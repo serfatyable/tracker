@@ -1,5 +1,7 @@
 Tracker follows Tracker_Developer_Guide_v1.0.md
 
+[![CI](https://github.com/serfatyable/tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/serfatyable/tracker/actions/workflows/ci.yml)
+
 ## ⚠️ Project Structure (IMPORTANT)
 
 **This project uses Next.js 15 App Router with routes at the root level.**
@@ -48,16 +50,19 @@ pnpm build
 ## Pre-commit hooks
 
 Husky + lint-staged run on staged files:
+
 - Prettier write
 - ESLint with --fix and no warnings allowed
 
 If a commit fails, fix issues and re-stage.
 
 ## Environment setup:
+
 - Put real values in Vercel Environment Variables.
 - For local dev, copy `.env.example` → `.env.local` and fill the same keys.
 
 Firestore security rules:
+
 - Rules are defined in firestore.rules
 - To deploy later:
   - Ensure Firebase CLI is installed and you are logged in.
@@ -65,6 +70,7 @@ Firestore security rules:
   - Deploy only rules: firebase deploy --only firestore:rules
 
 Firebase Emulator (optional):
+
 - Start emulators: firebase emulators:start
 - Use emulators in app: set NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true in .env.local
 - Auth: http://127.0.0.1:9099 | Firestore: 127.0.0.1:8080 | UI: http://127.0.0.1:4000
@@ -114,6 +120,7 @@ firebase deploy --only firestore:indexes
 ```
 
 Rules summary:
+
 - `users/{uid}`: owners can create/read/update their document
 - `tasks/*`: owners can read/create/update their tasks; tutors/admins have broader access
 
@@ -134,6 +141,7 @@ Rules summary:
 Path aliases (see `tsconfig.json`): `@/*`, `@app/*`, `@components/*`, `@lib/*`, `@types/*`, `@i18n/*`.
 
 Import boundaries enforced by ESLint:
+
 - `components` can import from `lib`, `types`
 - `app` can import from `components`, `lib`, `types`, `i18n`
 - `lib` can import from `lib`, `types`
