@@ -48,7 +48,7 @@ It connects **residents**, **tutors**, and **admins** to streamline learning tas
 ## 3. Authentication and Access
 
 Unified sign-in and sign-up page:
-- Fields: Full Name, Email, Password, Role (Resident / Tutor / Admin), Residency Start Date.
+- Fields: Full Name, Email, Password, Role (Resident / Tutor / Admin), Language (EN/HE); Residency Start Date (Residents only).
 - “Show Password” toggle.
 - Language preference stored per user.
 - Role activation requires admin approval.
@@ -57,8 +57,17 @@ Unified sign-in and sign-up page:
   - Tutor → Tutor Dashboard
   - Admin → Admin Dashboard
 
-**Residency Start Date**  
-Determines rotation unlocking schedule and analytics grouping.
+**Residency Start Date (Residents only)**
+Required only when role = resident; hidden and not stored for tutors/admins.  
+Must be a past date (no future); stored as ISO `YYYY-MM-DD`.  
+Used for analytics (time-in-program) and future rotation logic.  
+users/{uid}.status defaults to `pending` at signup; pending users are routed to `/awaiting-approval` until an admin approves.
+
+**Error Handling and Language Persistence**
+
+- **Auth Error UX:** Centralized mapping of Firebase Auth error codes to i18n keys. On **sign-in**, all credential-related errors (invalid-credential, user-not-found, wrong-password) are merged into a single generic error to avoid revealing whether an account exists. On **sign-up**, more specific messages are displayed (email already in use, weak password, etc.). The error mapper returns i18n keys under `errors.auth.*` for consistency.
+
+- **Language Persistence:** On sign-in, read `users/{uid}.settings.language` (default `"en"`). Immediately update i18n language and `<html lang/dir>` attributes to apply RTL if Hebrew. Persist this value in `localStorage`. When the user explicitly changes their language in Settings, update Firestore (`users/{uid}.settings.language`) and `localStorage`. The app defaults to English if the user is signed out or no preference is stored.
 
 ---
 
@@ -157,14 +166,29 @@ NEXT_PUBLIC_APP_ENV=staging|production
 
 ### Example Schemas
 
-**users/{uid}**
+**users/{uid}** (Resident)
 ```json
 {
   "fullName": "Daniel Cohen",
   "role": "resident",
   "email": "daniel@example.com",
+  "status": "pending",
   "settings": { "language": "en", "theme": "dark" },
-  "assignments": { "tutorIds": ["t123"], "rotationIds": ["icu2025"] }
+  "residencyStartDate": "2024-11-01",
+  "assignments": { "tutorIds": ["t123"], "rotationIds": ["icu2025"] },
+  "createdAt": "serverTimestamp"
+}
+```
+**users/{uid}** (Tutor/Admin)
+```json
+{
+  "fullName": "Dana Levi",
+  "role": "tutor",
+  "email": "dana@example.com",
+  "status": "approved",
+  "settings": { "language": "he", "theme": "light" },
+  "assignments": { "residentIds": ["u123"] },
+  "createdAt": "serverTimestamp"
 }
 ```
 
@@ -213,11 +237,15 @@ Implemented with **react-i18next**.
 ```
 RTL automatically applied when Hebrew selected.
 
+**SSR/CSR Synchronization:**  
+To prevent hydration mismatches, determine `<html lang>` and `dir` at render based on a cookie or client effect that reads the saved language preference. Hebrew enforces `dir="rtl"`. Numerical values within Hebrew text remain left-to-right using CSS (`unicode-bidi` and `direction`).
+
 ---
 
 ## 14. Security
 
 - Firestore rules with least privilege.
+- Enforce role-conditional fields: only residents may have/write 'residencyStartDate'; tutors/admins must not store this field. Users can write only allowed fields on their own doc.
 - Input sanitized using **DOMPurify**.
 - CSP headers applied globally.
 - IAM roles rotated every 90 days.
@@ -371,3 +399,12 @@ Migrating from prior drafts:
 
 **End of Tracker Developer Guide v1.0**  
 This is the official and final technical reference for the Tracker application.
+
+### Firestore Deploy Cheatsheet
+
+```bash
+firebase login
+firebase use YOUR_PROJECT_ID
+firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
+```

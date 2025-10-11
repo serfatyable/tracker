@@ -1,0 +1,16 @@
+{
+  "ignorePatterns": [
+    "**/.next/**",
+    "**/coverage/**",
+    "**/test/**",
+    "**/vitest.config.ts",
+    "**/next.config.js",
+    "**/postcss.config.js",
+    "**/tailwind.config.js",
+    "**/app/**",
+    "**/components/**",
+    "**/lib/**",
+    "**/types/**"
+  ]
+}
+
