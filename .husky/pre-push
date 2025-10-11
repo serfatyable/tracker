@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Guard: block direct pushes to main from local without explicit override
+current_branch="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$current_branch" = "main" ]; then
+  echo "[pre-push] Direct pushes to main are blocked. Create a PR or use --no-verify if you must."
+  exit 1
+fi
+
+# Allow feature branches to push without local checks; CI will validate on PR
+echo "[pre-push] Feature branch detected ('$current_branch'). Skipping local checks; CI will run on PR."
+
