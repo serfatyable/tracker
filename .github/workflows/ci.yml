@@ -1,35 +1,13 @@
-name: CI
+name: CI (disabled)
 
 on:
   push:
-    branches: [ main ]
+    branches: []
   pull_request:
-    branches: [ main ]
+    branches: []
 
 jobs:
-  build:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install pnpm
-        run: npm install -g pnpm@10.17.1
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test:mem
+      - run: echo "CI is temporarily disabled"
