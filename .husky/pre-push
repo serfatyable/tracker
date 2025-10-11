@@ -7,16 +7,6 @@ if [ "$current_branch" = "main" ]; then
   exit 1
 fi
 
-echo "[pre-push] Running checks (lint, typecheck, test:ci)..."
-
-# Run project checks with pnpm; fail fast if any step fails
-pnpm lint && pnpm typecheck && pnpm test:ci
-status=$?
-
-if [ $status -ne 0 ]; then
-  echo "[pre-push] Checks failed. Fix issues or push with --no-verify to bypass (not recommended)."
-  exit $status
-fi
-
-echo "[pre-push] All checks passed. Proceeding with push."
+# Allow feature branches to push without local checks; CI will validate on PR
+echo "[pre-push] Feature branch detected ('$current_branch'). Skipping local checks; CI will run on PR."
 
