@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Guard: block direct pushes to main from local without explicit override
+current_branch="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$current_branch" = "main" ]; then
+  echo "[pre-push] Direct pushes to main are blocked. Create a PR or use --no-verify if you must."
+  exit 1
+fi
+
+echo "[pre-push] Running checks (lint, typecheck, test:ci)..."
+
+# Run project checks with pnpm; fail fast if any step fails
+pnpm lint && pnpm typecheck && pnpm test:ci
+status=$?
+
+if [ $status -ne 0 ]; then
+  echo "[pre-push] Checks failed. Fix issues or push with --no-verify to bypass (not recommended)."
+  exit $status
+fi
+
+echo "[pre-push] All checks passed. Proceeding with push."
+
