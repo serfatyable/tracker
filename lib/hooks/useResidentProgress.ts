@@ -52,10 +52,10 @@ export function useResidentProgress(
           children: [],
         };
       }
-      const children = (node as any).__children.map((c: RotationNode) => compute(c));
-      const requiredCount = children.reduce<number>((acc: number, ch: NodeProgress) => acc + ch.requiredCount, 0);
-      const approvedCount = children.reduce<number>((acc: number, ch: NodeProgress) => acc + ch.approvedCount, 0);
-      const pendingCount = children.reduce<number>((acc: number, ch: NodeProgress) => acc + ch.pendingCount, 0);
+      const children: NodeProgress[] = (node as any).__children.map((c: RotationNode) => compute(c));
+      const requiredCount = children.reduce((acc, ch) => acc + ch.requiredCount, 0);
+      const approvedCount = children.reduce((acc, ch) => acc + ch.approvedCount, 0);
+      const pendingCount = children.reduce((acc, ch) => acc + ch.pendingCount, 0);
       return {
         id: node.id,
         name: node.name,
