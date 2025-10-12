@@ -86,46 +86,7 @@ vi.mock('react-i18next', async () => {
     'resident.approvals': 'Approvals',
     'resident.resources': 'Resources',
     // tabs
-    'ui.dashboard': 'Dashboard',
-    'tutor.tabs.residents': 'Residents',
-    'tutor.tabs.tasks': 'Tasks',
-    'tutor.tabs.rotations': 'Rotations',
-    'ui.reflections': 'Reflections',
-    'ui.settings': 'Settings',
-    // resident quick actions
-    'ui.logActivity': 'Log activity',
-    'ui.searchRotations': 'Search rotations',
-    'ui.goToActiveRotation': 'Go to active rotation',
-    // resident filters and labels
-    'ui.required': 'Required',
-    'ui.active': 'Active',
-    'ui.approved': 'Approved',
-    'ui.complete': 'complete',
-    'ui.pending': 'Pending',
-    'ui.awaitingApproval': 'Awaiting approval',
-    'ui.noItems': 'No items',
-    'ui.recentLogs': 'Recent logs',
-    'ui.noRecentLogs': 'No recent logs',
-    'ui.announcements': 'Announcements',
-    'ui.none': 'None',
-    'ui.all': 'All',
-    'ui.open': 'Open',
-    'ui.status': 'Status',
-    'ui.rotations': 'Rotations',
-    'ui.users': 'Users',
-    // overview
-    'overview.type': 'Type',
-    'overview.type.activate': 'Activate',
-    'overview.type.finish': 'Finish',
-    'overview.status.pending': 'Pending',
-    'overview.status.approved': 'Approved',
-    'overview.status.denied': 'Denied',
-    'overview.actions.approve': 'Approve',
-    'overview.actions.deny': 'Deny',
-    // resident sections
-    'resident.progress': 'Progress',
-    'resident.approvals': 'Approvals',
-    'resident.resources': 'Resources',
+    // (duplicates removed)
   };
 
 // Simple microtask/timeout flusher to let pending effects settle in tests
