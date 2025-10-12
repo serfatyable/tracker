@@ -15,11 +15,7 @@ describe('CSV Import parsing', () => {
     expect(leaves.length).toBe(2);
     const first = leaves[0]!;
     expect(first).toMatchObject({
-      category: 'Knowledge',
-      subject: 'Respiratory System',
-      topic: 'V/Q Mismatch',
-      itemTitle: 'V/Q Mismatch – Clinical Applications',
-      requiredCount: 3,
+      category: 'Knowledge', subject: 'Respiratory System', topic: 'V/Q Mismatch', itemTitle: 'V/Q Mismatch – Clinical Applications', requiredCount: 3,
     });
     const links0 = first.links ?? [];
     expect(links0.length).toBe(2);
@@ -28,13 +24,12 @@ describe('CSV Import parsing', () => {
   });
 
   it('validates required fields', () => {
-    const badCsv = [
-      'Category,Subject,Topic,SubTopic,SubSubTopic,ItemTitle,RequiredCount,mcqUrl',
-      'Knowledge,,,,',
-    ].join('\n');
+    const badCsv = ['Category,Subject,Topic,SubTopic,SubSubTopic,ItemTitle,RequiredCount,mcqUrl', 'Knowledge,,,,' ].join('\n');
     const { rows } = parseRotationCsvText(badCsv);
     const { leaves, errors } = normalizeParsedRows(rows);
     expect(leaves.length).toBe(0);
     expect(errors.length).toBeGreaterThan(0);
   });
 });
+
+

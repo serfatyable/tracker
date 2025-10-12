@@ -26,7 +26,6 @@ This project uses **Next.js 15 with App Router**. The structure MUST be maintain
 ### ❌ DO NOT Use `/src` Directory
 
 Next.js 15 App Router has issues discovering routes under `/src/app/`. While technically supported, it causes:
-
 - Routes returning 404
 - Build manifest errors
 - Missing server-side pages
@@ -51,7 +50,6 @@ import TextInput from '../../components/auth/TextInput';
 The project uses aliases pointing to root and key folders:
 
 **tsconfig.json:**
-
 ```json
 {
   "compilerOptions": {
@@ -100,3 +98,4 @@ pnpm dev
 ### History Note
 
 This project originally had routes in `/src/app/` which caused persistent 404 errors. Moving everything to root-level directories resolved all routing issues. **Do not revert to /src structure.**
+
