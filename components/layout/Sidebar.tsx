@@ -1,11 +1,13 @@
 "use client";
-import { HomeIcon, Cog6ToothIcon, UserGroupIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, Cog6ToothIcon, UserGroupIcon, BookOpenIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { useTranslation } from 'react-i18next';
 
 import NavItem from './NavItem';
 
 export default function Sidebar() {
     const { data: me } = useCurrentUserProfile();
+    const { t } = useTranslation();
 
     const role = me?.role || 'resident';
     const homeHref = role === 'admin' ? '/admin' : role === 'tutor' ? '/tutor' : '/resident';
@@ -17,6 +19,16 @@ export default function Sidebar() {
                 <NavItem href={homeHref} label="Dashboard" Icon={HomeIcon} />
                 <NavItem href={reflectionsHref} label="Reflections" Icon={BookOpenIcon} />
                 <NavItem href="/auth" label="Auth" Icon={UserGroupIcon} />
+                <NavItem
+                    href="/morning-meetings"
+                    label={t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}
+                    Icon={CalendarDaysIcon}
+                />
+                <NavItem
+                    href="/on-call"
+                    label={t('ui.onCall', { defaultValue: 'On Call' })}
+                    Icon={CalendarDaysIcon}
+                />
                 <NavItem href="/settings" label="Settings" Icon={Cog6ToothIcon} />
             </nav>
         </aside>

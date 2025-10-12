@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18nInstance from '../../lib/i18n/init';
 
 import PasswordInput from '../../components/auth/PasswordInput';
 import RolePills from '../../components/auth/RolePills';
@@ -38,7 +39,7 @@ export default function AuthPage() {
   );
   useEffect(() => {
     localStorage.setItem('i18n_lang', language);
-    i18n.changeLanguage(language);
+    i18nInstance.changeLanguage(language);
     document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
   }, [language, i18n]);
@@ -84,7 +85,7 @@ export default function AuthPage() {
       const { profile } = await getCurrentUserWithProfile();
       const profLang = (profile?.settings?.language as 'en' | 'he') || 'en';
       applyLanguageToDocument(profLang);
-      i18n.changeLanguage(profLang);
+      i18nInstance.changeLanguage(profLang);
       router.push('/awaiting-approval');
     } catch (err: any) {
       const key = mapFirebaseAuthErrorToI18nKey('signin', err?.code);

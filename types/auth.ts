@@ -7,6 +7,10 @@ export type UserSettings = {
     inApp: boolean;
     email: boolean;
   };
+  morningMeetings?: {
+    icsToken?: string;
+    reminderOptIn?: boolean;
+  };
 };
 
 export type BaseUserProfile = {

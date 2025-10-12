@@ -1,18 +1,22 @@
 'use client';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 import { signOut } from '../lib/firebase/auth';
 import { useCurrentUserProfile } from '../lib/hooks/useCurrentUserProfile';
 import Avatar from './ui/Avatar';
 import { useTranslation } from 'react-i18next';
+import { useTomorrowLecturerReminder } from '../lib/hooks/useTomorrowLecturerReminder';
 
 export default function TopBar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const { data: me } = useCurrentUserProfile();
-  const { i18n: i18next } = useTranslation();
+  const { t, i18n: i18next } = useTranslation();
+  const { show, meeting } = useTomorrowLecturerReminder();
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 2);
     onScroll();
@@ -82,6 +86,12 @@ export default function TopBar() {
         <span className="font-medium text-gray-600 dark:text-gray-300">Tracker</span>
       </div>
       <nav className="flex items-center gap-2">
+        {show && meeting ? (
+          <div className="hidden md:block rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-900">
+            {t('morningMeetings.lecturerReminder')} — {meeting?.title}
+          </div>
+        ) : null}
+        {/* Morning Meetings tab moved to Sidebar */}
         <LangToggle />
         <div className="flex items-center gap-2 rounded-full border px-2 py-1 text-sm transition hover:bg-[rgba(0,150,255,0.08)] border-[rgba(0,87,184,0.35)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]">
           <Avatar name={me?.fullName} size={20} />

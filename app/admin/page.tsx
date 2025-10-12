@@ -1,6 +1,7 @@
 'use client';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import SettingsPanel from '../../components/settings/SettingsPanel';
@@ -26,6 +27,11 @@ import Badge from '../../components/ui/Badge';
 import Drawer from '../../components/ui/Drawer';
 import { Dialog, DialogHeader, DialogFooter } from '../../components/ui/Dialog';
 import Toast from '../../components/ui/Toast';
+import TodayPanel from '../../components/on-call/TodayPanel';
+import NextShiftCard from '../../components/on-call/NextShiftCard';
+import TeamForDate from '../../components/on-call/TeamForDate';
+import MiniCalendar from '../../components/on-call/MiniCalendar';
+import { useMorningMeetingsUpcoming, useMorningMeetingsMonth } from '../../lib/hooks/useMorningClasses';
 import Avatar from '../../components/ui/Avatar';
 import {
   listUsers,
@@ -36,15 +42,17 @@ import {
   ensureDefaultReflectionTemplatesSeeded,
 } from '../../lib/firebase/admin';
 import { getCurrentUserWithProfile } from '../../lib/firebase/auth';
+import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { getFirebaseStatus } from '../../lib/firebase/client';
 import type { Role, UserProfile } from '../../types/auth';
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
   const firebaseOk = getFirebaseStatus().ok;
   const [tab, setTab] = useState<
-    'overview' | 'users' | 'tasks' | 'rotations' | 'reflections' | 'settings'
+    'overview' | 'users' | 'tasks' | 'rotations' | 'reflections' | 'settings' | 'morning' | 'oncall'
   >('overview');
   const [openRotationId, setOpenRotationId] = useState<string | null>(null);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -287,8 +295,8 @@ export default function AdminDashboard() {
       <TopBar />
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-stretch justify-start p-6">
         <div className="glass-card w-full p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <TabsList>
+            <div className="mb-4 flex items-center justify-between">
+              <TabsList>
               <TabsTrigger active={tab === 'overview'} onClick={() => setTab('overview')}>
                 {t('ui.dashboard') || 'Dashboard'}
               </TabsTrigger>
@@ -304,10 +312,30 @@ export default function AdminDashboard() {
               <TabsTrigger active={tab === 'reflections'} onClick={() => setTab('reflections')}>
                 Reflections
               </TabsTrigger>
+                <button
+                  className={`tab-levitate px-3 py-2 text-sm ${tab === 'morning' ? 'ring-1 ring-blue-500' : ''}`}
+                  onClick={() => setTab('morning')}
+                >
+                  {t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}
+                </button>
+                <button
+                  className={`tab-levitate px-3 py-2 text-sm ${tab === 'oncall' ? 'ring-1 ring-blue-500' : ''}`}
+                  onClick={() => setTab('oncall')}
+                >
+                  {t('ui.onCall', { defaultValue: 'On Call' })}
+                </button>
+                <Link
+                  href="/on-call"
+                  className={`tab-levitate px-3 py-2 text-sm ${
+                    pathname?.startsWith('/on-call') ? 'ring-1 ring-blue-500' : ''
+                  }`}
+                >
+                  {t('ui.onCall', { defaultValue: 'On Call' })}
+                </Link>
               <TabsTrigger active={tab === 'settings'} onClick={() => setTab('settings')}>
                 {t('ui.settings')}
               </TabsTrigger>
-            </TabsList>
+              </TabsList>
             <div />
           </div>
 
@@ -318,6 +346,10 @@ export default function AdminDashboard() {
               </div>
               <OverviewTab />
             </div>
+          ) : tab === 'morning' ? (
+            <AdminMorningMeetingsInline />
+          ) : tab === 'oncall' ? (
+            <AdminOnCallInline />
           ) : tab === 'users' ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
@@ -675,6 +707,107 @@ function OverviewTab() {
         <div className="lg:col-span-2">
           <TutorLoadTable assignments={assignments} tutors={tutors} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminMorningMeetingsInline() {
+  const { t, i18n } = useTranslation();
+  const { today, tomorrow, next7 } = useMorningMeetingsUpcoming();
+  const now = new Date();
+  const y = now.getFullYear();
+  const m0 = now.getMonth();
+  const { list: monthList } = useMorningMeetingsMonth(y, m0);
+  const daysInMonth = useMemo(() => new Date(y, m0 + 1, 0).getDate(), [y, m0]);
+  const monthByDay = useMemo(() => {
+    const map: Record<number, any[]> = {};
+    (monthList || []).forEach((it: any) => {
+      const d = new Date(it.date.toDate());
+      const dd = d.getDate();
+      map[dd] = map[dd] || [];
+      map[dd].push(it);
+    });
+    return map;
+  }, [monthList]);
+  function renderList(items: any[] | null) {
+    if (!items || !items.length) return <div className="opacity-70">{t('morningMeetings.noClasses')}</div>;
+    return (
+      <ul className="divide-y rounded border">
+        {(items || []).map((c: any) => {
+          const start = c.date?.toDate?.()?.toLocaleTimeString?.(i18n.language === 'he' ? 'he-IL' : 'en-US', { hour: '2-digit', minute: '2-digit' }) || '07:10';
+          return (
+            <li key={c.id || c.dateKey + c.title} className="p-2 flex items-center justify-between">
+              <div>
+                <div className="font-medium">{c.title}</div>
+                <div className="text-xs opacity-70">{c.lecturer} — {start}</div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="glass-card p-4">
+          <div className="mb-2 font-semibold">{t('morningMeetings.today')}</div>
+          {renderList(today)}
+        </div>
+        <div className="glass-card p-4">
+          <div className="mb-2 font-semibold">{t('morningMeetings.tomorrow')}</div>
+          {renderList(tomorrow)}
+        </div>
+        <div className="glass-card p-4">
+          <div className="mb-2 font-semibold">{t('morningMeetings.next7')}</div>
+          {renderList(next7)}
+        </div>
+      </div>
+      <div className="glass-card p-4">
+        <div className="mb-2 font-semibold">{t('morningMeetings.month')}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
+          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
+            <div key={d} className="rounded border p-2 min-h-[80px]">
+              <div className="text-xs opacity-70 mb-1">{d}</div>
+              <div className="space-y-1">
+                {(monthByDay[d] || []).map((c) => (
+                  <div key={c.id || c.title} className="truncate">{c.title}</div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminOnCallInline() {
+  const { data: me } = useCurrentUserProfile();
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
+          <div className="glass-card p-4 space-y-3">
+            <div className="text-sm font-medium">{t('onCall.today')}</div>
+            <TodayPanel highlightUserId={me?.uid} />
+          </div>
+        </div>
+        <div className="md:col-span-1">
+          <div className="glass-card p-4">
+            <NextShiftCard userId={me?.uid} />
+          </div>
+        </div>
+      </div>
+      <div className="glass-card p-4 space-y-3">
+        <div className="text-sm font-medium">{t('onCall.teamOnDate', { date: '' })}</div>
+        <TeamForDate />
+      </div>
+      <div className="glass-card p-4 space-y-3">
+        <div className="text-sm font-medium">Timeline</div>
+        <MiniCalendar />
       </div>
     </div>
   );

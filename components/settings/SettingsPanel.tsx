@@ -10,6 +10,9 @@ import {
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { applyLanguageToDocument } from '../../lib/i18n/applyLanguage';
 import Toast from '../ui/Toast';
+import { getFirebaseApp } from '../../lib/firebase/client';
+import { doc, getFirestore, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { simpleHash } from '../../lib/ics/buildMorningMeetingsIcs';
 
 export default function SettingsPanel() {
   const { t, i18n } = useTranslation();
@@ -20,6 +23,9 @@ export default function SettingsPanel() {
   const [notificationsInApp, setNotificationsInApp] = useState<boolean>(true);
   const [notificationsEmail, setNotificationsEmail] = useState<boolean>(true);
   const [toast, setToast] = useState<string | null>(null);
+  const [mmReminder, setMmReminder] = useState<boolean>(false);
+  const icsAllHref = '/api/ics/morning-meetings';
+  const [icsMyHref, setIcsMyHref] = useState<string>('');
 
   useEffect(() => {
     if (status !== 'ready') return;
@@ -28,6 +34,9 @@ export default function SettingsPanel() {
     setTheme((profile.settings?.theme as 'light' | 'dark' | 'system') || 'system');
     setNotificationsInApp(profile.settings?.notifications?.inApp ?? true);
     setNotificationsEmail(profile.settings?.notifications?.email ?? true);
+    setMmReminder(profile.settings?.morningMeetings?.reminderOptIn ?? false);
+    const token = profile.settings?.morningMeetings?.icsToken || '';
+    setIcsMyHref(token ? `/api/ics/morning-meetings/${token}` : '');
   }, [status, firebaseUser, profile]);
 
   async function handleSave(e: React.FormEvent) {
@@ -39,6 +48,16 @@ export default function SettingsPanel() {
         updateUserTheme(theme),
         updateUserNotifications({ inApp: notificationsInApp, email: notificationsEmail }),
       ]);
+      // Save morningMeetings reminder
+      try {
+        if (firebaseUser) {
+          const db = getFirestore(getFirebaseApp());
+          await updateDoc(doc(db, 'users', firebaseUser.uid), {
+            'settings.morningMeetings.reminderOptIn': mmReminder,
+            updatedAt: serverTimestamp(),
+          } as any);
+        }
+      } catch (_) {}
       applyLanguageToDocument(language);
       i18n.changeLanguage(language);
       // Apply theme immediately according to Tailwind dark mode class strategy
@@ -90,6 +109,49 @@ export default function SettingsPanel() {
           <option value="light">{t('settings.theme.light')}</option>
           <option value="dark">{t('settings.theme.dark')}</option>
         </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium">{t('morningMeetings.lecturerReminder')}</label>
+        <label className="mt-2 inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={mmReminder} onChange={(e) => setMmReminder(e.target.checked)} />
+          <span>{t('morningMeetings.lecturerReminder')}</span>
+        </label>
+      </div>
+      <div>
+        <label className="block text-sm font-medium">ICS</label>
+        <div className="mt-2 flex flex-col gap-2 text-sm">
+          <a className="text-blue-600 hover:underline" href={icsAllHref} target="_blank" rel="noopener noreferrer">
+            {t('morningMeetings.allIcs')}
+          </a>
+          {icsMyHref ? (
+            <a className="text-blue-600 hover:underline" href={icsMyHref} target="_blank" rel="noopener noreferrer">
+              {t('morningMeetings.myIcs')}
+            </a>
+          ) : (
+            <div className="opacity-70">{t('morningMeetings.myIcs')}</div>
+          )}
+          <button
+            type="button"
+            className="btn-levitate w-fit"
+            onClick={async () => {
+              if (!firebaseUser) return;
+              try {
+                const token = simpleHash(firebaseUser.uid + ':' + Date.now().toString());
+                const db = getFirestore(getFirebaseApp());
+                await updateDoc(doc(db, 'users', firebaseUser.uid), {
+                  'settings.morningMeetings.icsToken': token,
+                  updatedAt: serverTimestamp(),
+                } as any);
+                setIcsMyHref(`/api/ics/morning-meetings/${token}`);
+                setToast(t('ui.saved'));
+              } catch (e) {
+                setToast(t('settings.error'));
+              }
+            }}
+          >
+            {t('morningMeetings.rotateToken')}
+          </button>
+        </div>
       </div>
       <div>
         <label className="block text-sm font-medium">{t('settings.notifications')}</label>

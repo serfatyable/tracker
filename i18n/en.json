@@ -95,7 +95,21 @@
     "category.guidance": "guidance",
     "reflections": "Reflections",
     "templates": "Templates",
-    "submissions": "Submissions"
+    "submissions": "Submissions",
+    "morningMeetings": "Morning Meetings",
+    "onCall": "On Call"
+  },
+  "morningMeetings": {
+    "title": "Morning Meetings",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "next7": "Next 7 days",
+    "month": "This month",
+    "noClasses": "No meetings",
+    "lecturerReminder": "Remind me if I lecture tomorrow",
+    "allIcs": "All Morning Meetings (ICS)",
+    "myIcs": "My Lectures (ICS)",
+    "rotateToken": "Rotate link"
   },
   "settings": {
     "title": "Settings",
@@ -177,5 +191,38 @@
     "resident": "Resident",
     "tutor": "Tutor",
     "admin": "Admin"
+  }
+  ,
+  "onCall": {
+    "title": "On Call",
+    "today": "Today / Tonight",
+    "tomorrow": "Tomorrow Night",
+    "filters": {
+      "byDoctor": "Filter by doctor...",
+      "byStation": "Filter by station..."
+    },
+    "station": {
+      "or_main": "OR (Main)",
+      "labor_delivery": "Labor & Delivery",
+      "icu": "ICU",
+      "or_gyne": "OR (Gyne)",
+      "pacu": "PACU",
+      "on_call_manager": "On-call Manager",
+      "senior_or": "Senior OR",
+      "senior_or_half": "Senior OR (Half)",
+      "ortho_shatzi": "Ortho Shatzi",
+      "ortho_trauma": "Ortho Trauma",
+      "ortho_joint": "Ortho Joint",
+      "surgery": "Surgery",
+      "urology": "Urology",
+      "spine": "Spine",
+      "vascular_thoracic": "Vascular/Thoracic",
+      "pain_service": "Pain Service",
+      "spine_injections": "Spine Injections",
+      "weekly_day_off": "Weekly Day Off"
+    },
+    "yourNextShift": "Your Next Shift",
+    "teamOnDate": "Team on {{date}}",
+    "noShifts": "No shifts"
   }
 }

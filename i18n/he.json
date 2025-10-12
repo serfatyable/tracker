@@ -74,7 +74,21 @@
     "submissions": "הגשות",
     "category.knowledge": "ידע",
     "category.skills": "מיומנויות",
-    "category.guidance": "הדרכה"
+    "category.guidance": "הדרכה",
+    "morningMeetings": "ישיבת בוקר",
+    "onCall": "תורנות"
+  },
+  "morningMeetings": {
+    "title": "ישיבת בוקר",
+    "today": "היום",
+    "tomorrow": "מחר",
+    "next7": "7 הימים הבאים",
+    "month": "החודש",
+    "noClasses": "אין ישיבות",
+    "lecturerReminder": "תזכיר לי אם אני המרצה מחר",
+    "allIcs": "כל ישיבות הבוקר (ICS)",
+    "myIcs": "הישיבות שלי (ICS)",
+    "rotateToken": "סובב קישור"
   },
   "settings": {
     "title": "הגדרות",
@@ -132,5 +146,38 @@
     "resident": "מתמחה",
     "tutor": "טיוטור",
     "admin": "מנהל"
+  }
+  ,
+  "onCall": {
+    "title": "תורנות",
+    "today": "היום / הלילה",
+    "tomorrow": "מחר בלילה",
+    "filters": {
+      "byDoctor": "סינון לפי רופא...",
+      "byStation": "סינון לפי תחנה..."
+    },
+    "station": {
+      "or_main": "חדר ניתוח ראשי",
+      "labor_delivery": "חדר לידה",
+      "icu": "טיפול נמרץ",
+      "or_gyne": "חדר ניתוח נשים",
+      "pacu": "PACU",
+      "on_call_manager": "מנהל תורן",
+      "senior_or": "חנ בכיר",
+      "senior_or_half": "חצי חנ בכיר",
+      "ortho_shatzi": "אורתו שצי",
+      "ortho_trauma": "אורתו טראומה",
+      "ortho_joint": "אורתו מפרק",
+      "surgery": "כירורגיה",
+      "urology": "אורולוגיה",
+      "spine": "עמ\"ש",
+      "vascular_thoracic": "כלי דם / חזה",
+      "pain_service": "שירות כאב",
+      "spine_injections": "זריקות עמ\"ש",
+      "weekly_day_off": "יום מנוחה שבועי"
+    },
+    "yourNextShift": "התורנות הבאה שלך",
+    "teamOnDate": "הצוות ב-{{date}}",
+    "noShifts": "אין תורנויות"
   }
 }

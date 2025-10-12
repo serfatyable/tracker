@@ -118,6 +118,26 @@ service cloud.firestore {
       allow create, update, delete: if isAdminApproved();
     }
 
+    // Morning meetings
+    match /morningMeetings/{docId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdminApproved();
+    }
+
+    // On-call: assignments, per-day snapshots, and aliases
+    match /onCallAssignments/{id} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdminApproved();
+    }
+    match /onCallDays/{dateKey} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdminApproved();
+    }
+    match /onCallAliases/{aliasKey} {
+      allow read: if isAdminApproved();
+      allow create, update, delete: if isAdminApproved();
+    }
+
     // Reflection templates (versioned)
     match /reflectionTemplates/{templateId} {
       allow read: if isSignedIn(); // UI will filter to status == 'published'

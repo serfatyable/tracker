@@ -160,6 +160,14 @@
         { "fieldPath": "requestedAt", "order": "DESCENDING" }
       ]
     }
+    ,
+    {
+      "collectionId": "onCallAssignments",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "startAt", "order": "ASCENDING" }
+      ]
+    }
   ],
   "fieldOverrides": []
 }

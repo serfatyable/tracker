@@ -1,5 +1,6 @@
 import './globals.css';
 import DevDiagnosticsBar from '../components/DevDiagnosticsBar';
+import { I18nProvider } from '../lib/i18n/Provider';
 import { cookies } from 'next/headers';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -10,8 +11,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang} dir={dir} suppressHydrationWarning>
       <body suppressHydrationWarning>
-        {children}
-        <DevDiagnosticsBar />
+        <I18nProvider>
+          {children}
+          <DevDiagnosticsBar />
+        </I18nProvider>
       </body>
     </html>
   );

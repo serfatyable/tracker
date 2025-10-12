@@ -1,0 +1,68 @@
+import type { StationKey } from '../../types/onCall';
+
+export const hebrewHeaderToKey: Record<string, StationKey | 'dayOfWeek' | 'date'> = {
+  'יום': 'dayOfWeek',
+  'תאריך': 'date',
+  'ת.חדר ניתוח': 'or_main',
+  'ת. חדר לידה': 'labor_delivery',
+  'תורן טיפול נמרץ': 'icu',
+  'ת.חדר ניתוח נשים': 'or_gyne',
+  'תורן PACU': 'pacu',
+  'מנהל תורן': 'on_call_manager',
+  'תורן חנ בכיר': 'senior_or',
+  'תורן חצי חנ בכיר': 'senior_or_half',
+  'אורתו שצי': 'ortho_shatzi',
+  'אורתו טראומה': 'ortho_trauma',
+  'אורתו מפרק': 'ortho_joint',
+  'SUR': 'surgery',
+  'Urol': 'urology',
+  'עמ"ש': 'spine',
+  'כלי דם / חזה': 'vascular_thoracic',
+  'כאב': 'pain_service',
+  'זריקות עמ"ש': 'spine_injections',
+  'יום מנוחה שבועי': 'weekly_day_off',
+};
+
+export const stationKeys: StationKey[] = [
+  'or_main',
+  'labor_delivery',
+  'icu',
+  'or_gyne',
+  'pacu',
+  'on_call_manager',
+  'senior_or',
+  'senior_or_half',
+  'ortho_shatzi',
+  'ortho_trauma',
+  'ortho_joint',
+  'surgery',
+  'urology',
+  'spine',
+  'vascular_thoracic',
+  'pain_service',
+  'spine_injections',
+  'weekly_day_off',
+];
+
+export const stationI18nKeys: Record<StationKey, string> = {
+  or_main: 'onCall.station.or_main',
+  labor_delivery: 'onCall.station.labor_delivery',
+  icu: 'onCall.station.icu',
+  or_gyne: 'onCall.station.or_gyne',
+  pacu: 'onCall.station.pacu',
+  on_call_manager: 'onCall.station.on_call_manager',
+  senior_or: 'onCall.station.senior_or',
+  senior_or_half: 'onCall.station.senior_or_half',
+  ortho_shatzi: 'onCall.station.ortho_shatzi',
+  ortho_trauma: 'onCall.station.ortho_trauma',
+  ortho_joint: 'onCall.station.ortho_joint',
+  surgery: 'onCall.station.surgery',
+  urology: 'onCall.station.urology',
+  spine: 'onCall.station.spine',
+  vascular_thoracic: 'onCall.station.vascular_thoracic',
+  pain_service: 'onCall.station.pain_service',
+  spine_injections: 'onCall.station.spine_injections',
+  weekly_day_off: 'onCall.station.weekly_day_off',
+};
+
+
