@@ -5,10 +5,12 @@ import { getFirebaseApp } from '../../../../../lib/firebase/client';
 import { buildIcsCalendar, simpleHash } from '../../../../../lib/ics/buildMorningMeetingsIcs';
 import { listMorningMeetingsByDateRange } from '../../../../../lib/morning-meetings/store';
 
-export async function GET(_req: Request, context: { params: { token: string } }) {
+export async function GET(req: Request) {
   const app = getFirebaseApp();
   const db = getFirestore(app);
-  const token = context.params.token;
+  const url = new URL(req.url);
+  const segments = url.pathname.split('/').filter(Boolean);
+  const token = segments[segments.length - 1];
   if (!token) return NextResponse.json({ error: 'missing token' }, { status: 400 });
   // Find user by icsToken
   const usersSnap = await getDocs(
