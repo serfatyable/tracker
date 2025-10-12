@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
 import * as clientMod from '../../../lib/firebase/client';
-import AdminPage from '../page';
+// Import AdminPage dynamically after mocks are in place
+let AdminPage: any;
 
 // Stub TopBar to minimize noise
 vi.mock('../../../components/TopBar', () => ({ default: () => null }));
@@ -33,7 +34,10 @@ const {
   updateTasksStatusMock: vi.fn(),
 }));
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: replaceMock }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: replaceMock, push: vi.fn(), back: vi.fn() }),
+  usePathname: () => '/',
+}));
 
 vi.mock('../../../lib/firebase/auth', () => ({
   getCurrentUserWithProfile: getCurrentUserWithProfileMock,
@@ -74,6 +78,9 @@ describe('AdminPage smoke', () => {
   });
 
   it('redirects non-admin users', async () => {
+    if (!AdminPage) {
+      AdminPage = (await import('../page')).default;
+    }
     vi.spyOn(clientMod, 'getFirebaseStatus').mockReturnValue({
       ok: true,
       missing: [],
@@ -88,6 +95,9 @@ describe('AdminPage smoke', () => {
   });
 
   it('loads users/tasks and performs bulk actions', async () => {
+    if (!AdminPage) {
+      AdminPage = (await import('../page')).default;
+    }
     vi.spyOn(clientMod, 'getFirebaseStatus').mockReturnValue({
       ok: true,
       missing: [],

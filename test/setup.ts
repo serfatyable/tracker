@@ -24,6 +24,7 @@ process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS =
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
   usePathname: () => '/',
+  useSearchParams: () => ({ get: () => null, toString: () => '' }),
 }));
 
 // Minimal i18n mock for react-i18next: map common keys, otherwise humanize the last segment
@@ -89,17 +90,23 @@ vi.mock('react-i18next', async () => {
     // (duplicates removed)
   };
 
-// Simple microtask/timeout flusher to let pending effects settle in tests
-async function flushAllPromises() {
-  await new Promise((r) => setTimeout(r, 0));
-}
-(globalThis as any).flushAllPromises = flushAllPromises;
+  // Simple microtask/timeout flusher to let pending effects settle in tests
+  async function flushAllPromises() {
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  (globalThis as any).flushAllPromises = flushAllPromises;
   const humanize = (k: string) => {
     const seg = k.split('.').pop() || k;
-    return seg.replace(/[_.-]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+    return seg
+      .replace(/[_.-]+/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .toLowerCase();
   };
   return {
-    useTranslation: () => ({ t: (k: string) => map[k] ?? humanize(k), i18n: { changeLanguage: vi.fn() } }),
+    useTranslation: () => ({
+      t: (k: string) => map[k] ?? humanize(k),
+      i18n: { changeLanguage: vi.fn() },
+    }),
     Trans: ({ children }: any) => children,
     initReactI18next: { type: '3rdParty', init: () => {} },
   } as any;

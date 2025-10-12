@@ -11,6 +11,7 @@ const { replaceMock, signOutMock } = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: replaceMock }),
+  usePathname: () => '/',
 }));
 
 vi.mock('../../lib/firebase/auth', () => ({

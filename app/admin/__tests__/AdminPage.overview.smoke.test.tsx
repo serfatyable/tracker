@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
 import * as clientMod from '../../../lib/firebase/client';
@@ -12,7 +11,10 @@ const { replaceMock, getCurrentUserWithProfileMock } = vi.hoisted(() => ({
   getCurrentUserWithProfileMock: vi.fn(),
 }));
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: replaceMock }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: replaceMock, push: vi.fn(), back: vi.fn() }),
+  usePathname: () => '/',
+}));
 vi.mock('../../../lib/firebase/auth', () => ({
   getCurrentUserWithProfile: getCurrentUserWithProfileMock,
 }));

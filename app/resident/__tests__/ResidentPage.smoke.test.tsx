@@ -11,7 +11,10 @@ const { replaceMock } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
 }));
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: replaceMock }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: replaceMock, push: vi.fn(), back: vi.fn() }),
+  usePathname: () => '/',
+}));
 
 vi.mock('../../../lib/hooks/useCurrentUserProfile', () => ({
   useCurrentUserProfile: () => ({

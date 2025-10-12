@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
@@ -21,7 +21,10 @@ const {
   listRotationsMock: vi.fn(),
 }));
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: replaceMock }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: replaceMock, push: vi.fn(), back: vi.fn() }),
+  usePathname: () => '/',
+}));
 vi.mock('../../../lib/firebase/auth', () => ({
   getCurrentUserWithProfile: getCurrentUserWithProfileMock,
 }));
