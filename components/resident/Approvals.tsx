@@ -54,18 +54,18 @@ export default function Approvals({
         <div className="text-sm text-gray-500">{t('ui.noItems') || 'No items'}</div>
       ) : (
         <ul className="space-y-1 text-sm">
-          {filtered.map((t) => (
+          {filtered.map((task) => (
             <li
-              key={t.id}
+              key={task.id}
               className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-gray-800"
             >
-              <span>{byId[t.itemId]?.name || t.itemId}</span>
+              <span>{byId[task.itemId]?.name || task.itemId}</span>
               <span className="flex items-center gap-2">
-                <span className="text-gray-500">{t.status}</span>
+                <span className="text-gray-500">{task.status}</span>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onOpenRotation && onOpenRotation(t.rotationId, t.itemId)}
+                  onClick={() => onOpenRotation && onOpenRotation(task.rotationId, task.itemId)}
                 >
                   {t('ui.open') || 'Open'}
                 </Button>
