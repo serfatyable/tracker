@@ -15,133 +15,53 @@ service cloud.firestore {
       return isSignedIn() && (getUserRole() == 'tutor' || getUserRole() == 'admin');
     }
 
-    function isTutor() {
-      return isSignedIn() && getUserRole() == 'tutor';
-    }
-
     function isAdmin() {
       return isSignedIn() && getUserRole() == 'admin';
-    }
-
-    // Approval gating: only approved users get elevated role permissions
-    function getUserStatus() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status;
-    }
-
-    function isApproved() {
-      return isSignedIn() && getUserStatus() == 'approved';
-    }
-
-    function isAdminApproved() {
-      return isApproved() && getUserRole() == 'admin';
-    }
-
-    function isTutorApproved() {
-      return isApproved() && getUserRole() == 'tutor';
-    }
-
-    function isTutorOrAdminApproved() {
-      return isTutorApproved() || isAdminApproved();
     }
 
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    function isOwnerOfRotation(rotationId) {
-      return isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/rotations/$(rotationId)).data.ownerTutorIds);
-    }
-
-    // Users can create, read, and update their own profile document at users/{uid}; approved tutors/admins can read/update any
+    // Users can create, read, and update their own profile document at users/{uid}; tutors/admins can read/update any
     match /users/{uid} {
       allow create: if isOwner(uid);
-      allow read: if isOwner(uid) || isTutorOrAdminApproved();
-      allow update: if isOwner(uid) || isTutorOrAdminApproved();
+      allow read: if isOwner(uid) || isTutorOrAdmin();
+      allow update: if isOwner(uid) || isTutorOrAdmin();
     }
 
-    // Tasks: owners can read/create/update their own tasks; approved tutors/admins have broader access
+    // Tasks: owners can read/create/update their own tasks; tutors/admins have broader access
     match /tasks/{taskId} {
-      allow read: if isTutorOrAdminApproved() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read: if isTutorOrAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      // Tutors can update tasks only for rotations they own; approved admins can update any; owners (residents) can update their own
-      allow update: if isAdminApproved() || (isTutorApproved() && isOwnerOfRotation(resource.data.rotationId)) || (isSignedIn() && resource.data.userId == request.auth.uid);
-      allow delete: if isAdminApproved();
+      allow update: if isTutorOrAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow delete: if isTutorOrAdmin();
     }
 
-    // Rotations: approved admin-only write; read allowed to signed-in users (resident needs browse)
+    // Rotations: admin-only write; read allowed to admins for now
     match /rotations/{rotationId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdminApproved();
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // Rotation nodes: approved admin-only write; read allowed to signed-in users
+    // Rotation nodes: admin-only write; read allowed to admins for now
     match /rotationNodes/{nodeId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdminApproved();
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     // Rotation petitions
     match /rotationPetitions/{petitionId} {
-      allow read: if isAdminApproved() || isTutorApproved();
+      allow read: if isAdmin();
       allow create: if isSignedIn() && request.resource.data.residentId == request.auth.uid && request.resource.data.status == 'pending';
-      // Approved tutors may resolve petitions for rotations they own; must be a status transition from pending -> approved/denied
-      allow update: if isAdminApproved() || (isTutorApproved() && isOwnerOfRotation(resource.data.rotationId) && resource.data.status == 'pending' && (request.resource.data.status in ['approved', 'denied']));
+      allow update: if isAdmin();
       allow delete: if false;
     }
 
-    // Assignments: approved admin can access all; residents can read their own active assignment
+    // Assignments: admin-only access for now
     match /assignments/{assignmentId} {
-      allow read: if isAdminApproved() || (isSignedIn() && resource.data.residentId == request.auth.uid) || isTutorApproved();
-      // Approved admin retains full control; approved tutors can only add/remove themselves from tutorIds for owned rotation and active assignment
-      allow update: if isAdminApproved() || (
-        isTutorApproved() &&
-        resource.data.endedAt == null &&
-        isOwnerOfRotation(resource.data.rotationId) &&
-        // Only tutorIds may change; all other fields unchanged
-        request.resource.data.residentId == resource.data.residentId &&
-        request.resource.data.rotationId == resource.data.rotationId &&
-        request.resource.data.startedAt == resource.data.startedAt &&
-        request.resource.data.endedAt == resource.data.endedAt &&
-        (
-          // Add self (size +1, previously not present)
-          (!(request.auth.uid in resource.data.tutorIds) && (request.auth.uid in request.resource.data.tutorIds) && (request.resource.data.tutorIds.size() == resource.data.tutorIds.size() + 1)) ||
-          // Remove self (size -1, previously present)
-          ((request.auth.uid in resource.data.tutorIds) && !(request.auth.uid in request.resource.data.tutorIds) && (request.resource.data.tutorIds.size() == resource.data.tutorIds.size() - 1))
-        )
-      );
-      allow create, delete: if isAdminApproved();
-    }
-
-    // Announcements
-    match /announcements/{id} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdminApproved();
-    }
-
-    // Reflection templates (versioned)
-    match /reflectionTemplates/{templateId} {
-      allow read: if isSignedIn(); // UI will filter to status == 'published'
-      allow create, update, delete: if isAdminApproved();
-    }
-
-    // Reflections (immutable after submit; approved admin may add adminComment)
-    match /reflections/{rid} {
-      allow read: if isAdminApproved() || (isSignedIn() && (resource.data.residentId == request.auth.uid || resource.data.tutorId == request.auth.uid));
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isAdminApproved() &&
-        request.resource.data.keys().hasOnly(['taskOccurrenceId','taskType','templateKey','templateVersion','authorId','authorRole','residentId','tutorId','answers','submittedAt','adminComment']) &&
-        !(resource.data.submittedAt != null && (
-          request.resource.data.taskOccurrenceId != resource.data.taskOccurrenceId ||
-          request.resource.data.answers != resource.data.answers ||
-          request.resource.data.authorId != resource.data.authorId ||
-          request.resource.data.authorRole != resource.data.authorRole ||
-          request.resource.data.residentId != resource.data.residentId ||
-          request.resource.data.tutorId != resource.data.tutorId ||
-          request.resource.data.templateKey != resource.data.templateKey ||
-          request.resource.data.templateVersion != resource.data.templateVersion ||
-          request.resource.data.submittedAt != resource.data.submittedAt
-        ));
-      allow delete: if false;
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     // Deny everything else by default

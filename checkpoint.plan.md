@@ -1,5 +1,4 @@
 <!-- 7ad5f82f-2cb4-421d-aaf0-ddd6acc1590f 088cd11c-ad01-44ee-b04c-1afc36d23950 -->
-
 # Checkpoint Verification Plan
 
 ## Goals

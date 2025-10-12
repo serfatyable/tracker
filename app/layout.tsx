@@ -1,18 +1,18 @@
-import './globals.css';
-import DevDiagnosticsBar from '../components/DevDiagnosticsBar';
-import { cookies } from 'next/headers';
+import "./globals.css";
+import DevDiagnosticsBar from "../components/DevDiagnosticsBar";
+import { I18nProvider } from "../lib/i18n/Provider";
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const saved = cookieStore.get('i18n_lang')?.value;
-  const lang: 'en' | 'he' = saved === 'he' ? 'he' : 'en';
-  const dir: 'ltr' | 'rtl' = lang === 'he' ? 'rtl' : 'ltr';
-  return (
-    <html lang={lang} dir={dir} suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        {children}
-        <DevDiagnosticsBar />
-      </body>
-    </html>
-  );
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+	const lang: 'en' | 'he' = 'en';
+	const dir: 'ltr' | 'rtl' = 'ltr';
+	return (
+		<html lang={lang} dir={dir} suppressHydrationWarning>
+			<body suppressHydrationWarning>
+				<I18nProvider>
+					{children}
+				</I18nProvider>
+				<DevDiagnosticsBar />
+			</body>
+		</html>
+	);
 }
