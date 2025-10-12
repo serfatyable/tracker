@@ -53,9 +53,9 @@ export function useResidentProgress(
         };
       }
       const children = (node as any).__children.map((c: RotationNode) => compute(c));
-      const requiredCount = children.reduce((acc, ch) => acc + ch.requiredCount, 0);
-      const approvedCount = children.reduce((acc, ch) => acc + ch.approvedCount, 0);
-      const pendingCount = children.reduce((acc, ch) => acc + ch.pendingCount, 0);
+      const requiredCount = children.reduce<number>((acc: number, ch: NodeProgress) => acc + ch.requiredCount, 0);
+      const approvedCount = children.reduce<number>((acc: number, ch: NodeProgress) => acc + ch.approvedCount, 0);
+      const pendingCount = children.reduce<number>((acc: number, ch: NodeProgress) => acc + ch.pendingCount, 0);
       return {
         id: node.id,
         name: node.name,
@@ -68,8 +68,8 @@ export function useResidentProgress(
     }
 
     const roots = tree.map((r) => compute(r));
-    const totals = roots.reduce(
-      (acc, r) => {
+    const totals = roots.reduce<{ required: number; approved: number; pending: number }>(
+      (acc: { required: number; approved: number; pending: number }, r: NodeProgress) => {
         acc.required += r.requiredCount;
         acc.approved += r.approvedCount;
         acc.pending += r.pendingCount;
