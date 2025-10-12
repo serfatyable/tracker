@@ -1,7 +1,7 @@
 # Tracker for Anesthesiologists – Developer Guide v1.0
 
 **Status:** Final and Canonical Version  
-**Date:** October 2025  
+**Date:** October 2025
 
 ---
 
@@ -19,6 +19,7 @@ Tracker is a bilingual, Firebase-based web platform for managing anesthesiology 
 It connects **residents**, **tutors**, and **admins** to streamline learning task tracking, feedback, and analytics.
 
 **Core principles**
+
 - No patient data or hospital integration.
 - Modular, scalable, secure.
 - Fully bilingual (English ↔ Hebrew).
@@ -29,16 +30,19 @@ It connects **residents**, **tutors**, and **admins** to streamline learning tas
 ## 2. Core Roles
 
 **Residents**
+
 - Record skills, knowledge, and guidance progress.
 - Log cases and submit required tasks.
 - View feedback and performance statistics.
 
 **Tutors**
+
 - Approve or reject resident tasks with structured feedback.
 - Log teaching cases and monitor progress.
 - Participate in fairness analytics.
 
 **Admins**
+
 - Manage rotations, users, and system configuration.
 - Import/export rotations and templates.
 - Monitor quotas, performance, and compliance.
@@ -48,6 +52,7 @@ It connects **residents**, **tutors**, and **admins** to streamline learning tas
 ## 3. Authentication and Access
 
 Unified sign-in and sign-up page:
+
 - Fields: Full Name, Email, Password, Role (Resident / Tutor / Admin), Language (EN/HE); Residency Start Date (Residents only).
 - “Show Password” toggle.
 - Language preference stored per user.
@@ -73,7 +78,7 @@ users/{uid}.status defaults to `pending` at signup; pending users are routed to 
 
 ## 4. User Interfaces
 
-Tabs: Dashboard | Pending Tasks | Rotations | Courses | Simulations | Cases | Favorites | Stats | Settings  
+Tabs: Dashboard | Pending Tasks | Rotations | Courses | Simulations | Cases | Favorites | Stats | Settings
 
 **Mobile Navigation:**  
 Primary tabs accessed through a hamburger menu.  
@@ -83,14 +88,14 @@ Bottom bar (persistent): Log Case | Log Skill | Search.
 
 ## 5. Core Rotations
 
-1. ICU  
-2. OR  
-3. Block Room  
-4. PACU  
-5. Obstetrics  
-6. Cardiothoracic  
-7. Neurosurgery  
-8. Pediatrics  
+1. ICU
+2. OR
+3. Block Room
+4. PACU
+5. Obstetrics
+6. Cardiothoracic
+7. Neurosurgery
+8. Pediatrics
 9. Pain Medicine
 
 Each rotation contains **Skills**, **Knowledge**, and **Guidance**, divided hierarchically into topics and subtopics.
@@ -117,11 +122,13 @@ Each rotation contains **Skills**, **Knowledge**, and **Guidance**, divided hier
 ## 8. Local Development Setup
 
 **Requirements**
-- Node.js ≥ 20  
-- Firebase CLI  
+
+- Node.js ≥ 20
+- Firebase CLI
 - Vercel CLI (optional)
 
 **Setup**
+
 ```bash
 git clone <repo_url>
 cd tracker
@@ -129,6 +136,7 @@ pnpm install
 firebase emulators:start
 pnpm dev
 ```
+
 Visit [http://localhost:3000](http://localhost:3000)
 
 ---
@@ -142,12 +150,14 @@ Visit [http://localhost:3000](http://localhost:3000)
 **Auth data:** US (identity only)
 
 **Environment Variables**
+
 ```
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_APP_ENV=staging|production
 ```
+
 - Local: `.env.local` (ignored by Git)
 - Staging/Production: Vercel Environment Variables
 
@@ -155,18 +165,19 @@ NEXT_PUBLIC_APP_ENV=staging|production
 
 ## 10. Data Model Summary
 
-| Collection | Description |
-|-------------|--------------|
-| users | All registered users |
-| rotations | Rotation definitions |
-| rotationItems | Topics, subtopics, and tasks |
-| tasks | Logged activities per user |
-| cases | Recorded clinical/educational cases |
-| auditLog | System events |
+| Collection    | Description                         |
+| ------------- | ----------------------------------- |
+| users         | All registered users                |
+| rotations     | Rotation definitions                |
+| rotationItems | Topics, subtopics, and tasks        |
+| tasks         | Logged activities per user          |
+| cases         | Recorded clinical/educational cases |
+| auditLog      | System events                       |
 
 ### Example Schemas
 
 **users/{uid}** (Resident)
+
 ```json
 {
   "fullName": "Daniel Cohen",
@@ -179,7 +190,9 @@ NEXT_PUBLIC_APP_ENV=staging|production
   "createdAt": "serverTimestamp"
 }
 ```
+
 **users/{uid}** (Tutor/Admin)
+
 ```json
 {
   "fullName": "Dana Levi",
@@ -193,6 +206,7 @@ NEXT_PUBLIC_APP_ENV=staging|production
 ```
 
 **tasks/{taskId}**
+
 ```json
 {
   "userId": "u123",
@@ -217,7 +231,7 @@ NEXT_PUBLIC_APP_ENV=staging|production
 
 ## 12. Notifications & Calendar
 
-- Email and in-app notifications.  
+- Email and in-app notifications.
 - ICS export with timezone awareness.
 
 ---
@@ -227,14 +241,17 @@ NEXT_PUBLIC_APP_ENV=staging|production
 Implemented with **react-i18next**.
 
 **Example Files**
+
 ```json
 // en.json
 { "dashboard": "Dashboard", "skills": "Skills" }
 ```
+
 ```json
 // he.json
 { "dashboard": "לוח בקרה", "skills": "מיומנות" }
 ```
+
 RTL automatically applied when Hebrew selected.
 
 **SSR/CSR Synchronization:**  
@@ -259,11 +276,14 @@ Firebase Auth stores identity info in the U.S. If strict EU compliance is requir
 
 Daily Firestore export, weekly storage backup.  
 Automated via Cloud Function:
+
 ```js
-exports.scheduledBackup = functions.pubsub.schedule('0 2 * * *')
+exports.scheduledBackup = functions.pubsub
+  .schedule('0 2 * * *')
   .timeZone('Asia/Jerusalem')
   .onRun(() => backupFirestore());
 ```
+
 Quarterly restore drills ensure RTO ≤1h and RPO ≤24h.
 
 ---
@@ -289,22 +309,24 @@ Quarterly restore drills ensure RTO ≤1h and RPO ≤24h.
 
 - JS bundle ≤200 KB, Lighthouse ≥90.
 - Batched writes:
+
 ```ts
 const batch = writeBatch(db);
 batch.set(ref1, data);
 batch.update(ref2, data2);
 await batch.commit();
 ```
+
 - Randomized doc IDs prevent Firestore hotspotting (avoids write clustering).
 
 ---
 
 ## 19. Testing
 
-- **Unit:** Components and Firebase hooks  
-- **Integration:** Multi-role approval flow  
-- **E2E:** Cypress “Resident → Tutor → Admin” scenario  
-- **Accessibility:** axe-core + Lighthouse  
+- **Unit:** Components and Firebase hooks
+- **Integration:** Multi-role approval flow
+- **E2E:** Cypress “Resident → Tutor → Admin” scenario
+- **Accessibility:** axe-core + Lighthouse
 - Coverage ≥80%
 
 ---
@@ -323,29 +345,29 @@ await batch.commit();
 
 ## 21. Developer Workflow
 
-- Git Flow: main | staging | feature  
-- Pre-commit: ESLint + Prettier + Husky  
-- Dependabot for vulnerability scans.  
+- Git Flow: main | staging | feature
+- Pre-commit: ESLint + Prettier + Husky
+- Dependabot for vulnerability scans.
 - PR requires tests and reviews.
 
 ---
 
 ## 22. Service Worker & Transactions
 
-- Stale-while-revalidate cache pattern.  
-- Prompt user to refresh on new release.  
+- Stale-while-revalidate cache pattern.
+- Prompt user to refresh on new release.
 - Firestore `runTransaction()` for atomic counters.
 
 ---
 
 ## 23. Troubleshooting
 
-| Issue | Resolution |
-|-------|-------------|
-| Quota exceeded | Batch writes, cache data |
+| Issue           | Resolution                     |
+| --------------- | ------------------------------ |
+| Quota exceeded  | Batch writes, cache data       |
 | Hydration error | Remove client-only code in SSR |
-| Emulator crash | Clear `.firebase` cache |
-| CI timeout | Rerun with `--debug` |
+| Emulator crash  | Clear `.firebase` cache        |
+| CI timeout      | Rerun with `--debug`           |
 
 ---
 
@@ -360,18 +382,19 @@ await batch.commit();
 
 ## 25. Roadmap
 
-| Phase | Focus | Deliverables |
-|-------|--------|--------------|
-| 1 | Core | Auth, rotations, RTL |
-| 2 | Expansion | Calendar, portfolio |
-| 3 | Intelligence | AI feedback |
-| 4 | Institutional | Multi-site, SSO |
+| Phase | Focus         | Deliverables         |
+| ----- | ------------- | -------------------- |
+| 1     | Core          | Auth, rotations, RTL |
+| 2     | Expansion     | Calendar, portfolio  |
+| 3     | Intelligence  | AI feedback          |
+| 4     | Institutional | Multi-site, SSO      |
 
 ---
 
 ## 26. Legacy Compatibility & Version Upgrades
 
 Migrating from prior drafts:
+
 - `intern` → `resident`
 - Added `requiredCount`
 - Unified rotation collections
@@ -382,18 +405,18 @@ Migrating from prior drafts:
 
 ## Hebrew–English Summary Table
 
-| English | Hebrew |
-|----------|--------|
-| Resident | מתמחה |
-| Tutor | מדריך |
-| Admin | מנהל |
-| Rotation | מחזור |
-| Skill | מיומנות |
-| Guidance | הדרכה |
-| Knowledge | ידע |
-| Feedback | משוב |
+| English   | Hebrew   |
+| --------- | -------- |
+| Resident  | מתמחה    |
+| Tutor     | מדריך    |
+| Admin     | מנהל     |
+| Rotation  | מחזור    |
+| Skill     | מיומנות  |
+| Guidance  | הדרכה    |
+| Knowledge | ידע      |
+| Feedback  | משוב     |
 | Dashboard | לוח בקרה |
-| Settings | הגדרות |
+| Settings  | הגדרות   |
 
 ---
 
