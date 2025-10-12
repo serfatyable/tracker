@@ -1,16 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
-import { getFirebaseApp } from '../../../../../lib/firebase/client';
-import { listMorningMeetingsByDateRange } from '../../../../../lib/morning-meetings/store';
-import { buildIcsCalendar, simpleHash } from '../../../../../lib/ics/buildMorningMeetingsIcs';
+import { NextResponse } from 'next/server';
 
-export async function GET(_req: NextRequest, { params }: { params: { token: string } }) {
+import { getFirebaseApp } from '../../../../../lib/firebase/client';
+import { buildIcsCalendar, simpleHash } from '../../../../../lib/ics/buildMorningMeetingsIcs';
+import { listMorningMeetingsByDateRange } from '../../../../../lib/morning-meetings/store';
+
+export async function GET(_req: Request, context: { params: { token: string } }) {
   const app = getFirebaseApp();
   const db = getFirestore(app);
-  const token = params.token;
+  const token = context.params.token;
   if (!token) return NextResponse.json({ error: 'missing token' }, { status: 400 });
   // Find user by icsToken
-  const usersSnap = await getDocs(query(collection(db, 'users'), where('settings.icsToken', '==', token)));
+  const usersSnap = await getDocs(
+    query(collection(db, 'users'), where('settings.icsToken', '==', token)),
+  );
   const user = usersSnap.docs[0]?.data() as any;
   if (!user) return NextResponse.json({ error: 'invalid token' }, { status: 404 });
 
@@ -22,7 +25,8 @@ export async function GET(_req: NextRequest, { params }: { params: { token: stri
   const matchLecturer = (r: any): boolean => {
     if (r.lecturerUserId && r.lecturerUserId === user.uid) return true;
     // fallback email or name contains
-    if (user.email && r.lecturerEmailResolved && r.lecturerEmailResolved === user.email) return true;
+    if (user.email && r.lecturerEmailResolved && r.lecturerEmailResolved === user.email)
+      return true;
     if (user.fullName && typeof r.lecturer === 'string') {
       const a = (user.fullName || '').trim().toLowerCase();
       const b = (r.lecturer || '').trim().toLowerCase();
@@ -54,5 +58,3 @@ export async function GET(_req: NextRequest, { params }: { params: { token: stri
     },
   });
 }
-
-
