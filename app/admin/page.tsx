@@ -794,7 +794,6 @@ export default function AdminDashboard() {
                 </Suspense>
               ) : (
                 <Suspense fallback={<SpinnerSkeleton />}>
-                  {console.log('📋 RENDERING ROTATIONS PANEL (list view)')}
                   <RotationsPanel onOpenEditor={setOpenRotationId} />
                 </Suspense>
               )}
