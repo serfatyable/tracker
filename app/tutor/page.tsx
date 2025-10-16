@@ -1,34 +1,516 @@
-"use client";
-import { useState } from 'react';
+'use client';
+import { lazy, Suspense, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import AuthGate from '../../components/auth/AuthGate';
-import SettingsPanel from '../../components/settings/SettingsPanel';
-import TopBar from '../../components/TopBar';
+import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
+import AppShell from '../../components/layout/AppShell';
+import Card from '../../components/ui/Card';
+import { TabsTrigger } from '../../components/ui/Tabs';
+import Toast from '../../components/ui/Toast';
+import {
+  approveRotationPetition,
+  denyRotationPetition,
+  assignTutorToResident,
+  unassignTutorFromResident,
+  updateTasksStatus,
+} from '../../lib/firebase/admin';
+import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import {
+  useMorningMeetingsUpcoming,
+  useMorningMeetingsMonth,
+} from '../../lib/hooks/useMorningClasses';
+import { useReflectionsForTutor } from '../../lib/hooks/useReflections';
+import { useTutorDashboardData } from '../../lib/hooks/useTutorDashboardData';
+
+// Lazy load heavy components
+const MiniCalendar = lazy(() => import('../../components/on-call/MiniCalendar'));
+const NextShiftCard = lazy(() => import('../../components/on-call/NextShiftCard'));
+const TeamForDate = lazy(() => import('../../components/on-call/TeamForDate'));
+const TodayPanel = lazy(() => import('../../components/on-call/TodayPanel'));
+const SettingsPanel = lazy(() => import('../../components/settings/SettingsPanel'));
+const AssignedResidents = lazy(() => import('../../components/tutor/AssignedResidents'));
+const PendingApprovals = lazy(() => import('../../components/tutor/PendingApprovals'));
+const ResidentsTab = lazy(() => import('../../components/tutor/tabs/ResidentsTab'));
+const RotationsTab = lazy(() => import('../../components/tutor/tabs/RotationsTab'));
+const TasksTab = lazy(() => import('../../components/tutor/tabs/TasksTab'));
+const TutorTodos = lazy(() => import('../../components/tutor/TutorTodos'));
 
 export default function TutorDashboard() {
-    const [tab, setTab] = useState<'dashboard' | 'settings'>('dashboard');
-    return (
-        <AuthGate requiredRole="tutor">
-            <div>
-                <TopBar />
-                <div className="p-6">
-                    <div className="glass-card p-4">
-                        <div className="mb-4 flex items-center justify-between">
-                            <div className="flex gap-2">
-                                <button className={`tab-levitate ${tab==='dashboard' ? 'ring-1 ring-blue-500' : ''}`} onClick={()=> setTab('dashboard')}>Dashboard</button>
-                                <button className={`tab-levitate ${tab==='settings' ? 'ring-1 ring-blue-500' : ''}`} onClick={()=> setTab('settings')}>Settings</button>
-                            </div>
-                        </div>
-                        {tab === 'dashboard' ? (
-                            <div className="card-levitate">Tutor dashboard (placeholder)</div>
-                        ) : (
-                            <div className="space-y-3">
-                                <SettingsPanel />
-                            </div>
-                        )}
-                    </div>
-                </div>
+  const [tab, setTab] = useState<
+    | 'dashboard'
+    | 'residents'
+    | 'tasks'
+    | 'rotations'
+    | 'reflections'
+    | 'settings'
+    | 'morning'
+    | 'oncall'
+  >('dashboard');
+  const { t } = useTranslation();
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(
+    null,
+  );
+
+  const handleToast = (message: string, variant: 'success' | 'error') => {
+    setToast({ message, variant });
+  };
+
+  return (
+    <AuthGate requiredRole="tutor">
+      <Toast
+        message={toast?.message || null}
+        variant={toast?.variant}
+        onClear={() => setToast(null)}
+      />
+      <AppShell>
+        <div className="p-6">
+          <div className="w-full">
+            <h1 className="sr-only">
+              {t('ui.tutorDashboard', { defaultValue: 'Tutor Dashboard' })}
+            </h1>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex gap-2">
+                <TabsTrigger active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>
+                  {t('ui.dashboard') || 'Dashboard'}
+                </TabsTrigger>
+                <TabsTrigger active={tab === 'residents'} onClick={() => setTab('residents')}>
+                  {t('tutor.tabs.residents') || t('roles.resident') || 'Residents'}
+                </TabsTrigger>
+                <TabsTrigger active={tab === 'tasks'} onClick={() => setTab('tasks')}>
+                  {t('ui.tasks') || 'Tasks'}
+                </TabsTrigger>
+                <TabsTrigger active={tab === 'rotations'} onClick={() => setTab('rotations')}>
+                  {t('ui.rotations') || 'Rotations'}
+                </TabsTrigger>
+                <TabsTrigger active={tab === 'reflections'} onClick={() => setTab('reflections')}>
+                  {t('ui.reflections') || 'Reflections'}
+                </TabsTrigger>
+                <TabsTrigger active={tab === 'morning'} onClick={() => setTab('morning')}>
+                  {t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}
+                </TabsTrigger>
+                <TabsTrigger active={tab === 'oncall'} onClick={() => setTab('oncall')}>
+                  {t('ui.onCall', { defaultValue: 'On Call' })}
+                </TabsTrigger>
+                <TabsTrigger active={tab === 'settings'} onClick={() => setTab('settings')}>
+                  {t('ui.settings') || 'Settings'}
+                </TabsTrigger>
+              </div>
             </div>
-        </AuthGate>
+            {tab === 'dashboard' ? (
+              <Suspense
+                fallback={
+                  <div className="space-y-3">
+                    <CardSkeleton />
+                    <CardSkeleton />
+                  </div>
+                }
+              >
+                <div className="space-y-3">
+                  <TutorDashboardSections />
+                </div>
+              </Suspense>
+            ) : tab === 'residents' ? (
+              <Suspense fallback={<SpinnerSkeleton />}>
+                <TutorResidentsTab onToast={handleToast} />
+              </Suspense>
+            ) : tab === 'tasks' ? (
+              <Suspense fallback={<SpinnerSkeleton />}>
+                <TutorTasksTab onToast={handleToast} />
+              </Suspense>
+            ) : tab === 'rotations' ? (
+              <Suspense fallback={<SpinnerSkeleton />}>
+                <TutorRotationsTab />
+              </Suspense>
+            ) : tab === 'reflections' ? (
+              <TutorReflectionsInline />
+            ) : tab === 'morning' ? (
+              <TutorMorningMeetingsInline />
+            ) : tab === 'oncall' ? (
+              <Suspense fallback={<SpinnerSkeleton />}>
+                <TutorOnCallInline />
+              </Suspense>
+            ) : (
+              <Suspense fallback={<SpinnerSkeleton />}>
+                <div className="space-y-3">
+                  <SettingsPanel />
+                </div>
+              </Suspense>
+            )}
+          </div>
+        </div>
+      </AppShell>
+    </AuthGate>
+  );
+}
+
+function TutorDashboardSections() {
+  const { me, assignments, rotations, residents, tutors, ownedRotationIds, petitions, todos } =
+    useTutorDashboardData();
+  const residentIdToName = (id: string) => residents.find((r) => r.uid === id)?.fullName || id;
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-3">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      }
+    >
+      <PendingApprovals petitions={petitions} residentIdToName={residentIdToName} />
+      {me ? (
+        <AssignedResidents
+          meUid={me.uid}
+          assignments={assignments}
+          rotations={rotations}
+          residents={residents}
+          tutors={tutors}
+          ownedRotationIds={ownedRotationIds}
+        />
+      ) : null}
+      <TutorTodos todos={todos} onRefresh={() => {}} />
+    </Suspense>
+  );
+}
+
+function useTabsData() {
+  const data = useTutorDashboardData();
+  return { data } as const;
+}
+
+function TutorResidentsTab({
+  onToast,
+}: {
+  onToast: (message: string, variant: 'success' | 'error') => void;
+}) {
+  const { data } = useTabsData();
+  const { t } = useTranslation();
+  const actions = {
+    approvePetition: async (id: string) => {
+      if (!data.me) return;
+      try {
+        await approveRotationPetition(id, data.me.uid);
+        onToast(
+          t('tutor.petitionApproved', { defaultValue: 'Petition approved successfully' }),
+          'success',
+        );
+      } catch (error) {
+        console.error('Failed to approve petition:', error);
+        onToast(
+          t('tutor.petitionApproveFailed', {
+            defaultValue: 'Failed to approve petition. Please try again.',
+          }),
+          'error',
+        );
+      }
+    },
+    denyPetition: async (id: string) => {
+      if (!data.me) return;
+      try {
+        await denyRotationPetition(id, data.me.uid);
+        onToast(t('tutor.petitionDenied', { defaultValue: 'Petition denied' }), 'success');
+      } catch (error) {
+        console.error('Failed to deny petition:', error);
+        onToast(
+          t('tutor.petitionDenyFailed', {
+            defaultValue: 'Failed to deny petition. Please try again.',
+          }),
+          'error',
+        );
+      }
+    },
+    selfAssign: async (residentId: string) => {
+      if (!data.me) return;
+      try {
+        await assignTutorToResident(residentId, data.me.uid);
+        onToast(
+          t('tutor.assignSuccess', { defaultValue: 'Successfully assigned as tutor' }),
+          'success',
+        );
+      } catch (error) {
+        console.error('Failed to assign tutor:', error);
+        onToast(
+          t('tutor.assignFailed', { defaultValue: 'Failed to assign tutor. Please try again.' }),
+          'error',
+        );
+      }
+    },
+    unassignSelf: async (residentId: string) => {
+      if (!data.me) return;
+      try {
+        await unassignTutorFromResident(residentId, data.me.uid);
+        onToast(t('tutor.unassignSuccess', { defaultValue: 'Successfully unassigned' }), 'success');
+      } catch (error) {
+        console.error('Failed to unassign tutor:', error);
+        onToast(
+          t('tutor.unassignFailed', { defaultValue: 'Failed to unassign. Please try again.' }),
+          'error',
+        );
+      }
+    },
+  } as const;
+  if (!data.me) return null;
+  return (
+    <div className="space-y-3">
+      <ResidentsTab
+        meUid={data.me.uid}
+        residents={data.residents}
+        assignments={data.assignments}
+        rotations={data.rotations}
+        petitions={data.petitions as any}
+        ownedRotationIds={data.ownedRotationIds}
+        onApprove={actions.approvePetition}
+        onDeny={actions.denyPetition}
+        onSelfAssign={actions.selfAssign}
+        onUnassignSelf={actions.unassignSelf}
+      />
+    </div>
+  );
+}
+
+function TutorTasksTab({
+  onToast,
+}: {
+  onToast: (message: string, variant: 'success' | 'error') => void;
+}) {
+  const { data } = useTabsData();
+  const { t } = useTranslation();
+  const actions = {
+    bulkApproveTasks: async (ids: string[]) => {
+      if (!ids?.length) return;
+      try {
+        await updateTasksStatus({ taskIds: ids, status: 'approved' });
+        onToast(
+          t('tutor.tasksApproved', {
+            defaultValue: `Successfully approved ${ids.length} task(s)`,
+            count: ids.length,
+          }),
+          'success',
+        );
+      } catch (error) {
+        console.error('Failed to approve tasks:', error);
+        onToast(
+          t('tutor.tasksApproveFailed', {
+            defaultValue: 'Failed to approve tasks. Please try again.',
+          }),
+          'error',
+        );
+      }
+    },
+    bulkRejectTasks: async (ids: string[], _reason?: string) => {
+      if (!ids?.length) return;
+      try {
+        await updateTasksStatus({ taskIds: ids, status: 'rejected' });
+        onToast(
+          t('tutor.tasksRejected', {
+            defaultValue: `Successfully rejected ${ids.length} task(s)`,
+            count: ids.length,
+          }),
+          'success',
+        );
+      } catch (error) {
+        console.error('Failed to reject tasks:', error);
+        onToast(
+          t('tutor.tasksRejectFailed', {
+            defaultValue: 'Failed to reject tasks. Please try again.',
+          }),
+          'error',
+        );
+      }
+    },
+  } as const;
+  return (
+    <div className="space-y-3">
+      <TasksTab
+        residents={data.residents}
+        tasks={data.tasks as any}
+        onBulkApprove={actions.bulkApproveTasks}
+        onBulkReject={actions.bulkRejectTasks}
+      />
+    </div>
+  );
+}
+
+function TutorRotationsTab() {
+  const { data } = useTabsData();
+  if (!data.me) return null;
+  return (
+    <div className="space-y-3">
+      <RotationsTab
+        meUid={data.me.uid}
+        rotations={data.rotations}
+        assignments={data.assignments}
+        residents={data.residents}
+        petitions={data.petitions as any}
+      />
+    </div>
+  );
+}
+
+function TutorReflectionsInline() {
+  const { t } = useTranslation();
+  const { data: me } = useCurrentUserProfile();
+  const { list, loading } = useReflectionsForTutor(me?.uid || null);
+  return (
+    <div className="space-y-3">
+      <Card>
+        <div className="font-semibold mb-2">{t('tutor.reflectionsIWrote')}</div>
+        {loading ? <div className="text-sm opacity-70">Loading…</div> : null}
+        <div className="space-y-2">
+          {(list || []).map((r) => (
+            <div
+              key={r.id}
+              className="border rounded p-2 text-sm flex items-center justify-between"
+            >
+              <div>
+                <div className="font-medium">{r.taskType}</div>
+                <div className="text-xs opacity-70">{r.taskOccurrenceId}</div>
+              </div>
+              <div className="text-xs opacity-70">
+                {(r as any).submittedAt?.toDate?.()?.toLocaleString?.() || ''}
+              </div>
+            </div>
+          ))}
+          {!loading && !list?.length ? (
+            <div className="rounded-lg border-2 border-dashed border-muted/30 bg-surface/30 p-6 text-center">
+              <p className="text-sm text-muted">{t('tutor.noReflectionsYet')}</p>
+            </div>
+          ) : null}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function TutorMorningMeetingsInline() {
+  const { t, i18n } = useTranslation();
+  const { today, tomorrow, next7, loading: upcomingLoading } = useMorningMeetingsUpcoming();
+  const now = new Date();
+  const y = now.getFullYear();
+  const m0 = now.getMonth();
+  const { list: monthList, loading: monthLoading } = useMorningMeetingsMonth(y, m0);
+  const daysInMonth = useMemo(() => new Date(y, m0 + 1, 0).getDate(), [y, m0]);
+  const monthByDay = useMemo(() => {
+    const map: Record<number, any[]> = {};
+    (monthList || []).forEach((it: any) => {
+      const d = new Date(it.date.toDate());
+      const dd = d.getDate();
+      map[dd] = map[dd] || [];
+      map[dd].push(it);
+    });
+    return map;
+  }, [monthList]);
+  function renderList(items: any[] | null, loading: boolean) {
+    if (loading) {
+      return (
+        <div className="space-y-2">
+          <div className="h-12 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
+          <div className="h-12 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
+        </div>
+      );
+    }
+    if (!items || !items.length)
+      return (
+        <div className="rounded-lg border-2 border-dashed border-muted/30 bg-surface/30 p-4 text-center">
+          <p className="text-sm text-muted">{t('morningMeetings.noClasses')}</p>
+        </div>
+      );
+    return (
+      <ul className="divide-y rounded border">
+        {(items || []).map((c) => {
+          const start =
+            c.date?.toDate?.()?.toLocaleTimeString?.(i18n.language === 'he' ? 'he-IL' : 'en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }) || '07:10';
+          return (
+            <li key={c.id || c.dateKey + c.title} className="p-2 flex items-center justify-between">
+              <div>
+                <div className="font-medium">{c.title}</div>
+                <div className="text-xs opacity-70">
+                  {c.lecturer} — {start}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     );
+  }
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <Card>
+          <div className="mb-2 font-semibold">{t('morningMeetings.today')}</div>
+          {renderList(today, upcomingLoading)}
+        </Card>
+        <Card>
+          <div className="mb-2 font-semibold">{t('morningMeetings.tomorrow')}</div>
+          {renderList(tomorrow, upcomingLoading)}
+        </Card>
+        <Card>
+          <div className="mb-2 font-semibold">{t('morningMeetings.next7')}</div>
+          {renderList(next7, upcomingLoading)}
+        </Card>
+      </div>
+      <Card>
+        <div className="mb-2 font-semibold">{t('morningMeetings.month')}</div>
+        {monthLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
+            {Array.from({ length: 21 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded border p-2 h-20 bg-gray-100 dark:bg-gray-900 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
+            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
+              <div key={d} className="rounded border p-2 min-h-[80px]">
+                <div className="text-xs opacity-70 mb-1">{d}</div>
+                <div className="space-y-1">
+                  {(monthByDay[d] || []).map((c) => (
+                    <div key={c.id || c.title} className="truncate">
+                      {c.title}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function TutorOnCallInline() {
+  const { data: me } = useCurrentUserProfile();
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
+          <Card className="space-y-3">
+            <div className="text-sm font-medium">{t('onCall.today')}</div>
+            <TodayPanel highlightUserId={me?.uid} />
+          </Card>
+        </div>
+        <div className="md:col-span-1">
+          <Card>
+            <NextShiftCard userId={me?.uid} />
+          </Card>
+        </div>
+      </div>
+      <Card className="space-y-3">
+        <div className="text-sm font-medium">{t('onCall.teamOnDate', { date: '' })}</div>
+        <TeamForDate />
+      </Card>
+      <Card className="space-y-3">
+        <div className="text-sm font-medium">{t('ui.timeline')}</div>
+        <MiniCalendar />
+      </Card>
+    </div>
+  );
 }

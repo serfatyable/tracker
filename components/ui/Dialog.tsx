@@ -1,25 +1,41 @@
-"use client";
+'use client';
 
-import { Fragment, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-export function Dialog({ open, onClose, children }: { open: boolean; onClose: () => void; children: ReactNode }) {
-    if (!open) return null;
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-            <div className="relative z-10 w-full max-w-lg rounded-lg bg-white p-4 shadow-xl dark:bg-gray-900">
-                {children}
-            </div>
-        </div>
-    );
+export function Dialog({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+      <div
+        className="fixed inset-0 bg-black/40"
+        onClick={onClose}
+        role="presentation"
+        aria-label="Close dialog"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative z-10 w-full max-w-lg rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 sm:p-6 shadow-2xl border border-gray-200 dark:border-gray-700 focus:outline-none max-h-[90vh] overflow-y-auto"
+        tabIndex={-1}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export function DialogHeader({ children }: { children: ReactNode }) {
-    return <div className="mb-2 text-base font-semibold">{children}</div>;
+  return <div className="mb-2 text-base font-semibold">{children}</div>;
 }
 
 export function DialogFooter({ children }: { children: ReactNode }) {
-    return <div className="mt-4 flex justify-end gap-2">{children}</div>;
+  return <div className="mt-4 flex justify-end gap-2">{children}</div>;
 }
-
-

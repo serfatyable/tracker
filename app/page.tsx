@@ -1,11 +1,6 @@
-"use client";
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { redirect } from 'next/navigation';
 
 export default function RootRedirect() {
-	const router = useRouter();
-	useEffect(() => {
-		router.replace('/auth');
-	}, [router]);
-	return null;
+  // Server-side redirect avoids blank/404 on initial load in Vercel preview
+  redirect('/auth');
 }

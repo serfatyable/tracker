@@ -1,0 +1,17 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow private/sensitive routes
+Disallow: /api/
+Disallow: /admin/
+Disallow: /resident/
+Disallow: /tutor/
+Disallow: /settings/
+
+# Allow public pages
+Allow: /auth
+
+# Sitemap location (update with your actual domain)
+# Sitemap: https://yourdomain.com/sitemap.xml
+

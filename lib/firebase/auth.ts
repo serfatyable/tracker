@@ -1,117 +1,145 @@
 import type { User } from 'firebase/auth';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as fbSignOut, sendPasswordResetEmail } from 'firebase/auth';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as fbSignOut,
+  sendPasswordResetEmail,
+} from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-import type { Role, UserProfile, ResidentProfile, TutorProfile, AdminProfile } from '../../types/auth';
+import type {
+  Role,
+  UserProfile,
+  ResidentProfile,
+  TutorProfile,
+  AdminProfile,
+} from '../../types/auth';
 
 import { getFirebaseApp } from './client';
 
 function getAuthDb() {
-	const app = getFirebaseApp();
-	return { auth: getAuth(app), db: getFirestore(app) };
+  const app = getFirebaseApp();
+  return { auth: getAuth(app), db: getFirestore(app) };
 }
 
 export async function signIn(email: string, password: string) {
-	const { auth } = getAuthDb();
-	const cred = await signInWithEmailAndPassword(auth, email, password);
-	await ensureUserProfileExists(cred.user);
-	return cred.user;
+  const { auth } = getAuthDb();
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  await ensureUserProfileExists(cred.user);
+  return cred.user;
 }
 
 export async function signUp(params: {
-	fullName: string;
-	email: string;
-	password: string;
-	role: Role;
-	language: 'en' | 'he';
-	residencyStartDate?: string; // YYYY-MM-DD when role is resident
+  fullName: string;
+  email: string;
+  password: string;
+  role: Role;
+  language: 'en' | 'he';
+  residencyStartDate?: string; // YYYY-MM-DD when role is resident
 }) {
-	const { auth, db } = getAuthDb();
-	const { email, password, fullName, role, language, residencyStartDate } = params;
-	const cred = await createUserWithEmailAndPassword(auth, email, password);
+  const { auth, db } = getAuthDb();
+  const { email, password, fullName, role, language, residencyStartDate } = params;
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-	let userDoc: UserProfile;
-	if (role === 'resident') {
-		const residentDoc: ResidentProfile = {
-			uid: cred.user.uid,
-			fullName,
-			email,
-			role: 'resident',
-			status: 'pending',
-			settings: { language },
-			createdAt: serverTimestamp() as unknown as Date,
-			residencyStartDate: residencyStartDate || ''
-		};
-		userDoc = residentDoc;
-	} else if (role === 'tutor') {
-		const tutorDoc: TutorProfile = {
-			uid: cred.user.uid,
-			fullName,
-			email,
-			role: 'tutor',
-			status: 'pending',
-			settings: { language },
-			createdAt: serverTimestamp() as unknown as Date,
-		};
-		userDoc = tutorDoc;
-	} else {
-		const adminDoc: AdminProfile = {
-			uid: cred.user.uid,
-			fullName,
-			email,
-			role: 'admin',
-			status: 'pending',
-			settings: { language },
-			createdAt: serverTimestamp() as unknown as Date,
-		};
-		userDoc = adminDoc;
-	}
+  let userDoc: UserProfile;
+  if (role === 'resident') {
+    const residentDoc: ResidentProfile = {
+      uid: cred.user.uid,
+      fullName,
+      email,
+      role: 'resident',
+      status: 'pending',
+      settings: { language },
+      createdAt: serverTimestamp() as unknown as Date,
+      residencyStartDate: residencyStartDate || '',
+    };
+    userDoc = residentDoc;
+  } else if (role === 'tutor') {
+    const tutorDoc: TutorProfile = {
+      uid: cred.user.uid,
+      fullName,
+      email,
+      role: 'tutor',
+      status: 'pending',
+      settings: { language },
+      createdAt: serverTimestamp() as unknown as Date,
+    };
+    userDoc = tutorDoc;
+  } else {
+    const adminDoc: AdminProfile = {
+      uid: cred.user.uid,
+      fullName,
+      email,
+      role: 'admin',
+      status: 'pending',
+      settings: { language },
+      createdAt: serverTimestamp() as unknown as Date,
+    };
+    userDoc = adminDoc;
+  }
 
-	await setDoc(doc(db, 'users', cred.user.uid), userDoc as any, { merge: true });
-	return cred.user;
+  await setDoc(doc(db, 'users', cred.user.uid), userDoc as any, { merge: true });
+  return cred.user;
 }
 
 export async function signOut() {
-	const { auth } = getAuthDb();
-	await fbSignOut(auth);
+  const { auth } = getAuthDb();
+  await fbSignOut(auth);
 }
 
 async function ensureUserProfileExists(user: User) {
-	const { db } = getAuthDb();
-	const ref = doc(db, 'users', user.uid);
-	const snap = await getDoc(ref);
-	if (!snap.exists()) {
-		await setDoc(ref, {
-			uid: user.uid,
-			email: user.email,
-			role: 'resident',
-			status: 'pending',
-			settings: { language: 'en' },
-			createdAt: serverTimestamp(),
-		});
-	}
+  const { db } = getAuthDb();
+  const ref = doc(db, 'users', user.uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      uid: user.uid,
+      email: user.email,
+      role: 'resident',
+      status: 'pending',
+      settings: { language: 'en' },
+      createdAt: serverTimestamp(),
+    });
+  }
 }
 
 export async function getCurrentUserWithProfile(): Promise<{
-	firebaseUser: User | null;
-	profile: UserProfile | null;
+  firebaseUser: User | null;
+  profile: UserProfile | null;
 }> {
-	const { auth, db } = getAuthDb();
-	const current = auth.currentUser;
-	if (!current) return { firebaseUser: null, profile: null };
-	const snap = await getDoc(doc(db, 'users', current.uid));
-	return { firebaseUser: current, profile: (snap.exists() ? (snap.data() as UserProfile) : null) };
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) return { firebaseUser: null, profile: null };
+  const snap = await getDoc(doc(db, 'users', current.uid));
+  return { firebaseUser: current, profile: snap.exists() ? (snap.data() as UserProfile) : null };
 }
 
 export async function updateUserLanguage(language: 'en' | 'he') {
-	const { auth, db } = getAuthDb();
-	const current = auth.currentUser;
-	if (!current) throw new Error('Not authenticated');
-	const ref = doc(db, 'users', current.uid);
-	await setDoc(ref, { settings: { language } }, { merge: true });
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+  const ref = doc(db, 'users', current.uid);
+  await setDoc(ref, { settings: { language } }, { merge: true });
+}
+
+export async function updateUserTheme(theme: 'light' | 'dark' | 'system') {
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+  const ref = doc(db, 'users', current.uid);
+  await setDoc(ref, { settings: { theme } }, { merge: true });
+}
+
+export async function updateUserNotifications(notifications: { inApp?: boolean; email?: boolean }) {
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+  const ref = doc(db, 'users', current.uid);
+  await setDoc(ref, { settings: { notifications } }, { merge: true });
 }
 
 export async function requestPasswordReset(email: string) {
-    const { auth } = getAuthDb();
-    await sendPasswordResetEmail(auth, email);
+  const { auth } = getAuthDb();
+  await sendPasswordResetEmail(auth, email);
 }

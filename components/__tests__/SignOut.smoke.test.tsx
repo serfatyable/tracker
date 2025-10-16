@@ -5,33 +5,32 @@ import { vi } from 'vitest';
 import TopBar from '../TopBar';
 
 const { replaceMock, signOutMock } = vi.hoisted(() => ({
-    replaceMock: vi.fn(),
-    signOutMock: vi.fn().mockResolvedValue(undefined),
+  replaceMock: vi.fn(),
+  signOutMock: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('next/navigation', () => ({
-    useRouter: () => ({ push: vi.fn(), replace: replaceMock }),
+  useRouter: () => ({ push: vi.fn(), replace: replaceMock }),
+  usePathname: () => '/',
 }));
 
 vi.mock('../../lib/firebase/auth', () => ({
-    signOut: signOutMock,
+  signOut: signOutMock,
 }));
 
 describe('Sign out smoke', () => {
-    beforeEach(() => {
-        replaceMock.mockClear();
-        signOutMock.mockClear();
-    });
+  beforeEach(() => {
+    replaceMock.mockClear();
+    signOutMock.mockClear();
+  });
 
-    it('signs out and navigates to /auth', async () => {
-        const user = userEvent.setup();
-        render(<TopBar />);
+  it('signs out and navigates to /auth', async () => {
+    const user = userEvent.setup();
+    render(<TopBar />);
 
-        await user.click(screen.getByRole('button', { name: /sign out/i }));
+    await user.click(screen.getByRole('button', { name: /sign out/i }));
 
-        expect(signOutMock).toHaveBeenCalledTimes(1);
-        expect(replaceMock).toHaveBeenCalledWith('/auth');
-    });
+    expect(signOutMock).toHaveBeenCalledTimes(1);
+    expect(replaceMock).toHaveBeenCalledWith('/auth');
+  });
 });
-
-
