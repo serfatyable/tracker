@@ -123,6 +123,22 @@ export async function updateUserLanguage(language: 'en' | 'he') {
   await setDoc(ref, { settings: { language } }, { merge: true });
 }
 
+export async function updateUserTheme(theme: 'light' | 'dark' | 'system') {
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+  const ref = doc(db, 'users', current.uid);
+  await setDoc(ref, { settings: { theme } }, { merge: true });
+}
+
+export async function updateUserNotifications(notifications: { inApp?: boolean; email?: boolean }) {
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+  const ref = doc(db, 'users', current.uid);
+  await setDoc(ref, { settings: { notifications } }, { merge: true });
+}
+
 export async function requestPasswordReset(email: string) {
   const { auth } = getAuthDb();
   await sendPasswordResetEmail(auth, email);

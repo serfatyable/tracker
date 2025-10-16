@@ -762,14 +762,6 @@ export default function AdminDashboard() {
               {openRotationId ? (
                 <Suspense fallback={<SpinnerSkeleton />}>
                   <div className="space-y-3">
-                    {/* Debug: Confirm editor is rendering */}
-                    {console.log(
-                      '✅ RENDERING ROTATION EDITOR for ID:',
-                      openRotationId,
-                      'Name:',
-                      openRotationName,
-                    )}
-
                     {/* Rotation Editor Header */}
                     <div className="card-levitate p-6 bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/30 dark:to-teal-950/30 border-l-4 border-teal-500">
                       <div className="flex items-center justify-between">
