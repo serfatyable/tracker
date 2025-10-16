@@ -30,7 +30,7 @@ export default function TutorTodos({ todos, onRefresh }: Props) {
   };
 
   return (
-    <div className="glass-card p-3">
+    <div className="card-levitate p-3">
       <div className="font-semibold mb-2">My to-dos</div>
       <div className="mb-2 flex gap-2">
         <input

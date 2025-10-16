@@ -22,19 +22,15 @@ import {
   setDoc,
 } from 'firebase/firestore';
 
+import type { Assignment } from '../../types/assignments';
 import type { UserProfile, Role } from '../../types/auth';
+import type { ReflectionTemplate, ReflectionSection } from '../../types/reflections';
+import type { RotationPetition } from '../../types/rotationPetitions';
+import type { Rotation, RotationNode } from '../../types/rotations';
+import { normalizeParsedRows, parseRotationCsvText } from '../rotations/import';
 
 import { getFirebaseApp } from './client';
 import type { TaskDoc } from './db';
-import type { Assignment } from '../../types/assignments';
-import type { Rotation, RotationNode } from '../../types/rotations';
-import type { RotationPetition } from '../../types/rotationPetitions';
-import {
-  normalizeParsedRows,
-  parseRotationCsvText,
-  type NormalizedLeaf,
-} from '../rotations/import';
-import type { ReflectionTemplate, ReflectionSection } from '../../types/reflections';
 
 export type ListPage<T> = {
   items: T[];
@@ -392,18 +388,142 @@ export async function listRotationNodes(rotationId: string): Promise<RotationNod
 
 export async function createNode(input: Omit<RotationNode, 'id'>): Promise<{ id: string }> {
   const db = getFirestore(getFirebaseApp());
-  const ref = await addDoc(collection(db, 'rotationNodes'), input as any);
+
+  // Validate and sanitize requiredCount to prevent negative or invalid values
+  const sanitizedInput = { ...input };
+  if ('requiredCount' in sanitizedInput && sanitizedInput.requiredCount !== undefined) {
+    const parsed = parseInt(String(sanitizedInput.requiredCount), 10);
+    sanitizedInput.requiredCount = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }
+
+  const ref = await addDoc(collection(db, 'rotationNodes'), sanitizedInput as any);
   return { id: ref.id };
 }
 
 export async function updateNode(id: string, data: Partial<RotationNode>): Promise<void> {
   const db = getFirestore(getFirebaseApp());
-  await updateDoc(doc(db, 'rotationNodes', id), data as any);
+
+  // Validate and sanitize requiredCount to prevent negative or invalid values
+  const sanitizedData = { ...data };
+  if ('requiredCount' in sanitizedData && sanitizedData.requiredCount !== undefined) {
+    const parsed = parseInt(String(sanitizedData.requiredCount), 10);
+    sanitizedData.requiredCount = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }
+
+  await updateDoc(doc(db, 'rotationNodes', id), sanitizedData as any);
 }
 
 export async function deleteNode(id: string): Promise<void> {
   const db = getFirestore(getFirebaseApp());
   await deleteDoc(doc(db, 'rotationNodes', id));
+}
+
+/**
+ * Detects and removes duplicate rotation nodes within a rotation.
+ * Duplicates are defined as nodes with the same parentId, type, and name (case-insensitive).
+ * Keeps the node with the highest requiredCount (or most recent if tied).
+ * Returns statistics about the cleanup operation.
+ */
+export async function cleanupDuplicateNodes(rotationId: string): Promise<{
+  duplicatesFound: number;
+  nodesDeleted: number;
+  details: Array<{ name: string; kept: string; deleted: string[] }>;
+}> {
+  const db = getFirestore(getFirebaseApp());
+  const nodes = await listRotationNodes(rotationId);
+
+  // Group nodes by composite key: parentId + type + normalized name
+  const groupKey = (n: RotationNode) =>
+    `${n.parentId || 'root'}:${n.type}:${(n.name || '').trim().toLowerCase()}`;
+
+  const groups = new Map<string, RotationNode[]>();
+  for (const node of nodes) {
+    const key = groupKey(node);
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key)!.push(node);
+  }
+
+  // Find duplicates (groups with more than 1 node)
+  const duplicates = Array.from(groups.values()).filter((g) => g.length > 1);
+
+  const details: Array<{ name: string; kept: string; deleted: string[] }> = [];
+  let nodesDeleted = 0;
+
+  for (const group of duplicates) {
+    // Sort by: 1) requiredCount (highest first), 2) name (preserve original case)
+    const sorted = group.sort((a, b) => {
+      const reqA = a.requiredCount || 0;
+      const reqB = b.requiredCount || 0;
+      if (reqA !== reqB) return reqB - reqA; // Higher requiredCount first
+      return a.name.localeCompare(b.name); // Then by name
+    });
+
+    const keeper = sorted[0]!;
+    const toDelete = sorted.slice(1);
+
+    // Delete duplicates
+    const batch = writeBatch(db);
+    for (const node of toDelete) {
+      batch.delete(doc(db, 'rotationNodes', node.id));
+      nodesDeleted++;
+    }
+    await batch.commit();
+
+    details.push({
+      name: keeper.name,
+      kept: keeper.id,
+      deleted: toDelete.map((n) => n.id),
+    });
+  }
+
+  return {
+    duplicatesFound: duplicates.length,
+    nodesDeleted,
+    details,
+  };
+}
+
+/**
+ * Fixes any nodes with invalid requiredCount values (negative or NaN).
+ * Sets them to 0.
+ */
+export async function fixInvalidRequiredCounts(rotationId: string): Promise<{
+  nodesFixed: number;
+  details: Array<{ id: string; name: string; oldValue: any; newValue: number }>;
+}> {
+  const db = getFirestore(getFirebaseApp());
+  const nodes = await listRotationNodes(rotationId);
+
+  const details: Array<{ id: string; name: string; oldValue: any; newValue: number }> = [];
+  const batch = writeBatch(db);
+  let nodesFixed = 0;
+
+  for (const node of nodes) {
+    if (node.type === 'leaf' && node.requiredCount !== undefined) {
+      const current = node.requiredCount;
+      const parsed = parseInt(String(current), 10);
+
+      // Check if invalid: negative, NaN, or not a finite number
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        batch.update(doc(db, 'rotationNodes', node.id), { requiredCount: 0 });
+        details.push({
+          id: node.id,
+          name: node.name,
+          oldValue: current,
+          newValue: 0,
+        });
+        nodesFixed++;
+      }
+    }
+  }
+
+  if (nodesFixed > 0) {
+    await batch.commit();
+  }
+
+  return { nodesFixed, details };
 }
 
 export async function moveNode(id: string, newParentId: string | null): Promise<void> {
@@ -758,7 +878,6 @@ export async function importRotationFromCsv(params: {
     status: 'active' | 'inactive' | 'finished';
   };
 }): Promise<{ rotationId: string; errors: string[] }> {
-  const db = getFirestore(getFirebaseApp());
   const { rows } = parseRotationCsvText(params.csvText);
   const { leaves, errors } = normalizeParsedRows(rows);
   if (errors.length) return { rotationId: params.rotationId || '', errors };
@@ -831,32 +950,58 @@ export async function importRotationFromCsv(params: {
     const catId: string = catNode ? (catNode.id as string) : '';
     const subjectId = await ensureChild(catId as string, 'subject', leaf.subject as string);
     const topicId = await ensureChild(subjectId as string, 'topic', leaf.topic as string);
-    const subTopicId = leaf.subTopic
+    // SubTopic is now optional - if not provided, leaf becomes direct child of topic
+    const parentId = leaf.subTopic
       ? await ensureChild(topicId as string, 'subTopic', leaf.subTopic as string)
       : topicId;
-    const subSubTopicId = leaf.subSubTopic
-      ? await ensureChild(subTopicId as string, 'subSubTopic', leaf.subSubTopic as string)
-      : (subTopicId as string);
-    // create leaf
-    const siblings = allNodes.filter((n) => n.parentId === subSubTopicId && n.type === 'leaf');
-    const created = await createNode({
-      rotationId,
-      parentId: subSubTopicId,
-      type: 'leaf',
-      name: leaf.itemTitle,
-      order: siblings.length,
-      requiredCount: leaf.requiredCount,
-      mcqUrl: leaf.mcqUrl,
-      links: leaf.links,
-    } as any);
-    allNodes.push({
-      id: created.id,
-      rotationId,
-      parentId: subSubTopicId,
-      type: 'leaf',
-      name: leaf.itemTitle,
-      order: siblings.length,
-    } as any);
+
+    // Check if leaf already exists to prevent duplicates
+    const siblings = allNodes.filter((n) => n.parentId === parentId && n.type === 'leaf');
+    const targetName = norm(leaf.itemTitle);
+    const existing = siblings.find((n) => norm(n.name) === targetName);
+
+    if (existing) {
+      // Update existing leaf with new data if any changes
+      const updateData: any = {};
+      if (leaf.requiredCount !== undefined) updateData.requiredCount = leaf.requiredCount;
+      if (leaf.mcqUrl) updateData.mcqUrl = leaf.mcqUrl;
+      if (leaf.resources) updateData.resources = leaf.resources;
+      if (leaf.notes_en) updateData.notes_en = leaf.notes_en;
+      if (leaf.notes_he) updateData.notes_he = leaf.notes_he;
+      if (leaf.links && leaf.links.length > 0) updateData.links = leaf.links;
+
+      if (Object.keys(updateData).length > 0) {
+        await updateNode(existing.id, updateData);
+      }
+    } else {
+      // Create new leaf
+      // Build leaf data, omitting undefined fields (Firebase doesn't accept undefined)
+      const leafData: any = {
+        rotationId,
+        parentId,
+        type: 'leaf',
+        name: leaf.itemTitle,
+        order: siblings.length,
+        requiredCount: leaf.requiredCount,
+        links: leaf.links,
+      };
+
+      // Only add optional fields if they have values
+      if (leaf.mcqUrl) leafData.mcqUrl = leaf.mcqUrl;
+      if (leaf.resources) leafData.resources = leaf.resources;
+      if (leaf.notes_en) leafData.notes_en = leaf.notes_en;
+      if (leaf.notes_he) leafData.notes_he = leaf.notes_he;
+
+      const created = await createNode(leafData);
+      allNodes.push({
+        id: created.id,
+        rotationId,
+        parentId,
+        type: 'leaf',
+        name: leaf.itemTitle,
+        order: siblings.length,
+      } as any);
+    }
   }
 
   return { rotationId, errors: [] };

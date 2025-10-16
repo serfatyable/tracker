@@ -12,6 +12,7 @@ export function useUsersByRole() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         setLoading(true);
@@ -23,14 +24,19 @@ export function useUsersByRole() {
           ),
           getDocs(query(usersCol, where('role', '==', 'tutor'), where('status', '==', 'active'))),
         ]);
-        setResidents(resSnap.docs.map((d) => ({ ...(d.data() as any) })));
-        setTutors(tutSnap.docs.map((d) => ({ ...(d.data() as any) })));
+        if (!cancelled) {
+          setResidents(resSnap.docs.map((d) => ({ ...(d.data() as any) })));
+          setTutors(tutSnap.docs.map((d) => ({ ...(d.data() as any) })));
+        }
       } catch (e: any) {
-        setError(e?.message || 'Failed to load users');
+        if (!cancelled) setError(e?.message || 'Failed to load users');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return { residents, tutors, loading, error } as const;

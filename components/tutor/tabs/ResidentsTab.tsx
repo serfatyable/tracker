@@ -1,9 +1,10 @@
 'use client';
 import { useMemo, useState } from 'react';
+
 import type { Assignment } from '../../../types/assignments';
-import type { Rotation } from '../../../types/rotations';
 import type { UserProfile } from '../../../types/auth';
 import type { RotationPetition } from '../../../types/rotationPetitions';
+import type { Rotation } from '../../../types/rotations';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 
@@ -109,7 +110,7 @@ export default function ResidentsTab({
           const p = petitions[0];
           const tasksCount = pendingTasksCount.get(resident.uid) || 0;
           return (
-            <div key={assignment.id} className="glass-card card-levitate p-3">
+            <div key={assignment.id} className="card-levitate p-3">
               <div className="flex items-center justify-between">
                 <div className="font-semibold">{resident.fullName || resident.uid}</div>
                 {p ? (

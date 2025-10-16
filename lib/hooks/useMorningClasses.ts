@@ -1,7 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
+
 import type { MorningMeeting } from '../../types/morningMeetings';
-import { listMorningMeetingsByDateRange, listMorningMeetingsForMonth } from '../morning-meetings/store';
+import {
+  listMorningMeetingsByDateRange,
+  listMorningMeetingsForMonth,
+} from '../morning-meetings/store';
 
 export function useMorningMeetingsUpcoming(): {
   today: MorningMeeting[] | null;
@@ -24,9 +28,15 @@ export function useMorningMeetingsUpcoming(): {
       try {
         const now = new Date();
         const tzNow = now; // keep UTC here; server stores Timestamp; UI will display with tz
-        const startToday = new Date(Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate(), 0, 0, 0));
-        const startTomorrow = new Date(Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate() + 1, 0, 0, 0));
-        const startNext8 = new Date(Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate() + 8, 0, 0, 0));
+        const startToday = new Date(
+          Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate(), 0, 0, 0),
+        );
+        const startTomorrow = new Date(
+          Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate() + 1, 0, 0, 0),
+        );
+        const startNext8 = new Date(
+          Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate() + 8, 0, 0, 0),
+        );
 
         const [todayAll, next8All] = await Promise.all([
           listMorningMeetingsByDateRange(startToday, startTomorrow),
@@ -35,7 +45,9 @@ export function useMorningMeetingsUpcoming(): {
         if (cancelled) return;
         setToday(todayAll);
         // split tomorrow vs rest
-        const tomorrowEnd = new Date(Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate() + 2, 0, 0, 0));
+        const tomorrowEnd = new Date(
+          Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate() + 2, 0, 0, 0),
+        );
         const tmrwOnly = next8All.filter((c) => c.date.toMillis() < tomorrowEnd.getTime());
         const afterTmrw = next8All.filter((c) => !tmrwOnly.includes(c));
         setTomorrow(tmrwOnly);
@@ -80,5 +92,3 @@ export function useMorningMeetingsMonth(year: number, month0: number) {
   }, [year, month0]);
   return { list, loading, error };
 }
-
-

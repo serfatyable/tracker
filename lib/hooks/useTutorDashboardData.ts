@@ -2,16 +2,16 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type { Assignment } from '../../types/assignments';
-import type { Rotation } from '../../types/rotations';
-import type { UserProfile } from '../../types/auth';
 import type { RotationPetition } from '../../types/rotationPetitions';
+import type { Rotation } from '../../types/rotations';
+import { listRotationPetitions, listTasks } from '../firebase/admin';
 import type { TaskDoc, TutorTodo } from '../firebase/db';
-import { useCurrentUserProfile } from './useCurrentUserProfile';
+import { listTutorTodosByUser } from '../firebase/db';
+
 import { useActiveAssignments } from './useActiveAssignments';
 import { useActiveRotations } from './useActiveRotations';
+import { useCurrentUserProfile } from './useCurrentUserProfile';
 import { useUsersByRole } from './useUsersByRole';
-import { listRotationPetitions, listTasks } from '../firebase/admin';
-import { listTutorTodosByUser } from '../firebase/db';
 
 export function useTutorDashboardData() {
   const { data: me } = useCurrentUserProfile();
@@ -68,7 +68,7 @@ export function useTutorDashboardData() {
         setLoading(false);
       }
     })();
-  }, [me?.uid]);
+  }, [me]);
 
   const filteredPetitions = useMemo(() => {
     const set = supervisedResidentIds;

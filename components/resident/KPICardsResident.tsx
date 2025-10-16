@@ -3,15 +3,17 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
-import { useUserTasks } from '../../lib/hooks/useUserTasks';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
+import { useUserTasks } from '../../lib/hooks/useUserTasks';
+import { KPICardSkeleton } from '../dashboard/Skeleton';
 
 export default function KPICardsResident() {
   const { t } = useTranslation();
-  const { rotationId } = useResidentActiveRotation();
-  const { tasks } = useUserTasks();
-  const { nodes } = useRotationNodes(rotationId || null);
+  const { rotationId, loading: rotationLoading } = useResidentActiveRotation();
+  const { tasks, loading: tasksLoading } = useUserTasks();
+  const { nodes, loading: nodesLoading } = useRotationNodes(rotationId || null);
 
+  // Calculate KPIs - must be called before any conditional returns
   const { requiredTotal, approvedTotal, pendingTotal } = useMemo(() => {
     if (!rotationId) return { requiredTotal: 0, approvedTotal: 0, pendingTotal: 0 };
     const leafs = nodes.filter((n) => n.rotationId === rotationId && n.type === 'leaf');
@@ -25,15 +27,17 @@ export default function KPICardsResident() {
     return { requiredTotal, approvedTotal, pendingTotal };
   }, [rotationId, nodes, tasks]);
 
+  // Show loading state while any data is loading
+  if (rotationLoading || tasksLoading || nodesLoading) {
+    return <KPICardSkeleton />;
+  }
+
   function Card({ title, value, subtle }: { title: string; value: number; subtle: string }) {
     return (
-      <div
-        className="card-levitate rounded border p-3 border-blue-200/60 dark:border-blue-900/40"
-        style={{ boxShadow: '0 8px 24px rgba(59,130,246,0.16)' }}
-      >
-        <div className="text-sm text-gray-500">{title}</div>
+      <div className="card-levitate rounded border p-3 border-muted/12">
+        <div className="text-sm text-muted">{title}</div>
         <div className="text-2xl font-semibold">{value}</div>
-        <div className="text-xs text-gray-500">{subtle}</div>
+        <div className="text-xs text-muted">{subtle}</div>
       </div>
     );
   }

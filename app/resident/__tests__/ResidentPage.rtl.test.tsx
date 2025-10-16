@@ -8,8 +8,7 @@ import ResidentPage from '../page';
 // Stub TopBar
 vi.mock('../../../components/TopBar', () => ({ default: () => null }));
 
-const { getFirebaseStatusMock, getCurrentUserWithProfileMock } = vi.hoisted(() => ({
-  getFirebaseStatusMock: vi.fn(),
+const { getCurrentUserWithProfileMock } = vi.hoisted(() => ({
   getCurrentUserWithProfileMock: vi.fn(),
 }));
 

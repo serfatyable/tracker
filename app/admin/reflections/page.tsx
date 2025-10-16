@@ -1,5 +1,4 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
 import {
   collection,
   getDocs,
@@ -12,30 +11,35 @@ import {
   addDoc,
   serverTimestamp,
 } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+
+import Button from '../../../components/ui/Button';
 import { getFirebaseApp } from '../../../lib/firebase/client';
 import type { Audience, Reflection, ReflectionTemplate } from '../../../types/reflections';
-import Button from '../../../components/ui/Button';
 
 function TemplatesTab() {
   const [audience, setAudience] = useState<Audience>('resident');
   const [templates, setTemplates] = useState<ReflectionTemplate[]>([]);
   const [selected, setSelected] = useState<ReflectionTemplate | null>(null);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function run() {
-      const db = getFirestore(getFirebaseApp());
-      const qRef = query(
-        collection(db, 'reflectionTemplates'),
-        where('audience', '==', audience),
-        orderBy('version', 'desc'),
-      );
-      const snap = await getDocs(qRef);
-      if (!cancelled)
-        setTemplates(
-          snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as ReflectionTemplate[],
+      try {
+        const db = getFirestore(getFirebaseApp());
+        const qRef = query(
+          collection(db, 'reflectionTemplates'),
+          where('audience', '==', audience),
+          orderBy('version', 'desc'),
         );
+        const snap = await getDocs(qRef);
+        if (!cancelled)
+          setTemplates(
+            snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as ReflectionTemplate[],
+          );
+      } catch (error) {
+        console.error('Failed to load templates:', error);
+      }
     }
     run();
     return () => {
@@ -146,6 +150,9 @@ function TemplateEditor({
         } as any);
       }
       onClose();
+    } catch (error) {
+      console.error('Failed to save draft:', error);
+      alert('Failed to save draft: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setSaving(false);
     }
@@ -160,6 +167,9 @@ function TemplateEditor({
         } as any);
       }
       onClose();
+    } catch (error) {
+      console.error('Failed to publish template:', error);
+      alert('Failed to publish: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setSaving(false);
     }
@@ -241,24 +251,33 @@ function SubmissionsTab() {
   useEffect(() => {
     let cancelled = false;
     async function run() {
-      const qRef = query(collection(db, 'reflections'), orderBy('submittedAt', 'desc'));
-      const snap = await getDocs(qRef);
-      const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Reflection[];
-      if (!cancelled) setRows(list);
+      try {
+        const qRef = query(collection(db, 'reflections'), orderBy('submittedAt', 'desc'));
+        const snap = await getDocs(qRef);
+        const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Reflection[];
+        if (!cancelled) setRows(list);
+      } catch (error) {
+        console.error('Failed to load reflections:', error);
+      }
     }
     run();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [db]);
 
   const onSaveComment = async () => {
     if (!selected) return;
-    await updateDoc(doc(db, 'reflections', selected.id as string), {
-      adminComment: { text: comment, adminId: 'me', createdAt: serverTimestamp() },
-    } as any);
-    setSelected(null);
-    setComment('');
+    try {
+      await updateDoc(doc(db, 'reflections', selected.id as string), {
+        adminComment: { text: comment, adminId: 'me', createdAt: serverTimestamp() },
+      } as any);
+      setSelected(null);
+      setComment('');
+    } catch (error) {
+      console.error('Failed to save comment:', error);
+      alert('Failed to save comment: ' + (error instanceof Error ? error.message : String(error)));
+    }
   };
 
   return (

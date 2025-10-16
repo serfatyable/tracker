@@ -1,14 +1,17 @@
 'use client';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { useParams, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import ReflectionForm from '../../../../components/reflections/ReflectionForm';
+import { getFirebaseApp } from '../../../../lib/firebase/client';
 import { useCurrentUserProfile } from '../../../../lib/hooks/useCurrentUserProfile';
 import { submitReflection, useReflection } from '../../../../lib/hooks/useReflections';
 import { useLatestPublishedTemplate } from '../../../../lib/hooks/useReflectionTemplates';
-import ReflectionForm from '../../../../components/reflections/ReflectionForm';
-import { useEffect, useState } from 'react';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
-import { getFirebaseApp } from '../../../../lib/firebase/client';
 
 export default function TutorWriteReflectionPage() {
+  const { t } = useTranslation();
   const params = useParams() as { taskOccurrenceId?: string };
   const taskOccurrenceId = params?.taskOccurrenceId || '';
   const search = useSearchParams();
@@ -36,17 +39,17 @@ export default function TutorWriteReflectionPage() {
     };
   }, [residentId, taskOccurrenceId]);
 
-  if (!me) return <div className="p-4">Sign in required</div>;
-  if (!template) return <div className="p-4">Loading template…</div>;
+  if (!me) return <div className="p-4">{t('common.signInRequired')}</div>;
+  if (!template) return <div className="p-4">{t('common.loadingTemplate')}</div>;
 
   const submitted = !!reflection?.submittedAt;
 
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-xl font-semibold">Tutor reflection</h1>
+      <h1 className="text-xl font-semibold">{t('reflections.tutorReflection')}</h1>
       {residentReflection ? (
         <div className="rounded border p-3">
-          <div className="font-semibold mb-2">Resident reflection</div>
+          <div className="font-semibold mb-2">{t('reflections.residentReflection')}</div>
           <pre className="text-xs whitespace-pre-wrap">
             {JSON.stringify(residentReflection.answers, null, 2)}
           </pre>
@@ -72,7 +75,7 @@ export default function TutorWriteReflectionPage() {
           });
         }}
       />
-      {submitted ? <div className="text-sm text-green-700">Submitted</div> : null}
+      {submitted ? <div className="text-sm text-green-700">{t('common.submitted')}</div> : null}
     </div>
   );
 }

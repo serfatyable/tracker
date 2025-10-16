@@ -1,9 +1,10 @@
 'use client';
 import { useMemo } from 'react';
+
 import type { Assignment } from '../../../types/assignments';
-import type { Rotation } from '../../../types/rotations';
 import type { UserProfile } from '../../../types/auth';
 import type { RotationPetition } from '../../../types/rotationPetitions';
+import type { Rotation } from '../../../types/rotations';
 import Button from '../../ui/Button';
 
 type Props = {
@@ -28,7 +29,7 @@ export default function RotationsTab({
         .sort((a, b) => a.name.localeCompare(b.name)),
     [rotations, meUid],
   );
-  const resById = useMemo(() => new Map(residents.map((r) => [r.uid, r])), [residents]);
+  const _resById = useMemo(() => new Map(residents.map((r) => [r.uid, r])), [residents]);
   const assignmentsByRotation = useMemo(() => {
     const map = new Map<string, Assignment[]>();
     for (const a of assignments) {
@@ -51,7 +52,7 @@ export default function RotationsTab({
         const residentsCount = assigns.length;
         const pendingPetitions = petitionsByRotation.get(r.id) || 0;
         return (
-          <div key={r.id} className="glass-card card-levitate p-3">
+          <div key={r.id} className="card-levitate p-3">
             <div className="font-semibold mb-1">{r.name}</div>
             <div className="text-sm opacity-80">Residents: {residentsCount}</div>
             <div className="text-sm opacity-80">Pending petitions: {pendingPetitions}</div>

@@ -3,7 +3,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import AppShell from '../../components/layout/AppShell';
 import SettingsPanel from '../../components/settings/SettingsPanel';
+import Card from '../../components/ui/Card';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 
 export default function SettingsPage() {
@@ -24,12 +26,16 @@ export default function SettingsPage() {
   }, [status, firebaseUser, profile, router]);
 
   return (
-    <div className="mx-auto max-w-md p-6">
-      {status !== 'ready' ? <div className="text-sm text-gray-600">Loading…</div> : null}
-      <h1 className="mb-4 text-xl font-semibold">
-        {t('settings.title', { defaultValue: 'Settings' })}
-      </h1>
-      <SettingsPanel />
-    </div>
+    <AppShell>
+      <div className="mx-auto max-w-md p-6">
+        {status !== 'ready' ? <div className="text-sm text-gray-600">Loading…</div> : null}
+        <h1 className="mb-4 text-2xl font-semibold">
+          {t('settings.title', { defaultValue: 'Settings' })}
+        </h1>
+        <Card>
+          <SettingsPanel />
+        </Card>
+      </div>
+    </AppShell>
   );
 }

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
 
 import SettingsPanel from '../SettingsPanel';
 
@@ -36,7 +36,7 @@ describe('SettingsPanel', () => {
 
     // Label is not explicitly associated with select; query by text then sibling select
     expect(screen.getByText(/language/i)).toBeTruthy();
-    const langSelect = screen.getAllByRole('combobox')[0] as HTMLSelectElement;
+    screen.getAllByRole('combobox')[0] as HTMLSelectElement;
 
     expect(screen.getByText(/theme/i)).toBeTruthy();
     const themeSelect = screen.getAllByRole('combobox')[1] as HTMLSelectElement;

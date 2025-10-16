@@ -1,22 +1,36 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getFirestore, collection, getDocs, query, where, Timestamp as FBTimestamp, doc, getDoc, writeBatch, setDoc } from 'firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  Timestamp as FBTimestamp,
+  doc,
+  writeBatch,
+} from 'firebase/firestore';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import { requireAdminAuth, createAuthErrorResponse } from '../../../../lib/api/auth';
 import { getFirebaseApp } from '../../../../lib/firebase/client';
 import { parseOnCallCsv, buildAssignments } from '../../../../lib/on-call/import';
 import type { StationKey } from '../../../../types/onCall';
 
-function isAdminProfile(profile: any): boolean {
-  return profile && profile.role === 'admin' && profile.status === 'approved';
-}
-
+/**
+ * Import on-call schedule from CSV
+ *
+ * SECURITY: Requires admin authentication via Firebase ID token
+ *
+ * @route POST /api/on-call/import
+ * @auth Required - Admin only
+ */
 export async function POST(req: NextRequest) {
+  // ✅ SECURE: Verify Firebase ID token and admin role
   try {
+    const auth = await requireAdminAuth(req);
+    const uid = auth.uid;
+
     const app = getFirebaseApp();
     const db = getFirestore(app);
-    const uid = req.headers.get('x-user-uid');
-    if (!uid) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
-    const userSnap = await getDoc(doc(db, 'users', uid));
-    if (!userSnap.exists() || !isAdminProfile(userSnap.data()))
-      return NextResponse.json({ error: 'forbidden' }, { status: 403 });
 
     const url = new URL(req.url);
     const dryRun = url.searchParams.get('dryRun') === '1' || req.headers.get('x-dry-run') === '1';
@@ -33,10 +47,12 @@ export async function POST(req: NextRequest) {
     } else {
       csvText = await req.text();
     }
-    if (!csvText.trim()) return NextResponse.json({ imported: 0, errors: ['empty file'] }, { status: 400 });
+    if (!csvText.trim())
+      return NextResponse.json({ imported: 0, errors: ['empty file'] }, { status: 400 });
 
     const { rows } = parseOnCallCsv(csvText);
-    if (!rows.length) return NextResponse.json({ imported: 0, errors: ['no valid rows'] }, { status: 400 });
+    if (!rows.length)
+      return NextResponse.json({ imported: 0, errors: ['no valid rows'] }, { status: 400 });
 
     const [usersSnap, aliasesSnap] = await Promise.all([
       getDocs(query(collection(db, 'users'))),
@@ -46,7 +62,10 @@ export async function POST(req: NextRequest) {
     const aliasMap = new Map<string, { userId: string; userDisplayName: string }>();
     for (const d of aliasesSnap.docs) {
       const data = d.data() as any;
-      aliasMap.set(String(d.id).toLowerCase(), { userId: data.userId, userDisplayName: data.userDisplayName });
+      aliasMap.set(String(d.id).toLowerCase(), {
+        userId: data.userId,
+        userDisplayName: data.userDisplayName,
+      });
     }
 
     function resolveName(raw: string): { userId?: string; userDisplayName?: string } {
@@ -54,9 +73,20 @@ export async function POST(req: NextRequest) {
       if (!key) return {};
       const alias = aliasMap.get(key);
       if (alias) return alias;
-      const byEmail = users.find((u) => String(u.email || '').trim().toLowerCase() === key);
-      if (byEmail) return { userId: byEmail.id, userDisplayName: byEmail.fullName || byEmail.email };
-      const byName = users.find((u) => String(u.fullName || '').trim().toLowerCase() === key);
+      const byEmail = users.find(
+        (u) =>
+          String(u.email || '')
+            .trim()
+            .toLowerCase() === key,
+      );
+      if (byEmail)
+        return { userId: byEmail.id, userDisplayName: byEmail.fullName || byEmail.email };
+      const byName = users.find(
+        (u) =>
+          String(u.fullName || '')
+            .trim()
+            .toLowerCase() === key,
+      );
       if (byName) return { userId: byName.id, userDisplayName: byName.fullName || byName.email };
       if (resolutions && resolutions[key]) {
         const chosen = users.find((u) => u.id === resolutions![key]);
@@ -65,11 +95,18 @@ export async function POST(req: NextRequest) {
       return {};
     }
 
-    const { assignments, unresolved } = buildAssignments({ rows, nameToUser: resolveName, createdBy: uid });
+    const { assignments, unresolved } = buildAssignments({
+      rows,
+      nameToUser: resolveName,
+      createdBy: uid,
+    });
 
     // If dryRun, return preview without writing
     if (dryRun) {
-      return NextResponse.json({ imported: 0, preview: { assignments: assignments.length, unresolved } });
+      return NextResponse.json({
+        imported: 0,
+        preview: { assignments: assignments.length, unresolved },
+      });
     }
 
     // Commit: write assignments and per-day snapshots, and optionally new aliases
@@ -80,7 +117,11 @@ export async function POST(req: NextRequest) {
         const key = rawName.trim().toLowerCase();
         if (!aliasMap.has(key) && userId) {
           const u = users.find((x) => x.id === userId);
-          if (u) batch.set(doc(db, 'onCallAliases', key), { userId, userDisplayName: u.fullName || u.email });
+          if (u)
+            batch.set(doc(db, 'onCallAliases', key), {
+              userId,
+              userDisplayName: u.fullName || u.email,
+            });
         }
       });
     }
@@ -90,7 +131,10 @@ export async function POST(req: NextRequest) {
       batch.set(doc(db, 'onCallAssignments', a.id!), a as any);
     }
     // Build and write per-day snapshots
-    const byDate = new Map<string, Record<StationKey, { userId: string; userDisplayName: string }>>();
+    const byDate = new Map<
+      string,
+      Record<StationKey, { userId: string; userDisplayName: string }>
+    >();
     for (const a of assignments) {
       const map = byDate.get(a.dateKey) || ({} as any);
       (map as any)[a.stationKey] = { userId: a.userId, userDisplayName: a.userDisplayName };
@@ -98,7 +142,9 @@ export async function POST(req: NextRequest) {
     }
     for (const [dateKey, stations] of byDate.entries()) {
       const parts = dateKey.split('-').map((p) => parseInt(p, 10));
-      const date = new Date(Date.UTC(parts[0] as number, (parts[1] as number) - 1, parts[2] as number, 0, 0, 0));
+      const date = new Date(
+        Date.UTC(parts[0] as number, (parts[1] as number) - 1, parts[2] as number, 0, 0, 0),
+      );
       batch.set(doc(db, 'onCallDays', dateKey), {
         id: dateKey,
         dateKey,
@@ -110,9 +156,20 @@ export async function POST(req: NextRequest) {
 
     await batch.commit();
     return NextResponse.json({ imported: assignments.length, unresolved: [] });
-  } catch (e: any) {
-    return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
+  } catch (error) {
+    // Handle authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes('Missing') ||
+        error.message.includes('Invalid') ||
+        error.message.includes('Forbidden'))
+    ) {
+      return createAuthErrorResponse(error);
+    }
+    // Handle other errors
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Import failed' },
+      { status: 500 },
+    );
   }
 }
-
-

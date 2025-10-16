@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
+import { useResidentProgress } from '../../lib/hooks/useResidentProgress';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
-import { useResidentProgress } from '../../lib/hooks/useResidentProgress';
-import Button from '../ui/Button';
 import Badge from '../ui/Badge';
+import EmptyState, { ChecklistIcon } from '../ui/EmptyState';
 
 export default function Progress() {
   const { t } = useTranslation();
@@ -49,7 +50,14 @@ export default function Progress() {
 
       <div className="rounded-md border border-gray-200 dark:border-gray-800">
         {roots.length === 0 ? (
-          <div className="p-3 text-sm text-gray-500">{t('ui.noItems') as string}</div>
+          <EmptyState
+            icon={<ChecklistIcon size={40} />}
+            title={t('ui.noItems', { defaultValue: 'No items' })}
+            description={t('ui.noProgressItems', {
+              defaultValue: 'Start a rotation to track your progress.',
+            })}
+            className="py-6"
+          />
         ) : (
           <div className="divide-y divide-gray-200 dark:divide-gray-800">
             {roots.map((r) => (
@@ -58,7 +66,7 @@ export default function Progress() {
                 node={r}
                 level={0}
                 open={open[r.id] ?? true}
-                setOpen={(v) => setOpen((m) => ({ ...m, [r.id]: v }))}
+                setOpen={(v) => setOpen((m: Record<string, boolean>) => ({ ...m, [r.id]: v }))}
               />
             ))}
           </div>
@@ -70,13 +78,10 @@ export default function Progress() {
 
 function Card({ title, value, subtle }: { title: string; value: number; subtle: string }) {
   return (
-    <div
-      className="card-levitate rounded border p-3 border-blue-200/60 dark:border-blue-900/40"
-      style={{ boxShadow: '0 8px 24px rgba(59,130,246,0.16)' }}
-    >
-      <div className="text-sm text-gray-500">{title}</div>
+    <div className="card-levitate rounded border p-3">
+      <div className="text-sm text-muted">{title}</div>
       <div className="text-2xl font-semibold">{value}</div>
-      <div className="text-xs text-gray-500">{subtle}</div>
+      <div className="text-xs text-muted">{subtle}</div>
     </div>
   );
 }

@@ -17,7 +17,7 @@ export default function NavItem({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${active ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+      className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${active ? 'bg-surface text-fg ring-1 ring-primary' : 'hover:bg-surface/60'}`}
     >
       {Icon ? <Icon className="h-5 w-5" /> : null}
       <span>{label}</span>

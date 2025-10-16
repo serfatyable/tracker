@@ -1,13 +1,16 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { getRotationOwners, setRotationOwners, listUsers } from '../../../lib/firebase/admin';
+import type { UserProfile } from '../../../types/auth';
 import Button from '../../ui/Button';
 import Select from '../../ui/Select';
-import type { UserProfile } from '../../../types/auth';
-import { getRotationOwners, setRotationOwners, listUsers } from '../../../lib/firebase/admin';
 
 type Props = { rotationId: string };
 
 export default function RotationOwnersEditor({ rotationId }: Props) {
+  const { t } = useTranslation();
   const [owners, setOwners] = useState<string[]>([]);
   const [tutors, setTutors] = useState<UserProfile[]>([]);
   const [adding, setAdding] = useState<string>('');
@@ -48,11 +51,11 @@ export default function RotationOwnersEditor({ rotationId }: Props) {
   }
 
   return (
-    <div className="glass-card p-3">
-      <div className="font-semibold mb-2">Rotation owners</div>
+    <div className="card-levitate p-3">
+      <div className="font-semibold mb-2">{t('rotations.rotationOwners')}</div>
       <div className="flex items-center gap-2 mb-2">
         <Select value={adding} onChange={(e) => setAdding(e.target.value)}>
-          <option value="">Select tutor</option>
+          <option value="">{t('rotations.selectTutor')}</option>
           {available.map((t) => (
             <option key={t.uid} value={t.uid}>
               {t.fullName || t.uid}

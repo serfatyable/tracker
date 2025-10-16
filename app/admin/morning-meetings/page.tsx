@@ -1,11 +1,12 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import TopBar from '../../../components/TopBar';
 import Button from '../../../components/ui/Button';
 import Toast from '../../../components/ui/Toast';
 import { getCurrentUserWithProfile } from '../../../lib/firebase/auth';
-import { useRouter } from 'next/navigation';
 
 export default function AdminMorningMeetingsImportPage() {
   const { t } = useTranslation();
@@ -17,10 +18,15 @@ export default function AdminMorningMeetingsImportPage() {
 
   useEffect(() => {
     (async () => {
-      const { firebaseUser, profile } = await getCurrentUserWithProfile();
-      if (!firebaseUser) return router.replace('/auth');
-      if (!profile || profile.status === 'pending') return router.replace('/awaiting-approval');
-      if (profile.role !== 'admin') return router.replace('/auth');
+      try {
+        const { firebaseUser, profile } = await getCurrentUserWithProfile();
+        if (!firebaseUser) return router.replace('/auth');
+        if (!profile || profile.status === 'pending') return router.replace('/awaiting-approval');
+        if (profile.role !== 'admin') return router.replace('/auth');
+      } catch (error) {
+        console.error('Failed to check user profile:', error);
+        router.replace('/auth');
+      }
     })();
   }, [router]);
 
@@ -28,12 +34,12 @@ export default function AdminMorningMeetingsImportPage() {
     setErrors([]);
     setImporting(true);
     try {
-      const { firebaseUser } = await getCurrentUserWithProfile();
-      const res = await fetch('/api/morning-meetings/import', {
+      // ✅ SECURE: Use authenticated fetch with Bearer token
+      const { fetchWithAuth } = await import('../../../lib/api/client');
+      const res = await fetchWithAuth('/api/morning-meetings/import', {
         method: 'POST',
         headers: {
           'content-type': 'text/plain; charset=utf-8',
-          'x-user-uid': firebaseUser?.uid || '',
         },
         body: csvText,
       });
@@ -67,8 +73,10 @@ export default function AdminMorningMeetingsImportPage() {
             {t('ui.downloadTemplate')}
           </a>
         </div>
-        <div className="glass-card p-4 space-y-3">
-          <div className="text-sm opacity-70">Paste CSV content (single month). Columns: date,title,lecturer,organizer,link,notes</div>
+        <div className="card-levitate p-4 space-y-3">
+          <div className="text-sm opacity-70">
+            Paste CSV content (single month). Columns: date,title,lecturer,organizer,link,notes
+          </div>
           <textarea
             className="w-full h-64 border rounded p-2 font-mono text-sm"
             value={csvText}
@@ -92,5 +100,3 @@ export default function AdminMorningMeetingsImportPage() {
     </div>
   );
 }
-
-

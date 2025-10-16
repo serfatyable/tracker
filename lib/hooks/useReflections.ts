@@ -1,7 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  addDoc,
   collection,
   doc,
   getDoc,
@@ -13,8 +11,10 @@ import {
   setDoc,
   where,
 } from 'firebase/firestore';
-import { getFirebaseApp } from '../firebase/client';
+import { useEffect, useState } from 'react';
+
 import type { AuthorRole, Reflection, ReflectionListItem } from '../../types/reflections';
+import { getFirebaseApp } from '../firebase/client';
 
 function makeReflectionId(taskOccurrenceId: string, authorId: string) {
   return `${taskOccurrenceId}_${authorId}`;

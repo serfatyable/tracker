@@ -159,8 +159,7 @@
         { "fieldPath": "rotationId", "order": "ASCENDING" },
         { "fieldPath": "requestedAt", "order": "DESCENDING" }
       ]
-    }
-    ,
+    },
     {
       "collectionId": "onCallAssignments",
       "fields": [

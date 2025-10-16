@@ -1,5 +1,4 @@
 'use client';
-import { useEffect, useState } from 'react';
 import {
   addDoc,
   collection,
@@ -12,6 +11,8 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+
 import { getFirebaseApp } from '../../../lib/firebase/client';
 import type { Audience, Reflection, ReflectionTemplate } from '../../../types/reflections';
 import Button from '../../ui/Button';
@@ -20,7 +21,6 @@ function TemplatesTab({ onGoSubmissions }: { onGoSubmissions: () => void }) {
   const [audience, setAudience] = useState<Audience | ''>('');
   const [templates, setTemplates] = useState<ReflectionTemplate[]>([]);
   const [selected, setSelected] = useState<ReflectionTemplate | null>(null);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -305,7 +305,7 @@ function SubmissionsTab({ onGoTemplates }: { onGoTemplates: () => void }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [db]);
 
   const onSaveComment = async () => {
     if (!selected) return;

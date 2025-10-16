@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { getAuth } from 'firebase/auth';
 import { collection, getFirestore, onSnapshot, query, where } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
 import { getFirebaseApp } from '../firebase/client';
 

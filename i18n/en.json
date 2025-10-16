@@ -48,7 +48,7 @@
     "disabledUser": "Disabled user",
     "import": "Import",
     "importFromCsv": "Import from CSV",
-    "downloadTemplate": "Download CSV template",
+    "downloadTemplate": "CSV Template",
     "mode": "Mode",
     "createNewRotation": "Create new rotation",
     "mergeIntoExisting": "Merge into existing rotation",
@@ -76,6 +76,12 @@
     "noRecentLogs": "No recent logs",
     "required": "Required",
     "mcq": "MCQ",
+    "resources": "Resources",
+    "links": "Links",
+    "notes": "Notes",
+    "viewNotes": "View notes",
+    "noNotes": "No notes available",
+    "close": "Close",
     "optionalNote": "Optional note",
     "logPlusOne": "Log +1",
     "disabled": "Disabled",
@@ -97,7 +103,23 @@
     "templates": "Templates",
     "submissions": "Submissions",
     "morningMeetings": "Morning Meetings",
-    "onCall": "On Call"
+    "onCall": "On Call",
+    "compact": "Compact",
+    "normal": "Normal",
+    "rejected": "Rejected",
+    "reject": "Reject",
+    "user": "User",
+    "rotation": "Rotation",
+    "item": "Item",
+    "count": "Count",
+    "timeline": "Timeline",
+    "noOwners": "No owners",
+    "openCurriculum": "Open curriculum",
+    "manageOwners": "Manage owners",
+    "importCsv": "Import CSV",
+    "viewResidents": "View residents",
+    "residents_plural": "residents",
+    "remove": "Remove"
   },
   "morningMeetings": {
     "title": "Morning Meetings",
@@ -136,7 +158,14 @@
     "status.denied": "Denied",
     "actions": "Actions",
     "actions.approve": "Approve",
-    "actions.deny": "Deny"
+    "actions.deny": "Deny",
+    "unassigned": "Unassigned",
+    "allResidentsAssigned": "All residents are assigned",
+    "moveResidentToRotation": "Move resident to rotation",
+    "assignTutor": "Assign tutor",
+    "unassignTutor": "Unassign tutor",
+    "tutorLoad": "Tutor load",
+    "tutor": "Tutor"
   },
   "dashboard": {
     "pendingTasks": "Pending Tasks",
@@ -152,7 +181,11 @@
   "resident": {
     "progress": "Progress",
     "approvals": "Approvals",
-    "resources": "Resources"
+    "resources": "Resources",
+    "myReflections": "My reflections",
+    "loading": "Loading…",
+    "noReflectionsYet": "No reflections yet. Complete tasks to submit reflections.",
+    "recentlySubmitted": "Recently submitted reflections."
   },
   "leaf": {},
   "ui2": {},
@@ -166,6 +199,10 @@
     "selfAssign": "Self-assign",
     "unassign": "Unassign",
     "addTodoPlaceholder": "Add a to-do...",
+    "reflectionsIWrote": "Reflections I wrote",
+    "noReflectionsYet": "No reflections yet. Your submitted reflections will appear here.",
+    "assign": "Assign",
+    "featureNotUsed": "Feature not used in v1",
     "tabs": {
       "residents": "Residents",
       "tasks": "Tasks",
@@ -177,6 +214,76 @@
       "rejectionReason": "Optional rejection reason"
     }
   },
+  "bottomNav": {
+    "logSkill": "Log Skill",
+    "logCase": "Log Case",
+    "search": "Search",
+    "searchInCurriculum": "Search curriculum..."
+  },
+  "import": {
+    "csvInstructions": "CSV with Hebrew headers; one row per date. Paste content below.",
+    "csvInstructionsMeetings": "Paste CSV content (single month). Columns: date,title,lecturer,organizer,link,notes",
+    "preview": "Preview",
+    "assignmentsParsed": "Assignments parsed:",
+    "dryRun": "Dry run (preview)",
+    "dryRunFailed": "Dry run failed. Fix errors above.",
+    "importFailed": "Import failed",
+    "importRotationData": "Import Rotation Data",
+    "downloadTemplateFirst": "Download Template First",
+    "templateInstructions": "Download a template, fill it with your rotation data, and upload it back.",
+    "uploadFile": "Upload File",
+    "dragDropFile": "Drag and drop your file here",
+    "orClickToSelect": "or click to browse",
+    "selectFile": "Please select a file to import",
+    "importing": "Importing...",
+    "errorsFound": "Errors Found",
+    "createModeDesc": "Creates a new rotation",
+    "mergeModeDesc": "Adds items to existing rotation",
+    "creatingNewRotation": "Creating New Rotation",
+    "newRotationWillBeCreated": "A new rotation will be created with the imported items.",
+    "mergingIntoRotation": "Merging Into Rotation",
+    "itemsWillBeAddedToRotation": "Items will be added to the selected rotation.",
+    "successfullyCreated": "Rotation created successfully!",
+    "successfullyMerged": "Items merged successfully!"
+  },
+  "reflections": {
+    "latest": "Latest",
+    "editLatest": "Edit latest",
+    "allVersions": "All versions",
+    "editingTemplate": "Editing template v{{version}} ({{status}})",
+    "addPrompt": "Add prompt",
+    "addSection": "Add section",
+    "saveDraft": "Save draft",
+    "publish": "Publish",
+    "tutorReflections": "Tutor reflections",
+    "residentReflections": "Resident reflections",
+    "filterBy": "Filter by...",
+    "noSubmissionsYet": "No submissions yet.",
+    "reflectionDetail": "Reflection detail",
+    "adminComment": "Admin comment",
+    "tutorReflection": "Tutor reflection",
+    "residentReflection": "Resident reflection",
+    "writeReflection": "Write reflection",
+    "taskType": "Task type:"
+  },
+  "common": {
+    "signInRequired": "Sign in required",
+    "loadingTemplate": "Loading template…",
+    "submitted": "Submitted",
+    "loading": "Loading…",
+    "save": "Save"
+  },
+  "rotationTree": {
+    "selectNodeToEdit": "Select a node to edit",
+    "parent": "Parent",
+    "requiredCount": "Required Count",
+    "links": "Links",
+    "link": "Link"
+  },
+  "rotations": {
+    "rotationOwners": "Rotation owners",
+    "selectTutor": "Select tutor"
+  },
   "extra": {},
   "errors": {
     "required": "This field is required",
@@ -185,14 +292,28 @@
     "dateInFuture": "Date cannot be in the future",
     "firebaseGeneric": "An error occurred. Please try again.",
     "signInGeneric": "Invalid email or password",
-    "emailInUse": "Email is already in use"
+    "emailInUse": "Email is already in use",
+    "pageNotFound": "Page not found",
+    "pageNotFoundMessage": "The page you're looking for doesn't exist.",
+    "unexpectedError": "An unexpected error occurred. Please try again.",
+    "globalError": "The application encountered an unexpected error. Please reload the page."
+  },
+  "toasts": {
+    "failed": "Failed",
+    "failedToUndo": "Failed to undo",
+    "failedToLoadMoreUsers": "Failed to load more users",
+    "failedToApproveTasks": "Failed to approve tasks",
+    "failedToRejectTasks": "Failed to reject tasks",
+    "disabledUser": "Disabled user",
+    "failedToSaveDraft": "Failed to save draft",
+    "failedToPublish": "Failed to publish",
+    "failedToSaveComment": "Failed to save comment"
   },
   "roles": {
     "resident": "Resident",
     "tutor": "Tutor",
     "admin": "Admin"
-  }
-  ,
+  },
   "onCall": {
     "title": "On Call",
     "today": "Today / Tonight",

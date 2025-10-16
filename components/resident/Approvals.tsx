@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useUserTasks } from '../../lib/hooks/useUserTasks';
+
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
-import Select from '../ui/Select';
+import { useUserTasks } from '../../lib/hooks/useUserTasks';
 import Button from '../ui/Button';
+import EmptyState, { ChecklistIcon } from '../ui/EmptyState';
+import Select from '../ui/Select';
 
 export default function Approvals({
   onOpenRotation,
@@ -17,8 +19,8 @@ export default function Approvals({
   const { tasks } = useUserTasks();
   const { rotationId } = useResidentActiveRotation();
   const { byId } = useRotationNodes(rotationId || null);
-  const [status, setStatus] = useState<'all' | 'pending' | 'rejected'>('all');
-  const [category, setCategory] = useState<'all' | 'Knowledge' | 'Skills' | 'Guidance'>('all');
+  const [status, setStatus] = useState<'' | 'all' | 'pending' | 'rejected'>('');
+  const [category, setCategory] = useState<'' | 'all' | 'Knowledge' | 'Skills' | 'Guidance'>('');
 
   const filtered = useMemo(() => {
     let list = tasks.filter((t) => t.status === 'pending' || t.status === 'rejected');
@@ -35,6 +37,11 @@ export default function Approvals({
           value={status}
           onChange={(e) => setStatus(e.target.value as any)}
         >
+          {status === '' ? (
+            <option value="" disabled>
+              {t('ui.status', { defaultValue: 'Status' })}
+            </option>
+          ) : null}
           <option value="all">{t('ui.all') || 'All'}</option>
           <option value="pending">{t('ui.pending') || 'Pending'}</option>
           <option value="rejected">Rejected</option>
@@ -44,14 +51,32 @@ export default function Approvals({
           value={category}
           onChange={(e) => setCategory(e.target.value as any)}
         >
-          <option value="all">knowledge/skills/guidance</option>
+          {category === '' ? (
+            <option value="" disabled>
+              {t('ui.category.all', { defaultValue: 'knowledge/skills/guidance' })}
+            </option>
+          ) : null}
+          <option value="all">{t('ui.all', { defaultValue: 'All' })}</option>
           <option value="Knowledge">{t('ui.category.knowledge') || 'knowledge'}</option>
           <option value="Skills">{t('ui.category.skills') || 'skills'}</option>
           <option value="Guidance">{t('ui.category.guidance') || 'guidance'}</option>
         </Select>
       </div>
       {filtered.length === 0 ? (
-        <div className="text-sm text-gray-500">{t('ui.noItems') || 'No items'}</div>
+        <EmptyState
+          icon={<ChecklistIcon size={40} />}
+          title={t('ui.noApprovals', { defaultValue: 'No approvals' })}
+          description={
+            status !== 'all' || category !== 'all'
+              ? t('ui.tryDifferentFilter', {
+                  defaultValue: 'Try adjusting your filters.',
+                })
+              : t('ui.noApprovalsAvailable', {
+                  defaultValue: 'You have no tasks awaiting approval.',
+                })
+          }
+          className="py-6"
+        />
       ) : (
         <ul className="space-y-1 text-sm">
           {filtered.map((task) => (

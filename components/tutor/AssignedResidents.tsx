@@ -1,11 +1,12 @@
 'use client';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import type { Assignment } from '../../types/assignments';
-import type { Rotation } from '../../types/rotations';
-import type { UserProfile } from '../../types/auth';
-import Button from '../ui/Button';
 import { assignTutorToResident, unassignTutorFromResident } from '../../lib/firebase/admin';
+import type { Assignment } from '../../types/assignments';
+import type { UserProfile } from '../../types/auth';
+import type { Rotation } from '../../types/rotations';
+import Button from '../ui/Button';
 import { Dialog, DialogHeader, DialogFooter } from '../ui/Dialog';
 
 type Props = {
@@ -22,9 +23,10 @@ export default function AssignedResidents({
   assignments,
   rotations,
   residents,
-  tutors,
+  tutors: _tutors,
   ownedRotationIds,
 }: Props) {
+  const { t } = useTranslation();
   const resById = useMemo(() => new Map(residents.map((r) => [r.uid, r])), [residents]);
   const rotById = useMemo(() => new Map(rotations.map((r) => [r.id, r])), [rotations]);
   const mine = useMemo(
@@ -38,8 +40,8 @@ export default function AssignedResidents({
   const canSelfAssign = (rotationId: string) => ownedRotationIds.has(rotationId);
 
   return (
-    <div className="glass-card card-levitate p-3">
-      <div className="font-semibold mb-2">Assigned residents</div>
+    <div className="card-levitate p-3">
+      <div className="font-semibold mb-2">{t('tutor.assignedResidents')}</div>
       <div className="space-y-2">
         {mine.map((a) => {
           const resident = resById.get(a.residentId);
@@ -108,8 +110,8 @@ export default function AssignedResidents({
 
       <Dialog open={!!assignState} onClose={() => setAssignState(null)}>
         <div className="p-3 space-y-2">
-          <DialogHeader>Assign</DialogHeader>
-          <div className="text-sm">Feature not used in v1</div>
+          <DialogHeader>{t('tutor.assign')}</DialogHeader>
+          <div className="text-sm">{t('tutor.featureNotUsed')}</div>
           <DialogFooter>
             <Button variant="secondary" onClick={() => setAssignState(null)}>
               Close

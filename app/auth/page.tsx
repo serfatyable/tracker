@@ -4,11 +4,15 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import i18nInstance from '../../lib/i18n/init';
+// removed direct i18n instance import; use hook instance instead
+
+// Note: metadata export must be in a Server Component, but this is a Client Component
+// The parent layout provides the default metadata
 
 import PasswordInput from '../../components/auth/PasswordInput';
 import RolePills from '../../components/auth/RolePills';
 import TextInput from '../../components/auth/TextInput';
+import Card from '../../components/ui/Card';
 import {
   signIn,
   signUp,
@@ -38,10 +42,22 @@ export default function AuthPage() {
       (typeof window !== 'undefined' && (localStorage.getItem('i18n_lang') as 'en' | 'he')) || 'en',
   );
   useEffect(() => {
-    localStorage.setItem('i18n_lang', language);
-    i18nInstance.changeLanguage(language);
-    document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
+    try {
+      localStorage.setItem('i18n_lang', language);
+    } catch {
+      // localStorage may not be available
+    }
+    try {
+      i18n.changeLanguage(language);
+    } catch {
+      // i18n may not be initialized
+    }
+    try {
+      document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
+      document.documentElement.lang = language;
+    } catch {
+      // document may not be available in SSR
+    }
   }, [language, i18n]);
 
   const [siEmail, setSiEmail] = useState('');
@@ -85,7 +101,7 @@ export default function AuthPage() {
       const { profile } = await getCurrentUserWithProfile();
       const profLang = (profile?.settings?.language as 'en' | 'he') || 'en';
       applyLanguageToDocument(profLang);
-      i18nInstance.changeLanguage(profLang);
+      i18n.changeLanguage(profLang);
       router.push('/awaiting-approval');
     } catch (err: any) {
       const key = mapFirebaseAuthErrorToI18nKey('signin', err?.code);
@@ -152,9 +168,9 @@ export default function AuthPage() {
   if (!firebaseOk) {
     return (
       <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center p-6">
-        <div className="glass-card w-full p-4 text-sm text-red-700">
+        <Card className="w-full p-4 text-sm text-red-700">
           Firebase is not configured. Check your .env.local.
-        </div>
+        </Card>
       </div>
     );
   }
@@ -162,14 +178,18 @@ export default function AuthPage() {
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center p-6">
       {/* Force brand header to LTR regardless of app language */}
-      <div dir="ltr" className="mb-6 flex w-full max-w-2xl items-center justify-between gap-4">
+      <div
+        dir="ltr"
+        className="mb-6 flex w-full max-w-2xl items-center justify-between gap-4 text-fg"
+      >
         <div className="flex items-center gap-4">
           <Image
-            src="/logo.jpg"
-            alt="Tracker"
-            width={56}
-            height={56}
-            className="rounded-full object-cover ring-1 ring-gray-300"
+            src="/logo.png"
+            alt="Tracker logo"
+            width={64}
+            height={64}
+            className="rounded-full object-cover ring-1 ring-gray-300 shadow-md"
+            priority
           />
           <h1 className="text-3xl font-semibold">Tracker</h1>
         </div>
@@ -179,7 +199,9 @@ export default function AuthPage() {
             onClick={() => setLanguage('en')}
             className={classNames(
               'rounded-full px-3 py-1 text-sm border',
-              language === 'en' ? 'bg-white text-blue-600 ring-2 ring-blue-500' : 'bg-transparent',
+              language === 'en'
+                ? 'pill ring-2 ring-primary border-primary-token'
+                : 'pill opacity-90 border-primary-token',
             )}
           >
             EN
@@ -189,14 +211,16 @@ export default function AuthPage() {
             onClick={() => setLanguage('he')}
             className={classNames(
               'rounded-full px-3 py-1 text-sm border',
-              language === 'he' ? 'bg-white text-blue-600 ring-2 ring-blue-500' : 'bg-transparent',
+              language === 'he'
+                ? 'pill ring-2 ring-primary border-primary-token'
+                : 'pill opacity-90 border-primary-token',
             )}
           >
             HE
           </button>
         </div>
       </div>
-      <div className="glass-card w-full">
+      <Card className="w-full">
         <Tab.Group selectedIndex={tabIndex} onChange={setTabIndex}>
           <Tab.List className="mb-6 flex gap-2">
             <Tab
@@ -238,6 +262,7 @@ export default function AuthPage() {
                   error={errors.siEmail || null}
                   required
                   disabled={loading}
+                  autoComplete="email"
                 />
                 <PasswordInput
                   id="si-password"
@@ -246,6 +271,7 @@ export default function AuthPage() {
                   label={t('auth.password')}
                   required
                   disabled={loading}
+                  autoComplete="current-password"
                 />
                 <button type="submit" disabled={loading} className="btn-levitate w-full">
                   {t('auth.signIn')}
@@ -255,7 +281,7 @@ export default function AuthPage() {
                     type="button"
                     onClick={handleForgotPassword}
                     disabled={loading}
-                    className="text-sm text-blue-600 hover:text-blue-700 hover:underline disabled:text-gray-400"
+                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline disabled:text-gray-400 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     {t('auth.forgotPassword')}
                   </button>
@@ -289,6 +315,7 @@ export default function AuthPage() {
                   error={errors.fullName || null}
                   required
                   disabled={loading}
+                  autoComplete="name"
                 />
                 <TextInput
                   id="su-email"
@@ -299,6 +326,7 @@ export default function AuthPage() {
                   error={errors.suEmail || null}
                   required
                   disabled={loading}
+                  autoComplete="email"
                 />
                 <PasswordInput
                   id="su-password"
@@ -307,6 +335,7 @@ export default function AuthPage() {
                   label={t('auth.password')}
                   required
                   disabled={loading}
+                  autoComplete="new-password"
                 />
                 <RolePills value={role} onChange={setRole} disabled={loading} />
                 {role === 'resident' ? (
@@ -319,6 +348,7 @@ export default function AuthPage() {
                     error={errors.residencyStartDate || null}
                     required
                     disabled={loading}
+                    autoComplete="off"
                   />
                 ) : null}
                 <button type="submit" disabled={loading} className="btn-levitate w-full">
@@ -328,7 +358,7 @@ export default function AuthPage() {
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
-      </div>
+      </Card>
     </div>
   );
 }

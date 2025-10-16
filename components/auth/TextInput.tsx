@@ -9,6 +9,7 @@ type Props = {
   required?: boolean;
   disabled?: boolean;
   error?: string | null;
+  autoComplete?: string;
 };
 
 export default function TextInput({
@@ -20,6 +21,7 @@ export default function TextInput({
   required,
   disabled,
   error,
+  autoComplete,
 }: Props) {
   const errorId = `${id}-error`;
   return (
@@ -34,6 +36,7 @@ export default function TextInput({
         onChange={(e) => onChange(e.target.value)}
         required={required}
         disabled={disabled}
+        autoComplete={autoComplete}
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error ? errorId : undefined}
         className="input-levitate"

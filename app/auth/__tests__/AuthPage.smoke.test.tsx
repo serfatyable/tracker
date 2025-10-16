@@ -23,12 +23,10 @@ const {
   signInMock: vi.fn().mockResolvedValue({ uid: 'test-user-signin' }),
   signUpMock: vi.fn().mockResolvedValue({ uid: 'test-user-signup' }),
   requestPasswordResetMock: vi.fn().mockResolvedValue(undefined),
-  getCurrentUserWithProfileMock: vi
-    .fn()
-    .mockResolvedValue({
-      firebaseUser: { uid: 'test-user-signin' },
-      profile: { settings: { language: 'en' } },
-    }),
+  getCurrentUserWithProfileMock: vi.fn().mockResolvedValue({
+    firebaseUser: { uid: 'test-user-signin' },
+    profile: { settings: { language: 'en' } },
+  }),
 }));
 
 vi.mock('next/navigation', () => ({

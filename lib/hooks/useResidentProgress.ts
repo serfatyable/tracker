@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+
 import type { RotationNode } from '../../types/rotations';
 import type { TaskDoc } from '../firebase/db';
 
@@ -52,7 +53,9 @@ export function useResidentProgress(
           children: [],
         };
       }
-      const children: NodeProgress[] = (node as any).__children.map((c: RotationNode) => compute(c));
+      const children: NodeProgress[] = (node as any).__children.map((c: RotationNode) =>
+        compute(c),
+      );
       const requiredCount = children.reduce((acc, ch) => acc + ch.requiredCount, 0);
       const approvedCount = children.reduce((acc, ch) => acc + ch.approvedCount, 0);
       const pendingCount = children.reduce((acc, ch) => acc + ch.pendingCount, 0);

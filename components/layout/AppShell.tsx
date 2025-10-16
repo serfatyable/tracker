@@ -1,18 +1,24 @@
 'use client';
+import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import TopBar from '../TopBar';
+import NetworkStatusIndicator from '../ui/NetworkStatusIndicator';
 
 import BottomBar from './BottomBar';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const { data: me } = useCurrentUserProfile();
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      <div className="sticky top-0 z-40 bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-bg text-fg">
+      <div className="sticky top-0 z-40 bg-bg/95 backdrop-blur supports-[backdrop-filter]:bg-bg/80">
         <TopBar />
       </div>
       <div className="mx-auto flex w-full max-w-6xl">
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-3 sm:p-4 md:p-6 pb-20 md:pb-6" role="main">
+          {children}
+        </main>
       </div>
-      <BottomBar />
+      {me?.role === 'resident' ? <BottomBar /> : null}
+      <NetworkStatusIndicator show="offline-only" position="bottom" />
     </div>
   );
 }

@@ -7,8 +7,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function userDocPath() {
+      return "/databases/" + database + "/documents/users/" + request.auth.uid;
+    }
+
+    function hasUserDoc() {
+      return exists(path(userDocPath()));
+    }
+
     function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return hasUserDoc() ? get(path(userDocPath())).data.role : null;
     }
 
     function isTutorOrAdmin() {
@@ -25,11 +33,12 @@ service cloud.firestore {
 
     // Approval gating: only approved users get elevated role permissions
     function getUserStatus() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status;
+      return hasUserDoc() ? get(path(userDocPath())).data.status : null;
     }
 
     function isApproved() {
-      return isSignedIn() && getUserStatus() == 'approved';
+      // Treat 'active' as approved; backward-compatible with potential 'approved'
+      return isSignedIn() && (getUserStatus() in ['active', 'approved']);
     }
 
     function isAdminApproved() {
@@ -49,7 +58,17 @@ service cloud.firestore {
     }
 
     function isOwnerOfRotation(rotationId) {
-      return isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/rotations/$(rotationId)).data.ownerTutorIds);
+      return isSignedIn() && exists(/databases/$(database)/documents/rotations/$(rotationId)) && (request.auth.uid in get(/databases/$(database)/documents/rotations/$(rotationId)).data.ownerTutorIds);
+    }
+
+    // Check if tutor is assigned to a resident (for tasks)
+    // NOTE: This relies on tutorIds being stored on the task document itself
+    // If tutorIds is not present, falls back to rotation ownership check
+    function isTutorForTask(taskData) {
+      // If task has tutorIds array (from assignment), check if tutor is in it
+      return (taskData.keys().hasAll(['tutorIds']) && request.auth.uid in taskData.tutorIds) ||
+             // Fallback: check if tutor owns the rotation
+             isOwnerOfRotation(taskData.rotationId);
     }
 
     // Users can create, read, and update their own profile document at users/{uid}; approved tutors/admins can read/update any
@@ -59,12 +78,25 @@ service cloud.firestore {
       allow update: if isOwner(uid) || isTutorOrAdminApproved();
     }
 
-    // Tasks: owners can read/create/update their own tasks; approved tutors/admins have broader access
+    // Tasks: owners can read/create/update their own tasks; approved tutors/admins have restricted access
     match /tasks/{taskId} {
-      allow read: if isTutorOrAdminApproved() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      // AUTHORIZATION: Tutors can only read tasks for residents they supervise
+      // - Admins can read all tasks
+      // - Residents can only read their own tasks
+      // - Tutors can read tasks if:
+      //   a) They are listed in the task's tutorIds array (copied from assignment), OR
+      //   b) They own the rotation (as a fallback)
+      allow read: if isAdminApproved() || 
+        (isSignedIn() && resource.data.userId == request.auth.uid) ||
+        (isTutorApproved() && isTutorForTask(resource.data));
+      
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      
       // Tutors can update tasks only for rotations they own; approved admins can update any; owners (residents) can update their own
-      allow update: if isAdminApproved() || (isTutorApproved() && isOwnerOfRotation(resource.data.rotationId)) || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update: if isAdminApproved() || 
+        (isTutorApproved() && isOwnerOfRotation(resource.data.rotationId)) || 
+        (isSignedIn() && resource.data.userId == request.auth.uid);
+      
       allow delete: if isAdminApproved();
     }
 

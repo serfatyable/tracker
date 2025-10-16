@@ -17,11 +17,79 @@ body {
     'Apple Color Emoji',
     'Segoe UI Emoji';
   background:
-    radial-gradient(1200px 600px at 50% -10%, rgb(59 130 246 / 0.12), transparent 60%),
-    linear-gradient(to bottom, rgb(59 130 246 / 0.03), transparent 120px);
+    radial-gradient(1200px 600px at 50% -10%, rgb(var(--primary) / 0.1), transparent 60%),
+    linear-gradient(to bottom, rgb(var(--primary) / 0.04), transparent 120px);
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgb(0 0 0 / 0.45), transparent 60%),
+      linear-gradient(to bottom, rgb(0 0 0 / 0.25), transparent 120px);
+  }
+}
+
+/* Design tokens (Material-ish); colors as RGB tuples for alpha support */
+:root {
+  /* Colors (light) */
+  --bg: 255 255 255;
+  --fg: 17 24 39;
+  --surface: 249 250 251;
+  --primary: 59 130 246;
+  --primary-ink: 255 255 255;
+  --muted: 107 114 128;
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  /* Elevation */
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --elev-2: 0 2px 8px rgba(0, 0, 0, 0.08);
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-1: 150ms;
+  --dur-2: 200ms;
+  /* Typography */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    'Apple Color Emoji', 'Segoe UI Emoji';
+  --fs-xs: 0.75rem; /* 12px */
+  --fs-sm: 0.875rem; /* 14px */
+  --fs-md: 1rem; /* 16px */
+  --fs-lg: 1.125rem; /* 18px */
+  --fs-xl: 1.25rem; /* 20px */
+  --fs-2xl: 1.5rem; /* 24px */
+  --fs-3xl: 1.875rem; /* 30px */
+  --lh-tight: 1.25;
+  --lh-normal: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: 12 16 24;
+    --fg: 236 239 244;
+    --surface: 22 28 38;
+    --primary: 96 165 250;
+    --primary-ink: 0 0 0;
+    --muted: 160 170 184;
+  }
 }
 
 @layer components {
+  /* Compact table density helper */
+  .table-compact th,
+  .table-compact td {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  .table-compact th {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .table-compact td {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
   /* Color variables for hover effects */
   :root {
     --btn-color: 59 130 246; /* blue-500 */
@@ -31,8 +99,9 @@ body {
   }
 
   .btn-levitate {
-    @apply inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium text-gray-900 shadow-sm transition-transform transition-shadow duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed dark:text-gray-100;
-    border-color: rgb(var(--btn-color) / 0.5);
+    @apply inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium shadow-sm transition-transform transition-shadow duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed;
+    color: rgb(var(--fg));
+    border-color: rgb(var(--muted) / 0.35);
     box-shadow: 0 1px 2px 0 rgb(var(--btn-color) / 0.08);
   }
   .btn-levitate:hover {
@@ -43,31 +112,36 @@ body {
   }
 
   .tab-levitate {
-    @apply rounded border bg-transparent px-3 py-2 text-sm font-medium text-gray-900 shadow-sm transition-transform transition-shadow duration-150 ease-out hover:-translate-y-0.5 dark:text-gray-100;
-    border-color: rgb(var(--btn-color) / 0.5);
-    box-shadow: 0 1px 2px 0 rgb(var(--btn-color) / 0.08);
+    @apply rounded border px-3 py-2 text-sm font-medium shadow-sm transition-transform transition-shadow duration-150 ease-out hover:-translate-y-0.5;
+    color: rgb(var(--fg));
+    background-color: rgb(var(--surface) / 0.9);
+    border-color: rgb(var(--muted) / 0.25);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06);
   }
   .tab-levitate:hover {
-    background-color: rgb(var(--btn-color) / 0.06);
+    background-color: rgb(var(--surface) / 1);
     box-shadow:
-      0 10px 15px -3px rgb(var(--btn-color) / 0.25),
-      0 4px 6px -4px rgb(var(--btn-color) / 0.25);
+      0 8px 16px -6px rgb(0 0 0 / 0.15),
+      0 3px 6px -4px rgb(0 0 0 / 0.12);
   }
 
   .card-levitate {
-    @apply rounded border bg-transparent p-4 shadow-sm transition-transform transition-shadow duration-150 ease-out hover:-translate-y-0.5 dark:border-gray-800;
-    border-color: rgb(var(--btn-color) / 0.35);
-    box-shadow: 0 1px 2px 0 rgb(var(--btn-color) / 0.06);
+    @apply rounded border p-4 shadow-sm transition-transform transition-shadow duration-150 ease-out hover:-translate-y-0.5;
+    color: rgb(var(--fg));
+    background-color: rgb(var(--surface));
+    border-color: rgb(var(--muted) / 0.12);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06);
   }
   .card-levitate:hover {
-    background-color: rgb(var(--btn-color) / 0.03);
+    background-color: rgb(var(--surface));
     box-shadow:
-      0 10px 15px -3px rgb(var(--btn-color) / 0.2),
-      0 4px 6px -4px rgb(var(--btn-color) / 0.2);
+      0 8px 16px -6px rgb(0 0 0 / 0.15),
+      0 3px 6px -4px rgb(0 0 0 / 0.12);
   }
 
   .input-levitate {
-    @apply w-full rounded border bg-transparent px-3 py-2 shadow-sm transition-transform transition-shadow duration-150 ease-out hover:-translate-y-0.5 focus:outline-none dark:border-gray-700;
+    @apply w-full rounded border bg-transparent px-3 py-2 shadow-sm transition-transform transition-shadow duration-150 ease-out hover:-translate-y-0.5 focus:outline-none;
+    color: rgb(var(--fg));
     border-color: rgb(var(--btn-color) / 0.4);
     box-shadow: 0 1px 2px 0 rgb(var(--btn-color) / 0.08);
   }
@@ -78,17 +152,200 @@ body {
   .input-levitate:focus {
     box-shadow: 0 0 0 3px rgb(var(--btn-color) / 0.35);
   }
+}
 
-  .glass-card {
-    @apply rounded border p-6;
-    backdrop-filter: blur(10px);
-    background-color: rgb(255 255 255 / 0.55);
-    border-color: rgb(var(--btn-color) / 0.28);
-    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+/* Disabled states for form elements */
+input:disabled,
+select:disabled,
+textarea:disabled,
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input[type='checkbox']:disabled,
+input[type='radio']:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Enhanced checkbox and radio styles */
+input[type='checkbox'],
+input[type='radio'] {
+  cursor: pointer;
+  min-width: 20px;
+  min-height: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+input[type='checkbox']:focus,
+input[type='radio']:focus {
+  outline: 2px solid rgb(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Ensure proper text wrapping and overflow handling */
+.truncate-multiline {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Safe area insets for iOS notch/home indicator */
+@supports (padding: max(0px)) {
+  .safe-area-inset-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
-  @media (prefers-color-scheme: dark) {
-    .glass-card {
-      background-color: rgb(17 24 39 / 0.45);
-    }
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  /* Ensure minimum touch targets */
+  button,
+  a,
+  [role='button'],
+  input[type='checkbox'],
+  input[type='radio'],
+  select {
+    min-height: 44px;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    min-width: 24px;
+    min-height: 24px;
+  }
+
+  /* Prevent text from being too small on mobile */
+  body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Better tap highlighting */
+  * {
+    -webkit-tap-highlight-color: rgba(var(--primary), 0.1);
+  }
+}
+
+/* Hide scrollbars while maintaining scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Screen reader only - visually hidden but accessible to assistive technology */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Ensure adequate touch targets on mobile */
+@media (max-width: 768px) {
+  /* Increase clickable area for small interactive elements */
+  input[type='checkbox'],
+  input[type='radio'] {
+    min-width: 24px;
+    min-height: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Add padding to clickable text elements on mobile */
+  button,
+  a,
+  [role='button'] {
+    min-height: 44px;
+  }
+}
+
+/* Dark pill utility for controls in dark mode and low-contrast areas */
+.pill {
+  @apply inline-flex items-center gap-2 rounded-full border px-2 py-1 text-sm;
+  background-color: rgb(255 255 255 / 0.85);
+  color: rgb(var(--fg));
+  border-color: rgb(var(--muted) / 0.3);
+}
+.pill:hover {
+  filter: brightness(1.02);
+}
+.pill:focus-visible {
+  outline: 2px solid rgb(var(--primary));
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pill {
+    background-image: linear-gradient(to bottom right, rgb(17 24 39 / 0.92), rgb(3 7 18 / 0.92));
+    color: rgb(255 255 255);
+    border-color: rgb(255 255 255 / 0.18);
+  }
+}
+
+/* Brand token utilities */
+.border-primary-token {
+  border-color: rgb(var(--primary)) !important;
+}
+.text-primary-token {
+  color: rgb(var(--primary)) !important;
+}
+.ring-primary-token {
+  --tw-ring-color: rgb(var(--primary)) !important;
+}
+.neon-primary {
+  box-shadow:
+    0 0 0 2px rgb(var(--primary)),
+    0 0 12px rgb(var(--primary) / 0.6),
+    0 0 24px rgb(var(--primary) / 0.35) !important;
+}
+.text-gradient-primary {
+  background-image: linear-gradient(
+    180deg,
+    rgb(var(--primary)) 0%,
+    rgb(var(--primary)) 70%,
+    rgb(120 144 180) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* Dark shadow progression for brand wordmark */
+.text-gradient-dark {
+  background-image: linear-gradient(
+    180deg,
+    rgba(210, 216, 224, 0.95) 0%,
+    rgba(160, 170, 184, 0.92) 50%,
+    rgba(110, 120, 135, 0.9) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+/* Dark-mode readability for levitating elements */
+@media (prefers-color-scheme: dark) {
+  .btn-levitate {
+    background-image: linear-gradient(180deg, rgb(17 24 39 / 0.95), rgb(3 7 18 / 0.95));
+    color: rgb(255 255 255);
+    border-color: rgb(var(--primary) / 0.5);
+  }
+  .tab-levitate {
+    background-image: linear-gradient(180deg, rgb(17 24 39 / 0.92), rgb(3 7 18 / 0.92));
+    color: rgb(255 255 255);
+    border-color: rgb(var(--primary) / 0.45);
   }
 }

@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import TopBar from '../../../components/TopBar';
 import Button from '../../../components/ui/Button';
 import Toast from '../../../components/ui/Toast';
-import { useTranslation } from 'react-i18next';
 import { getCurrentUserWithProfile } from '../../../lib/firebase/auth';
 import { useUsersByRole } from '../../../lib/hooks/useUsersByRole';
 
@@ -15,31 +16,45 @@ export default function AdminOnCallImportPage() {
   const [errors, setErrors] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
-  const [preview, setPreview] = useState<{ assignments: number; unresolved: Unresolved[] } | null>(null);
+  const [preview, setPreview] = useState<{ assignments: number; unresolved: Unresolved[] } | null>(
+    null,
+  );
   const [resolutions, setResolutions] = useState<Record<string, string>>({}); // rawName (lower) -> userId
   const { residents, tutors } = useUsersByRole();
 
   useEffect(() => {
     (async () => {
-      const { firebaseUser, profile } = await getCurrentUserWithProfile();
-      if (!firebaseUser) return (window.location.href = '/auth');
-      if (!profile || profile.status === 'pending') return (window.location.href = '/awaiting-approval');
-      if (profile.role !== 'admin') return (window.location.href = '/auth');
+      try {
+        const { firebaseUser, profile } = await getCurrentUserWithProfile();
+        if (!firebaseUser) return (window.location.href = '/auth');
+        if (!profile || profile.status === 'pending')
+          return (window.location.href = '/awaiting-approval');
+        if (profile.role !== 'admin') return (window.location.href = '/auth');
+      } catch (error) {
+        console.error('Failed to check user profile:', error);
+        window.location.href = '/auth';
+      }
     })();
   }, []);
 
   const activeUsers = useMemo(() => {
-    return [...residents, ...tutors].map((u) => ({ id: (u as any).uid, name: (u as any).fullName || (u as any).email }));
+    return [...residents, ...tutors].map((u) => ({
+      id: (u as any).uid,
+      name: (u as any).fullName || (u as any).email,
+    }));
   }, [residents, tutors]);
 
   async function doDryRun() {
     setErrors([]);
     setImporting(true);
     try {
-      const { firebaseUser } = await getCurrentUserWithProfile();
-      const res = await fetch('/api/on-call/import?dryRun=1', {
+      // ✅ SECURE: Use authenticated fetch with Bearer token
+      const { fetchWithAuth } = await import('../../../lib/api/client');
+      const res = await fetchWithAuth('/api/on-call/import?dryRun=1', {
         method: 'POST',
-        headers: { 'content-type': 'text/plain; charset=utf-8', 'x-user-uid': firebaseUser?.uid || '' },
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+        },
         body: csvText,
       });
       const data = await res.json();
@@ -60,10 +75,13 @@ export default function AdminOnCallImportPage() {
     setErrors([]);
     setImporting(true);
     try {
-      const { firebaseUser } = await getCurrentUserWithProfile();
-      const res = await fetch('/api/on-call/import', {
+      // ✅ SECURE: Use authenticated fetch with Bearer token
+      const { fetchWithAuth } = await import('../../../lib/api/client');
+      const res = await fetchWithAuth('/api/on-call/import', {
         method: 'POST',
-        headers: { 'content-type': 'application/json; charset=utf-8', 'x-user-uid': firebaseUser?.uid || '' },
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+        },
         body: JSON.stringify({ csv: csvText, resolutions, saveAliases: true }),
       });
       const data = await res.json();
@@ -94,12 +112,19 @@ export default function AdminOnCallImportPage() {
         <Toast message={toast} onClear={() => setToast(null)} />
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">{t('ui.onCall', { defaultValue: 'On Call' })}</h1>
-          <a className="btn-levitate" href="/api/templates/on-call.csv" target="_blank" rel="noopener noreferrer">
+          <a
+            className="btn-levitate"
+            href="/api/templates/on-call.csv"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             {t('ui.downloadTemplate')}
           </a>
         </div>
-        <div className="glass-card p-4 space-y-3">
-          <div className="text-sm opacity-70">CSV with Hebrew headers; one row per date. Paste content below.</div>
+        <div className="card-levitate p-4 space-y-3">
+          <div className="text-sm opacity-70">
+            CSV with Hebrew headers; one row per date. Paste content below.
+          </div>
           <textarea
             className="w-full h-64 border rounded p-2 font-mono text-sm"
             value={csvText}
@@ -124,7 +149,7 @@ export default function AdminOnCallImportPage() {
         </div>
 
         {preview ? (
-          <div className="glass-card p-4 space-y-3">
+          <div className="card-levitate p-4 space-y-3">
             <div className="font-medium">Preview</div>
             <div className="text-sm">Assignments parsed: {preview.assignments}</div>
             <div className="text-sm">Unresolved names: {preview.unresolved.length}</div>
@@ -157,5 +182,3 @@ export default function AdminOnCallImportPage() {
     </div>
   );
 }
-
-

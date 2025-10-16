@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import TasksTab from '../../../components/tutor/tabs/TasksTab';
 
 describe('TasksTab smoke', () => {
@@ -46,7 +47,7 @@ describe('TasksTab smoke', () => {
     );
     await screen.findByText('Alice');
     const checkboxes = screen.getAllByRole('checkbox');
-    await user.click(checkboxes[0]);
+    await user.click(checkboxes[0]!);
     await user.click(screen.getByRole('button', { name: /approve/i }));
   });
 });

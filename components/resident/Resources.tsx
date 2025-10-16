@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
-import Input from '../ui/Input';
 import Button from '../ui/Button';
+import EmptyState, { DocumentIcon } from '../ui/EmptyState';
+import Input from '../ui/Input';
 
 type ResourceItem = { type: 'mcq' | 'link'; href: string; label: string; nodeId: string };
 
@@ -17,7 +19,7 @@ export default function Resources({
   const { t } = useTranslation();
   const { rotationId } = useResidentActiveRotation();
   const { nodes } = useRotationNodes(rotationId || null);
-  const [scope, setScope] = useState<'current' | 'all'>('current');
+  const [scope, setScope] = useState<'' | 'current' | 'all'>('');
   const [search, setSearch] = useState('');
   const [allNodes, setAllNodes] = useState<any[]>([]);
 
@@ -33,7 +35,7 @@ export default function Resources({
         const snap = await getDocs(collection(db, 'rotationNodes'));
         const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
         setAllNodes(list);
-      } catch (_err) {
+      } catch {
         /* noop */
       }
     })();
@@ -64,7 +66,7 @@ export default function Resources({
   useEffect(() => {
     try {
       localStorage.setItem(favoritesKey, JSON.stringify(favorites));
-    } catch (_err) {
+    } catch {
       /* noop */
     }
   }, [favorites]);
@@ -86,20 +88,24 @@ export default function Resources({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <button
-          type="button"
-          aria-label="Toggle scope"
-          title={scope === 'current' ? 'Current' : 'All'}
-          onClick={() => setScope((s) => (s === 'current' ? 'all' : 'current'))}
-          className="rounded-full px-2 py-0.5 text-xs border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
+        <select
+          className="input-levitate text-sm"
+          value={scope}
+          onChange={(e) => setScope(e.target.value as 'current' | 'all')}
         >
-          {scope === 'current' ? 'current' : 'all'}
-        </button>
+          {scope === 'current' || scope === 'all' ? null : (
+            <option value="" disabled>
+              {t('ui.allActiveRotations', { defaultValue: 'All/Active rotations' })}
+            </option>
+          )}
+          <option value="all">{t('ui.all', { defaultValue: 'All rotations' })}</option>
+          <option value="current">{t('ui.active', { defaultValue: 'Active rotations' })}</option>
+        </select>
       </div>
       {favorites.length > 0 ? (
         <div>
           <div className="text-sm font-medium mb-1 flex items-center justify-between">
-            <span>Favorites</span>
+            <span>{t('dashboard.favorites')}</span>
             <button className="text-xs text-gray-500" onClick={() => setFavOpen((v) => !v)}>
               {favOpen ? 'Hide' : 'Show'}
             </button>
@@ -151,7 +157,20 @@ export default function Resources({
         </div>
       ) : null}
       {items.length === 0 ? (
-        <div className="text-sm text-gray-500">{t('ui.noItems') || 'No items'}</div>
+        <EmptyState
+          icon={<DocumentIcon size={40} />}
+          title={t('ui.noResources', { defaultValue: 'No resources' })}
+          description={
+            search.trim()
+              ? t('ui.noResourcesMatch', {
+                  defaultValue: 'No resources match your search.',
+                })
+              : t('ui.noResourcesAvailable', {
+                  defaultValue: 'No resources are available for this rotation.',
+                })
+          }
+          className="py-6"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items

@@ -24,7 +24,7 @@ process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS =
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
   usePathname: () => '/',
-  useSearchParams: () => ({ get: () => null, toString: () => '' }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 // Minimal i18n mock for react-i18next: map common keys, otherwise humanize the last segment

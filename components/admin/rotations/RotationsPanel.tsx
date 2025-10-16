@@ -3,34 +3,31 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { createRotation, listRotations, listUsers } from '../../../lib/firebase/admin';
+import { useActiveAssignments } from '../../../lib/hooks/useActiveAssignments';
+import type { Rotation, RotationStatus } from '../../../types/rotations';
+import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
+import { Dialog, DialogHeader, DialogFooter } from '../../ui/Dialog';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
-import Badge from '../../ui/Badge';
-import { Dialog, DialogHeader, DialogFooter } from '../../ui/Dialog';
-import type { Rotation, RotationStatus } from '../../../types/rotations';
-import {
-  createRotation,
-  listRotations,
-  updateRotation,
-  listUsers,
-} from '../../../lib/firebase/admin';
-import TemplateImportDialog from './TemplateImportDialog';
-import { useActiveAssignments } from '../../../lib/hooks/useActiveAssignments';
+
+import MaintenanceDialog from './MaintenanceDialog';
 import RotationOwnersEditor from './RotationOwnersEditor';
+import TemplateImportDialog from './TemplateImportDialog';
 
 type Props = {
   onOpenEditor: (rotationId: string) => void;
 };
 
-export default function RotationsPanel({ onOpenEditor }: Props) {
+export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<RotationStatus | ''>('');
   const [items, setItems] = useState<Rotation[]>([] as any);
-  const [cursor, setCursor] = useState<any | undefined>(undefined);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [_cursor, setCursor] = useState<any | undefined>(undefined);
+  const [_hasMore, setHasMore] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<{
     name: string;
@@ -39,7 +36,11 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
     status: RotationStatus;
   }>({ name: '', startDate: '', endDate: '', status: 'active' });
   const [openImport, setOpenImport] = useState(false);
+  const [importDialogRotationId, setImportDialogRotationId] = useState<string | null>(null);
   const [ownersDialog, setOwnersDialog] = useState<string | null>(null);
+  const [maintenanceDialog, setMaintenanceDialog] = useState<{ id: string; name: string } | null>(
+    null,
+  );
   const [tutors, setTutors] = useState<Array<{ uid: string; fullName?: string }>>([]);
   const { assignments } = useActiveAssignments();
 
@@ -58,7 +59,7 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
         try {
           const u = await listUsers({ role: 'tutor', status: 'active', limit: 200 });
           setTutors((u.items || []).map((x: any) => ({ uid: x.uid, fullName: x.fullName })));
-        } catch (_err) {
+        } catch {
           /* noop */
         }
       } finally {
@@ -100,11 +101,7 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
           >
             {t('ui.create')}
           </Button>
-          <a
-            href="/api/templates/rotation.csv"
-            className="btn-levitate inline-flex items-center rounded border px-3 py-1 text-sm hover:bg-[rgba(0,150,255,0.08)] border-[rgba(0,87,184,0.35)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
-            download
-          >
+          <a href="/api/templates/rotation.csv" className="btn-levitate" download>
             {t('ui.downloadTemplate') as string}
           </a>
           <Button
@@ -129,7 +126,7 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
           return (
             <div
               key={r.id}
-              className="glass-card card-levitate p-4"
+              className="card-levitate p-4"
               style={{
                 borderColor: (r.color || '#93c5fd') + '66',
                 boxShadow: r.color ? `0 1px 2px 0 ${r.color}22` : undefined,
@@ -137,7 +134,9 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
             >
               <div className="flex items-center justify-between">
                 <div className="font-semibold">{name}</div>
-                <div className="text-sm opacity-70">{count} residents</div>
+                <div className="text-sm opacity-70">
+                  {count} {t('ui.residents_plural')}
+                </div>
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {owners.length ? (
@@ -147,37 +146,48 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
                     </Badge>
                   ))
                 ) : (
-                  <span className="text-xs opacity-60">No owners</span>
+                  <span className="text-xs opacity-60">{t('ui.noOwners')}</span>
                 )}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
                   variant="outline"
-                  onClick={() => window.open(`/curriculum?rotation=${r.id}`, '_self')}
+                  onClick={() => _onOpenEditor(r.id)}
                 >
-                  Open curriculum
+                  {t('ui.openCurriculum')}
                 </Button>
                 <Button
                   className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
                   variant="outline"
                   onClick={() => setOwnersDialog(r.id)}
                 >
-                  Manage owners
+                  {t('ui.manageOwners')}
                 </Button>
                 <Button
                   className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
                   variant="outline"
-                  onClick={() => setOpenImport(true)}
+                  onClick={() => {
+                    setImportDialogRotationId(r.id);
+                    setOpenImport(true);
+                  }}
                 >
-                  Import CSV
+                  {t('ui.importCsv')}
                 </Button>
                 <Button
                   className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
                   variant="outline"
                   onClick={() => window.open(`/admin?tab=overview`, '_self')}
                 >
-                  View residents
+                  {t('ui.viewResidents')}
+                </Button>
+                <Button
+                  className="btn-levitate border-amber-500 hover:bg-amber-50 text-amber-700 dark:border-amber-500 dark:text-amber-300 dark:hover:bg-amber-900/30"
+                  variant="outline"
+                  onClick={() => setMaintenanceDialog({ id: r.id, name })}
+                  title="Fix duplicates and invalid data"
+                >
+                  🔧 Maintenance
                 </Button>
               </div>
             </div>
@@ -203,18 +213,32 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
           </Button>
           <Button
             onClick={async () => {
-              const { Timestamp } = await import('firebase/firestore');
-              // Dates irrelevant for admin; store placeholders
-              const start = Timestamp.fromDate(new Date());
-              const end = Timestamp.fromDate(new Date());
-              await createRotation({
-                name: form.name,
-                startDate: start,
-                endDate: end,
-                status: 'inactive',
-              });
-              setOpen(false);
-              setSearch(''); // trigger refresh
+              // Validate: name must not be empty
+              if (!form.name.trim()) {
+                alert('Please enter a rotation name');
+                return;
+              }
+
+              try {
+                const { Timestamp } = await import('firebase/firestore');
+                // Dates irrelevant for admin; store placeholders
+                const start = Timestamp.fromDate(new Date());
+                const end = Timestamp.fromDate(new Date());
+                await createRotation({
+                  name: form.name,
+                  startDate: start,
+                  endDate: end,
+                  status: 'inactive',
+                });
+                setOpen(false);
+                setSearch(''); // trigger refresh
+              } catch (error) {
+                console.error('Failed to create rotation:', error);
+                alert(
+                  'Failed to create rotation: ' +
+                    (error instanceof Error ? error.message : String(error)),
+                );
+              }
             }}
           >
             {t('ui.create')}
@@ -223,11 +247,16 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
       </Dialog>
       <TemplateImportDialog
         open={openImport}
-        onClose={() => setOpenImport(false)}
-        onImported={(rid) => {
+        onClose={() => {
           setOpenImport(false);
+          setImportDialogRotationId(null);
+        }}
+        onImported={() => {
+          setOpenImport(false);
+          setImportDialogRotationId(null);
           setSearch('');
         }}
+        rotationId={importDialogRotationId || undefined}
       />
 
       <Dialog open={!!ownersDialog} onClose={() => setOwnersDialog(null)}>
@@ -241,11 +270,20 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
           </Button>
         </DialogFooter>
       </Dialog>
+
+      {maintenanceDialog && (
+        <MaintenanceDialog
+          open={true}
+          onClose={() => setMaintenanceDialog(null)}
+          rotationId={maintenanceDialog.id}
+          rotationName={maintenanceDialog.name}
+        />
+      )}
     </div>
   );
 }
 
-function formatDates(r: any) {
+function _formatDates(r: any) {
   try {
     const s = r.startDate?.toDate ? r.startDate.toDate() : new Date(r.startDate);
     const e = r.endDate?.toDate ? r.endDate.toDate() : new Date(r.endDate);

@@ -35,4 +35,7 @@ export type RotationNode = {
   requiredCount?: number;
   links?: Array<{ label: string; href: string }>;
   mcqUrl?: string;
+  resources?: string; // Free text field for books, videos, etc.
+  notes_en?: string; // English notes (max 500 chars)
+  notes_he?: string; // Hebrew notes (max 500 chars)
 };

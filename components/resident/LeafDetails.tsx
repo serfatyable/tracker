@@ -1,24 +1,29 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import type { RotationNode } from '../../types/rotations';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
 import { getAuth } from 'firebase/auth';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { createTask, listRecentTasksByLeaf } from '../../lib/firebase/db';
-import { useTranslation } from 'react-i18next';
+import { logError } from '../../lib/utils/logger';
+import type { RotationNode } from '../../types/rotations';
+import Button from '../ui/Button';
+import { Dialog, DialogHeader, DialogFooter } from '../ui/Dialog';
+import EmptyState, { DocumentIcon } from '../ui/EmptyState';
+import Input from '../ui/Input';
 import Toast from '../ui/Toast';
 
 type Props = { leaf: RotationNode | null; canLog: boolean };
 
 export default function LeafDetails({ leaf, canLog }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [count, setCount] = useState(1);
   const [note, setNote] = useState('');
   const [recent, setRecent] = useState<any[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -33,11 +38,14 @@ export default function LeafDetails({ leaf, canLog }: Props) {
       try {
         const list = await listRecentTasksByLeaf({ userId: uid, itemId: leaf.id, limit: 5 });
         setRecent(list);
+      } catch (error) {
+        logError('Failed to load recent tasks for leaf', 'LeafDetails', error as Error);
+        setRecent([]);
       } finally {
         setLoadingRecent(false);
       }
     })();
-  }, [leaf && leaf.id]);
+  }, [leaf]);
 
   const required = leaf?.requiredCount || 0;
   const progress = useMemo(() => {
@@ -72,21 +80,53 @@ export default function LeafDetails({ leaf, canLog }: Props) {
         requiredCount: required,
         note: note || undefined,
       });
-      setToast(t('ui.logSuccess') || 'Logged +1');
+      setToast(
+        t('ui.logSuccess', { defaultValue: 'Activity logged successfully!' }) || 'Logged +1',
+      );
       setNote('');
       setCount(1);
       const list = await listRecentTasksByLeaf({ userId: uid, itemId: leaf.id, limit: 5 });
       setRecent(list);
-    } catch (e: any) {
-      setToast(t('ui.logError') || 'Failed to log');
+    } catch {
+      setToast(
+        t('ui.logError', { defaultValue: 'Failed to log activity. Please try again.' }) ||
+          'Failed to log',
+      );
     } finally {
       setSaving(false);
     }
   }
 
+  const notes = i18n.language === 'he' ? leaf.notes_he : leaf.notes_en;
+
   return (
     <div className="rounded-md border border-gray-200 dark:border-gray-800 p-4 space-y-4">
-      <div className="text-lg font-medium">{leaf.name}</div>
+      <div className="flex items-center gap-2">
+        <div className="text-lg font-medium">{leaf.name}</div>
+        {notes ? (
+          <button
+            onClick={() => setNotesDialogOpen(true)}
+            className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 rounded-full p-1"
+            title={t('ui.viewNotes') as string}
+            aria-label="View notes"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        ) : null}
+      </div>
       <div className="space-y-2">
         <div className="text-sm text-gray-600">
           {t('ui.required')}: {required}
@@ -105,8 +145,21 @@ export default function LeafDetails({ leaf, canLog }: Props) {
           </a>
         </div>
       ) : null}
+      {leaf.resources ? (
+        <div className="space-y-1">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('ui.resources')}
+          </div>
+          <div className="text-sm whitespace-pre-line">
+            <Linkify text={leaf.resources} />
+          </div>
+        </div>
+      ) : null}
       {(leaf.links || []).length ? (
         <div className="space-y-1">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('ui.links')}
+          </div>
           {(leaf.links || []).map((lnk, i) => (
             <div key={i} className="text-sm">
               <a
@@ -153,7 +206,14 @@ export default function LeafDetails({ leaf, canLog }: Props) {
         {loadingRecent ? (
           <div className="text-sm text-gray-500">{t('ui.loadingItems')}</div>
         ) : recent.length === 0 ? (
-          <div className="text-sm text-gray-500">{t('ui.noRecentLogs') || 'No recent logs'}</div>
+          <EmptyState
+            icon={<DocumentIcon size={36} />}
+            title={t('ui.noRecentLogs') || 'No recent logs'}
+            description={t('ui.logFirstActivity', {
+              defaultValue: 'Log your first activity to track progress.',
+            })}
+            className="py-4"
+          />
         ) : (
           <div className="text-sm">
             {recent.map((t) => (
@@ -168,7 +228,44 @@ export default function LeafDetails({ leaf, canLog }: Props) {
         )}
       </div>
       <Toast message={toast} onClear={() => setToast(null)} />
+
+      <Dialog open={notesDialogOpen} onClose={() => setNotesDialogOpen(false)}>
+        <DialogHeader>{t('ui.notes')}</DialogHeader>
+        <div className="p-4 space-y-3">
+          <div className="text-sm whitespace-pre-wrap">{notes || t('ui.noNotes')}</div>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => setNotesDialogOpen(false)}>{t('ui.close')}</Button>
+        </DialogFooter>
+      </Dialog>
     </div>
+  );
+}
+
+function Linkify({ text }: { text: string }) {
+  // Detect URLs and make them clickable
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.match(urlRegex)) {
+          return (
+            <a
+              key={i}
+              href={part}
+              target="_blank"
+              rel="noreferrer"
+              className="text-teal-700 underline hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300"
+            >
+              {part}
+            </a>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
   );
 }
 

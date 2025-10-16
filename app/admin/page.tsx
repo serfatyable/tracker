@@ -1,60 +1,70 @@
 'use client';
-import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import SettingsPanel from '../../components/settings/SettingsPanel';
-import TopBar from '../../components/TopBar';
-import RotationsPanel from '../../components/admin/rotations/RotationsPanel';
-import KPICards from '../../components/admin/overview/KPICards';
-import PetitionsTable from '../../components/admin/overview/PetitionsTable';
-import ResidentsByRotation from '../../components/admin/overview/ResidentsByRotation';
-import TutorLoadTable from '../../components/admin/overview/TutorLoadTable';
-import UnassignedQueues from '../../components/admin/overview/UnassignedQueues';
-import { useActiveAssignments } from '../../lib/hooks/useActiveAssignments';
-import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
-import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
-import RotationTree from '../../components/admin/rotations/RotationTree';
-import RotationOwnersEditor from '../../components/admin/rotations/RotationOwnersEditor';
+import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
+import AppShell from '../../components/layout/AppShell';
+import Avatar from '../../components/ui/Avatar';
+import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
+import { Dialog, DialogHeader, DialogFooter } from '../../components/ui/Dialog';
+import Drawer from '../../components/ui/Drawer';
 import Select from '../../components/ui/Select';
 import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/Table';
 import { TabsList, TabsTrigger } from '../../components/ui/Tabs';
-import AdminReflectionsTabs from '../../components/admin/reflections/AdminReflectionsTabs';
-import Badge from '../../components/ui/Badge';
-import Drawer from '../../components/ui/Drawer';
-import { Dialog, DialogHeader, DialogFooter } from '../../components/ui/Dialog';
+import TextField from '../../components/ui/TextField';
 import Toast from '../../components/ui/Toast';
-import TodayPanel from '../../components/on-call/TodayPanel';
-import NextShiftCard from '../../components/on-call/NextShiftCard';
-import TeamForDate from '../../components/on-call/TeamForDate';
-import MiniCalendar from '../../components/on-call/MiniCalendar';
-import { useMorningMeetingsUpcoming, useMorningMeetingsMonth } from '../../lib/hooks/useMorningClasses';
-import Avatar from '../../components/ui/Avatar';
 import {
   listUsers,
   listTasks,
   updateUsersStatus,
   updateUsersRole,
   updateTasksStatus,
-  ensureDefaultReflectionTemplatesSeeded,
 } from '../../lib/firebase/admin';
 import { getCurrentUserWithProfile } from '../../lib/firebase/auth';
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { getFirebaseStatus } from '../../lib/firebase/client';
+import { useActiveAssignments } from '../../lib/hooks/useActiveAssignments';
+import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
+import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import {
+  useMorningMeetingsUpcoming,
+  useMorningMeetingsMonth,
+} from '../../lib/hooks/useMorningClasses';
+import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
 import type { Role, UserProfile } from '../../types/auth';
 
+// Lazy load heavy tab components
+const KPICards = lazy(() => import('../../components/admin/overview/KPICards'));
+const PetitionsTable = lazy(() => import('../../components/admin/overview/PetitionsTable'));
+const ResidentsByRotation = lazy(
+  () => import('../../components/admin/overview/ResidentsByRotation'),
+);
+const TutorLoadTable = lazy(() => import('../../components/admin/overview/TutorLoadTable'));
+const UnassignedQueues = lazy(() => import('../../components/admin/overview/UnassignedQueues'));
+const AdminReflectionsTabs = lazy(
+  () => import('../../components/admin/reflections/AdminReflectionsTabs'),
+);
+const RotationOwnersEditor = lazy(
+  () => import('../../components/admin/rotations/RotationOwnersEditor'),
+);
+const RotationsPanel = lazy(() => import('../../components/admin/rotations/RotationsPanel'));
+const RotationTree = lazy(() => import('../../components/admin/rotations/RotationTree'));
+const MiniCalendar = lazy(() => import('../../components/on-call/MiniCalendar'));
+const NextShiftCard = lazy(() => import('../../components/on-call/NextShiftCard'));
+const TeamForDate = lazy(() => import('../../components/on-call/TeamForDate'));
+const TodayPanel = lazy(() => import('../../components/on-call/TodayPanel'));
+const SettingsPanel = lazy(() => import('../../components/settings/SettingsPanel'));
+
 export default function AdminDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
-  const pathname = usePathname();
   const firebaseOk = getFirebaseStatus().ok;
   const [tab, setTab] = useState<
     'overview' | 'users' | 'tasks' | 'rotations' | 'reflections' | 'settings' | 'morning' | 'oncall'
   >('overview');
   const [openRotationId, setOpenRotationId] = useState<string | null>(null);
+  const [openRotationName, setOpenRotationName] = useState<string>('');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [userSel, setUserSel] = useState<Record<string, boolean>>({});
   const [userSearch, setUserSearch] = useState('');
@@ -110,6 +120,17 @@ export default function AdminDashboard() {
   const [taskCursor, setTaskCursor] = useState<any | undefined>(undefined);
   const [hasMoreTasks, setHasMoreTasks] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [density, setDensity] = useState<'normal' | 'compact'>(() => {
+    if (typeof window === 'undefined') return 'normal';
+    return (localStorage.getItem('ui_density') as 'normal' | 'compact') || 'normal';
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('ui_density', density);
+    } catch {
+      // localStorage may not be available
+    }
+  }, [density]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -128,7 +149,7 @@ export default function AdminDashboard() {
           setUserCursor(u.lastCursor as any);
           setHasMoreUsers((u.items?.length || 0) >= 25);
           setUserSel({});
-        } catch (err) {
+        } catch {
           // Fallback: minimal query to avoid index issues
           const u = await listUsers({ limit: 25 });
           setUsers(u.items);
@@ -165,33 +186,47 @@ export default function AdminDashboard() {
         if (typeof mod.ensureDefaultReflectionTemplatesSeeded === 'function') {
           await mod.ensureDefaultReflectionTemplatesSeeded();
         }
-      } catch (e) {
-        console.error('Core rotations seeding failed', e);
+      } catch {
+        // Seeding failed - continue anyway
       }
       await refresh();
     })();
   }, [router, firebaseOk, refresh]);
 
+  // Fetch rotation name when opening rotation editor
+  useEffect(() => {
+    if (!openRotationId) {
+      setOpenRotationName('');
+      return;
+    }
+
+    (async () => {
+      try {
+        const { listRotations } = await import('../../lib/firebase/admin');
+        const result = await listRotations({ limit: 100 });
+        const rotation = result.items.find((r: any) => r.id === openRotationId);
+
+        if (rotation) {
+          const name = String(
+            i18n.language === 'he'
+              ? (rotation as any).name_he || (rotation as any).name_en || (rotation as any).name
+              : (rotation as any).name_en || (rotation as any).name,
+          );
+          setOpenRotationName(name);
+        } else {
+          setOpenRotationName('Unknown Rotation');
+        }
+      } catch (error) {
+        console.error('Failed to fetch rotation name:', error);
+        setOpenRotationName('Rotation');
+      }
+    })();
+  }, [openRotationId, i18n.language]);
+
   const filteredUsers = users; // server-side search
 
   function idsFrom(sel: Record<string, boolean>) {
     return Object.keys(sel).filter((k) => sel[k]);
-  }
-
-  async function bulkApproveUsers() {
-    if (!idsFrom(userSel).length) return;
-    await updateUsersStatus({ userIds: idsFrom(userSel), status: 'active' });
-    await refresh();
-  }
-  async function bulkDisableUsers() {
-    if (!idsFrom(userSel).length) return;
-    await updateUsersStatus({ userIds: idsFrom(userSel), status: 'disabled' });
-    await refresh();
-  }
-  async function bulkChangeRole(role: Role) {
-    if (!idsFrom(userSel).length) return;
-    await updateUsersRole({ userIds: idsFrom(userSel), role });
-    await refresh();
   }
 
   function openUserDrawer(u: UserProfile) {
@@ -212,31 +247,46 @@ export default function AdminDashboard() {
     if (!confirmTarget || !confirmAction) return;
     const target = confirmTarget;
     setConfirmOpen(false);
-    if (confirmAction === 'approve') {
-      await updateUsersStatus({ userIds: [target.uid], status: 'active' });
-      await refresh();
-    } else if (confirmAction === 'disable') {
-      const prev = target.status;
-      await updateUsersStatus({ userIds: [target.uid], status: 'disabled' });
-      setLastAction({ type: 'disable', userId: target.uid, prevStatus: prev });
-      setToastMessage('Disabled user');
-      await refresh();
-    } else if (confirmAction === 'role' && confirmRole) {
-      await updateUsersRole({ userIds: [target.uid], role: confirmRole });
-      await refresh();
+    try {
+      if (confirmAction === 'approve') {
+        await updateUsersStatus({ userIds: [target.uid], status: 'active' });
+        await refresh();
+      } else if (confirmAction === 'disable') {
+        const prev = target.status;
+        await updateUsersStatus({ userIds: [target.uid], status: 'disabled' });
+        setLastAction({ type: 'disable', userId: target.uid, prevStatus: prev });
+        setToastMessage(t('toasts.disabledUser'));
+        await refresh();
+      } else if (confirmAction === 'role' && confirmRole) {
+        await updateUsersRole({ userIds: [target.uid], role: confirmRole });
+        await refresh();
+      }
+    } catch (error) {
+      console.error('Failed to execute action:', error);
+      setToastMessage(
+        t('toasts.failed') + ': ' + (error instanceof Error ? error.message : String(error)),
+      );
+    } finally {
+      setConfirmAction(null);
+      setConfirmTarget(null);
+      setConfirmRole(null);
     }
-    setConfirmAction(null);
-    setConfirmTarget(null);
-    setConfirmRole(null);
   }
 
   async function undoLast() {
     if (!lastAction) return;
-    if (lastAction.type === 'disable') {
-      await updateUsersStatus({ userIds: [lastAction.userId], status: lastAction.prevStatus });
-      await refresh();
+    try {
+      if (lastAction.type === 'disable') {
+        await updateUsersStatus({ userIds: [lastAction.userId], status: lastAction.prevStatus });
+        await refresh();
+      }
+      setLastAction(null);
+    } catch (error) {
+      console.error('Failed to undo action:', error);
+      setToastMessage(
+        t('toasts.failedToUndo') + ': ' + (error instanceof Error ? error.message : String(error)),
+      );
     }
-    setLastAction(null);
   }
 
   async function loadMoreUsers() {
@@ -256,6 +306,13 @@ export default function AdminDashboard() {
       setUserCursor(u.lastCursor as any);
       setHasMoreUsers((u.items?.length || 0) >= 25);
       setUserSel({});
+    } catch (error) {
+      console.error('Failed to load more users:', error);
+      setToastMessage(
+        t('toasts.failedToLoadMoreUsers') +
+          ': ' +
+          (error instanceof Error ? error.message : String(error)),
+      );
     } finally {
       setLoadingMoreUsers(false);
     }
@@ -271,19 +328,37 @@ export default function AdminDashboard() {
   }
   async function bulkApproveTasks() {
     if (!idsFrom(taskSel).length) return;
-    await updateTasksStatus({ taskIds: idsFrom(taskSel), status: 'approved' });
-    await refresh();
+    try {
+      await updateTasksStatus({ taskIds: idsFrom(taskSel), status: 'approved' });
+      await refresh();
+    } catch (error) {
+      console.error('Failed to approve tasks:', error);
+      setToastMessage(
+        t('toasts.failedToApproveTasks') +
+          ': ' +
+          (error instanceof Error ? error.message : String(error)),
+      );
+    }
   }
   async function bulkRejectTasks() {
     if (!idsFrom(taskSel).length) return;
-    await updateTasksStatus({ taskIds: idsFrom(taskSel), status: 'rejected' });
-    await refresh();
+    try {
+      await updateTasksStatus({ taskIds: idsFrom(taskSel), status: 'rejected' });
+      await refresh();
+    } catch (error) {
+      console.error('Failed to reject tasks:', error);
+      setToastMessage(
+        t('toasts.failedToRejectTasks') +
+          ': ' +
+          (error instanceof Error ? error.message : String(error)),
+      );
+    }
   }
 
   if (!firebaseOk) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="glass-card p-4 text-sm text-red-700">
+        <div className="card-levitate p-4 text-sm text-red-700">
           Firebase is not configured. Check your .env.local.
         </div>
       </div>
@@ -291,12 +366,12 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div>
-      <TopBar />
+    <AppShell>
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-stretch justify-start p-6">
-        <div className="glass-card w-full p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <TabsList>
+        <div className="w-full">
+          <h1 className="sr-only">{t('ui.adminDashboard', { defaultValue: 'Admin Dashboard' })}</h1>
+          <div className="mb-4 flex items-center justify-between">
+            <TabsList>
               <TabsTrigger active={tab === 'overview'} onClick={() => setTab('overview')}>
                 {t('ui.dashboard') || 'Dashboard'}
               </TabsTrigger>
@@ -310,39 +385,27 @@ export default function AdminDashboard() {
                 {t('ui.rotations')}
               </TabsTrigger>
               <TabsTrigger active={tab === 'reflections'} onClick={() => setTab('reflections')}>
-                Reflections
+                {t('ui.reflections')}
               </TabsTrigger>
-                <button
-                  className={`tab-levitate px-3 py-2 text-sm ${tab === 'morning' ? 'ring-1 ring-blue-500' : ''}`}
-                  onClick={() => setTab('morning')}
-                >
-                  {t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}
-                </button>
-                <button
-                  className={`tab-levitate px-3 py-2 text-sm ${tab === 'oncall' ? 'ring-1 ring-blue-500' : ''}`}
-                  onClick={() => setTab('oncall')}
-                >
-                  {t('ui.onCall', { defaultValue: 'On Call' })}
-                </button>
-                <Link
-                  href="/on-call"
-                  className={`tab-levitate px-3 py-2 text-sm ${
-                    pathname?.startsWith('/on-call') ? 'ring-1 ring-blue-500' : ''
-                  }`}
-                >
-                  {t('ui.onCall', { defaultValue: 'On Call' })}
-                </Link>
+              <TabsTrigger active={tab === 'morning'} onClick={() => setTab('morning')}>
+                {t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}
+              </TabsTrigger>
+              <TabsTrigger active={tab === 'oncall'} onClick={() => setTab('oncall')}>
+                {t('ui.onCall', { defaultValue: 'On Call' })}
+              </TabsTrigger>
               <TabsTrigger active={tab === 'settings'} onClick={() => setTab('settings')}>
                 {t('ui.settings')}
               </TabsTrigger>
-              </TabsList>
+            </TabsList>
             <div />
           </div>
 
           {tab === 'overview' ? (
             <div className="space-y-4">
-              <div className="glass-card p-4">
-                <PetitionsTable />
+              <div className="card-levitate p-4">
+                <Suspense fallback={<SpinnerSkeleton />}>
+                  <PetitionsTable />
+                </Suspense>
               </div>
               <OverviewTab />
             </div>
@@ -354,7 +417,7 @@ export default function AdminDashboard() {
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex w-full items-center gap-2">
-                  <Input
+                  <TextField
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     placeholder={(t('ui.searchUsers') as string) + '...'}
@@ -373,15 +436,24 @@ export default function AdminDashboard() {
                     onChange={(e) => setStatusFilter((e.target.value || '') as any)}
                   >
                     <option value="">{t('ui.status')}</option>
-                    <option value="pending">Pending</option>
-                    <option value="active">Active</option>
-                    <option value="disabled">Disabled</option>
+                    <option value="pending">{t('ui.pending')}</option>
+                    <option value="active">{t('ui.active')}</option>
+                    <option value="disabled">{t('ui.disabled')}</option>
                   </Select>
                 </div>
-                {/* bulk actions removed; actions live in the drawer */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    className="pill text-xs px-2 py-1"
+                    onClick={() => setDensity((d) => (d === 'normal' ? 'compact' : 'normal'))}
+                    aria-pressed={density === 'compact'}
+                  >
+                    {density === 'compact' ? t('ui.compact') : t('ui.normal')}
+                  </Button>
+                </div>
               </div>
               <div className="overflow-x-auto">
-                <Table>
+                <Table className={density === 'compact' ? 'table-compact' : ''}>
                   <THead>
                     <TR>
                       <TH className="w-8">
@@ -428,7 +500,18 @@ export default function AdminDashboard() {
                   </THead>
                   <TBody>
                     {filteredUsers.map((u) => (
-                      <TR key={u.uid} className="cursor-pointer" onClick={() => openUserDrawer(u)}>
+                      <TR
+                        key={u.uid}
+                        className="cursor-pointer"
+                        onClick={() => openUserDrawer(u)}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openUserDrawer(u);
+                          }
+                        }}
+                      >
                         <TD className="w-8" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
@@ -550,10 +633,10 @@ export default function AdminDashboard() {
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <Select value={taskFilter} onChange={(e) => setTaskFilter(e.target.value as any)}>
-                  <option value="">All</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="">{t('ui.all')}</option>
+                  <option value="pending">{t('ui.pending')}</option>
+                  <option value="approved">{t('ui.approved')}</option>
+                  <option value="rejected">{t('ui.rejected')}</option>
                 </Select>
                 <div className="flex items-center gap-2">
                   <Button
@@ -570,59 +653,76 @@ export default function AdminDashboard() {
                     onClick={bulkRejectTasks}
                     disabled={loading || idsFrom(taskSel).length === 0}
                   >
-                    Reject
+                    {t('ui.reject')}
                   </Button>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <Table>
-                  <THead>
-                    <TR>
-                      <TH>
-                        <input
-                          type="checkbox"
-                          checked={tasks.length > 0 && tasks.every((t) => taskSel[t.id])}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            const next: Record<string, boolean> = {};
-                            tasks.forEach((t) => {
-                              next[t.id] = checked;
-                            });
-                            setTaskSel(next);
-                          }}
-                        />
-                      </TH>
-                      <TH>User</TH>
-                      <TH>Rotation</TH>
-                      <TH>Item</TH>
-                      <TH>Count</TH>
-                      <TH>Required</TH>
-                      <TH>{t('ui.status')}</TH>
-                    </TR>
-                  </THead>
-                  <TBody>
-                    {tasks.map((t) => (
-                      <TR key={t.id}>
-                        <TD>
+              {tasks.length === 0 && !loading ? (
+                <div className="rounded-lg border-2 border-dashed border-muted/30 bg-surface/30 p-8 text-center">
+                  <h2 className="text-base font-semibold text-fg mb-1">
+                    {t('overview.noTasks', { defaultValue: 'No tasks found' })}
+                  </h2>
+                  <p className="text-sm text-muted">
+                    {taskFilter
+                      ? t('overview.tryDifferentFilter', {
+                          defaultValue: 'Try a different filter to see tasks.',
+                        })
+                      : t('overview.tasksAppearHere', {
+                          defaultValue: 'Resident tasks will appear here for review.',
+                        })}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <THead>
+                      <TR>
+                        <TH>
                           <input
                             type="checkbox"
-                            checked={!!taskSel[t.id]}
-                            onChange={(e) =>
-                              setTaskSel((s) => ({ ...s, [t.id]: e.target.checked }))
-                            }
+                            checked={tasks.length > 0 && tasks.every((t) => taskSel[t.id])}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const next: Record<string, boolean> = {};
+                              tasks.forEach((t) => {
+                                next[t.id] = checked;
+                              });
+                              setTaskSel(next);
+                            }}
                           />
-                        </TD>
-                        <TD>{t.userId}</TD>
-                        <TD>{t.rotationId}</TD>
-                        <TD>{t.itemId}</TD>
-                        <TD>{t.count}</TD>
-                        <TD>{t.requiredCount}</TD>
-                        <TD>{t.status}</TD>
+                        </TH>
+                        <TH>{t('ui.user')}</TH>
+                        <TH>{t('ui.rotation')}</TH>
+                        <TH>{t('ui.item')}</TH>
+                        <TH>{t('ui.count')}</TH>
+                        <TH>{t('ui.required')}</TH>
+                        <TH>{t('ui.status')}</TH>
                       </TR>
-                    ))}
-                  </TBody>
-                </Table>
-              </div>
+                    </THead>
+                    <TBody>
+                      {tasks.map((t) => (
+                        <TR key={t.id}>
+                          <TD>
+                            <input
+                              type="checkbox"
+                              checked={!!taskSel[t.id]}
+                              onChange={(e) =>
+                                setTaskSel((s) => ({ ...s, [t.id]: e.target.checked }))
+                              }
+                            />
+                          </TD>
+                          <TD>{t.userId}</TD>
+                          <TD>{t.rotationId}</TD>
+                          <TD>{t.itemId}</TD>
+                          <TD>{t.count}</TD>
+                          <TD>{t.requiredCount}</TD>
+                          <TD>{t.status}</TD>
+                        </TR>
+                      ))}
+                    </TBody>
+                  </Table>
+                </div>
+              )}
               <div className="flex justify-end gap-2">
                 <Button
                   disabled={loading}
@@ -660,31 +760,69 @@ export default function AdminDashboard() {
           ) : tab === 'rotations' ? (
             <div className="space-y-3">
               {openRotationId ? (
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <button className="btn-levitate" onClick={() => setOpenRotationId(null)}>
-                      {t('ui.back')}
-                    </button>
+                <Suspense fallback={<SpinnerSkeleton />}>
+                  <div className="space-y-3">
+                    {/* Debug: Confirm editor is rendering */}
+                    {console.log(
+                      '✅ RENDERING ROTATION EDITOR for ID:',
+                      openRotationId,
+                      'Name:',
+                      openRotationName,
+                    )}
+
+                    {/* Rotation Editor Header */}
+                    <div className="card-levitate p-6 bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-950/30 dark:to-teal-950/30 border-l-4 border-teal-500">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="text-3xl">📚</span>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                              {openRotationName || 'Loading...'}
+                            </h2>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 ml-12">
+                            Editing curriculum structure and requirements
+                          </p>
+                        </div>
+                        <button
+                          className="btn-levitate px-4 py-2 text-sm font-medium hover:scale-105 transition-transform"
+                          onClick={() => {
+                            console.log('🔙 Back button clicked - closing editor');
+                            setOpenRotationId(null);
+                          }}
+                        >
+                          ← Back to Rotations
+                        </button>
+                      </div>
+                    </div>
+
+                    <RotationOwnersEditor rotationId={openRotationId} />
+                    <RotationTree rotationId={openRotationId} />
                   </div>
-                  <RotationOwnersEditor rotationId={openRotationId} />
-                  <RotationTree rotationId={openRotationId} />
-                </div>
+                </Suspense>
               ) : (
-                <RotationsPanel onOpenEditor={setOpenRotationId} />
+                <Suspense fallback={<SpinnerSkeleton />}>
+                  {console.log('📋 RENDERING ROTATIONS PANEL (list view)')}
+                  <RotationsPanel onOpenEditor={setOpenRotationId} />
+                </Suspense>
               )}
             </div>
           ) : tab === 'reflections' ? (
-            <div className="space-y-3">
-              <AdminReflectionsTabs />
-            </div>
+            <Suspense fallback={<SpinnerSkeleton />}>
+              <div className="space-y-3">
+                <AdminReflectionsTabs />
+              </div>
+            </Suspense>
           ) : (
-            <div className="space-y-3">
-              <SettingsPanel />
-            </div>
+            <Suspense fallback={<SpinnerSkeleton />}>
+              <div className="space-y-3">
+                <SettingsPanel />
+              </div>
+            </Suspense>
           )}
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
 
@@ -694,31 +832,40 @@ function OverviewTab() {
   const { rotations } = useActiveRotations();
 
   return (
-    <div className="space-y-4">
-      <KPICards assignments={assignments} residents={residents} tutors={tutors} />
-      <ResidentsByRotation
-        assignments={assignments}
-        rotations={rotations}
-        residents={residents}
-        tutors={tutors}
-      />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
-        <div className="lg:col-span-2">
-          <TutorLoadTable assignments={assignments} tutors={tutors} />
+    <Suspense
+      fallback={
+        <div className="space-y-4">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        <KPICards assignments={assignments} residents={residents} tutors={tutors} />
+        <ResidentsByRotation
+          assignments={assignments}
+          rotations={rotations}
+          residents={residents}
+          tutors={tutors}
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
+          <div className="lg:col-span-2">
+            <TutorLoadTable assignments={assignments} tutors={tutors} />
+          </div>
         </div>
       </div>
-    </div>
+    </Suspense>
   );
 }
 
 function AdminMorningMeetingsInline() {
   const { t, i18n } = useTranslation();
-  const { today, tomorrow, next7 } = useMorningMeetingsUpcoming();
+  const { today, tomorrow, next7, loading: upcomingLoading } = useMorningMeetingsUpcoming();
   const now = new Date();
   const y = now.getFullYear();
   const m0 = now.getMonth();
-  const { list: monthList } = useMorningMeetingsMonth(y, m0);
+  const { list: monthList, loading: monthLoading } = useMorningMeetingsMonth(y, m0);
   const daysInMonth = useMemo(() => new Date(y, m0 + 1, 0).getDate(), [y, m0]);
   const monthByDay = useMemo(() => {
     const map: Record<number, any[]> = {};
@@ -730,17 +877,36 @@ function AdminMorningMeetingsInline() {
     });
     return map;
   }, [monthList]);
-  function renderList(items: any[] | null) {
-    if (!items || !items.length) return <div className="opacity-70">{t('morningMeetings.noClasses')}</div>;
+  function renderList(items: any[] | null, loading: boolean) {
+    if (loading) {
+      return (
+        <div className="space-y-2">
+          <div className="h-12 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
+          <div className="h-12 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
+        </div>
+      );
+    }
+    if (!items || !items.length)
+      return (
+        <div className="rounded-lg border-2 border-dashed border-muted/30 bg-surface/30 p-4 text-center">
+          <p className="text-sm text-muted">{t('morningMeetings.noClasses')}</p>
+        </div>
+      );
     return (
       <ul className="divide-y rounded border">
         {(items || []).map((c: any) => {
-          const start = c.date?.toDate?.()?.toLocaleTimeString?.(i18n.language === 'he' ? 'he-IL' : 'en-US', { hour: '2-digit', minute: '2-digit' }) || '07:10';
+          const start =
+            c.date?.toDate?.()?.toLocaleTimeString?.(i18n.language === 'he' ? 'he-IL' : 'en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }) || '07:10';
           return (
             <li key={c.id || c.dateKey + c.title} className="p-2 flex items-center justify-between">
               <div>
                 <div className="font-medium">{c.title}</div>
-                <div className="text-xs opacity-70">{c.lecturer} — {start}</div>
+                <div className="text-xs opacity-70">
+                  {c.lecturer} — {start}
+                </div>
               </div>
             </li>
           );
@@ -751,33 +917,46 @@ function AdminMorningMeetingsInline() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="glass-card p-4">
+        <div className="card-levitate p-4">
           <div className="mb-2 font-semibold">{t('morningMeetings.today')}</div>
-          {renderList(today)}
+          {renderList(today, upcomingLoading)}
         </div>
-        <div className="glass-card p-4">
+        <div className="card-levitate p-4">
           <div className="mb-2 font-semibold">{t('morningMeetings.tomorrow')}</div>
-          {renderList(tomorrow)}
+          {renderList(tomorrow, upcomingLoading)}
         </div>
-        <div className="glass-card p-4">
+        <div className="card-levitate p-4">
           <div className="mb-2 font-semibold">{t('morningMeetings.next7')}</div>
-          {renderList(next7)}
+          {renderList(next7, upcomingLoading)}
         </div>
       </div>
-      <div className="glass-card p-4">
+      <div className="card-levitate p-4">
         <div className="mb-2 font-semibold">{t('morningMeetings.month')}</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
-          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
-            <div key={d} className="rounded border p-2 min-h-[80px]">
-              <div className="text-xs opacity-70 mb-1">{d}</div>
-              <div className="space-y-1">
-                {(monthByDay[d] || []).map((c) => (
-                  <div key={c.id || c.title} className="truncate">{c.title}</div>
-                ))}
+        {monthLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
+            {Array.from({ length: 21 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded border p-2 h-20 bg-gray-100 dark:bg-gray-900 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
+            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
+              <div key={d} className="rounded border p-2 min-h-[80px]">
+                <div className="text-xs opacity-70 mb-1">{d}</div>
+                <div className="space-y-1">
+                  {(monthByDay[d] || []).map((c) => (
+                    <div key={c.id || c.title} className="truncate">
+                      {c.title}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -787,28 +966,37 @@ function AdminOnCallInline() {
   const { data: me } = useCurrentUserProfile();
   const { t } = useTranslation();
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          <div className="glass-card p-4 space-y-3">
-            <div className="text-sm font-medium">{t('onCall.today')}</div>
-            <TodayPanel highlightUserId={me?.uid} />
+    <Suspense
+      fallback={
+        <div className="space-y-4">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      }
+    >
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <div className="card-levitate p-4 space-y-3">
+              <div className="text-sm font-medium">{t('onCall.today')}</div>
+              <TodayPanel highlightUserId={me?.uid} />
+            </div>
+          </div>
+          <div className="md:col-span-1">
+            <div className="card-levitate p-4">
+              <NextShiftCard userId={me?.uid} />
+            </div>
           </div>
         </div>
-        <div className="md:col-span-1">
-          <div className="glass-card p-4">
-            <NextShiftCard userId={me?.uid} />
-          </div>
+        <div className="card-levitate p-4 space-y-3">
+          <div className="text-sm font-medium">{t('onCall.teamOnDate', { date: '' })}</div>
+          <TeamForDate />
+        </div>
+        <div className="card-levitate p-4 space-y-3">
+          <div className="text-sm font-medium">{t('ui.timeline')}</div>
+          <MiniCalendar />
         </div>
       </div>
-      <div className="glass-card p-4 space-y-3">
-        <div className="text-sm font-medium">{t('onCall.teamOnDate', { date: '' })}</div>
-        <TeamForDate />
-      </div>
-      <div className="glass-card p-4 space-y-3">
-        <div className="text-sm font-medium">Timeline</div>
-        <MiniCalendar />
-      </div>
-    </div>
+    </Suspense>
   );
 }

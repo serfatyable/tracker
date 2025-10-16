@@ -1,10 +1,11 @@
 'use client';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { assignResidentToRotation } from '../../../lib/firebase/admin';
 import type { Assignment } from '../../../types/assignments';
 import type { UserProfile } from '../../../types/auth';
 import Button from '../../ui/Button';
-import { assignResidentToRotation } from '../../../lib/firebase/admin';
 
 type Props = {
   assignments: Assignment[];
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function UnassignedQueues({ assignments, residents, rotations }: Props) {
+  const { t } = useTranslation();
   const { unassignedResidents } = useMemo(() => {
     const assigned = new Set(assignments.map((a) => a.residentId));
     return {
@@ -21,11 +23,11 @@ export default function UnassignedQueues({ assignments, residents, rotations }: 
   }, [assignments, residents]);
 
   return (
-    <div className="glass-card card-levitate p-3">
-      <div className="font-semibold mb-2">Unassigned</div>
+    <div className="card-levitate p-3">
+      <div className="font-semibold mb-2">{t('overview.unassigned')}</div>
       <div className="space-y-2">
         {unassignedResidents.length === 0 ? (
-          <div className="text-sm opacity-70">All residents are assigned</div>
+          <div className="text-sm opacity-70">{t('overview.allResidentsAssigned')}</div>
         ) : (
           unassignedResidents.map((r) => (
             <div

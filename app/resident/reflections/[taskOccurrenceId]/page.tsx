@@ -1,11 +1,14 @@
 'use client';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+
+import ReflectionForm from '../../../../components/reflections/ReflectionForm';
 import { useCurrentUserProfile } from '../../../../lib/hooks/useCurrentUserProfile';
 import { submitReflection, useReflection } from '../../../../lib/hooks/useReflections';
 import { useLatestPublishedTemplate } from '../../../../lib/hooks/useReflectionTemplates';
-import ReflectionForm from '../../../../components/reflections/ReflectionForm';
 
 export default function ResidentWriteReflectionPage() {
+  const { t } = useTranslation();
   const params = useParams() as { taskOccurrenceId?: string };
   const taskOccurrenceId = params?.taskOccurrenceId || '';
   const search = useSearchParams();
@@ -16,15 +19,17 @@ export default function ResidentWriteReflectionPage() {
   const { template } = useLatestPublishedTemplate('resident', taskType);
   const { reflection } = useReflection(taskOccurrenceId || null, me?.uid || null);
 
-  if (!me) return <div className="p-4">Sign in required</div>;
-  if (!template) return <div className="p-4">Loading template…</div>;
+  if (!me) return <div className="p-4">{t('common.signInRequired')}</div>;
+  if (!template) return <div className="p-4">{t('common.loadingTemplate')}</div>;
 
   const submitted = !!reflection?.submittedAt;
 
   return (
     <div className="p-4 space-y-3">
-      <h1 className="text-xl font-semibold">Write reflection</h1>
-      <div className="text-sm opacity-70">Task type: {taskType}</div>
+      <h1 className="text-xl font-semibold">{t('reflections.writeReflection')}</h1>
+      <div className="text-sm opacity-70">
+        {t('reflections.taskType')} {taskType}
+      </div>
       <ReflectionForm
         audience="resident"
         template={template}
@@ -45,7 +50,7 @@ export default function ResidentWriteReflectionPage() {
           });
         }}
       />
-      {submitted ? <div className="text-sm text-green-700">Submitted</div> : null}
+      {submitted ? <div className="text-sm text-green-700">{t('common.submitted')}</div> : null}
     </div>
   );
 }

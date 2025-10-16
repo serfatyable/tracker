@@ -7,8 +7,9 @@ import {
   Timestamp,
   where,
 } from 'firebase/firestore';
-import { getFirebaseApp } from '../firebase/client';
+
 import type { MorningMeeting } from '../../types/morningClasses';
+import { getFirebaseApp } from '../firebase/client';
 
 export async function listMorningMeetingsByDateRange(
   startInclusive: Date,
@@ -34,5 +35,3 @@ export async function listMorningMeetingsForMonth(
   const to = new Date(Date.UTC(year, month0 + 1, 1, 0, 0, 0));
   return listMorningMeetingsByDateRange(from, to);
 }
-
-

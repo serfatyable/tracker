@@ -1,9 +1,9 @@
 'use client';
 import { useMemo, useState } from 'react';
+
 import type { TaskDoc } from '../../../lib/firebase/db';
 import type { UserProfile } from '../../../types/auth';
 import Button from '../../ui/Button';
-import Select from '../../ui/Select';
 
 type Props = {
   residents: UserProfile[];
@@ -55,7 +55,7 @@ export default function TasksTab({ residents, tasks, onBulkApprove, onBulkReject
         {Array.from(groups.entries()).map(([uid, list]) => {
           const r = resById.get(uid);
           return (
-            <div key={uid} className="glass-card card-levitate p-3">
+            <div key={uid} className="card-levitate p-3">
               <div className="font-semibold mb-2">{(r && r.fullName) || uid}</div>
               <div className="space-y-2">
                 {list.map((t) => (

@@ -1,6 +1,7 @@
 'use client';
-import Button from '../ui/Button';
 import { useTranslation } from 'react-i18next';
+
+import Button from '../ui/Button';
 
 export default function QuickActions({
   onGoRotations,
@@ -13,15 +14,12 @@ export default function QuickActions({
 }) {
   const { t } = useTranslation();
   return (
-    <div
-      className="card-levitate rounded border p-3 border-emerald-200/60 dark:border-emerald-900/40"
-      style={{ boxShadow: '0 8px 24px rgba(16,185,129,0.18)' }}
-    >
+    <div className="card-levitate rounded border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Button
           size="sm"
           variant="outline"
-          className="border-blue-300 text-blue-700"
+          className="btn-levitate text-primary border-primary/40"
           onClick={onGoRotations}
         >
           {t('ui.logActivity') || 'Log activity'}
@@ -29,7 +27,7 @@ export default function QuickActions({
         <Button
           size="sm"
           variant="outline"
-          className="border-blue-300 text-blue-700"
+          className="btn-levitate text-primary border-primary/40"
           onClick={onFocusSearch}
         >
           {t('ui.searchRotations') || 'Search'}
@@ -37,7 +35,7 @@ export default function QuickActions({
         <Button
           size="sm"
           variant="outline"
-          className="border-blue-300 text-blue-700"
+          className="btn-levitate text-primary border-primary/40"
           onClick={onGoRotations}
         >
           {t('ui.goToActiveRotation') || 'Go to active rotation'}

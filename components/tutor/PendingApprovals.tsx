@@ -1,11 +1,12 @@
 'use client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { approveRotationPetition, denyRotationPetition } from '../../lib/firebase/admin';
+import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import type { RotationPetition } from '../../types/rotationPetitions';
 import Button from '../ui/Button';
 import { Dialog, DialogHeader, DialogFooter } from '../ui/Dialog';
-import { approveRotationPetition, denyRotationPetition } from '../../lib/firebase/admin';
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 
 type Props = {
   petitions: RotationPetition[];
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function PendingApprovals({ petitions, residentIdToName }: Props) {
+  const { t } = useTranslation();
   const { data: me } = useCurrentUserProfile();
   const [confirm, setConfirm] = useState<{ id: string; action: 'approve' | 'deny' } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -32,8 +34,8 @@ export default function PendingApprovals({ petitions, residentIdToName }: Props)
   if (!petitions.length) return null;
 
   return (
-    <div className="glass-card card-levitate p-3">
-      <div className="font-semibold mb-2">Pending approvals</div>
+    <div className="card-levitate p-3">
+      <div className="font-semibold mb-2">{t('tutor.pendingApprovals')}</div>
       <div className="space-y-2">
         {petitions.map((p) => (
           <div key={p.id} className="border rounded p-2 flex items-center justify-between text-sm">

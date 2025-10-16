@@ -1,8 +1,9 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs, getFirestore, query, where } from 'firebase/firestore';
-import { getFirebaseApp } from '../firebase/client';
+import { useEffect, useMemo, useState } from 'react';
+
 import type { Audience, ReflectionTemplate } from '../../types/reflections';
+import { getFirebaseApp } from '../firebase/client';
 
 export function useLatestPublishedTemplate(audience: Audience, taskType?: string) {
   const [templates, setTemplates] = useState<ReflectionTemplate[] | null>(null);

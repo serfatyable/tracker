@@ -10,17 +10,23 @@ export function useActiveRotations() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         setLoading(true);
         const page = await listRotations({ status: 'active', limit: 200 });
-        setRotations(page.items || []);
+        if (!cancelled) {
+          setRotations(page.items || []);
+        }
       } catch (e: any) {
-        setError(e?.message || 'Failed to load rotations');
+        if (!cancelled) setError(e?.message || 'Failed to load rotations');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return { rotations, loading, error } as const;

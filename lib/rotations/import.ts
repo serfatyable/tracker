@@ -3,11 +3,13 @@ export type ParsedRow = {
   Subject?: string;
   Topic?: string;
   SubTopic?: string;
-  SubSubTopic?: string;
   ItemTitle?: string;
   RequiredCount?: string;
   mcqUrl?: string;
-  Links?: string[]; // aggregated from Link1..LinkN
+  Resources?: string;
+  notes_en?: string;
+  notes_he?: string;
+  Links?: Array<{ label: string; href: string }>; // aggregated from Link1_Label/Link1_URL pairs
 };
 
 export function parseRotationCsvText(text: string): { header: string[]; rows: ParsedRow[] } {
@@ -22,19 +24,46 @@ export function parseRotationCsvText(text: string): { header: string[]; rows: Pa
     header.forEach((h, i) => {
       rec[h] = (cols[i] || '').trim();
     });
-    // collect links
-    const linkCols = header.filter((h) => /^Link\d+$/i.test(h));
-    const links = linkCols.map((h) => rec[h]).filter((v: string) => !!v);
+
+    // collect links from Link1_Label/Link1_URL, Link2_Label/Link2_URL, etc.
+    const linkPairs: Array<{ label: string; href: string }> = [];
+    const linkNumbers = new Set<number>();
+
+    // Find all link numbers by scanning for both _Label and _URL patterns
+    header.forEach((h) => {
+      const match = h.match(/^Link(\d+)_(Label|URL)$/i);
+      if (match) {
+        linkNumbers.add(parseInt(match[1]!, 10));
+      }
+    });
+
+    // For each link number, create a link object if URL exists
+    Array.from(linkNumbers)
+      .sort((a, b) => a - b)
+      .forEach((num) => {
+        const label = rec[`Link${num}_Label`] || '';
+        const href = rec[`Link${num}_URL`] || '';
+        if (href) {
+          // Only add if URL is provided
+          linkPairs.push({
+            label: label || `Link ${num}`, // Fallback to "Link N" if label is empty
+            href,
+          });
+        }
+      });
+
     const row: ParsedRow = {
       Category: rec['Category'] || '',
       Subject: rec['Subject'] || '',
       Topic: rec['Topic'] || '',
       SubTopic: rec['SubTopic'] || '',
-      SubSubTopic: rec['SubSubTopic'] || '',
       ItemTitle: rec['ItemTitle'] || '',
       RequiredCount: rec['RequiredCount'] || '',
       mcqUrl: rec['mcqUrl'] || '',
-      Links: links,
+      Resources: rec['Resources'] || '',
+      notes_en: rec['notes_en'] || '',
+      notes_he: rec['notes_he'] || '',
+      Links: linkPairs,
     };
     rows.push(row);
   }
@@ -46,10 +75,12 @@ export type NormalizedLeaf = {
   subject: string;
   topic: string;
   subTopic?: string;
-  subSubTopic?: string;
   itemTitle: string;
   requiredCount: number;
   mcqUrl?: string;
+  resources?: string;
+  notes_en?: string;
+  notes_he?: string;
   links: Array<{ label: string; href: string }>;
 };
 
@@ -72,17 +103,31 @@ export function normalizeParsedRows(rows: ParsedRow[]): {
     if (!topic) errors.push(`Row ${rowNum}: Topic is required`);
     const required = parseInt(String(r.RequiredCount || '0'), 10);
     const requiredCount = Number.isFinite(required) && required >= 0 ? required : 0;
-    const links = (r.Links || []).map((href, i) => ({ label: `Link ${i + 1}`, href }));
+    const links = r.Links || []; // Links are already in {label, href} format from parsing
+    const resources = (r.Resources || '').trim() || undefined;
+    const notes_en = (r.notes_en || '').trim() || undefined;
+    const notes_he = (r.notes_he || '').trim() || undefined;
+
+    // Validate notes length (max 500 chars each)
+    if (notes_en && notes_en.length > 500) {
+      errors.push(`Row ${rowNum}: notes_en exceeds 500 characters (${notes_en.length} chars)`);
+    }
+    if (notes_he && notes_he.length > 500) {
+      errors.push(`Row ${rowNum}: notes_he exceeds 500 characters (${notes_he.length} chars)`);
+    }
+
     if (allowedCats.has(r.Category) && itemTitle && subject && topic) {
       leaves.push({
         category: r.Category as any,
         subject,
         topic,
         subTopic: (r.SubTopic || '').trim() || undefined,
-        subSubTopic: (r.SubSubTopic || '').trim() || undefined,
         itemTitle,
         requiredCount,
         mcqUrl: (r.mcqUrl || '').trim() || undefined,
+        resources,
+        notes_en,
+        notes_he,
         links,
       });
     }

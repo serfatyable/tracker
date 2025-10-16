@@ -36,7 +36,7 @@ export default function AuthGate({
   if (status === 'loading') {
     return (
       <div className="p-6">
-        <div className="glass-card p-4">
+        <div className="card-levitate p-4">
           <Skeleton className="h-6 w-40 mb-3" />
           <Skeleton className="h-24 w-full" />
         </div>
@@ -47,7 +47,9 @@ export default function AuthGate({
   if (status === 'error') {
     return (
       <div className="p-6">
-        <div className="glass-card p-4 text-sm text-red-700">{error || 'Failed to load user'}</div>
+        <div className="card-levitate p-4 text-sm text-red-700">
+          {error || 'Failed to load user'}
+        </div>
       </div>
     );
   }

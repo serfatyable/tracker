@@ -1,6 +1,5 @@
 import {
   collection,
-  deleteDoc,
   doc,
   getDocs,
   getFirestore,
@@ -9,10 +8,11 @@ import {
   Timestamp,
   where,
   writeBatch,
-  setDoc,
 } from 'firebase/firestore';
-import { getFirebaseApp } from '../firebase/client';
+
 import type { MorningMeeting } from '../../types/morningMeetings';
+import { getFirebaseApp } from '../firebase/client';
+import { withTimeoutAndRetry } from '../utils/networkUtils';
 
 export async function listMorningMeetingsByDateRange(
   startInclusive: Date,
@@ -26,8 +26,18 @@ export async function listMorningMeetingsByDateRange(
     where('date', '<', Timestamp.fromDate(endExclusive)),
     orderBy('date', 'asc'),
   );
-  const snap = await getDocs(qRef);
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+
+  return withTimeoutAndRetry(
+    async () => {
+      const snap = await getDocs(qRef);
+      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+    },
+    {
+      timeout: 15000, // 15 seconds for morning meetings
+      retries: 3,
+      operationName: 'load morning meetings',
+    },
+  );
 }
 
 export async function listMorningMeetingsForMonth(
@@ -44,21 +54,30 @@ export async function replaceMonthMeetings(
   month0: number,
   rows: MorningMeeting[],
 ): Promise<void> {
-  const db = getFirestore(getFirebaseApp());
-  const from = new Date(Date.UTC(year, month0, 1, 0, 0, 0));
-  const to = new Date(Date.UTC(year, month0 + 1, 1, 0, 0, 0));
-  const existing = await listMorningMeetingsByDateRange(from, to);
-  const batch = writeBatch(db);
-  for (const ex of existing) if (ex.id) batch.delete(doc(db, 'morningMeetings', ex.id));
-  for (const r of rows) {
-    const id = `${r.dateKey}-${slug(r.title)}`;
-    batch.set(doc(db, 'morningMeetings', id), {
-      ...r,
-      createdAt: r.createdAt || Timestamp.fromDate(new Date()),
-      updatedAt: Timestamp.fromDate(new Date()),
-    } as any);
-  }
-  await batch.commit();
+  return withTimeoutAndRetry(
+    async () => {
+      const db = getFirestore(getFirebaseApp());
+      const from = new Date(Date.UTC(year, month0, 1, 0, 0, 0));
+      const to = new Date(Date.UTC(year, month0 + 1, 1, 0, 0, 0));
+      const existing = await listMorningMeetingsByDateRange(from, to);
+      const batch = writeBatch(db);
+      for (const ex of existing) if (ex.id) batch.delete(doc(db, 'morningMeetings', ex.id));
+      for (const r of rows) {
+        const id = `${r.dateKey}-${slug(r.title)}`;
+        batch.set(doc(db, 'morningMeetings', id), {
+          ...r,
+          createdAt: r.createdAt || Timestamp.fromDate(new Date()),
+          updatedAt: Timestamp.fromDate(new Date()),
+        } as any);
+      }
+      await batch.commit();
+    },
+    {
+      timeout: 30000, // 30 seconds for batch operations
+      retries: 2, // Fewer retries for write operations
+      operationName: 'replace month meetings',
+    },
+  );
 }
 
 function slug(input: string): string {
@@ -70,5 +89,3 @@ function slug(input: string): string {
     .replace(/\.+/g, '.')
     .replace(/_+/g, '_');
 }
-
-

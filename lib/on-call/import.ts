@@ -1,5 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
+
 import type { OnCallAssignment, StationKey } from '../../types/onCall';
+
 import { hebrewHeaderToKey, stationKeys } from './stations';
 
 export type ParsedOnCallCsvRow = {
@@ -58,7 +60,10 @@ export function buildAssignments(params: {
   rows: ParsedOnCallCsvRow[];
   nameToUser: (name: string) => { userId?: string; userDisplayName?: string };
   createdBy: string;
-}): { assignments: OnCallAssignment[]; unresolved: Array<{ dateKey: string; stationKey: StationKey; name: string }> } {
+}): {
+  assignments: OnCallAssignment[];
+  unresolved: Array<{ dateKey: string; stationKey: StationKey; name: string }>;
+} {
   const out: OnCallAssignment[] = [];
   const unresolved: Array<{ dateKey: string; stationKey: StationKey; name: string }> = [];
   for (const row of params.rows) {
@@ -88,5 +93,3 @@ export function buildAssignments(params: {
   }
   return { assignments: out, unresolved };
 }
-
-

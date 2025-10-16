@@ -1,37 +1,72 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { getAuth } from 'firebase/auth';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { listRecentTasksForUser, type TaskDoc } from '../../lib/firebase/db';
-import { useTranslation } from 'react-i18next';
+import { ListSkeleton } from '../dashboard/Skeleton';
+import EmptyState, { DocumentIcon } from '../ui/EmptyState';
+import { ErrorWithRetry } from '../ui/RetryButton';
 
 export default function RecentLogs({ itemIdsToNames }: { itemIdsToNames: Record<string, string> }) {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<TaskDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadLogs = useCallback(async () => {
+    const auth = getAuth(getFirebaseApp());
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      setLoading(false);
+      return;
+    }
+    try {
+      setError(null);
+      setLoading(true);
+      const recent = await listRecentTasksForUser({ userId: uid, limit: 5 });
+      setLogs(recent);
+    } catch (err: any) {
+      console.error('Failed to load recent logs:', err);
+      setError(
+        t('ui.failedToLoadLogs', { defaultValue: 'Failed to load recent logs' }) ||
+          'Failed to load logs',
+      );
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
   useEffect(() => {
-    (async () => {
-      const auth = getAuth(getFirebaseApp());
-      const uid = auth.currentUser?.uid;
-      if (!uid) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const recent = await listRecentTasksForUser({ userId: uid, limit: 5 });
-        setLogs(recent);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    loadLogs();
+  }, [loadLogs]);
+
+  const handleRetry = () => {
+    return loadLogs();
+  };
   return (
     <div className="card-levitate rounded border p-3 border-sky-200/60 dark:border-sky-900/40">
-      <div className="text-sm font-medium">{t('ui.recentLogs') || 'Recent logs'}</div>
+      <div className="text-sm font-medium mb-2">{t('ui.recentLogs') || 'Recent logs'}</div>
       {loading ? (
-        <div className="text-sm text-gray-500">{t('ui.loadingItems')}</div>
+        <ListSkeleton items={3} />
+      ) : error ? (
+        <ErrorWithRetry
+          title={t('ui.errorLoadingLogs', { defaultValue: 'Error loading logs' })}
+          message={error}
+          onRetry={handleRetry}
+          retryLabel={t('ui.tryAgain', { defaultValue: 'Try Again' })}
+        />
       ) : logs.length === 0 ? (
-        <div className="text-sm text-gray-500">{t('ui.noRecentLogs') || 'No recent logs'}</div>
+        <EmptyState
+          icon={<DocumentIcon size={40} />}
+          title={t('ui.noRecentLogs') || 'No recent logs'}
+          description={t('ui.logsAppearHere', {
+            defaultValue: 'Your logged activities will appear here.',
+          })}
+          className="py-6"
+        />
       ) : (
         <ul className="mt-1 space-y-1 text-sm">
           {logs.map((l) => (

@@ -71,6 +71,10 @@ export async function createTask(params: {
   note?: string;
 }): Promise<{ id: string }> {
   const db = getFirestore(getFirebaseApp());
+
+  // Fetch current tutorIds for authorization
+  const tutorIds = await getCurrentTutorIdsForResident(params.userId);
+
   const ref = await addDoc(collection(db, 'tasks'), {
     userId: params.userId,
     rotationId: params.rotationId,
@@ -79,9 +83,33 @@ export async function createTask(params: {
     requiredCount: params.requiredCount,
     status: 'pending',
     note: params.note || null,
+    tutorIds: tutorIds, // ✅ AUTHORIZATION: Include for Firestore rules
     createdAt: serverTimestamp(),
   } as any);
   return { id: ref.id };
+}
+
+/**
+ * Get tutorIds from resident's active assignment
+ * Used to populate task.tutorIds for authorization rules
+ */
+async function getCurrentTutorIdsForResident(residentId: string): Promise<string[]> {
+  const db = getFirestore(getFirebaseApp());
+
+  const assignmentsQuery = query(
+    collection(db, 'assignments'),
+    where('residentId', '==', residentId),
+    where('endedAt', '==', null),
+  );
+
+  const assignmentsSnap = await getDocs(assignmentsQuery);
+
+  if (assignmentsSnap.empty) {
+    return [];
+  }
+
+  const assignment = assignmentsSnap.docs[0]?.data() as any;
+  return assignment.tutorIds || [];
 }
 
 export async function listRecentTasksByLeaf(params: {

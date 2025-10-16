@@ -1,4 +1,5 @@
 'use client';
+import { doc, getFirestore, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,12 +8,11 @@ import {
   updateUserTheme,
   updateUserNotifications,
 } from '../../lib/firebase/auth';
+import { getFirebaseApp } from '../../lib/firebase/client';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { applyLanguageToDocument } from '../../lib/i18n/applyLanguage';
-import Toast from '../ui/Toast';
-import { getFirebaseApp } from '../../lib/firebase/client';
-import { doc, getFirestore, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { simpleHash } from '../../lib/ics/buildMorningMeetingsIcs';
+import Toast from '../ui/Toast';
 
 export default function SettingsPanel() {
   const { t, i18n } = useTranslation();
@@ -22,6 +22,10 @@ export default function SettingsPanel() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [notificationsInApp, setNotificationsInApp] = useState<boolean>(true);
   const [notificationsEmail, setNotificationsEmail] = useState<boolean>(true);
+  const [defaultDensity, setDefaultDensity] = useState<'normal' | 'compact'>(() => {
+    if (typeof window === 'undefined') return 'normal';
+    return (localStorage.getItem('ui_density') as 'normal' | 'compact') || 'normal';
+  });
   const [toast, setToast] = useState<string | null>(null);
   const [mmReminder, setMmReminder] = useState<boolean>(false);
   const icsAllHref = '/api/ics/morning-meetings';
@@ -57,7 +61,9 @@ export default function SettingsPanel() {
             updatedAt: serverTimestamp(),
           } as any);
         }
-      } catch (_) {}
+      } catch {
+        // Error updating user preferences
+      }
       applyLanguageToDocument(language);
       i18n.changeLanguage(language);
       // Apply theme immediately according to Tailwind dark mode class strategy
@@ -85,7 +91,7 @@ export default function SettingsPanel() {
   }
 
   return (
-    <form onSubmit={handleSave} className="space-y-4 glass-card card-levitate p-4">
+    <form onSubmit={handleSave} className="space-y-4 card-levitate p-4">
       <Toast message={toast} onClear={() => setToast(null)} />
       <div>
         <label className="block text-sm font-medium">{t('auth.language')}</label>
@@ -96,6 +102,25 @@ export default function SettingsPanel() {
         >
           <option value="en">English</option>
           <option value="he">עברית</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Table density (default)</label>
+        <select
+          value={defaultDensity}
+          onChange={(e) => {
+            const v = e.target.value as 'normal' | 'compact';
+            setDefaultDensity(v);
+            try {
+              localStorage.setItem('ui_density', v);
+            } catch {
+              // localStorage may not be available
+            }
+          }}
+          className="mt-1 input-levitate"
+        >
+          <option value="normal">Normal</option>
+          <option value="compact">Compact</option>
         </select>
       </div>
       <div>
@@ -111,47 +136,66 @@ export default function SettingsPanel() {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium">{t('morningMeetings.lecturerReminder')}</label>
         <label className="mt-2 inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={mmReminder} onChange={(e) => setMmReminder(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={mmReminder}
+            onChange={(e) => setMmReminder(e.target.checked)}
+          />
           <span>{t('morningMeetings.lecturerReminder')}</span>
         </label>
       </div>
       <div>
-        <label className="block text-sm font-medium">ICS</label>
+        <label className="block text-sm font-medium">
+          {t('settings.exportToCalendar', { defaultValue: 'Export to calendar' })}
+        </label>
         <div className="mt-2 flex flex-col gap-2 text-sm">
-          <a className="text-blue-600 hover:underline" href={icsAllHref} target="_blank" rel="noopener noreferrer">
-            {t('morningMeetings.allIcs')}
+          <a
+            className="text-blue-600 hover:underline"
+            href={icsAllHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t('morningMeetings.allMeetings', { defaultValue: 'All meetings' })}
           </a>
           {icsMyHref ? (
-            <a className="text-blue-600 hover:underline" href={icsMyHref} target="_blank" rel="noopener noreferrer">
-              {t('morningMeetings.myIcs')}
+            <a
+              className="text-blue-600 hover:underline"
+              href={icsMyHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('morningMeetings.myLectures', { defaultValue: 'My lectures' })}
             </a>
           ) : (
-            <div className="opacity-70">{t('morningMeetings.myIcs')}</div>
+            <div className="opacity-70">
+              {t('morningMeetings.myLectures', { defaultValue: 'My lectures' })}
+            </div>
           )}
-          <button
-            type="button"
-            className="btn-levitate w-fit"
-            onClick={async () => {
-              if (!firebaseUser) return;
-              try {
-                const token = simpleHash(firebaseUser.uid + ':' + Date.now().toString());
-                const db = getFirestore(getFirebaseApp());
-                await updateDoc(doc(db, 'users', firebaseUser.uid), {
-                  'settings.morningMeetings.icsToken': token,
-                  updatedAt: serverTimestamp(),
-                } as any);
-                setIcsMyHref(`/api/ics/morning-meetings/${token}`);
-                setToast(t('ui.saved'));
-              } catch (e) {
-                setToast(t('settings.error'));
-              }
-            }}
-          >
-            {t('morningMeetings.rotateToken')}
-          </button>
         </div>
+        <button
+          type="button"
+          className="mt-2 text-xs text-muted hover:text-fg underline text-left"
+          onClick={async () => {
+            if (!firebaseUser) return;
+            try {
+              const token = simpleHash(firebaseUser.uid + ':' + Date.now().toString());
+              const db = getFirestore(getFirebaseApp());
+              await updateDoc(doc(db, 'users', firebaseUser.uid), {
+                'settings.morningMeetings.icsToken': token,
+                updatedAt: serverTimestamp(),
+              } as any);
+              setIcsMyHref(`/api/ics/morning-meetings/${token}`);
+              setToast(t('ui.saved'));
+            } catch {
+              setToast(t('settings.error'));
+            }
+          }}
+        >
+          {t('morningMeetings.generateCalendar', {
+            defaultValue: 'Generate a calendar for my lectures',
+          })}
+        </button>
       </div>
       <div>
         <label className="block text-sm font-medium">{t('settings.notifications')}</label>

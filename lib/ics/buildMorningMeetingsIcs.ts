@@ -7,10 +7,6 @@ type IcsEvent = {
   end: Date; // in local Asia/Jerusalem time
 };
 
-function pad(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
 function formatLocal(dt: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone,
@@ -105,5 +101,3 @@ export function simpleHash(input: string): string {
   }
   return Math.abs(h).toString(36);
 }
-
-

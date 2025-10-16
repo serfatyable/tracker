@@ -17,5 +17,3 @@ export type MorningMeeting = {
 };
 
 export type MorningMeetingsByDate = Record<string, MorningMeeting[]>;
-
-

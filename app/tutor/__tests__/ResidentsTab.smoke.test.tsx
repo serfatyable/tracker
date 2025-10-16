@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { vi } from 'vitest';
+
 import ResidentsTab from '../../../components/tutor/tabs/ResidentsTab';
 
 describe('ResidentsTab smoke', () => {

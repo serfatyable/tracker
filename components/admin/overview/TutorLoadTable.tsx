@@ -1,5 +1,6 @@
 'use client';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { Assignment } from '../../../types/assignments';
 import type { UserProfile } from '../../../types/auth';
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export default function TutorLoadTable({ assignments, tutors }: Props) {
+  const { t } = useTranslation();
   const rows = useMemo(() => {
     const load = new Map<string, number>();
     for (const t of tutors) load.set(t.uid, 0);
@@ -22,14 +24,14 @@ export default function TutorLoadTable({ assignments, tutors }: Props) {
   }, [assignments, tutors]);
 
   return (
-    <div className="glass-card card-levitate p-3">
-      <div className="font-semibold mb-2">Tutor load</div>
+    <div className="card-levitate p-3">
+      <div className="font-semibold mb-2">{t('overview.tutorLoad')}</div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left opacity-70">
-              <th className="py-1 pr-4">Tutor</th>
-              <th className="py-1 pr-4">Residents</th>
+              <th className="py-1 pr-4">{t('overview.tutor')}</th>
+              <th className="py-1 pr-4">{t('tutor.tabs.residents')}</th>
               <th className="py-1" />
             </tr>
           </thead>

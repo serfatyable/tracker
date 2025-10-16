@@ -1,17 +1,18 @@
 'use client';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import type { Assignment } from '../../../types/assignments';
-import type { Rotation } from '../../../types/rotations';
-import type { UserProfile } from '../../../types/auth';
-import Button from '../../ui/Button';
-import Select from '../../ui/Select';
-import { Dialog, DialogHeader, DialogFooter } from '../../ui/Dialog';
 import {
   assignResidentToRotation,
   assignTutorToResident,
   unassignTutorFromResident,
 } from '../../../lib/firebase/admin';
+import type { Assignment } from '../../../types/assignments';
+import type { UserProfile } from '../../../types/auth';
+import type { Rotation } from '../../../types/rotations';
+import Button from '../../ui/Button';
+import { Dialog, DialogHeader, DialogFooter } from '../../ui/Dialog';
+import Select from '../../ui/Select';
 
 type Props = {
   assignments: Assignment[];
@@ -29,6 +30,7 @@ function yearsSince(dateStr?: string): number | null {
 }
 
 export default function ResidentsByRotation({ assignments, rotations, residents, tutors }: Props) {
+  const { t } = useTranslation();
   const [moveState, setMoveState] = useState<{ residentId: string; rotationId: string } | null>(
     null,
   );
@@ -71,7 +73,7 @@ export default function ResidentsByRotation({ assignments, rotations, residents,
       {rotations.map((rot) => {
         const grouped = rotationIdToResidents.get(rot.id) || [];
         return (
-          <div key={rot.id} className="min-w-[260px] glass-card card-levitate p-3">
+          <div key={rot.id} className="min-w-[260px] card-levitate p-3">
             <div className="font-semibold mb-2 flex items-center justify-between">
               <span>{rot.name}</span>
               <span className="text-xs opacity-70">{grouped.length}</span>
@@ -137,7 +139,7 @@ export default function ResidentsByRotation({ assignments, rotations, residents,
 
       <Dialog open={!!moveState} onClose={() => setMoveState(null)}>
         <div className="p-3 space-y-2">
-          <DialogHeader>Move resident to rotation</DialogHeader>
+          <DialogHeader>{t('overview.moveResidentToRotation')}</DialogHeader>
           <Select
             value={moveState?.rotationId || ''}
             onChange={(e) => setMoveState((s) => (s ? { ...s, rotationId: e.target.value } : s))}
@@ -164,7 +166,7 @@ export default function ResidentsByRotation({ assignments, rotations, residents,
 
       <Dialog open={!!tutorAssignState} onClose={() => setTutorAssignState(null)}>
         <div className="p-3 space-y-2">
-          <DialogHeader>Assign tutor</DialogHeader>
+          <DialogHeader>{t('overview.assignTutor')}</DialogHeader>
           <Select
             defaultValue=""
             onChange={(e) => onAssignTutor(tutorAssignState!.residentId, e.target.value)}
@@ -188,7 +190,7 @@ export default function ResidentsByRotation({ assignments, rotations, residents,
 
       <Dialog open={!!unassignState} onClose={() => setUnassignState(null)}>
         <div className="p-3 space-y-2">
-          <DialogHeader>Unassign tutor</DialogHeader>
+          <DialogHeader>{t('overview.unassignTutor')}</DialogHeader>
           <div className="text-sm">
             Are you sure you want to unassign this tutor from the resident?
           </div>

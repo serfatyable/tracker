@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+
 import RotationsTab from '../../../components/tutor/tabs/RotationsTab';
 
 describe('RotationsTab smoke', () => {

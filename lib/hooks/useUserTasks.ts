@@ -18,17 +18,23 @@ export function useUserTasks() {
       setLoading(false);
       return;
     }
+    let cancelled = false;
     (async () => {
       try {
         setLoading(true);
         const list = await fetchUserTasks(uid);
-        setTasks(list);
+        if (!cancelled) {
+          setTasks(list);
+        }
       } catch (e: any) {
-        setError(e?.message || 'Failed to load tasks');
+        if (!cancelled) setError(e?.message || 'Failed to load tasks');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return { tasks, loading, error } as const;

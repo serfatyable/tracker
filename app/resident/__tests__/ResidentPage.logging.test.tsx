@@ -149,19 +149,17 @@ vi.mock('../../../lib/hooks/useUserTasks', () => ({
 
 const { createTaskMock, listRecentMock } = vi.hoisted(() => ({
   createTaskMock: vi.fn().mockResolvedValue({ id: 'new' }),
-  listRecentMock: vi
-    .fn()
-    .mockResolvedValue([
-      {
-        id: 'new',
-        userId: 'u1',
-        itemId: 'leaf1',
-        rotationId: 'icu',
-        count: 1,
-        requiredCount: 5,
-        status: 'pending',
-      },
-    ]),
+  listRecentMock: vi.fn().mockResolvedValue([
+    {
+      id: 'new',
+      userId: 'u1',
+      itemId: 'leaf1',
+      rotationId: 'icu',
+      count: 1,
+      requiredCount: 5,
+      status: 'pending',
+    },
+  ]),
 }));
 
 vi.mock('../../../lib/firebase/db', async () => {

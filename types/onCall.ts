@@ -39,5 +39,3 @@ export type OnCallDay = {
   stations: Partial<Record<StationKey, { userId: string; userDisplayName: string }>>;
   createdAt?: Timestamp;
 };
-
-

@@ -1,11 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Button from '../../ui/Button';
-import Badge from '../../ui/Badge';
-import Input from '../../ui/Input';
-import Select from '../../ui/Select';
-import type { RotationNode } from '../../../types/rotations';
+import { useTranslation } from 'react-i18next';
+
 import {
   createNode,
   deleteNode,
@@ -14,30 +11,56 @@ import {
   reorderSiblings,
   updateNode,
 } from '../../../lib/firebase/admin';
+import type { RotationNode } from '../../../types/rotations';
+import Badge from '../../ui/Badge';
+import Button from '../../ui/Button';
+import Input from '../../ui/Input';
+import Select from '../../ui/Select';
 
 type Props = { rotationId: string };
 
 type TreeNode = RotationNode & { children: TreeNode[] };
 
 export default function RotationTree({ rotationId }: Props) {
+  const { t } = useTranslation();
   const [nodes, setNodes] = useState<RotationNode[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     (async () => {
       const n = await listRotationNodes(rotationId);
       setNodes(n);
-      const rootCats = n.filter((x) => x.parentId === null);
-      const exp: Record<string, boolean> = {};
-      rootCats.forEach((c) => {
-        exp[c.id] = true;
-      });
-      setExpanded(exp);
+      // Start with all categories collapsed
+      setExpanded({});
     })();
   }, [rotationId]);
 
   const tree = useMemo(() => buildTree(nodes), [nodes]);
+
+  // Auto-expand nodes that contain search matches
+  useEffect(() => {
+    if (!searchTerm.trim()) return;
+
+    const newExpanded: Record<string, boolean> = {};
+    const needle = searchTerm.toLowerCase();
+
+    function hasMatchingDescendant(node: TreeNode): boolean {
+      if (node.name.toLowerCase().includes(needle)) return true;
+      return node.children.some(hasMatchingDescendant);
+    }
+
+    function expandMatching(node: TreeNode) {
+      if (hasMatchingDescendant(node)) {
+        newExpanded[node.id] = true;
+        node.children.forEach(expandMatching);
+      }
+    }
+
+    tree.forEach(expandMatching);
+    setExpanded((prev) => ({ ...prev, ...newExpanded }));
+  }, [searchTerm, tree]);
 
   const current = nodes.find((n) => n.id === selected) || null;
 
@@ -46,24 +69,98 @@ export default function RotationTree({ rotationId }: Props) {
     setNodes(fresh);
   }
 
+  // Highlight matching text in search results
+  function highlight(text: string, query: string) {
+    if (!query.trim()) return text;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx < 0) return text;
+    return (
+      <span>
+        {text.slice(0, idx)}
+        <span className="bg-yellow-200 text-yellow-900 dark:bg-yellow-600/40 dark:text-yellow-100 font-semibold">
+          {text.slice(idx, idx + query.length)}
+        </span>
+        {text.slice(idx + query.length)}
+      </span>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="lg:col-span-1 rounded-md border border-gray-200 dark:border-gray-800 p-2">
-        {tree.map((n) => (
-          <NodeItem
-            key={n.id}
-            node={n}
-            level={0}
-            expanded={expanded}
-            onToggle={(id) => setExpanded((s) => ({ ...s, [id]: !s[id] }))}
-            onSelect={setSelected}
-            selectedId={selected}
-          />
-        ))}
+      {/* LEFT PANEL: Tree Navigation */}
+      <div className="lg:col-span-1 rounded-md border-2 border-teal-300 dark:border-teal-700 bg-white dark:bg-gray-900 p-3">
+        <div className="mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            📂 Curriculum Structure
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Click any item to edit →</p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-3">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder={t('ui.searchInCurriculum') || 'Search curriculum...'}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 text-sm"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg font-bold leading-none"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          {searchTerm && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 px-1">
+              🔍 Searching for "{searchTerm}"
+            </div>
+          )}
+        </div>
+
+        {tree.length === 0 ? (
+          <div className="text-sm text-amber-600 dark:text-amber-400 p-4 bg-amber-50 dark:bg-amber-900/20 rounded">
+            No items yet. Import a CSV or create nodes manually.
+          </div>
+        ) : (
+          tree.map((n) => (
+            <NodeItem
+              key={n.id}
+              node={n}
+              level={0}
+              expanded={expanded}
+              onToggle={(id) => setExpanded((s) => ({ ...s, [id]: !s[id] }))}
+              onSelect={setSelected}
+              selectedId={selected}
+              categoryColor={null}
+              searchTerm={searchTerm}
+              highlight={highlight}
+              parentName={undefined}
+            />
+          ))
+        )}
       </div>
-      <div className="lg:col-span-2 rounded-md border border-gray-200 dark:border-gray-800 p-4">
+
+      {/* RIGHT PANEL: Node Editor */}
+      <div className="lg:col-span-2 rounded-md border-2 border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-900 p-4">
+        <div className="mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">✏️ Edit Node</h3>
+        </div>
         {!current ? (
-          <div className="text-sm text-gray-500">Select a node to edit</div>
+          <div className="p-8 text-center">
+            <div className="text-6xl mb-4">👈</div>
+            <div className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('rotationTree.selectNodeToEdit') || 'Select a node to edit'}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Click on any item in the tree to view and edit its details
+            </div>
+          </div>
         ) : (
           <NodeEditor
             key={current.id}
@@ -75,7 +172,7 @@ export default function RotationTree({ rotationId }: Props) {
             }}
             onCreateChild={async (type) => {
               const siblings = nodes.filter((x) => x.parentId === current.id);
-              const created = await createNode({
+              await createNode({
                 id: '' as any,
                 rotationId,
                 parentId: current.id,
@@ -123,6 +220,10 @@ function NodeItem({
   onToggle,
   onSelect,
   selectedId,
+  categoryColor,
+  searchTerm,
+  highlight,
+  parentName,
 }: {
   node: TreeNode;
   level: number;
@@ -130,35 +231,120 @@ function NodeItem({
   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
   selectedId: string | null;
+  categoryColor: { bg: string; border: string; baseColor: string } | null;
+  searchTerm: string;
+  highlight: (text: string, query: string) => React.ReactNode;
+  parentName?: string;
 }) {
   const isExpanded = Boolean(expanded[node.id]);
   const hasChildren = node.children.length > 0;
+  const isCategory = node.type === 'category';
+  const isLeaf = node.type === 'leaf';
+
+  // Check if this leaf has the same name as its parent (duplicate display issue)
+  const isDuplicateName =
+    isLeaf && parentName && node.name.toLowerCase().trim() === parentName.toLowerCase().trim();
+
+  // If this is a category node, get its color scheme
+  // Otherwise, inherit from parent
+  const currentCategoryColor = isCategory ? getCategoryColor(node.name) : categoryColor;
+
+  // Determine background opacity based on node type
+  let bgClass = '';
+  if (currentCategoryColor) {
+    if (isCategory) {
+      // Category itself: full color with border
+      bgClass = `${currentCategoryColor.bg} ${currentCategoryColor.border}`;
+    } else if (node.type === 'subject') {
+      // Direct children (subjects): medium opacity
+      if (currentCategoryColor.baseColor === 'blue') {
+        bgClass = 'bg-blue-50/50 dark:bg-blue-950/15';
+      } else if (currentCategoryColor.baseColor === 'green') {
+        bgClass = 'bg-green-50/50 dark:bg-green-950/15';
+      } else if (currentCategoryColor.baseColor === 'purple') {
+        bgClass = 'bg-purple-50/50 dark:bg-purple-950/15';
+      }
+    } else {
+      // Deeper children (topics, subtopics, leaves): light opacity
+      if (currentCategoryColor.baseColor === 'blue') {
+        bgClass = 'bg-blue-50/30 dark:bg-blue-950/10';
+      } else if (currentCategoryColor.baseColor === 'green') {
+        bgClass = 'bg-green-50/30 dark:bg-green-950/10';
+      } else if (currentCategoryColor.baseColor === 'purple') {
+        bgClass = 'bg-purple-50/30 dark:bg-purple-950/10';
+      }
+    }
+  }
+
   return (
     <div className="pl-2">
       <div
         className={
-          'flex items-center gap-2 py-1 rounded cursor-pointer ' +
-          (selectedId === node.id ? 'bg-teal-50 dark:bg-gray-800' : '')
+          'flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer transition-colors ' +
+          (selectedId === node.id
+            ? 'bg-teal-50 dark:bg-teal-900/30 '
+            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 ') +
+          bgClass
         }
-        onClick={() => onSelect(node.id)}
+        onClick={() => {
+          if (hasChildren) onToggle(node.id);
+          onSelect(node.id);
+        }}
       >
         {hasChildren ? (
-          <button
-            className="text-xs text-gray-600"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggle(node.id);
-            }}
-          >
+          <span className="text-xs text-gray-600 dark:text-gray-400 select-none">
             {isExpanded ? '▾' : '▸'}
-          </button>
+          </span>
         ) : (
           <span className="text-xs text-transparent">▸</span>
         )}
-        <span className="text-sm">{node.name}</span>
+        <span
+          className={`text-sm ${isCategory ? 'font-semibold' : ''} ${isDuplicateName ? 'text-gray-500 dark:text-gray-400 italic' : ''}`}
+        >
+          {isDuplicateName ? (
+            <span className="flex items-center gap-1">
+              <span className="text-xs">↳</span>
+              <span className="text-xs">(practice activities)</span>
+            </span>
+          ) : searchTerm.trim() ? (
+            highlight(node.name, searchTerm)
+          ) : (
+            node.name
+          )}
+        </span>
         {node.type !== 'leaf' ? (
-          <Badge className="ml-auto">{branchTotals(node).join(' / ')}</Badge>
-        ) : null}
+          // Branch nodes: Show total required count from all child leaves
+          (() => {
+            const totals = branchTotals(node);
+            return (
+              <Badge
+                variant="secondary"
+                className="ml-auto text-xs font-bold px-2.5 py-1 !bg-blue-100 !text-blue-800 dark:!bg-blue-900/60 dark:!text-blue-200 border border-blue-300 dark:border-blue-700"
+                title={`Total activities required: ${totals.totalRequired} (from ${totals.leafCount} items)`}
+              >
+                Σ {totals.totalRequired}
+              </Badge>
+            );
+          })()
+        ) : node.requiredCount ? (
+          // Leaf nodes: Show required count prominently
+          <Badge
+            variant="secondary"
+            className="ml-auto text-xs font-bold px-2.5 py-1 !bg-orange-100 !text-orange-800 dark:!bg-orange-900/60 dark:!text-orange-200 border border-orange-300 dark:border-orange-700"
+            title={`Required activities: ${node.requiredCount}`}
+          >
+            ⚡ {node.requiredCount}
+          </Badge>
+        ) : (
+          // Leaf with no required count - show warning
+          <Badge
+            variant="secondary"
+            className="ml-auto text-xs !bg-gray-100 !text-gray-600 dark:!bg-gray-800 dark:!text-gray-400"
+            title="No required count set"
+          >
+            —
+          </Badge>
+        )}
       </div>
       {hasChildren && isExpanded ? (
         <div className="pl-4">
@@ -173,6 +359,10 @@ function NodeItem({
                 onToggle={onToggle}
                 onSelect={onSelect}
                 selectedId={selectedId}
+                categoryColor={currentCategoryColor}
+                searchTerm={searchTerm}
+                highlight={highlight}
+                parentName={node.name}
               />
             ))}
         </div>
@@ -215,11 +405,15 @@ function NodeEditor({
   onMoveParent: (newParentId: string | null) => Promise<void>;
   onReorder: (dir: 'up' | 'down') => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState(node.name);
   const isLeaf = node.type === 'leaf';
   const [requiredCount, setRequiredCount] = useState<number>(node.requiredCount || 0);
   const [mcqUrl, setMcqUrl] = useState<string>(node.mcqUrl || '');
   const [links, setLinks] = useState<Array<{ label: string; href: string }>>(node.links || []);
+  const [resources, setResources] = useState<string>(node.resources || '');
+  const [notesEn, setNotesEn] = useState<string>(node.notes_en || '');
+  const [notesHe, setNotesHe] = useState<string>(node.notes_he || '');
   const parentType = getParentType(node.type);
   const parentOptions = parentType
     ? nodes.filter((n) => n.type === parentType && n.rotationId === node.rotationId)
@@ -232,16 +426,25 @@ function NodeEditor({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium">Name</label>
-        <Input
+        <label className="block text-sm font-medium mb-2">
+          {t('ui.name')} <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onBlur={async () => name !== node.name && onChange({ name })}
+          onBlur={async () => {
+            if (name !== node.name) {
+              await onChange({ name });
+            }
+          }}
+          placeholder="Enter node name"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
       {parentType ? (
         <div>
-          <label className="block text-sm font-medium">Parent</label>
+          <label className="block text-sm font-medium">{t('rotationTree.parent')}</label>
           <Select
             value={node.parentId || ''}
             onChange={(e) => onMoveParent(e.target.value || null)}
@@ -277,26 +480,46 @@ function NodeEditor({
         </div>
       ) : (
         <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium">Required Count</label>
+          <div className="rounded-lg border-2 border-orange-200 dark:border-orange-800 bg-orange-50/30 dark:bg-orange-900/10 p-4">
+            <label className="block text-sm font-semibold text-orange-900 dark:text-orange-100 mb-1">
+              ⚡ Required Activities Count
+            </label>
             <Input
               type="number"
+              min="0"
               value={String(requiredCount)}
               onChange={(e) => setRequiredCount(Number(e.target.value))}
               onBlur={async () => onChange({ requiredCount })}
+              className="text-lg font-bold"
             />
+            <div className="text-xs text-orange-800 dark:text-orange-200 mt-2">
+              {requiredCount === 0 ? (
+                <div className="flex items-center gap-1">
+                  <span>⚠️</span>
+                  <span>No requirement set - residents won't see this as a target</span>
+                </div>
+              ) : (
+                <div>
+                  Residents must complete this activity <strong>{requiredCount}</strong> time
+                  {requiredCount !== 1 ? 's' : ''} to fulfill the requirement.
+                </div>
+              )}
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium">MCQ URL</label>
+            <label className="block text-sm font-medium mb-2">MCQ URL</label>
             <div className="flex gap-2">
-              <Input
+              <input
+                type="text"
                 value={mcqUrl}
                 onChange={(e) => setMcqUrl(e.target.value)}
-                onBlur={async () => onChange({ mcqUrl })}
+                onBlur={async () => await onChange({ mcqUrl })}
+                placeholder="https://forms.gle/..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
               />
               {mcqUrl ? (
                 <a
-                  className="text-sm text-teal-700 underline"
+                  className="text-sm text-teal-700 underline px-3 py-2"
                   href={mcqUrl}
                   target="_blank"
                   rel="noreferrer"
@@ -305,6 +528,48 @@ function NodeEditor({
                 </a>
               ) : null}
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Resources</label>
+            <textarea
+              value={resources}
+              onChange={(e) => setResources(e.target.value)}
+              onBlur={async () => await onChange({ resources })}
+              placeholder="Books, videos, articles (one per line)"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 font-mono text-sm resize-y"
+            />
+            <div className="text-xs text-gray-500 mt-1">
+              Add books, videos, or other reference materials. URLs will be auto-detected and made
+              clickable.
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Notes (English)</label>
+            <textarea
+              value={notesEn}
+              onChange={(e) => setNotesEn(e.target.value)}
+              onBlur={async () => await onChange({ notes_en: notesEn })}
+              placeholder="Clinical notes, tips, or additional information (max 500 chars)"
+              rows={3}
+              maxLength={500}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 resize-y"
+            />
+            <div className="text-xs text-gray-500 mt-1">{notesEn.length}/500 characters</div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Notes (Hebrew)</label>
+            <textarea
+              value={notesHe}
+              onChange={(e) => setNotesHe(e.target.value)}
+              onBlur={async () => await onChange({ notes_he: notesHe })}
+              placeholder="הערות קליניות, טיפים או מידע נוסף (מקסימום 500 תווים)"
+              rows={3}
+              maxLength={500}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 resize-y"
+              dir="rtl"
+            />
+            <div className="text-xs text-gray-500 mt-1">{notesHe.length}/500 characters</div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -315,7 +580,8 @@ function NodeEditor({
             </div>
             {links.map((lnk, idx) => (
               <div key={idx} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Input
+                <input
+                  type="text"
                   placeholder="Label"
                   value={lnk.label}
                   onChange={(e) =>
@@ -323,9 +589,11 @@ function NodeEditor({
                       arr.map((x, i) => (i === idx ? { ...x, label: e.target.value } : x)),
                     )
                   }
-                  onBlur={async () => onChange({ links })}
+                  onBlur={async () => await onChange({ links })}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
-                <Input
+                <input
+                  type="text"
                   placeholder="URL"
                   value={lnk.href}
                   onChange={(e) =>
@@ -333,7 +601,8 @@ function NodeEditor({
                       arr.map((x, i) => (i === idx ? { ...x, href: e.target.value } : x)),
                     )
                   }
-                  onBlur={async () => onChange({ links })}
+                  onBlur={async () => await onChange({ links })}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
             ))}
@@ -373,13 +642,43 @@ function getParentType(type: RotationNode['type']): RotationNode['type'] | null 
   }
 }
 
-function branchTotals(node: TreeNode): number[] {
-  // Compute simple totals: sum of leaf requiredCounts under this node grouped by category depth
-  const totals = { leafs: 0 } as any;
+function branchTotals(node: TreeNode): { totalRequired: number; leafCount: number } {
+  // Compute totals: sum of leaf requiredCounts and count of leaves
+  let totalRequired = 0;
+  let leafCount = 0;
   function walk(n: TreeNode) {
-    if (n.type === 'leaf') totals.leafs += n.requiredCount || 0;
+    if (n.type === 'leaf') {
+      totalRequired += n.requiredCount || 0;
+      leafCount += 1;
+    }
     n.children.forEach(walk);
   }
   walk(node);
-  return [totals.leafs];
+  return { totalRequired, leafCount };
+}
+
+function getCategoryColor(name: string): { bg: string; border: string; baseColor: string } | null {
+  const normalized = name.toLowerCase();
+  if (normalized.includes('knowledge')) {
+    return {
+      bg: 'bg-blue-50 dark:bg-blue-950/30',
+      border: 'border-l-4 border-blue-400 dark:border-blue-600',
+      baseColor: 'blue',
+    };
+  }
+  if (normalized.includes('skill')) {
+    return {
+      bg: 'bg-green-50 dark:bg-green-950/30',
+      border: 'border-l-4 border-green-400 dark:border-green-600',
+      baseColor: 'green',
+    };
+  }
+  if (normalized.includes('guidance')) {
+    return {
+      bg: 'bg-purple-50 dark:bg-purple-950/30',
+      border: 'border-l-4 border-purple-400 dark:border-purple-600',
+      baseColor: 'purple',
+    };
+  }
+  return null;
 }

@@ -10,7 +10,14 @@ export type CsvRow = {
 export function parseMorningMeetingsCsv(text: string): { header: string[]; rows: CsvRow[] } {
   const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (!lines.length) return { header: [], rows: [] };
-  const header = lines.shift()!.split(',').map((s: any) => String(s || '').trim().toLowerCase()) as string[];
+  const header = lines
+    .shift()!
+    .split(',')
+    .map((s: any) =>
+      String(s || '')
+        .trim()
+        .toLowerCase(),
+    ) as string[];
   const rows: CsvRow[] = [];
   for (const line of lines) {
     const cols = line.split(',');
@@ -48,5 +55,3 @@ export function isBasicUrl(url: string): boolean {
     return false;
   }
 }
-
-

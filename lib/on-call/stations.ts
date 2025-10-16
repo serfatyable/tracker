@@ -1,8 +1,8 @@
 import type { StationKey } from '../../types/onCall';
 
 export const hebrewHeaderToKey: Record<string, StationKey | 'dayOfWeek' | 'date'> = {
-  'יום': 'dayOfWeek',
-  'תאריך': 'date',
+  יום: 'dayOfWeek',
+  תאריך: 'date',
   'ת.חדר ניתוח': 'or_main',
   'ת. חדר לידה': 'labor_delivery',
   'תורן טיפול נמרץ': 'icu',
@@ -14,11 +14,11 @@ export const hebrewHeaderToKey: Record<string, StationKey | 'dayOfWeek' | 'date'
   'אורתו שצי': 'ortho_shatzi',
   'אורתו טראומה': 'ortho_trauma',
   'אורתו מפרק': 'ortho_joint',
-  'SUR': 'surgery',
-  'Urol': 'urology',
+  SUR: 'surgery',
+  Urol: 'urology',
   'עמ"ש': 'spine',
   'כלי דם / חזה': 'vascular_thoracic',
-  'כאב': 'pain_service',
+  כאב: 'pain_service',
   'זריקות עמ"ש': 'spine_injections',
   'יום מנוחה שבועי': 'weekly_day_off',
 };
@@ -64,5 +64,3 @@ export const stationI18nKeys: Record<StationKey, string> = {
   spine_injections: 'onCall.station.spine_injections',
   weekly_day_off: 'onCall.station.weekly_day_off',
 };
-
-
