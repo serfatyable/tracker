@@ -356,6 +356,7 @@ export default function ResidentDashboard() {
   );
 }
 function ResidentReflectionsInline() {
+  const { t } = useTranslation();
   const { data: me } = useCurrentUserProfile();
   const { list, loading } = useReflectionsForResident(me?.uid || null);
   return (
