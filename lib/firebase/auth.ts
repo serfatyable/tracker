@@ -6,7 +6,7 @@ import {
   signOut as fbSignOut,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 import type {
   Role,
@@ -120,23 +120,7 @@ export async function updateUserLanguage(language: 'en' | 'he') {
   const current = auth.currentUser;
   if (!current) throw new Error('Not authenticated');
   const ref = doc(db, 'users', current.uid);
-  await updateDoc(ref, { 'settings.language': language } as any);
-}
-
-export async function updateUserTheme(theme: 'light' | 'dark' | 'system') {
-  const { auth, db } = getAuthDb();
-  const current = auth.currentUser;
-  if (!current) throw new Error('Not authenticated');
-  const ref = doc(db, 'users', current.uid);
-  await updateDoc(ref, { 'settings.theme': theme } as any);
-}
-
-export async function updateUserNotifications(settings: { inApp: boolean; email: boolean }) {
-  const { auth, db } = getAuthDb();
-  const current = auth.currentUser;
-  if (!current) throw new Error('Not authenticated');
-  const ref = doc(db, 'users', current.uid);
-  await updateDoc(ref, { 'settings.notifications': settings } as any);
+  await setDoc(ref, { settings: { language } }, { merge: true });
 }
 
 export async function requestPasswordReset(email: string) {
