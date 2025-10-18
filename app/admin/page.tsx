@@ -27,12 +27,12 @@ import { getFirebaseStatus } from '../../lib/firebase/client';
 import { useActiveAssignments } from '../../lib/hooks/useActiveAssignments';
 import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
-import {
-  useMorningMeetingsUpcoming,
-  useMorningMeetingsMonth,
-} from '../../lib/hooks/useMorningClasses';
 import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
 import type { Role, UserProfile } from '../../types/auth';
+import Input from '../../components/ui/Input';
+import Link from 'next/link';
+import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
+import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 
 // Lazy load heavy tab components
 const KPICards = lazy(() => import('../../components/admin/overview/KPICards'));
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
         ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
         : status === 'pending'
           ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-          : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+          : 'bg-gray-100 text-gray-800 dark:bg-[rgb(var(--surface-elevated))] dark:text-[rgb(var(--fg))]';
     return (
       <Badge variant="outline" className={statusClass}>
         {status}
@@ -410,9 +410,9 @@ export default function AdminDashboard() {
               <OverviewTab />
             </div>
           ) : tab === 'morning' ? (
-            <AdminMorningMeetingsInline />
+            <MorningMeetingsView showUploadButton={true} />
           ) : tab === 'oncall' ? (
-            <AdminOnCallInline />
+            <OnCallScheduleView showUploadButton={true} />
           ) : tab === 'users' ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
@@ -480,7 +480,7 @@ export default function AdminDashboard() {
                           onClick={() => toggleSort('role')}
                         >
                           <span>{t('ui.role')}</span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-[rgb(var(--muted))]">
                             {orderBy === 'role' ? (orderDir === 'asc' ? '▲' : '▼') : ''}
                           </span>
                         </button>
@@ -491,7 +491,7 @@ export default function AdminDashboard() {
                           onClick={() => toggleSort('status')}
                         >
                           <span>{t('ui.status')}</span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-[rgb(var(--muted))]">
                             {orderBy === 'status' ? (orderDir === 'asc' ? '▲' : '▼') : ''}
                           </span>
                         </button>
@@ -549,15 +549,15 @@ export default function AdminDashboard() {
                 {selectedUser ? (
                   <div className="space-y-3 text-sm">
                     <div>
-                      <span className="text-gray-500">Email:</span>{' '}
+                      <span className="text-gray-500 dark:text-[rgb(var(--muted))]">Email:</span>{' '}
                       <span>{selectedUser.email || '-'}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500">{t('ui.role')}:</span>
+                      <span className="text-gray-500 dark:text-[rgb(var(--muted))]">{t('ui.role')}:</span>
                       {renderRoleBadge(selectedUser.role)}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500">{t('ui.status')}:</span>
+                      <span className="text-gray-500 dark:text-[rgb(var(--muted))]">{t('ui.status')}:</span>
                       {renderStatusBadge(selectedUser.status)}
                     </div>
                     <div className="flex items-center gap-2 pt-2">
@@ -606,7 +606,7 @@ export default function AdminDashboard() {
                       ? t('ui.confirmDisableUser') || 'Disable user?'
                       : t('ui.confirmChangeRole') || 'Change role?'}
                 </DialogHeader>
-                <div className="text-sm text-gray-700 dark:text-gray-300">
+                <div className="text-sm text-gray-700 dark:text-[rgb(var(--fg))]">
                   {confirmAction === 'role' && confirmRole
                     ? (t('ui.changeRoleTo', {
                         name: confirmTarget?.fullName || 'user',
@@ -772,7 +772,7 @@ export default function AdminDashboard() {
                               {openRotationName || 'Loading...'}
                             </h2>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 ml-12">
+                          <p className="text-sm text-gray-600 dark:text-[rgb(var(--muted))] ml-12">
                             Editing curriculum structure and requirements
                           </p>
                         </div>
@@ -845,148 +845,6 @@ function OverviewTab() {
           <div className="lg:col-span-2">
             <TutorLoadTable assignments={assignments} tutors={tutors} />
           </div>
-        </div>
-      </div>
-    </Suspense>
-  );
-}
-
-function AdminMorningMeetingsInline() {
-  const { t, i18n } = useTranslation();
-  const { today, tomorrow, next7, loading: upcomingLoading } = useMorningMeetingsUpcoming();
-  const now = new Date();
-  const y = now.getFullYear();
-  const m0 = now.getMonth();
-  const { list: monthList, loading: monthLoading } = useMorningMeetingsMonth(y, m0);
-  const daysInMonth = useMemo(() => new Date(y, m0 + 1, 0).getDate(), [y, m0]);
-  const monthByDay = useMemo(() => {
-    const map: Record<number, any[]> = {};
-    (monthList || []).forEach((it: any) => {
-      const d = new Date(it.date.toDate());
-      const dd = d.getDate();
-      map[dd] = map[dd] || [];
-      map[dd].push(it);
-    });
-    return map;
-  }, [monthList]);
-  function renderList(items: any[] | null, loading: boolean) {
-    if (loading) {
-      return (
-        <div className="space-y-2">
-          <div className="h-12 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
-          <div className="h-12 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
-        </div>
-      );
-    }
-    if (!items || !items.length)
-      return (
-        <div className="rounded-lg border-2 border-dashed border-muted/30 bg-surface/30 p-4 text-center">
-          <p className="text-sm text-muted">{t('morningMeetings.noClasses')}</p>
-        </div>
-      );
-    return (
-      <ul className="divide-y rounded border">
-        {(items || []).map((c: any) => {
-          const start =
-            c.date?.toDate?.()?.toLocaleTimeString?.(i18n.language === 'he' ? 'he-IL' : 'en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-            }) || '07:10';
-          return (
-            <li key={c.id || c.dateKey + c.title} className="p-2 flex items-center justify-between">
-              <div>
-                <div className="font-medium">{c.title}</div>
-                <div className="text-xs opacity-70">
-                  {c.lecturer} — {start}
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    );
-  }
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="card-levitate p-4">
-          <div className="mb-2 font-semibold">{t('morningMeetings.today')}</div>
-          {renderList(today, upcomingLoading)}
-        </div>
-        <div className="card-levitate p-4">
-          <div className="mb-2 font-semibold">{t('morningMeetings.tomorrow')}</div>
-          {renderList(tomorrow, upcomingLoading)}
-        </div>
-        <div className="card-levitate p-4">
-          <div className="mb-2 font-semibold">{t('morningMeetings.next7')}</div>
-          {renderList(next7, upcomingLoading)}
-        </div>
-      </div>
-      <div className="card-levitate p-4">
-        <div className="mb-2 font-semibold">{t('morningMeetings.month')}</div>
-        {monthLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
-            {Array.from({ length: 21 }).map((_, i) => (
-              <div
-                key={i}
-                className="rounded border p-2 h-20 bg-gray-100 dark:bg-gray-900 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
-            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
-              <div key={d} className="rounded border p-2 min-h-[80px]">
-                <div className="text-xs opacity-70 mb-1">{d}</div>
-                <div className="space-y-1">
-                  {(monthByDay[d] || []).map((c) => (
-                    <div key={c.id || c.title} className="truncate">
-                      {c.title}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function AdminOnCallInline() {
-  const { data: me } = useCurrentUserProfile();
-  const { t } = useTranslation();
-  return (
-    <Suspense
-      fallback={
-        <div className="space-y-4">
-          <CardSkeleton />
-          <CardSkeleton />
-        </div>
-      }
-    >
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <div className="card-levitate p-4 space-y-3">
-              <div className="text-sm font-medium">{t('onCall.today')}</div>
-              <TodayPanel highlightUserId={me?.uid} />
-            </div>
-          </div>
-          <div className="md:col-span-1">
-            <div className="card-levitate p-4">
-              <NextShiftCard userId={me?.uid} />
-            </div>
-          </div>
-        </div>
-        <div className="card-levitate p-4 space-y-3">
-          <div className="text-sm font-medium">{t('onCall.teamOnDate', { date: '' })}</div>
-          <TeamForDate />
-        </div>
-        <div className="card-levitate p-4 space-y-3">
-          <div className="text-sm font-medium">{t('ui.timeline')}</div>
-          <MiniCalendar />
         </div>
       </div>
     </Suspense>

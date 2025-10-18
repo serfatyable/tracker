@@ -55,7 +55,7 @@ function TemplatesTab({ onGoSubmissions }: { onGoSubmissions: () => void }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <select
-          className="border rounded px-2 py-1"
+          className="border rounded px-2 py-1 text-gray-900 dark:text-gray-50 bg-white dark:bg-[rgb(var(--surface-depressed))] border-gray-300 dark:border-[rgb(var(--border))]"
           value={audience}
           onChange={(e) => setAudience((e.target.value || '') as any)}
         >
@@ -100,8 +100,8 @@ function TemplatesTab({ onGoSubmissions }: { onGoSubmissions: () => void }) {
       </div>
       <div className="space-y-2">
         {audience && templates.length ? (
-          <div className="border rounded">
-            <div className="grid grid-cols-2 gap-2 px-3 py-2 text-xs font-semibold border-b">
+          <div className="border rounded border-gray-200 dark:border-[rgb(var(--border))]">
+            <div className="grid grid-cols-2 gap-2 px-3 py-2 text-xs font-semibold border-b border-gray-200 dark:border-[rgb(var(--border))] text-gray-900 dark:text-gray-50">
               <div>Name</div>
               <div>Actions</div>
             </div>
@@ -114,7 +114,7 @@ function TemplatesTab({ onGoSubmissions }: { onGoSubmissions: () => void }) {
                 return (
                   <div
                     key={t.id}
-                    className="grid grid-cols-2 gap-2 items-center px-3 py-2 text-sm border-t"
+                    className="grid grid-cols-2 gap-2 items-center px-3 py-2 text-sm border-t border-gray-200 dark:border-[rgb(var(--border))] text-gray-900 dark:text-gray-50"
                   >
                     <div className="truncate">{name}</div>
                     <div className="flex gap-2">
@@ -132,13 +132,13 @@ function TemplatesTab({ onGoSubmissions }: { onGoSubmissions: () => void }) {
               })}
           </div>
         ) : audience ? (
-          <div className="text-sm opacity-70">No templates yet.</div>
+          <div className="text-sm opacity-70 text-gray-700 dark:text-gray-50">No templates yet.</div>
         ) : null}
       </div>
       {selected ? (
         <TemplateEditor template={selected} onClose={() => setSelected(null)} />
       ) : (
-        <div className="text-sm opacity-70">Select audience to view/publish templates.</div>
+        <div className="text-sm opacity-70 text-gray-700 dark:text-gray-50">Select audience to view/publish templates.</div>
       )}
     </div>
   );
@@ -221,28 +221,28 @@ function TemplateEditor({
   };
 
   return (
-    <div className="border rounded p-3 space-y-3">
+    <div className="border rounded p-3 space-y-3 border-gray-200 dark:border-[rgb(var(--border))]">
       <div className="flex items-center gap-2">
         <div className="font-semibold">
           Editing template v{working.version} ({working.status})
         </div>
-        <div className="text-xs opacity-70">{working.audience}</div>
+        <div className="text-xs opacity-70 text-gray-600 dark:text-gray-50">{working.audience}</div>
       </div>
       <div className="space-y-3">
         {working.sections?.map((s) => (
-          <div key={s.id} className="border rounded p-2">
+          <div key={s.id} className="border rounded p-2 border-gray-200 dark:border-[rgb(var(--border))]">
             <div className="flex items-center justify-between">
               <div className="font-medium">{s.name.en}</div>
               <Button size="sm" variant="outline" onClick={() => onAddPrompt(s.id)}>
                 Add prompt
               </Button>
             </div>
-            <div className="text-xs opacity-70">{s.purpose.en}</div>
+            <div className="text-xs opacity-70 text-gray-600 dark:text-gray-50">{s.purpose.en}</div>
             <div className="space-y-2 mt-2">
               {s.prompts.map((p) => (
                 <div key={p.id} className="grid grid-cols-2 gap-2 items-center">
                   <input
-                    className="border rounded px-2 py-1"
+                    className="border rounded px-2 py-1 text-gray-900 dark:text-gray-50 bg-white dark:bg-[rgb(var(--surface-depressed))] border-gray-300 dark:border-[rgb(var(--border))]"
                     value={p.label.en}
                     onChange={(e) => {
                       const next = { ...working };
@@ -329,15 +329,15 @@ function SubmissionsTab({ onGoTemplates }: { onGoTemplates: () => void }) {
       </div>
       <div className="space-y-2">
         {rows.map((r) => (
-          <div key={r.id} className="border rounded p-2 text-sm flex items-center justify-between">
+          <div key={r.id} className="border rounded p-2 text-sm flex items-center justify-between border-gray-200 dark:border-[rgb(var(--border))] text-gray-900 dark:text-gray-50">
             <div>
               <div className="font-medium">
                 {r.taskType} — {r.authorRole}
               </div>
-              <div className="text-xs opacity-70">{r.taskOccurrenceId}</div>
+              <div className="text-xs opacity-70 text-gray-600 dark:text-gray-50">{r.taskOccurrenceId}</div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="text-xs opacity-70">
+              <div className="text-xs opacity-70 text-gray-600 dark:text-gray-50">
                 {(r as any).submittedAt?.toDate?.()?.toLocaleString?.() || ''}
               </div>
               <Button size="sm" variant="outline" onClick={() => setSelected(r)}>
@@ -346,17 +346,17 @@ function SubmissionsTab({ onGoTemplates }: { onGoTemplates: () => void }) {
             </div>
           </div>
         ))}
-        {!rows.length ? <div className="text-sm opacity-70">No submissions yet.</div> : null}
+        {!rows.length ? <div className="text-sm opacity-70 text-gray-700 dark:text-gray-50">No submissions yet.</div> : null}
       </div>
       {selected ? (
-        <div className="border rounded p-3 space-y-2">
+        <div className="border rounded p-3 space-y-2 border-gray-200 dark:border-[rgb(var(--border))]">
           <div className="font-semibold">Reflection detail</div>
-          <pre className="text-xs whitespace-pre-wrap">
+          <pre className="text-xs whitespace-pre-wrap text-gray-900 dark:text-gray-50 bg-gray-50 dark:bg-[rgb(var(--surface-depressed))] p-2 rounded">
             {JSON.stringify(selected.answers, null, 2)}
           </pre>
           <div className="flex items-center gap-2">
             <input
-              className="border rounded px-2 py-1 w-full"
+              className="border rounded px-2 py-1 w-full text-gray-900 dark:text-gray-50 bg-white dark:bg-[rgb(var(--surface-depressed))] border-gray-300 dark:border-[rgb(var(--border))]"
               placeholder="Admin comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}

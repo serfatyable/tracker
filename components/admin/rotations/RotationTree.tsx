@@ -88,12 +88,12 @@ export default function RotationTree({ rotationId }: Props) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* LEFT PANEL: Tree Navigation */}
-      <div className="lg:col-span-1 rounded-md border-2 border-teal-300 dark:border-teal-700 bg-white dark:bg-gray-900 p-3">
-        <div className="mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+      <div className="lg:col-span-1 rounded-md border-2 border-teal-300 dark:border-teal-700 bg-white dark:bg-[rgb(var(--surface))] p-3">
+        <div className="mb-3 pb-2 border-b border-gray-200 dark:border-[rgb(var(--border))]">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-[rgb(var(--fg))]">
             📂 Curriculum Structure
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Click any item to edit →</p>
+          <p className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">Click any item to edit →</p>
         </div>
 
         {/* Search Bar */}
@@ -104,12 +104,12 @@ export default function RotationTree({ rotationId }: Props) {
               placeholder={t('ui.searchInCurriculum') || 'Search curriculum...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 text-sm"
+              className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))] text-sm"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg font-bold leading-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-[rgb(var(--muted))] dark:hover:text-[rgb(var(--fg))] text-lg font-bold leading-none"
                 title="Clear search"
               >
                 ✕
@@ -117,7 +117,7 @@ export default function RotationTree({ rotationId }: Props) {
             )}
           </div>
           {searchTerm && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 px-1">
+            <div className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1.5 px-1">
               🔍 Searching for "{searchTerm}"
             </div>
           )}
@@ -147,17 +147,17 @@ export default function RotationTree({ rotationId }: Props) {
       </div>
 
       {/* RIGHT PANEL: Node Editor */}
-      <div className="lg:col-span-2 rounded-md border-2 border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-900 p-4">
-        <div className="mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">✏️ Edit Node</h3>
+      <div className="lg:col-span-2 rounded-md border-2 border-blue-300 dark:border-blue-700 bg-white dark:bg-[rgb(var(--surface))] p-4">
+        <div className="mb-4 pb-3 border-b border-gray-200 dark:border-[rgb(var(--border))]">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-[rgb(var(--fg))]">✏️ Edit Node</h3>
         </div>
         {!current ? (
           <div className="p-8 text-center">
             <div className="text-6xl mb-4">👈</div>
-            <div className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="text-lg font-medium text-gray-700 dark:text-[rgb(var(--fg))] mb-2">
               {t('rotationTree.selectNodeToEdit') || 'Select a node to edit'}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500 dark:text-[rgb(var(--muted))]">
               Click on any item in the tree to view and edit its details
             </div>
           </div>
@@ -283,7 +283,7 @@ function NodeItem({
           'flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer transition-colors ' +
           (selectedId === node.id
             ? 'bg-teal-50 dark:bg-teal-900/30 '
-            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 ') +
+            : 'hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] ') +
           bgClass
         }
         onClick={() => {
@@ -292,14 +292,14 @@ function NodeItem({
         }}
       >
         {hasChildren ? (
-          <span className="text-xs text-gray-600 dark:text-gray-400 select-none">
+          <span className="text-xs text-gray-600 dark:text-[rgb(var(--muted))] select-none">
             {isExpanded ? '▾' : '▸'}
           </span>
         ) : (
           <span className="text-xs text-transparent">▸</span>
         )}
         <span
-          className={`text-sm ${isCategory ? 'font-semibold' : ''} ${isDuplicateName ? 'text-gray-500 dark:text-gray-400 italic' : ''}`}
+          className={`text-sm text-gray-900 dark:text-gray-50 ${isCategory ? 'font-semibold' : ''} ${isDuplicateName ? 'text-gray-500 dark:text-[rgb(var(--muted))] italic' : ''}`}
         >
           {isDuplicateName ? (
             <span className="flex items-center gap-1">
@@ -339,7 +339,7 @@ function NodeItem({
           // Leaf with no required count - show warning
           <Badge
             variant="secondary"
-            className="ml-auto text-xs !bg-gray-100 !text-gray-600 dark:!bg-gray-800 dark:!text-gray-400"
+            className="ml-auto text-xs !bg-gray-100 !text-gray-600 dark:!bg-[rgb(var(--surface-elevated))] dark:!text-[rgb(var(--muted))]"
             title="No required count set"
           >
             —
@@ -426,7 +426,7 @@ function NodeEditor({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-2">
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">
           {t('ui.name')} <span className="text-red-500">*</span>
         </label>
         <input
@@ -439,12 +439,12 @@ function NodeEditor({
             }
           }}
           placeholder="Enter node name"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))]"
         />
       </div>
       {parentType ? (
         <div>
-          <label className="block text-sm font-medium">{t('rotationTree.parent')}</label>
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('rotationTree.parent')}</label>
           <Select
             value={node.parentId || ''}
             onChange={(e) => onMoveParent(e.target.value || null)}
@@ -507,7 +507,7 @@ function NodeEditor({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">MCQ URL</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">MCQ URL</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -515,7 +515,7 @@ function NodeEditor({
                 onChange={(e) => setMcqUrl(e.target.value)}
                 onBlur={async () => await onChange({ mcqUrl })}
                 placeholder="https://forms.gle/..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))]"
               />
               {mcqUrl ? (
                 <a
@@ -530,22 +530,22 @@ function NodeEditor({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Resources</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">Resources</label>
             <textarea
               value={resources}
               onChange={(e) => setResources(e.target.value)}
               onBlur={async () => await onChange({ resources })}
               placeholder="Books, videos, articles (one per line)"
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 font-mono text-sm resize-y"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))] font-mono text-sm resize-y"
             />
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">
               Add books, videos, or other reference materials. URLs will be auto-detected and made
               clickable.
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Notes (English)</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">Notes (English)</label>
             <textarea
               value={notesEn}
               onChange={(e) => setNotesEn(e.target.value)}
@@ -553,12 +553,12 @@ function NodeEditor({
               placeholder="Clinical notes, tips, or additional information (max 500 chars)"
               rows={3}
               maxLength={500}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 resize-y"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))] resize-y"
             />
-            <div className="text-xs text-gray-500 mt-1">{notesEn.length}/500 characters</div>
+            <div className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">{notesEn.length}/500 characters</div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Notes (Hebrew)</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">Notes (Hebrew)</label>
             <textarea
               value={notesHe}
               onChange={(e) => setNotesHe(e.target.value)}
@@ -566,14 +566,14 @@ function NodeEditor({
               placeholder="הערות קליניות, טיפים או מידע נוסף (מקסימום 500 תווים)"
               rows={3}
               maxLength={500}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 resize-y"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))] resize-y"
               dir="rtl"
             />
-            <div className="text-xs text-gray-500 mt-1">{notesHe.length}/500 characters</div>
+            <div className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">{notesHe.length}/500 characters</div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Links</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Links</span>
               <Button onClick={() => setLinks((arr) => [...arr, { label: 'Link', href: '' }])}>
                 Add link
               </Button>
@@ -590,7 +590,7 @@ function NodeEditor({
                     )
                   }
                   onBlur={async () => await onChange({ links })}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))]"
                 />
                 <input
                   type="text"
@@ -602,7 +602,7 @@ function NodeEditor({
                     )
                   }
                   onBlur={async () => await onChange({ links })}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))]"
                 />
               </div>
             ))}

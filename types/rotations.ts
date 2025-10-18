@@ -30,10 +30,12 @@ export type RotationNode = {
   parentId: string | null;
   type: RotationNodeType;
   name: string;
+  name_en?: string;
+  name_he?: string;
   order: number;
   // leaf-only fields
   requiredCount?: number;
-  links?: Array<{ label: string; href: string }>;
+  links?: Array<{ label?: string; label_en?: string; label_he?: string; href: string }>;
   mcqUrl?: string;
   resources?: string; // Free text field for books, videos, etc.
   notes_en?: string; // English notes (max 500 chars)

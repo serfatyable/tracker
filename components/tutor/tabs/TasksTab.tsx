@@ -31,10 +31,10 @@ export default function TasksTab({ residents, tasks, onBulkApprove, onBulkReject
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="text-sm opacity-70">Selected: {selectedIds.length}</div>
+        <div className="text-sm opacity-70 text-gray-600 dark:text-gray-300">Selected: {selectedIds.length}</div>
         <div className="flex items-center gap-2">
           <input
-            className="rounded border px-2 py-1 text-sm bg-transparent"
+            className="rounded border px-2 py-1 text-sm bg-white dark:bg-[rgb(var(--surface-depressed))] text-gray-900 dark:text-gray-50 border-gray-300 dark:border-[rgb(var(--border))] placeholder:text-gray-500 dark:placeholder:text-gray-400"
             placeholder="Optional rejection reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -56,21 +56,21 @@ export default function TasksTab({ residents, tasks, onBulkApprove, onBulkReject
           const r = resById.get(uid);
           return (
             <div key={uid} className="card-levitate p-3">
-              <div className="font-semibold mb-2">{(r && r.fullName) || uid}</div>
+              <div className="font-semibold mb-2 text-gray-900 dark:text-gray-50">{(r && r.fullName) || uid}</div>
               <div className="space-y-2">
                 {list.map((t) => (
                   <label
                     key={t.id}
-                    className="flex items-center justify-between text-sm border rounded px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition"
+                    className="flex items-center justify-between text-sm border border-gray-200 dark:border-[rgb(var(--border))] rounded px-2 py-1 hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] transition"
                   >
                     <div>
-                      <div className="font-medium">
+                      <div className="font-medium text-gray-900 dark:text-gray-50">
                         {t.itemId}{' '}
-                        <span className="opacity-70">
+                        <span className="opacity-70 text-gray-600 dark:text-gray-300">
                           ({t.count}/{t.requiredCount})
                         </span>
                       </div>
-                      <div className="text-xs opacity-70">Rotation: {t.rotationId}</div>
+                      <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">Rotation: {t.rotationId}</div>
                     </div>
                     <input
                       type="checkbox"

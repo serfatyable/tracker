@@ -23,7 +23,7 @@ export function Dialog({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative z-10 w-full max-w-lg rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 sm:p-6 shadow-2xl border border-gray-200 dark:border-gray-700 focus:outline-none max-h-[90vh] overflow-y-auto"
+        className="relative z-10 w-full max-w-lg rounded-lg bg-white dark:bg-[rgb(var(--surface))] text-gray-900 dark:text-[rgb(var(--fg))] p-4 sm:p-6 shadow-2xl border border-gray-200 dark:border-[rgb(var(--border-strong))] focus:outline-none max-h-[90vh] overflow-y-auto"
         tabIndex={-1}
       >
         {children}

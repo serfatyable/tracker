@@ -9,6 +9,22 @@ const nextConfig = {
     // Avoid build failures/noisy errors during full rebuilds; run `pnpm lint` separately
     ignoreDuringBuilds: true,
   },
+  // Webpack configuration for xlsx library
+  webpack: (config, { isServer }) => {
+    // Don't resolve xlsx on the client side with Node.js dependencies
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        zlib: false,
+      };
+    }
+    return config;
+  },
   // Security headers
   async headers() {
     return [

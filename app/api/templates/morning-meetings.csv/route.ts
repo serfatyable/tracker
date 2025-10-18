@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const csv = [
-    'date,title,lecturer,organizer,link,notes',
-    '01/11/2025,Airway pearls,Dr. Jane Doe,Dr. John Smith,https://example.com/airway.pdf,Focus on RSI pitfalls',
-    '02/11/2025,OB anesthesia update,Dr. Alex Cohen,Dr. Dana Levi,,',
+    'יום,תאריך,נושא,מציג,מנחה,רכז,link,notes',
+    'א,19/10/2025,AW assessment & AW management; difficult AW & Extubation part 1 out of 4,ד״ר דן קוטלר,ד״ר מונה ליכטנשטיין,ד״ר נעימה קציר,https://example.com/meeting1.pdf,',
+    ',,Advanced Hemodynamic Monitoring,,,ד״ר נעימה קציר,,Second session - same day (empty day/date)',
+    'ב,20/10/2025,הניחן ריפואי,ד״ר עזרא ארנפלד,ד״ר אלית רחמן,ד״ר גיא פיינברג,,',
+    'ג,21/10/2025,הניחן ריפואי,ד״ר שמעון כהן,ד״ר מוניה לקלמן,ד״ר רון בן טור,https://zoom.us/j/example,',
   ].join('\n');
   return new NextResponse(csv, {
     headers: {

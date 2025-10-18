@@ -16,7 +16,7 @@ export default function TodayPanel({ highlightUserId }: { highlightUserId?: stri
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="rounded border p-3 border-gray-200 dark:border-gray-800">
+          <div key={i} className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]">
             <Skeleton className="h-3 w-20 mb-2" />
             <div className="mt-1 flex items-center gap-2">
               <Skeleton className="h-5 w-5 rounded-full" />
@@ -51,7 +51,7 @@ export default function TodayPanel({ highlightUserId }: { highlightUserId?: stri
         return (
           <div
             key={sk}
-            className={`rounded border p-3 ${isMe ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/20' : 'border-gray-200 dark:border-gray-800'}`}
+            className={`rounded border p-3 ${isMe ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/20' : 'border-gray-200 dark:border-[rgb(var(--border))]'}`}
           >
             <div className="text-xs opacity-70">{t(stationI18nKeys[sk as StationKey])}</div>
             <div className="mt-1 flex items-center gap-2">

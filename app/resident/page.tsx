@@ -15,10 +15,16 @@ import KPICardsResident from '../../components/resident/KPICardsResident';
 import LeafDetails from '../../components/resident/LeafDetails';
 import PendingTasksList from '../../components/resident/PendingTasksList';
 import Progress from '../../components/resident/Progress';
+import EnhancedProgress from '../../components/resident/EnhancedProgress';
 import QuickActions from '../../components/resident/QuickActions';
 import RecentLogs from '../../components/resident/RecentLogs';
 import Resources from '../../components/resident/Resources';
 import RotationBrowser from '../../components/resident/RotationBrowser';
+import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
+import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
+import RotationDashboard from '../../components/resident/rotation-views/RotationDashboard';
+import RotationTreeMap from '../../components/resident/rotation-views/RotationTreeMap';
+import RotationBrowse from '../../components/resident/rotation-views/RotationBrowse';
 import SettingsPanel from '../../components/settings/SettingsPanel';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
@@ -26,10 +32,6 @@ import Card from '../../components/ui/Card';
 import { TabsTrigger } from '../../components/ui/Tabs';
 import TextField from '../../components/ui/TextField';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
-import {
-  useMorningMeetingsUpcoming,
-  useMorningMeetingsMonth,
-} from '../../lib/hooks/useMorningClasses';
 import { useReflectionsForResident } from '../../lib/hooks/useReflections';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
@@ -50,14 +52,16 @@ export default function ResidentDashboard() {
     | 'morning'
     | 'oncall'
   >(initialTab);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { rotations, loading: rotationsLoading, error: rotationsError } = useRotations();
   const { rotationId: activeRotationId } = useResidentActiveRotation();
   const [selectedLeaf, setSelectedLeaf] = useState<RotationNode | null>(null);
   const [selectedRotationId, setSelectedRotationId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [searchScope, setSearchScope] = useState<'current' | 'all'>('current');
+  const [rotationView, setRotationView] = useState<'dashboard' | 'map' | 'browse'>('dashboard');
   const { nodes: activeNodes } = useRotationNodes(activeRotationId || null);
+  const { nodes: selectedNodes } = useRotationNodes(selectedRotationId);
 
   // Auto-select active rotation on load if none selected
   useEffect(() => {
@@ -77,6 +81,22 @@ export default function ResidentDashboard() {
     // Apply golden angle multiplication to avoid clustering
     const hue = Math.floor((base * 137.508) % 360);
     return hue;
+  }
+
+  function getFavorites(
+    nodes: RotationNode[] | null,
+    onSelect: (id: string) => void
+  ): Array<{ id: string; name: string; onSelect: () => void }> {
+    if (!nodes) return [];
+    // Get favorite nodes (marked as favorite or recently accessed)
+    return nodes
+      .filter((n: any) => n.isFavorite || n.isRecent)
+      .slice(0, 5) // Limit to 5 favorites
+      .map((n: any) => ({
+        id: n.id,
+        name: n.name,
+        onSelect: () => onSelect(n.id),
+      }));
   }
 
   // Auto-open first matching rotation when none selected and search narrows the list
@@ -179,9 +199,9 @@ export default function ResidentDashboard() {
                 <AnnouncementsCard />
               </div>
             ) : tab === 'morning' ? (
-              <ResidentMorningMeetingsInline />
+              <MorningMeetingsView showUploadButton={false} />
             ) : tab === 'oncall' ? (
-              <ResidentOnCallInline />
+              <OnCallScheduleView showUploadButton={false} />
             ) : tab === 'settings' ? (
               <div className="space-y-3">
                 <SettingsPanel />
@@ -189,7 +209,7 @@ export default function ResidentDashboard() {
             ) : tab === 'reflections' ? (
               <ResidentReflectionsInline />
             ) : tab === 'progress' ? (
-              <Progress />
+              <EnhancedProgress />
             ) : tab === 'approvals' ? (
               <Approvals
                 onOpenRotation={(rid) => {
@@ -217,12 +237,12 @@ export default function ResidentDashboard() {
                     <button
                       type="button"
                       aria-label="Toggle search scope"
-                      title={searchScope === 'current' ? 'Current' : 'All'}
+                      title={searchScope === 'current' ? t('morningMeetings.current') : t('ui.all')}
                       onClick={() => setSearchScope((s) => (s === 'current' ? 'all' : 'current'))}
                       className="absolute top-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-xs border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
                       style={{ insetInlineEnd: '0.375rem' as any }}
                     >
-                      {searchScope === 'current' ? 'current' : 'all'}
+                      {searchScope === 'current' ? t('morningMeetings.current') : t('ui.all')}
                     </button>
                   </div>
                 </div>
@@ -244,6 +264,11 @@ export default function ResidentDashboard() {
                         .includes('pacu');
                     const borderColor = `hsl(${hue}, ${isPACU ? 35 : 45}%, ${isPACU ? 88 : 82}%)`;
                     const ringColor = `hsl(${hue}, 60%, 46%)`;
+                    const displayName =
+                      (i18n.language === 'he'
+                        ? (r as any).name_he || (r as any).name_en || r.name
+                        : (r as any).name_en || r.name) ||
+                      (t('ui.unnamedRotation', { defaultValue: 'Unnamed rotation' }) as string);
                     // Special-case PACU for a more subtle color treatment
                     return (
                       <div
@@ -265,7 +290,7 @@ export default function ResidentDashboard() {
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="font-medium">{(r as any).name_en || r.name}</div>
+                          <div className="font-medium">{displayName}</div>
                           {/** Status-coded pill colors */}
                           <Badge
                             variant="outline"
@@ -274,10 +299,18 @@ export default function ResidentDashboard() {
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
                                 : r.status === 'finished'
                                   ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                                  : 'bg-gray-100 text-gray-800 dark:bg-[rgb(var(--surface-elevated))] dark:text-[rgb(var(--fg))]'
                             }
                           >
-                            {r.status}
+                            {(
+                              r.status === 'active'
+                                ? t('ui.active')
+                                : r.status === 'inactive'
+                                  ? t('ui.inactive')
+                                  : r.status === 'finished'
+                                    ? t('ui.finished')
+                                    : (r.status as any)
+                            )}
                           </Badge>
                         </div>
                         <div className="pt-2 text-right">
@@ -289,7 +322,7 @@ export default function ResidentDashboard() {
                               setSelectedRotationId(r.id);
                             }}
                           >
-                            Open
+                            {t('ui.open')}
                           </Button>
                         </div>
                       </div>
@@ -299,26 +332,83 @@ export default function ResidentDashboard() {
                 {/* Auto-select active rotation or first match when none selected */}
                 {null}
                 {selectedRotationId ? (
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <div className="lg:col-span-1">
-                      <RotationBrowser
-                        selectedRotationId={selectedRotationId}
+                  <div className="space-y-4">
+                    {/* Sub-tab selector */}
+                    <div className="flex gap-2 border-b border-gray-200 dark:border-[rgb(var(--border))]">
+                      <button
+                        className={`px-4 py-2 text-sm font-medium transition-colors ${
+                          rotationView === 'dashboard'
+                            ? 'border-b-2 border-primary text-primary dark:text-[rgb(var(--primary))]'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
+                        onClick={() => setRotationView('dashboard')}
+                      >
+                        {t('resident.dashboard', { defaultValue: 'Dashboard' })}
+                      </button>
+                      <button
+                        className={`px-4 py-2 text-sm font-medium transition-colors ${
+                          rotationView === 'map'
+                            ? 'border-b-2 border-primary text-primary dark:text-[rgb(var(--primary))]'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
+                        onClick={() => setRotationView('map')}
+                      >
+                        {t('resident.treeMap', { defaultValue: 'Tree Map' })}
+                      </button>
+                      <button
+                        className={`px-4 py-2 text-sm font-medium transition-colors ${
+                          rotationView === 'browse'
+                            ? 'border-b-2 border-primary text-primary dark:text-[rgb(var(--primary))]'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
+                        onClick={() => setRotationView('browse')}
+                      >
+                        {t('resident.browse', { defaultValue: 'Browse' })}
+                      </button>
+                    </div>
+
+                    {/* Sub-tab content */}
+                    {rotationView === 'dashboard' && (
+                      <RotationDashboard
+                        rotationId={selectedRotationId}
+                        onNavigateToBrowse={(leafId) => {
+                          setRotationView('browse');
+                          const foundLeaf = selectedNodes.find((n: any) => n.id === leafId);
+                          if (foundLeaf) {
+                            setSelectedLeaf(foundLeaf);
+                          }
+                        }}
+                      />
+                    )}
+
+                    {rotationView === 'map' && (
+                      <RotationTreeMap
+                        rotationId={selectedRotationId}
+                        onSelectNode={(nodeId) => {
+                          setRotationView('browse');
+                          const foundLeaf = selectedNodes.find((n: any) => n.id === nodeId);
+                          if (foundLeaf) {
+                            setSelectedLeaf(foundLeaf);
+                          }
+                        }}
+                      />
+                    )}
+
+                    {rotationView === 'browse' && (
+                      <RotationBrowse
+                        rotationId={selectedRotationId}
                         searchTerm={search}
                         searchScope={searchScope}
+                        selectedLeaf={selectedLeaf}
                         onSelectLeaf={setSelectedLeaf}
-                        onAutoScopeAll={() => setSearchScope('all')}
-                      />
-                    </div>
-                    <div className="lg:col-span-2">
-                      <LeafDetails
-                        leaf={selectedLeaf}
                         canLog={Boolean(
                           selectedLeaf &&
                             activeRotationId &&
                             selectedLeaf.rotationId === activeRotationId,
                         )}
+                        onAutoScopeAll={() => setSearchScope('all')}
                       />
-                    </div>
+                    )}
                   </div>
                 ) : filteredRotations.length > 0 ? (
                   <div className="rounded-lg border-2 border-dashed border-muted/30 bg-surface/30 p-8 text-center">
@@ -362,26 +452,26 @@ function ResidentReflectionsInline() {
   return (
     <div className="space-y-3">
       <Card>
-        <div className="font-semibold mb-2">{t('resident.myReflections')}</div>
-        {loading ? <div className="text-sm opacity-70">{t('common.loading')}</div> : null}
+        <div className="font-semibold mb-2 text-gray-900 dark:text-gray-50">{t('resident.myReflections')}</div>
+        {loading ? <div className="text-sm opacity-70 text-gray-600 dark:text-gray-300">{t('common.loading')}</div> : null}
         <div className="space-y-2">
           {(list || []).map((r) => (
             <div
               key={r.id}
-              className="border rounded p-2 text-sm flex items-center justify-between"
+              className="border rounded p-2 text-sm flex items-center justify-between border-gray-200 dark:border-[rgb(var(--border))]"
             >
               <div>
-                <div className="font-medium">{r.taskType}</div>
-                <div className="text-xs opacity-70">{r.taskOccurrenceId}</div>
+                <div className="font-medium text-gray-900 dark:text-gray-50">{r.taskType}</div>
+                <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">{r.taskOccurrenceId}</div>
               </div>
-              <div className="text-xs opacity-70">
+              <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">
                 {(r as any).submittedAt?.toDate?.()?.toLocaleString?.() || ''}
               </div>
             </div>
           ))}
           {!loading && !list?.length ? (
-            <div className="rounded-lg border-2 border-dashed border-muted/30 bg-surface/30 p-6 text-center">
-              <p className="text-sm text-muted">{t('resident.noReflectionsYet')}</p>
+            <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-[rgb(var(--border))] bg-gray-50 dark:bg-[rgb(var(--surface-elevated))] p-6 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-300">{t('resident.noReflectionsYet')}</p>
             </div>
           ) : null}
         </div>
@@ -390,165 +480,3 @@ function ResidentReflectionsInline() {
   );
 }
 
-function ResidentMorningMeetingsInline() {
-  const { t, i18n } = useTranslation();
-  const { today, tomorrow, next7, loading: upcomingLoading } = useMorningMeetingsUpcoming();
-  const now = new Date();
-  const y = now.getFullYear();
-  const m0 = now.getMonth();
-  const { list: monthList, loading: monthLoading } = useMorningMeetingsMonth(y, m0);
-  const daysInMonth = useMemo(() => new Date(y, m0 + 1, 0).getDate(), [y, m0]);
-  const monthByDay = useMemo(() => {
-    const map: Record<number, any[]> = {};
-    (monthList || []).forEach((it: any) => {
-      const d = new Date(it.date.toDate());
-      const dd = d.getDate();
-      map[dd] = map[dd] || [];
-      map[dd].push(it);
-    });
-    return map;
-  }, [monthList]);
-  function renderList(items: any[] | null, loading: boolean) {
-    if (loading) {
-      return (
-        <div className="space-y-2">
-          <div className="h-12 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
-          <div className="h-12 bg-gray-200 dark:bg-gray-800 animate-pulse rounded" />
-        </div>
-      );
-    }
-    if (!items || !items.length)
-      return (
-        <div className="rounded-lg border-2 border-dashed border-muted/30 bg-surface/30 p-4 text-center">
-          <p className="text-sm text-muted">{t('morningMeetings.noClasses')}</p>
-        </div>
-      );
-    return (
-      <ul className="divide-y rounded border">
-        {(items || []).map((c) => {
-          const start =
-            c.date?.toDate?.()?.toLocaleTimeString?.(i18n.language === 'he' ? 'he-IL' : 'en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-            }) || '07:10';
-          return (
-            <li key={c.id || c.dateKey + c.title} className="p-2 flex items-center justify-between">
-              <div>
-                <div className="font-medium">{c.title}</div>
-                <div className="text-xs opacity-70">
-                  {c.lecturer} — {start}
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    );
-  }
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <Card>
-          <div className="mb-2 font-semibold">{t('morningMeetings.today')}</div>
-          {renderList(today, upcomingLoading)}
-        </Card>
-        <Card>
-          <div className="mb-2 font-semibold">{t('morningMeetings.tomorrow')}</div>
-          {renderList(tomorrow, upcomingLoading)}
-        </Card>
-        <Card>
-          <div className="mb-2 font-semibold">{t('morningMeetings.next7')}</div>
-          {renderList(next7, upcomingLoading)}
-        </Card>
-      </div>
-      <Card>
-        <div className="mb-2 font-semibold">{t('morningMeetings.month')}</div>
-        {monthLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
-            {Array.from({ length: 21 }).map((_, i) => (
-              <div
-                key={i}
-                className="rounded border p-2 h-20 bg-gray-100 dark:bg-gray-900 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 text-sm">
-            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
-              <div key={d} className="rounded border p-2 min-h-[80px]">
-                <div className="text-xs opacity-70 mb-1">{d}</div>
-                <div className="space-y-1">
-                  {(monthByDay[d] || []).map((c) => (
-                    <div key={c.id || c.title} className="truncate">
-                      {c.title}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-}
-
-function ResidentOnCallInline() {
-  const { data: me } = useCurrentUserProfile();
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          <Card className="space-y-3">
-            <div className="text-sm font-medium">{t('onCall.today')}</div>
-            <TodayPanel highlightUserId={me?.uid} />
-          </Card>
-        </div>
-        <div className="md:col-span-1">
-          <Card>
-            <NextShiftCard userId={me?.uid} />
-          </Card>
-        </div>
-      </div>
-      <Card className="space-y-3">
-        <div className="text-sm font-medium">{t('onCall.teamOnDate', { date: '' })}</div>
-        <TeamForDate />
-      </Card>
-      <Card className="space-y-3">
-        <div className="text-sm font-medium">{t('ui.timeline')}</div>
-        <MiniCalendar />
-      </Card>
-    </div>
-  );
-}
-
-function getFavorites(
-  nodes: any[],
-  onSelectById: (id: string) => void,
-): Array<{ id: string; name: string; onSelect: () => void }> {
-  try {
-    const raw = localStorage.getItem('resident.resources.favorites');
-    const hrefs: string[] = raw ? JSON.parse(raw) : [];
-    // Map hrefs back to node ids if possible by matching links/mcqUrl
-    const byHref: Record<string, { id: string; name: string }> = {};
-    (nodes || []).forEach((n: any) => {
-      if (n.mcqUrl) byHref[n.mcqUrl] = { id: n.id, name: n.name };
-      (n.links || []).forEach((l: any) => {
-        if (l.href) byHref[l.href] = { id: n.id, name: l.label || n.name };
-      });
-    });
-    const unique: Record<string, boolean> = {};
-    const items = hrefs
-      .map((h) => byHref[h])
-      .filter(Boolean)
-      .filter((x) => {
-        if (unique[x!.id]) return false;
-        unique[x!.id] = true;
-        return true;
-      }) as Array<{ id: string; name: string }>;
-    return items.map((it) => ({ id: it.id, name: it.name, onSelect: () => onSelectById(it.id) }));
-  } catch {
-    return [];
-  }
-}

@@ -48,14 +48,21 @@ export default function TopBar() {
       } catch {
         /* noop */
       }
+      // Update document dir attribute
+      try {
+        document.documentElement.dir = next === 'he' ? 'rtl' : 'ltr';
+        document.documentElement.lang = next;
+      } catch {
+        /* noop */
+      }
     };
     return (
       <button
         type="button"
         onClick={onToggle}
-        className="relative inline-flex items-center rounded-full border px-2 py-1 text-xs transition-colors duration-200 border-gray-300/60 text-gray-700 hover:bg-gray-100/60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-        aria-label="Toggle language"
-        title="Language"
+        className="relative inline-flex items-center rounded-full border px-2 py-1 text-xs transition-colors duration-200 border-gray-300/60 text-gray-700 hover:bg-gray-100/60 dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))] dark:hover:bg-[rgb(var(--surface-elevated))]"
+        aria-label={t('ui.toggleLanguage')}
+        title={t('ui.language')}
       >
         {lang.toUpperCase()}
       </button>
@@ -106,7 +113,7 @@ export default function TopBar() {
         <div className="pill text-sm min-w-0">
           <Avatar name={me?.fullName} size={20} className="flex-shrink-0" />
           <span className="max-w-[12ch] sm:max-w-[16ch] truncate">
-            {me?.fullName || me?.email || 'User'}
+            {me?.fullName || me?.email || t('ui.user')}
           </span>
         </div>
         <button

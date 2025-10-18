@@ -32,20 +32,20 @@ export default function Sidebar() {
       aria-label="Sidebar navigation"
     >
       <nav className="space-y-1" aria-label="Main navigation">
-        <NavItem href={homeHref} label="Dashboard" Icon={HomeIcon} />
-        <NavItem href={reflectionsHref} label="Reflections" Icon={BookOpenIcon} />
-        <NavItem href="/auth" label="Auth" Icon={UserGroupIcon} />
+        <NavItem href={homeHref} label={t('ui.dashboard')} Icon={HomeIcon} />
+        <NavItem href={reflectionsHref} label={t('ui.reflections')} Icon={BookOpenIcon} />
+        <NavItem href="/auth" label={t('ui.auth')} Icon={UserGroupIcon} />
         <NavItem
           href="/morning-meetings"
-          label={t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}
+          label={t('ui.morningMeetings')}
           Icon={CalendarDaysIcon}
         />
         <NavItem
           href="/on-call"
-          label={t('ui.onCall', { defaultValue: 'On Call' })}
+          label={t('ui.onCall')}
           Icon={CalendarDaysIcon}
         />
-        <NavItem href="/settings" label="Settings" Icon={Cog6ToothIcon} />
+        <NavItem href="/settings" label={t('ui.settings')} Icon={Cog6ToothIcon} />
       </nav>
     </aside>
   );

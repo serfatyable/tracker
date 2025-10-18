@@ -30,7 +30,7 @@ export default function TeamForDate() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded border p-3 border-gray-200 dark:border-gray-800">
+            <div key={i} className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]">
               <Skeleton className="h-3 w-20 mb-2" />
               <Skeleton className="h-4 w-32" />
             </div>
@@ -53,7 +53,7 @@ export default function TeamForDate() {
               | undefined;
             if (!entry) return null;
             return (
-              <div key={sk} className="rounded border p-3 border-gray-200 dark:border-gray-800">
+              <div key={sk} className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]">
                 <div className="text-xs opacity-70">{t(stationI18nKeys[sk as StationKey])}</div>
                 <div className="mt-1 font-medium">{entry.userDisplayName}</div>
               </div>

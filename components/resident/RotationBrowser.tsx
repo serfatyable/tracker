@@ -14,6 +14,7 @@ import { SpinnerSkeleton } from '../dashboard/Skeleton';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import EmptyState, { EmptyIcon } from '../ui/EmptyState';
+import { getLocalized } from '../../lib/i18n/getLocalized';
 
 type Props = {
   selectedRotationId: string | null;
@@ -32,7 +33,7 @@ export default function RotationBrowser({
   onSelectLeaf,
   onAutoScopeAll,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { rotationId: activeRotationId } = useResidentActiveRotation();
   const { nodes, loading } = useRotationNodes(selectedRotationId || null);
   const { tasks } = useUserTasks();
@@ -64,7 +65,22 @@ export default function RotationBrowser({
     if (!searchTerm.trim()) return tree;
     const needle = searchTerm.trim().toLowerCase();
     function nodeMatches(n: RotationNode): boolean {
-      const hay = [n.name, n.mcqUrl || '', ...(n.links || []).map((l) => l.href || '')]
+      const displayName =
+        getLocalized<string>({
+          he: (n as any).name_he as any,
+          en: (n as any).name_en as any,
+          fallback: n.name as any,
+          lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
+        }) || n.name;
+      const linkLabels = (n.links || []).map((l) =>
+        getLocalized<string>({
+          he: (l as any).label_he as any,
+          en: (l as any).label_en as any,
+          fallback: (l as any).label as any,
+          lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
+        }) || l.href || '',
+      );
+      const hay = [displayName, n.mcqUrl || '', ...(n.links || []).map((l) => l.href || ''), ...linkLabels]
         .join(' ')
         .toLowerCase();
       return hay.includes(needle);
@@ -101,7 +117,16 @@ export default function RotationBrowser({
     if (!searchTerm.trim()) return empty;
     const needle = searchTerm.trim().toLowerCase();
     const fields = (n: RotationNode) =>
-      [n.name, ...(n.mcqUrl ? [n.mcqUrl] : []), ...(n.links || []).map((l) => l.href)]
+      [
+        getLocalized<string>({
+          he: (n as any).name_he as any,
+          en: (n as any).name_en as any,
+          fallback: n.name as any,
+          lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
+        }) || n.name,
+        ...(n.mcqUrl ? [n.mcqUrl] : []),
+        ...(n.links || []).map((l) => l.href),
+      ]
         .join(' ')
         .toLowerCase();
     const curr = nodes.filter((n) => fields(n).includes(needle));
@@ -139,9 +164,9 @@ export default function RotationBrowser({
   return (
     <div className="space-y-3">
       {searchTerm.trim() && results.length > 0 ? (
-        <div className="rounded-md border border-gray-200 dark:border-gray-800 p-2 text-sm">
+        <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-2 text-sm">
           {results.slice(0, 10).map((n) => (
-            <div key={n.id} className="flex items-center justify-between py-1">
+            <div key={n.id} className="flex items-center justify-between py-1 text-gray-900 dark:text-gray-50">
               <span>{highlight(n.name, searchTerm)}</span>
               {n.type === 'leaf' ? (
                 <Button
@@ -160,13 +185,13 @@ export default function RotationBrowser({
             </div>
           ))}
           {results.length > 10 ? (
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-600 dark:text-gray-300">
               {t('ui.showingMatches', { shown: 10, total: results.length })}
             </div>
           ) : null}
         </div>
       ) : null}
-      <div className="rounded-md border border-gray-200 dark:border-gray-800 p-2">
+      <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-2">
         {loading ? (
           <SpinnerSkeleton />
         ) : filteredTree.length === 0 ? (
@@ -274,7 +299,7 @@ function NodeItem({
     <div className="pl-2">
       <div
         className={
-          'flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ' +
+          'flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] ' +
           bgClass
         }
         onClick={handleRowClick}
@@ -288,14 +313,14 @@ function NodeItem({
         }}
       >
         {hasChildren ? (
-          <span className="text-xs text-gray-600 dark:text-gray-400 select-none">
+          <span className="text-xs text-gray-600 dark:text-gray-300 select-none">
             {open ? '▾' : '▸'}
           </span>
         ) : (
           <span className="text-xs text-transparent">▸</span>
         )}
         <span
-          className={`text-sm ${isCategory ? 'font-semibold' : ''} ${isLeaf ? 'hover:text-primary hover:underline' : ''} ${isDuplicateName ? 'text-gray-500 dark:text-gray-400 italic' : ''}`}
+          className={`text-sm ${isCategory ? 'font-semibold' : ''} ${isLeaf ? 'hover:text-primary hover:underline' : ''} ${isDuplicateName ? 'text-gray-500 dark:text-gray-400 italic' : 'text-gray-900 dark:text-gray-50'}`}
         >
           {isDuplicateName ? (
             <span className="flex items-center gap-1">

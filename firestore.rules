@@ -156,12 +156,16 @@ service cloud.firestore {
       allow create, update, delete: if isAdminApproved();
     }
 
-    // On-call: assignments, per-day snapshots, and aliases
+    // On-call: assignments, per-day snapshots, shifts, and aliases
     match /onCallAssignments/{id} {
       allow read: if isSignedIn();
       allow create, update, delete: if isAdminApproved();
     }
     match /onCallDays/{dateKey} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdminApproved();
+    }
+    match /onCallShifts/{id} {
       allow read: if isSignedIn();
       allow create, update, delete: if isAdminApproved();
     }

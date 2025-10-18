@@ -13,12 +13,12 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
   return (
     <html>
       <body>
-        <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
-          <div className="max-w-lg w-full bg-white rounded-lg shadow-lg p-6">
+        <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-[rgb(var(--bg))]">
+          <div className="max-w-lg w-full bg-white dark:bg-[rgb(var(--surface))] rounded-lg shadow-lg p-6 border border-gray-200 dark:border-[rgb(var(--border-strong))]">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-shrink-0">
                 <svg
-                  className="h-8 w-8 text-red-500"
+                  className="h-8 w-8 text-red-500 dark:text-red-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -31,14 +31,14 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
                   />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">Application Error</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Application Error</h2>
             </div>
-            <p className="text-sm text-gray-700 break-words mb-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300 break-words mb-4">
               {error?.message || t('errors.globalError')}
             </p>
             <div className="flex gap-2 justify-end">
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white dark:text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition"
                 onClick={() => reset()}
               >
                 Reload Application

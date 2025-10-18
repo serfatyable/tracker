@@ -1,7 +1,7 @@
 import type { HTMLAttributes, TableHTMLAttributes } from 'react';
 
 export function Table({ className, ...rest }: TableHTMLAttributes<HTMLTableElement>) {
-  return <table className={'min-w-full text-sm text-fg ' + (className || '')} {...rest} />;
+  return <table className={'min-w-full text-sm text-gray-900 dark:text-gray-50 ' + (className || '')} {...rest} />;
 }
 
 export function THead({ className, ...rest }: HTMLAttributes<HTMLTableSectionElement>) {
@@ -36,14 +36,14 @@ export function TR({ className, ...rest }: HTMLAttributes<HTMLTableRowElement>) 
 export function TH({ className, ...rest }: HTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={'px-2 sm:px-3 py-2 font-medium text-fg whitespace-nowrap ' + (className || '')}
+      className={'px-2 sm:px-3 py-2 font-medium text-gray-900 dark:text-gray-50 whitespace-nowrap ' + (className || '')}
       {...rest}
     />
   );
 }
 
 export function TD({ className, ...rest }: HTMLAttributes<HTMLTableCellElement>) {
-  return <td className={'px-2 sm:px-3 py-2 ' + (className || '')} {...rest} />;
+  return <td className={'px-2 sm:px-3 py-2 text-gray-900 dark:text-gray-50 ' + (className || '')} {...rest} />;
 }
 
 // Wrapper for making tables scrollable on mobile

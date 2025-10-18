@@ -32,7 +32,7 @@ export default function UnassignedQueues({ assignments, residents, rotations }: 
           unassignedResidents.map((r) => (
             <div
               key={r.uid}
-              className="flex items-center justify-between border rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition"
+              className="flex items-center justify-between border rounded p-2 hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] transition"
             >
               <div className="text-sm">{r.fullName || r.uid}</div>
               <div className="flex items-center gap-2">

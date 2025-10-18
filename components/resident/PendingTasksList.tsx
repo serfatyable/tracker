@@ -113,7 +113,7 @@ export default function PendingTasksList({
           {list.map((t) => (
             <li
               key={t.id}
-              className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-gray-800"
+              className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-[rgb(var(--border))]"
             >
               <span>{nodesById[t.itemId]?.name || t.itemId}</span>
               <span className="flex items-center gap-2">
