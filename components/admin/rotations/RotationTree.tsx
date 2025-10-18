@@ -410,7 +410,7 @@ function NodeEditor({
   const isLeaf = node.type === 'leaf';
   const [requiredCount, setRequiredCount] = useState<number>(node.requiredCount || 0);
   const [mcqUrl, setMcqUrl] = useState<string>(node.mcqUrl || '');
-  const [links, setLinks] = useState<Array<{ label: string; href: string }>>(node.links || []);
+  const [links, setLinks] = useState<Array<{ label?: string; label_en?: string; label_he?: string; href: string }>>(node.links || []);
   const [resources, setResources] = useState<string>(node.resources || '');
   const [notesEn, setNotesEn] = useState<string>(node.notes_en || '');
   const [notesHe, setNotesHe] = useState<string>(node.notes_he || '');
@@ -583,7 +583,7 @@ function NodeEditor({
                 <input
                   type="text"
                   placeholder="Label"
-                  value={lnk.label}
+                  value={lnk.label || ''}
                   onChange={(e) =>
                     setLinks((arr) =>
                       arr.map((x, i) => (i === idx ? { ...x, label: e.target.value } : x)),
