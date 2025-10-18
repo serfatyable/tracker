@@ -664,7 +664,8 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                   if (!matchesFilter) return false;
                 }
                 if (myShiftsOnly && currentUser?.fullName) {
-                  if (!String(name).includes(currentUser.fullName)) return false;
+                  const displayName = typeof name === 'string' ? name : '';
+                  if (!displayName.includes(currentUser.fullName)) return false;
                 }
                 return true;
               }).length : 0;
@@ -679,7 +680,8 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                     );
                     if (!matchesFilter) return false;
                   }
-                  return String(name).includes(currentUser.fullName);
+                  const displayName = typeof name === 'string' ? name : '';
+                  return displayName.includes(currentUser.fullName);
                 });
               
               return (
