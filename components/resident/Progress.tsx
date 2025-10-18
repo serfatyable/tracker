@@ -153,13 +153,14 @@ function ProgressBar({
   required: number;
   pending: number;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="w-40">
       <div className="h-2 w-full rounded bg-gray-200 dark:bg-[rgb(var(--surface-depressed))] overflow-hidden">
         <div className="h-2 bg-green-500 rtl:float-right" style={{ width: `${percent}%` }} />
       </div>
       <div className="text-[11px] text-gray-500 dark:text-[rgb(var(--muted))]">
-        {approved}/{required} ({pending} {t('ui.pending').toLowerCase()})
+        {approved}/{required} ({pending} {String(t('ui.pending')).toLowerCase()})
       </div>
     </div>
   );
