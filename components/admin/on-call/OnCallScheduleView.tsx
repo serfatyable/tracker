@@ -663,14 +663,18 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                   );
                   if (!matchesFilter) return false;
                 }
-                if (myShiftsOnly && currentUser?.fullName) {
-                  const displayName = typeof name === 'string' ? name : '';
-                  if (!displayName.includes(currentUser.fullName)) return false;
+                {
+                  const myName = currentUser?.fullName ?? '';
+                  if (myShiftsOnly && myName) {
+                    const displayName = typeof name === 'string' ? name : '';
+                    if (!displayName.includes(myName)) return false;
+                  }
                 }
                 return true;
               }).length : 0;
               
-              const hasMyShift = daySchedule && currentUser?.fullName && 
+              const myName = currentUser?.fullName ?? '';
+              const hasMyShift = !!(daySchedule && myName && 
                 Object.entries(daySchedule.shifts).some(([type, name]) => {
                   // Apply filters
                   if (shiftTypeFilter.length > 0) {
@@ -681,8 +685,8 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                     if (!matchesFilter) return false;
                   }
                   const displayName = typeof name === 'string' ? name : '';
-                  return displayName.includes(currentUser.fullName);
-                });
+                  return displayName.includes(myName);
+                }));
               
               return (
                 <div 
