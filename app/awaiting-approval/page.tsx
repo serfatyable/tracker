@@ -35,7 +35,7 @@ export default function AwaitingApprovalPage() {
 
   return (
     <div className="mx-auto max-w-md p-6 text-center">
-      <p className="text-lg">{t('auth.awaitingApproval')}</p>
+      <p className="text-lg text-gray-900 dark:text-gray-50">{t('auth.awaitingApproval')}</p>
     </div>
   );
 }

@@ -80,6 +80,63 @@ export async function replaceMonthMeetings(
   );
 }
 
+/**
+ * Replace meetings for multiple months in a single operation
+ */
+export async function replaceMultipleMonthsMeetings(
+  records: MorningMeeting[],
+): Promise<void> {
+  return withTimeoutAndRetry(
+    async () => {
+      const db = getFirestore(getFirebaseApp());
+      
+      // Group records by month to determine which months to delete
+      const monthKeys = new Set<string>();
+      records.forEach((r) => {
+        const date = r.date instanceof Timestamp ? r.date.toDate() : new Date(r.date as any);
+        monthKeys.add(`${date.getUTCFullYear()}-${date.getUTCMonth()}`);
+      });
+      
+      // Delete all existing meetings for affected months
+      const deletePromises = Array.from(monthKeys).map(async (monthKey) => {
+        const [year, month] = monthKey.split('-').map(Number);
+        const from = new Date(Date.UTC(year!, month!, 1, 0, 0, 0));
+        const to = new Date(Date.UTC(year!, month! + 1, 1, 0, 0, 0));
+        const existing = await listMorningMeetingsByDateRange(from, to);
+        return existing;
+      });
+      
+      const allExisting = (await Promise.all(deletePromises)).flat();
+      
+      // Create a batch for all operations
+      const batch = writeBatch(db);
+      
+      // Delete existing meetings
+      for (const ex of allExisting) {
+        if (ex.id) batch.delete(doc(db, 'morningMeetings', ex.id));
+      }
+      
+      // Add new meetings
+      for (const r of records) {
+        const id = `${r.dateKey}-${slug(r.title)}`;
+        batch.set(doc(db, 'morningMeetings', id), {
+          ...r,
+          createdAt: r.createdAt || Timestamp.fromDate(new Date()),
+          updatedAt: Timestamp.fromDate(new Date()),
+        } as any);
+      }
+      
+      await batch.commit();
+      console.log(`Replaced ${allExisting.length} existing meetings with ${records.length} new meetings across ${monthKeys.size} month(s)`);
+    },
+    {
+      timeout: 45000, // 45 seconds for multi-month batch operations
+      retries: 2,
+      operationName: 'replace multiple months meetings',
+    },
+  );
+}
+
 function slug(input: string): string {
   return String(input || '')
     .toLowerCase()

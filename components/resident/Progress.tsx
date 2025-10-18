@@ -48,7 +48,7 @@ export default function Progress() {
         />
       </div>
 
-      <div className="rounded-md border border-gray-200 dark:border-gray-800">
+      <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))]">
         {roots.length === 0 ? (
           <EmptyState
             icon={<ChecklistIcon size={40} />}
@@ -59,7 +59,7 @@ export default function Progress() {
             className="py-6"
           />
         ) : (
-          <div className="divide-y divide-gray-200 dark:divide-gray-800">
+          <div className="divide-y divide-gray-200 dark:divide-[rgb(var(--border))]">
             {roots.map((r) => (
               <NodeRow
                 key={r.id}
@@ -153,13 +153,14 @@ function ProgressBar({
   required: number;
   pending: number;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="w-40">
-      <div className="h-2 w-full rounded bg-gray-200 dark:bg-gray-800 overflow-hidden">
-        <div className="h-2 bg-green-500" style={{ width: `${percent}%` }} />
+      <div className="h-2 w-full rounded bg-gray-200 dark:bg-[rgb(var(--surface-depressed))] overflow-hidden">
+        <div className="h-2 bg-green-500 rtl:float-right" style={{ width: `${percent}%` }} />
       </div>
-      <div className="text-[11px] text-gray-500">
-        {approved}/{required} ({pending} pending)
+      <div className="text-[11px] text-gray-500 dark:text-[rgb(var(--muted))]">
+        {approved}/{required} ({pending} {String(t('ui.pending')).toLowerCase()})
       </div>
     </div>
   );

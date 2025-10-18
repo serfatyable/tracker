@@ -1,175 +1,251 @@
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  query,
-  Timestamp as FBTimestamp,
-  doc,
-  writeBatch,
-} from 'firebase/firestore';
-import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 
-import { requireAdminAuth, createAuthErrorResponse } from '../../../../lib/api/auth';
-import { getFirebaseApp } from '../../../../lib/firebase/client';
-import { parseOnCallCsv, buildAssignments } from '../../../../lib/on-call/import';
-import type { StationKey } from '../../../../types/onCall';
+// Server-side Excel parsing
+async function parseOnCallExcelServer(buffer: ArrayBuffer) {
+  const XLSX = await import('xlsx');
+  
+  const workbook = XLSX.read(buffer, { type: 'array' });
+  const firstSheetName = workbook.SheetNames[0];
+  if (!firstSheetName) {
+    throw new Error('No sheets found in workbook');
+  }
+  const firstSheet = workbook.Sheets[firstSheetName];
+  if (!firstSheet) {
+    throw new Error('Failed to load sheet');
+  }
+  const data: any[][] = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-/**
- * Import on-call schedule from CSV
- *
- * SECURITY: Requires admin authentication via Firebase ID token
- *
- * @route POST /api/on-call/import
- * @auth Required - Admin only
- */
-export async function POST(req: NextRequest) {
-  // ✅ SECURE: Verify Firebase ID token and admin role
-  try {
-    const auth = await requireAdminAuth(req);
-    const uid = auth.uid;
+  const SHIFT_COLUMNS = {
+    2: 'ת.חדר ניתוח',
+    3: 'ת. חדר לידה',
+    4: 'תורן טיפול נמרץ',
+    5: 'ת.חדר ניתוח נשים',
+    6: 'תורן PACU',
+    7: 'מנהל תורן',
+    8: 'תורן חנ בכיר',
+    9: 'תורן חצי חנ בכיר',
+    10: 'כונן',
+    11: 'תורן שליש',
+    12: 'כיסוי טפנץ',
+    13: 'עובד נוסף',
+    14: 'אורתו שצי',
+    15: 'אורתו טראומה',
+    16: 'אורתו מפרק',
+    17: 'SUR',
+    18: 'Urol',
+    19: 'עמ"ש',
+    20: 'כלי דם / חזה',
+    21: 'כאב',
+    22: 'זריקות עמ"ש',
+    23: 'יום מנוחה שבועי',
+  };
 
-    const app = getFirebaseApp();
-    const db = getFirestore(app);
+  const rows: any[] = [];
+  const errors: any[] = [];
 
-    const url = new URL(req.url);
-    const dryRun = url.searchParams.get('dryRun') === '1' || req.headers.get('x-dry-run') === '1';
-    const contentType = req.headers.get('content-type') || '';
+  function parseExcelDate(serial: number): Date {
+    const EXCEL_EPOCH = new Date(1899, 11, 30);
+    const MS_PER_DAY = 86400000;
+    return new Date(EXCEL_EPOCH.getTime() + serial * MS_PER_DAY);
+  }
 
-    let csvText = '';
-    let resolutions: Record<string, string> | undefined; // raw name -> userId
-    let saveAliases = false;
-    if (contentType.includes('application/json')) {
-      const body = await req.json();
-      csvText = String(body.csv || '');
-      resolutions = body.resolutions || undefined;
-      saveAliases = !!body.saveAliases;
+  function parseDateString(dateStr: string): Date {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0]!, 10);
+      const month = parseInt(parts[1]!, 10) - 1;
+      const year = parseInt(parts[2]!, 10);
+      return new Date(year, month, day);
+    }
+    
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      throw new Error(`Cannot parse date: ${dateStr}`);
+    }
+    return date;
+  }
+
+  // Start from row 3 (index 2) - rows 1-2 are headers
+  for (let i = 2; i < data.length; i++) {
+    const row = data[i];
+    if (!row || row.length === 0) continue;
+    
+    const rowNum = i + 1;
+    const dateRaw = row[1];
+    
+    if (!dateRaw) continue; // Empty row
+    
+    let parsedDate: Date;
+    try {
+      if (typeof dateRaw === 'number') {
+        parsedDate = parseExcelDate(dateRaw);
+      } else if (dateRaw instanceof Date) {
+        parsedDate = dateRaw;
+      } else if (typeof dateRaw === 'string') {
+        parsedDate = parseDateString(dateRaw);
     } else {
-      csvText = await req.text();
-    }
-    if (!csvText.trim())
-      return NextResponse.json({ imported: 0, errors: ['empty file'] }, { status: 400 });
-
-    const { rows } = parseOnCallCsv(csvText);
-    if (!rows.length)
-      return NextResponse.json({ imported: 0, errors: ['no valid rows'] }, { status: 400 });
-
-    const [usersSnap, aliasesSnap] = await Promise.all([
-      getDocs(query(collection(db, 'users'))),
-      getDocs(query(collection(db, 'onCallAliases'))),
-    ]);
-    const users = usersSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-    const aliasMap = new Map<string, { userId: string; userDisplayName: string }>();
-    for (const d of aliasesSnap.docs) {
-      const data = d.data() as any;
-      aliasMap.set(String(d.id).toLowerCase(), {
-        userId: data.userId,
-        userDisplayName: data.userDisplayName,
-      });
-    }
-
-    function resolveName(raw: string): { userId?: string; userDisplayName?: string } {
-      const key = (raw || '').trim().toLowerCase();
-      if (!key) return {};
-      const alias = aliasMap.get(key);
-      if (alias) return alias;
-      const byEmail = users.find(
-        (u) =>
-          String(u.email || '')
-            .trim()
-            .toLowerCase() === key,
-      );
-      if (byEmail)
-        return { userId: byEmail.id, userDisplayName: byEmail.fullName || byEmail.email };
-      const byName = users.find(
-        (u) =>
-          String(u.fullName || '')
-            .trim()
-            .toLowerCase() === key,
-      );
-      if (byName) return { userId: byName.id, userDisplayName: byName.fullName || byName.email };
-      if (resolutions && resolutions[key]) {
-        const chosen = users.find((u) => u.id === resolutions![key]);
-        if (chosen) return { userId: chosen.id, userDisplayName: chosen.fullName || chosen.email };
+        errors.push({ row: rowNum, message: `Invalid date: ${dateRaw}` });
+        continue;
       }
-      return {};
+      
+      if (isNaN(parsedDate.getTime())) {
+        errors.push({ row: rowNum, message: 'Invalid date value' });
+        continue;
+      }
+    } catch (error) {
+      errors.push({ row: rowNum, message: `Date error: ${error}` });
+      continue;
     }
+    
+    const shifts: Record<string, string> = {};
+    for (const [colIdx, shiftType] of Object.entries(SHIFT_COLUMNS)) {
+      const value = row[parseInt(colIdx)];
+      if (value && typeof value === 'string' && value.trim() !== '') {
+        shifts[shiftType] = value.trim();
+      }
+    }
+    
+    const dayOfWeek = row[0] && typeof row[0] === 'string' ? row[0] : undefined;
+    
+    rows.push({ date: parsedDate, dayOfWeek, shifts });
+  }
 
-    const { assignments, unresolved } = buildAssignments({
-      rows,
-      nameToUser: resolveName,
-      createdBy: uid,
-    });
+  return { rows, errors };
+}
 
-    // If dryRun, return preview without writing
-    if (dryRun) {
-      return NextResponse.json({
-        imported: 0,
-        preview: { assignments: assignments.length, unresolved },
-      });
-    }
+// Initialize Firebase Admin
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  });
+}
 
-    // Commit: write assignments and per-day snapshots, and optionally new aliases
-    const batch = writeBatch(db);
-    // Save aliases for provided resolutions
-    if (resolutions && saveAliases) {
-      Object.entries(resolutions).forEach(([rawName, userId]) => {
-        const key = rawName.trim().toLowerCase();
-        if (!aliasMap.has(key) && userId) {
-          const u = users.find((x) => x.id === userId);
-          if (u)
-            batch.set(doc(db, 'onCallAliases', key), {
-              userId,
-              userDisplayName: u.fullName || u.email,
-            });
-        }
-      });
-    }
-
-    // Write assignments
-    for (const a of assignments) {
-      batch.set(doc(db, 'onCallAssignments', a.id!), a as any);
-    }
-    // Build and write per-day snapshots
-    const byDate = new Map<
-      string,
-      Record<StationKey, { userId: string; userDisplayName: string }>
-    >();
-    for (const a of assignments) {
-      const map = byDate.get(a.dateKey) || ({} as any);
-      (map as any)[a.stationKey] = { userId: a.userId, userDisplayName: a.userDisplayName };
-      byDate.set(a.dateKey, map);
-    }
-    for (const [dateKey, stations] of byDate.entries()) {
-      const parts = dateKey.split('-').map((p) => parseInt(p, 10));
-      const date = new Date(
-        Date.UTC(parts[0] as number, (parts[1] as number) - 1, parts[2] as number, 0, 0, 0),
+export async function POST(request: Request) {
+  try {
+    // Verify authentication
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { errorCode: 'MISSING_AUTH', error: 'MISSING_AUTH' },
+        { status: 401 }
       );
-      batch.set(doc(db, 'onCallDays', dateKey), {
-        id: dateKey,
-        dateKey,
-        date: FBTimestamp.fromDate(date),
-        stations,
-        createdAt: FBTimestamp.now(),
-      } as any);
     }
-
+    
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await getAuth().verifyIdToken(token!);
+    const uid = decodedToken.uid;
+    
+    // Check if user is admin
+    const adminDb = getFirestore();
+    const userDoc = await adminDb.collection('users').doc(uid).get();
+    const userData = userDoc.data();
+    
+    if (userData?.role !== 'admin') {
+      return NextResponse.json(
+        { errorCode: 'ADMIN_REQUIRED', error: 'ADMIN_REQUIRED' },
+        { status: 403 }
+      );
+    }
+    
+    // Parse the Excel file
+    const buffer = await request.arrayBuffer();
+    
+    // File size limit: 10MB
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+    if (buffer.byteLength === 0) {
+      return NextResponse.json(
+        { errorCode: 'EMPTY_FILE', error: 'EMPTY_FILE' },
+        { status: 400 }
+      );
+    }
+    if (buffer.byteLength > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { errorCode: 'FILE_TOO_LARGE', error: 'FILE_TOO_LARGE' },
+        { status: 400 }
+      );
+    }
+    
+    const { rows, errors } = await parseOnCallExcelServer(buffer);
+    
+    if (errors.length > 0) {
+      return NextResponse.json(
+        { errors: errors.map(e => `Row ${e.row}: ${e.message}`) },
+        { status: 400 }
+      );
+    }
+    
+    if (rows.length === 0) {
+      return NextResponse.json(
+        { errorCode: 'NO_DATA', error: 'NO_DATA' },
+        { status: 400 }
+      );
+    }
+    
+    // Get all unique months from the upload
+    const monthsToReplace = new Set(
+      rows.map(r => `${r.date.getFullYear()}-${r.date.getMonth()}`)
+    );
+    
+    // Delete existing shifts for those months
+    const deletePromises = Array.from(monthsToReplace).map(async (monthKey) => {
+      const [year, month] = monthKey.split('-').map(Number);
+      const startKey = `${year}-${String(month! + 1).padStart(2, '0')}-01`;
+      const endKey = `${year}-${String(month! + 1).padStart(2, '0')}-31`;
+      
+      const snapshot = await adminDb.collection('onCallShifts')
+        .where('dateKey', '>=', startKey)
+        .where('dateKey', '<=', endKey)
+        .get();
+      
+      const batch = adminDb.batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
-    return NextResponse.json({ imported: assignments.length, unresolved: [] });
-  } catch (error) {
-    // Handle authentication errors
-    if (
-      error instanceof Error &&
-      (error.message.includes('Missing') ||
-        error.message.includes('Invalid') ||
-        error.message.includes('Forbidden'))
-    ) {
-      return createAuthErrorResponse(error);
+      
+      return snapshot.size;
+    });
+    
+    await Promise.all(deletePromises);
+    
+    // Create new shifts
+    let totalShifts = 0;
+    
+    for (const dayData of rows) {
+      const date = dayData.date;
+      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+      // Create one document per day with all shifts
+      const docRef = adminDb.collection('onCallShifts').doc();
+      
+      await docRef.set({
+        date: date,
+        dateKey: dateKey,
+        dayOfWeek: dayData.dayOfWeek || null,
+        shifts: dayData.shifts,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      
+      totalShifts += Object.keys(dayData.shifts).length;
     }
-    // Handle other errors
+    
+    return NextResponse.json({ 
+      success: true, 
+      imported: rows.length,
+      totalShifts: totalShifts,
+      months: Array.from(monthsToReplace).length
+    });
+    
+  } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Import failed' },
-      { status: 500 },
+      { error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
     );
   }
 }

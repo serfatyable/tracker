@@ -94,7 +94,7 @@ export default function ResidentsTab({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <label className="text-sm flex items-center gap-2">
+        <label className="text-sm flex items-center gap-2 text-gray-900 dark:text-gray-50">
           <input
             type="checkbox"
             checked={onlyWithPetitions}

@@ -12,6 +12,7 @@ import { Dialog, DialogHeader, DialogFooter } from '../ui/Dialog';
 import EmptyState, { DocumentIcon } from '../ui/EmptyState';
 import Input from '../ui/Input';
 import Toast from '../ui/Toast';
+import { getLocalized } from '../../lib/i18n/getLocalized';
 
 type Props = { leaf: RotationNode | null; canLog: boolean };
 
@@ -60,7 +61,7 @@ export default function LeafDetails({ leaf, canLog }: Props) {
 
   if (!leaf)
     return (
-      <div className="rounded-md border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-500">
+      <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-4 text-sm text-gray-600 dark:text-gray-300">
         {t('ui.selectLeaf')}
       </div>
     );
@@ -100,9 +101,16 @@ export default function LeafDetails({ leaf, canLog }: Props) {
   const notes = i18n.language === 'he' ? leaf.notes_he : leaf.notes_en;
 
   return (
-    <div className="rounded-md border border-gray-200 dark:border-gray-800 p-4 space-y-4">
+    <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-4 space-y-4">
       <div className="flex items-center gap-2">
-        <div className="text-lg font-medium">{leaf.name}</div>
+        <div className="text-lg font-medium text-gray-900 dark:text-gray-50">{
+          getLocalized<string>({
+            he: (leaf as any).name_he as any,
+            en: (leaf as any).name_en as any,
+            fallback: leaf.name as any,
+            lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
+          }) || leaf.name
+        }</div>
         {notes ? (
           <button
             onClick={() => setNotesDialogOpen(true)}
@@ -128,7 +136,7 @@ export default function LeafDetails({ leaf, canLog }: Props) {
         ) : null}
       </div>
       <div className="space-y-2">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-300">
           {t('ui.required')}: {required}
         </div>
         <ProgressBar approved={progress.approved} pending={progress.pending} required={required} />
@@ -136,7 +144,7 @@ export default function LeafDetails({ leaf, canLog }: Props) {
       {leaf.mcqUrl ? (
         <div className="text-sm">
           <a
-            className="text-teal-700 underline"
+            className="text-teal-700 underline dark:text-teal-400 dark:hover:text-teal-300"
             href={leaf.mcqUrl}
             target="_blank"
             rel="noreferrer"
@@ -147,28 +155,33 @@ export default function LeafDetails({ leaf, canLog }: Props) {
       ) : null}
       {leaf.resources ? (
         <div className="space-y-1">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="text-sm font-medium text-gray-700 dark:text-[rgb(var(--fg))]">
             {t('ui.resources')}
           </div>
-          <div className="text-sm whitespace-pre-line">
+          <div className="text-sm whitespace-pre-line text-gray-900 dark:text-gray-50">
             <Linkify text={leaf.resources} />
           </div>
         </div>
       ) : null}
       {(leaf.links || []).length ? (
         <div className="space-y-1">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="text-sm font-medium text-gray-700 dark:text-[rgb(var(--fg))]">
             {t('ui.links')}
           </div>
           {(leaf.links || []).map((lnk, i) => (
             <div key={i} className="text-sm">
               <a
-                className="text-teal-700 underline"
+                className="text-teal-700 underline dark:text-teal-400 dark:hover:text-teal-300"
                 href={lnk.href}
                 target="_blank"
                 rel="noreferrer"
               >
-                {lnk.label || lnk.href}
+                {getLocalized<string>({
+                  he: (lnk as any).label_he as any,
+                  en: (lnk as any).label_en as any,
+                  fallback: (lnk as any).label as any,
+                  lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
+                }) || lnk.href}
               </a>
             </div>
           ))}
@@ -194,7 +207,7 @@ export default function LeafDetails({ leaf, canLog }: Props) {
         </Button>
         {!canLog ? (
           <span
-            className="ml-2 text-sm text-gray-500"
+            className="ml-2 text-sm text-gray-600 dark:text-gray-300"
             title={t('ui.loggingOnlyInActiveRotation') as string}
           >
             {t('ui.disabled')}
@@ -202,9 +215,9 @@ export default function LeafDetails({ leaf, canLog }: Props) {
         ) : null}
       </div>
       <div className="space-y-1">
-        <div className="text-sm font-medium">{t('ui.recentLogs') || 'Recent logs'}</div>
+        <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{t('ui.recentLogs') || 'Recent logs'}</div>
         {loadingRecent ? (
-          <div className="text-sm text-gray-500">{t('ui.loadingItems')}</div>
+          <div className="text-sm text-gray-600 dark:text-gray-300">{t('ui.loadingItems')}</div>
         ) : recent.length === 0 ? (
           <EmptyState
             icon={<DocumentIcon size={36} />}
@@ -215,7 +228,7 @@ export default function LeafDetails({ leaf, canLog }: Props) {
             className="py-4"
           />
         ) : (
-          <div className="text-sm">
+          <div className="text-sm text-gray-900 dark:text-gray-50">
             {recent.map((t) => (
               <div key={t.id} className="flex items-center justify-between py-1">
                 <span>
@@ -232,7 +245,7 @@ export default function LeafDetails({ leaf, canLog }: Props) {
       <Dialog open={notesDialogOpen} onClose={() => setNotesDialogOpen(false)}>
         <DialogHeader>{t('ui.notes')}</DialogHeader>
         <div className="p-4 space-y-3">
-          <div className="text-sm whitespace-pre-wrap">{notes || t('ui.noNotes')}</div>
+          <div className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-50">{notes || t('ui.noNotes')}</div>
         </div>
         <DialogFooter>
           <Button onClick={() => setNotesDialogOpen(false)}>{t('ui.close')}</Button>
@@ -282,7 +295,7 @@ function ProgressBar({
   const aPct = total ? Math.round((approved / total) * 100) : 0;
   const pPct = total ? Math.round((pending / total) * 100) : 0;
   return (
-    <div className="h-3 w-full rounded bg-gray-100 dark:bg-gray-800 overflow-hidden flex">
+    <div className="h-3 w-full rounded bg-gray-100 dark:bg-[rgb(var(--surface-depressed))] overflow-hidden flex">
       <div className="bg-green-500" style={{ width: `${aPct}%` }} />
       <div className="bg-amber-400" style={{ width: `${pPct}%` }} />
     </div>

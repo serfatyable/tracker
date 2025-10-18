@@ -63,10 +63,10 @@ export default function AnnouncementsCard() {
           {items.map((a) => (
             <li
               key={a.id}
-              className="rounded border border-gray-200 px-2 py-1 dark:border-gray-800"
+              className="rounded border border-gray-200 px-2 py-1 dark:border-[rgb(var(--border))]"
             >
               <div className="font-medium">{a.title}</div>
-              <div className="text-gray-600 dark:text-gray-300">{a.body}</div>
+              <div className="text-gray-600 dark:text-[rgb(var(--fg))]">{a.body}</div>
             </li>
           ))}
         </ul>

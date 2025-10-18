@@ -29,7 +29,7 @@ function DayCard({
   const { data, loading } = useOnCallByDate(dateKey);
 
   return (
-    <div className="rounded border p-3 border-gray-200 dark:border-gray-800">
+    <div className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]">
       <div className="text-xs opacity-70 font-mono mb-2">{dateKey}</div>
       {loading ? (
         <div className="space-y-1">

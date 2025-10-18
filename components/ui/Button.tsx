@@ -39,12 +39,12 @@ export function Button({
   };
   const variants: Record<Variant, string> = {
     default:
-      'bg-primary text-[rgb(var(--primary-ink))] hover:bg-primary/90 hover:shadow-md active:scale-[0.98] focus-visible:ring-primary',
+      'bg-primary text-white dark:text-white hover:bg-primary/90 hover:shadow-md active:scale-[0.98] focus-visible:ring-primary',
     secondary:
-      'bg-surface text-fg hover:bg-surface/80 hover:shadow-md active:scale-[0.98] ring-1 ring-muted/20',
+      'bg-surface text-gray-900 dark:text-gray-50 hover:bg-surface/80 hover:shadow-md active:scale-[0.98] ring-1 ring-muted/20',
     outline:
-      'border border-muted/30 text-fg hover:bg-surface/70 hover:border-muted/50 active:scale-[0.98]',
-    ghost: 'bg-transparent text-fg hover:bg-surface/60 active:scale-[0.98]',
+      'border border-muted/30 text-gray-900 dark:text-gray-50 hover:bg-surface/70 hover:border-muted/50 active:scale-[0.98]',
+    ghost: 'bg-transparent text-gray-900 dark:text-gray-50 hover:bg-surface/60 active:scale-[0.98]',
     destructive:
       'bg-red-600 text-white hover:bg-red-700 hover:shadow-md active:scale-[0.98] focus-visible:ring-red-500',
   };

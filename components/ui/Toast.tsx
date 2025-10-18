@@ -63,7 +63,7 @@ export default function Toast({
         aria-live="polite"
         className={`pointer-events-auto flex items-center gap-3 rounded-md border px-4 py-3 text-sm shadow-elev2 ${variants[variant]}`}
       >
-        <span className="flex-shrink-0 text-base font-semibold" aria-hidden="true">
+        <span className="flex-shrink-0 text-base font-semibold rtl:order-last" aria-hidden="true">
           {icons[variant]}
         </span>
         <span className="flex-1">{message}</span>
@@ -80,7 +80,7 @@ export default function Toast({
           </button>
         ) : null}
         <button
-          className="flex-shrink-0 ml-2 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+          className="flex-shrink-0 ms-2 opacity-60 hover:opacity-100 transition-opacity cursor-pointer rtl:order-first rtl:me-2 rtl:ms-0"
           onClick={() => {
             setOpen(false);
             onClear?.();

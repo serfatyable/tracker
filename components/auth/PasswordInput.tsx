@@ -24,7 +24,7 @@ export default function PasswordInput({
   const [show, setShow] = useState(false);
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="block text-sm font-medium">
+      <label htmlFor={id} className="block text-sm font-medium" suppressHydrationWarning>
         {label}
       </label>
       <div className="relative">

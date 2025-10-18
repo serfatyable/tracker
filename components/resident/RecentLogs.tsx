@@ -2,6 +2,7 @@
 import { getAuth } from 'firebase/auth';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getLocalized } from '../../lib/i18n/getLocalized';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { listRecentTasksForUser, type TaskDoc } from '../../lib/firebase/db';
@@ -72,7 +73,7 @@ export default function RecentLogs({ itemIdsToNames }: { itemIdsToNames: Record<
           {logs.map((l) => (
             <li
               key={l.id}
-              className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-gray-800"
+              className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-[rgb(var(--border))]"
             >
               <span>{itemIdsToNames[l.itemId] || l.itemId}</span>
               <span className="text-gray-500">{l.count}</span>

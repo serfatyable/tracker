@@ -1,5 +1,5 @@
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-gray-200 dark:bg-gray-800 ${className}`} />;
+  return <div className={`animate-pulse rounded-md bg-gray-200 dark:bg-[rgb(var(--surface-elevated))] ${className}`} />;
 }
 
 export function CardSkeleton({ className = '' }: { className?: string }) {
@@ -31,7 +31,7 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
   return (
     <div className="overflow-x-auto">
       <div className="min-w-full">
-        <div className="border-b border-gray-200 dark:border-gray-800 pb-2 mb-2">
+        <div className="border-b border-gray-200 dark:border-[rgb(var(--border))] pb-2 mb-2">
           <div className="flex gap-4">
             {Array.from({ length: columns }).map((_, i) => (
               <Skeleton key={i} className="h-4 w-24" />
@@ -41,7 +41,7 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
         {Array.from({ length: rows }).map((_, rowIdx) => (
           <div
             key={rowIdx}
-            className="flex gap-4 py-2 border-b border-gray-100 dark:border-gray-900"
+            className="flex gap-4 py-2 border-b border-gray-100 dark:border-[rgb(var(--border))]"
           >
             {Array.from({ length: columns }).map((_, colIdx) => (
               <Skeleton key={colIdx} className="h-4 w-24" />
@@ -104,7 +104,7 @@ export function SpinnerSkeleton({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) 
   return (
     <div className="flex items-center justify-center p-4">
       <div
-        className={`${sizeClass} animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400`}
+        className={`${sizeClass} animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-[rgb(var(--border))] dark:border-t-blue-400`}
       />
     </div>
   );

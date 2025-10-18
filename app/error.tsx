@@ -11,7 +11,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-[rgb(var(--bg))]">
       <div className="card-levitate max-w-lg w-full p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-shrink-0">
@@ -29,19 +29,19 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
               />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Something went wrong
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-[rgb(var(--fg))]">
+            {t('errors.somethingWentWrong')}
           </h2>
         </div>
-        <p className="text-sm text-gray-700 dark:text-gray-300 break-words mb-4">
+        <p className="text-sm text-gray-700 dark:text-[rgb(var(--muted))] break-words mb-4">
           {error?.message || t('errors.unexpectedError')}
         </p>
         {process.env.NODE_ENV === 'development' && error?.stack && (
           <details className="mb-4">
-            <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">
-              View error details
+            <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 dark:text-[rgb(var(--muted))] dark:hover:text-[rgb(var(--fg))]">
+              {t('errors.viewDetails')}
             </summary>
-            <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-auto max-h-40">
+            <pre className="mt-2 text-xs bg-gray-100 dark:bg-[rgb(var(--surface-elevated))] p-2 rounded overflow-auto max-h-40">
               {error.stack}
             </pre>
           </details>
@@ -51,10 +51,10 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
             className="btn-levitate border-blue-500 text-blue-700 hover:bg-blue-50 dark:border-blue-500 dark:text-blue-300 dark:hover:bg-blue-900/30"
             onClick={() => (window.location.href = '/')}
           >
-            Go Home
+            {t('errors.goHome')}
           </button>
           <button className="btn-levitate" onClick={() => reset()}>
-            Try Again
+            {t('errors.tryAgain')}
           </button>
         </div>
       </div>

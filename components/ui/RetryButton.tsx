@@ -122,7 +122,7 @@ export function ErrorWithRetry({
         {title && (
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{title}</h2>
         )}
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{message}</p>
+        <p className="text-sm text-gray-600 dark:text-[rgb(var(--muted))] mb-4">{message}</p>
       </div>
 
       <RetryButton onRetry={onRetry} label={retryLabel} size="md" variant="outline" />
@@ -163,7 +163,7 @@ export function InlineRetry({ onRetry, message, asLink = false }: InlineRetryPro
 
   if (asLink) {
     return (
-      <div className="text-sm text-gray-600 dark:text-gray-300">
+      <div className="text-sm text-gray-600 dark:text-[rgb(var(--muted))]">
         {message}{' '}
         <button
           onClick={handleRetry}
@@ -180,7 +180,7 @@ export function InlineRetry({ onRetry, message, asLink = false }: InlineRetryPro
 
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className="text-gray-600 dark:text-gray-300">{message}</span>
+      <span className="text-gray-600 dark:text-[rgb(var(--muted))]">{message}</span>
       <RetryButton onRetry={onRetry} size="sm" showLoading={false} />
     </div>
   );

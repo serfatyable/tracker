@@ -8,8 +8,20 @@ import en from '../../i18n/en.json';
 import he from '../../i18n/he.json';
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const lang =
-    (typeof document !== 'undefined' && document.documentElement.lang) === 'he' ? 'he' : 'en';
+  // Get language from document OR localStorage as fallback
+  const lang = (() => {
+    if (typeof document === 'undefined') return 'en';
+    const docLang = document.documentElement.lang;
+    if (docLang === 'he' || docLang === 'en') return docLang as 'he' | 'en';
+    // Fallback to localStorage if document lang not set properly
+    try {
+      const stored = localStorage.getItem('i18n_lang');
+      return (stored === 'he' ? 'he' : 'en') as 'he' | 'en';
+    } catch {
+      return 'en' as 'he' | 'en';
+    }
+  })();
+  
   const isInitialized = useRef(false);
 
   // Initialize i18n once during render (before first useEffect)
@@ -28,6 +40,9 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     if (i18n.language !== lang) {
       i18n.changeLanguage(lang);
     }
+    // Also ensure dir is set correctly
+    document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
   }, [lang]);
 
   useEffect(() => {

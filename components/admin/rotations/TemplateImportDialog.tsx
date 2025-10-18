@@ -171,13 +171,13 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 {t('import.downloadTemplateFirst')}
               </h3>
-              <p className="text-xs text-gray-700 dark:text-gray-300 mb-3">
+              <p className="text-xs text-gray-700 dark:text-[rgb(var(--fg))] mb-3">
                 {t('import.templateInstructions')}
               </p>
               <div className="flex gap-2">
                 <a
                   href="/api/templates/rotation.csv"
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-white dark:bg-[rgb(var(--surface))] border border-gray-300 dark:border-[rgb(var(--border))] hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] transition-colors"
                   download
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -192,7 +192,7 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
                 </a>
                 <a
                   href="/api/templates/rotation.xlsx"
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-white dark:bg-[rgb(var(--surface))] border border-gray-300 dark:border-[rgb(var(--border))] hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] transition-colors"
                   download
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -212,7 +212,7 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
 
         {/* File Upload Section */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-[rgb(var(--fg))] mb-2">
             {t('import.uploadFile')}
           </label>
           <div
@@ -278,7 +278,7 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                   />
                 </svg>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <p className="text-sm font-medium text-gray-700 dark:text-[rgb(var(--fg))]">
                   {t('import.dragDropFile')}
                 </p>
                 <p className="text-xs text-gray-500">{t('import.orClickToSelect')}</p>
@@ -309,7 +309,7 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
                   {t('import.creatingNewRotation')}
                 </h4>
-                <p className="text-xs text-gray-700 dark:text-gray-300">
+                <p className="text-xs text-gray-700 dark:text-[rgb(var(--fg))]">
                   {t('import.newRotationWillBeCreated')}
                 </p>
               </div>
@@ -337,7 +337,7 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
                   {t('import.mergingIntoRotation')}
                 </h4>
-                <p className="text-xs text-gray-700 dark:text-gray-300">
+                <p className="text-xs text-gray-700 dark:text-[rgb(var(--fg))]">
                   {t('import.itemsWillBeAddedToRotation')}
                 </p>
               </div>

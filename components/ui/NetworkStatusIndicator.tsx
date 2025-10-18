@@ -167,7 +167,7 @@ export function NetworkStatusBadge() {
           !networkStatus.isConnected ? 'bg-red-500' : 'bg-amber-500'
         }`}
       />
-      <span className="text-xs text-gray-600 dark:text-gray-300">
+      <span className="text-xs text-gray-600 dark:text-[rgb(var(--muted))]">
         {!networkStatus.isConnected ? 'Offline' : 'Slow'}
       </span>
     </div>

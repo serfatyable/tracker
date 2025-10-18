@@ -13,11 +13,11 @@ type Props = {
 export default function EmptyState({ icon, title, description, action, className = '' }: Props) {
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted/30 bg-surface/30 p-8 text-center ${className}`}
+      className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-[rgb(var(--border))] bg-gray-50 dark:bg-[rgb(var(--surface-elevated))] p-8 text-center ${className}`}
     >
-      {icon && <div className="mb-4 text-muted/40">{icon}</div>}
-      <h2 className="text-base font-semibold text-fg mb-1">{title}</h2>
-      {description && <p className="text-sm text-muted mb-4 max-w-md">{description}</p>}
+      {icon && <div className="mb-4 text-gray-400 dark:text-gray-500">{icon}</div>}
+      <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50 mb-1">{title}</h2>
+      {description && <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 max-w-md">{description}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );

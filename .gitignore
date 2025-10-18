@@ -145,3 +145,11 @@ firestore-debug.log
 .DS_Store
 .idea/
 .vscode/
+
+# Firebase Admin Service Account (contains private keys!)
+firebase-service-account.json
+*-service-account.json
+
+# Migration script backups
+scripts/backups/
+backups/

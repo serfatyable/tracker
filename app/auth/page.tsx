@@ -38,9 +38,18 @@ export default function AuthPage() {
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
   const [language, setLanguage] = useState<'en' | 'he'>(
-    () =>
-      (typeof window !== 'undefined' && (localStorage.getItem('i18n_lang') as 'en' | 'he')) || 'en',
+    () => (typeof document !== 'undefined' && (document.documentElement.lang === 'he' ? 'he' : 'en')) || 'en',
   );
+  // On mount, sync with <html lang> which is set server-side to avoid SSR/CSR mismatch
+  useEffect(() => {
+    try {
+      const docLang = document.documentElement.lang === 'he' ? 'he' : 'en';
+      if (docLang !== language) setLanguage(docLang);
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     try {
       localStorage.setItem('i18n_lang', language);
@@ -48,13 +57,25 @@ export default function AuthPage() {
       // localStorage may not be available
     }
     try {
-      i18n.changeLanguage(language);
+      document.cookie = `i18n_lang=${language}; path=/; SameSite=Lax`;
+    } catch {
+      // cookies may not be available
+    }
+    try {
+      if (i18n.language !== language) {
+        i18n.changeLanguage(language);
+      }
     } catch {
       // i18n may not be initialized
     }
     try {
-      document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
-      document.documentElement.lang = language;
+      if (document.documentElement.lang !== language) {
+        document.documentElement.lang = language;
+      }
+      const desiredDir = language === 'he' ? 'rtl' : 'ltr';
+      if (document.documentElement.dir !== desiredDir) {
+        document.documentElement.dir = desiredDir;
+      }
     } catch {
       // document may not be available in SSR
     }
@@ -99,9 +120,15 @@ export default function AuthPage() {
       setLoading(true);
       await signIn(siEmail, siPassword);
       const { profile } = await getCurrentUserWithProfile();
-      const profLang = (profile?.settings?.language as 'en' | 'he') || 'en';
-      applyLanguageToDocument(profLang);
-      i18n.changeLanguage(profLang);
+      // Prefer the user's current selection on the Auth page; fall back to profile
+      const nextLang: 'en' | 'he' = language || (profile?.settings?.language as 'en' | 'he') || 'en';
+      applyLanguageToDocument(nextLang);
+      if (i18n.language !== nextLang) i18n.changeLanguage(nextLang);
+      try {
+        document.cookie = `i18n_lang=${nextLang}; path=/; SameSite=Lax`;
+      } catch {
+        /* noop */
+      }
       router.push('/awaiting-approval');
     } catch (err: any) {
       const key = mapFirebaseAuthErrorToI18nKey('signin', err?.code);
@@ -156,6 +183,18 @@ export default function AuthPage() {
         language,
         residencyStartDate: role === 'resident' ? residencyStartDate : undefined,
       });
+      // Apply language immediately and persist cookie before navigating
+      try {
+        applyLanguageToDocument(language);
+        if (i18n.language !== language) i18n.changeLanguage(language);
+      } catch {
+        /* noop */
+      }
+      try {
+        document.cookie = `i18n_lang=${language}; path=/; SameSite=Lax`;
+      } catch {
+        /* noop */
+      }
       router.push('/awaiting-approval');
     } catch (err: any) {
       const key = mapFirebaseAuthErrorToI18nKey('signup', err?.code);
@@ -169,7 +208,8 @@ export default function AuthPage() {
     return (
       <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center p-6">
         <Card className="w-full p-4 text-sm text-red-700">
-          Firebase is not configured. Check your .env.local.
+          <div>{t('errors.firebaseNotConfigured')}</div>
+          <div className="text-xs mt-1 opacity-75">{t('errors.firebaseNotConfiguredHint')}</div>
         </Card>
       </div>
     );
@@ -191,7 +231,7 @@ export default function AuthPage() {
             className="rounded-full object-cover ring-1 ring-gray-300 shadow-md"
             priority
           />
-          <h1 className="text-3xl font-semibold">Tracker</h1>
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-50">Tracker</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -203,6 +243,7 @@ export default function AuthPage() {
                 ? 'pill ring-2 ring-primary border-primary-token'
                 : 'pill opacity-90 border-primary-token',
             )}
+            suppressHydrationWarning
           >
             EN
           </button>
@@ -215,6 +256,7 @@ export default function AuthPage() {
                 ? 'pill ring-2 ring-primary border-primary-token'
                 : 'pill opacity-90 border-primary-token',
             )}
+            suppressHydrationWarning
           >
             HE
           </button>
@@ -228,14 +270,14 @@ export default function AuthPage() {
                 classNames('tab-levitate flex-1 text-center', selected && 'ring-1 ring-blue-500')
               }
             >
-              {t('auth.signIn')}
+              <span suppressHydrationWarning>{t('auth.signIn')}</span>
             </Tab>
             <Tab
               className={({ selected }) =>
                 classNames('tab-levitate flex-1 text-center', selected && 'ring-1 ring-blue-500')
               }
             >
-              {t('auth.signUp')}
+              <span suppressHydrationWarning>{t('auth.signUp')}</span>
             </Tab>
           </Tab.List>
           <Tab.Panels>
@@ -273,7 +315,7 @@ export default function AuthPage() {
                   disabled={loading}
                   autoComplete="current-password"
                 />
-                <button type="submit" disabled={loading} className="btn-levitate w-full">
+                <button type="submit" disabled={loading} className="btn-levitate w-full" suppressHydrationWarning>
                   {t('auth.signIn')}
                 </button>
                 <div className="flex justify-end">
@@ -282,6 +324,7 @@ export default function AuthPage() {
                     onClick={handleForgotPassword}
                     disabled={loading}
                     className="text-sm text-blue-600 hover:text-blue-800 hover:underline disabled:text-gray-400 dark:text-blue-400 dark:hover:text-blue-300"
+                    suppressHydrationWarning
                   >
                     {t('auth.forgotPassword')}
                   </button>
@@ -351,7 +394,7 @@ export default function AuthPage() {
                     autoComplete="off"
                   />
                 ) : null}
-                <button type="submit" disabled={loading} className="btn-levitate w-full">
+                <button type="submit" disabled={loading} className="btn-levitate w-full" suppressHydrationWarning>
                   {t('auth.submit')}
                 </button>
               </form>

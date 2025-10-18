@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import type { Role } from '../../types/auth';
@@ -15,6 +16,7 @@ export default function AuthGate({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { status, firebaseUser, data: profile, error } = useCurrentUserProfile();
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function AuthGate({
     return (
       <div className="p-6">
         <div className="card-levitate p-4 text-sm text-red-700">
-          {error || 'Failed to load user'}
+          {error || t('errors.failedToLoadUser')}
         </div>
       </div>
     );

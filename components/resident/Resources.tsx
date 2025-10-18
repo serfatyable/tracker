@@ -107,7 +107,7 @@ export default function Resources({
           <div className="text-sm font-medium mb-1 flex items-center justify-between">
             <span>{t('dashboard.favorites')}</span>
             <button className="text-xs text-gray-500" onClick={() => setFavOpen((v) => !v)}>
-              {favOpen ? 'Hide' : 'Show'}
+              {favOpen ? t('auth.hide') : t('auth.show')}
             </button>
           </div>
           {favOpen ? (
@@ -122,8 +122,9 @@ export default function Resources({
                       </div>
                       <button
                         className={`text-sm ${favorites.includes(it.href) ? 'text-amber-500' : 'text-gray-400'}`}
-                        title={favorites.includes(it.href) ? 'Unfavorite' : 'Favorite'}
+                        title={favorites.includes(it.href) ? t('dashboard.favorites') : t('dashboard.favorites')}
                         onClick={() => toggleFavorite(it.href)}
+                        aria-label={favorites.includes(it.href) ? t('dashboard.favorites') : t('dashboard.favorites')}
                       >
                         ★
                       </button>
@@ -138,7 +139,7 @@ export default function Resources({
                         rel="noreferrer"
                         className="text-xs underline"
                       >
-                        Open
+                        {t('ui.open')}
                       </a>
                       <Button
                         size="sm"
@@ -183,8 +184,9 @@ export default function Resources({
                   </div>
                   <button
                     className={`text-sm ${favorites.includes(it.href) ? 'text-amber-500' : 'text-gray-400'}`}
-                    title={favorites.includes(it.href) ? 'Unfavorite' : 'Favorite'}
+                    title={favorites.includes(it.href) ? t('dashboard.favorites') : t('dashboard.favorites')}
                     onClick={() => toggleFavorite(it.href)}
+                    aria-label={favorites.includes(it.href) ? t('dashboard.favorites') : t('dashboard.favorites')}
                   >
                     ★
                   </button>
@@ -194,7 +196,7 @@ export default function Resources({
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   <a href={it.href} target="_blank" rel="noreferrer" className="text-xs underline">
-                    Open
+                    {t('ui.open')}
                   </a>
                   <Button
                     size="sm"

@@ -82,7 +82,7 @@ export default function ResidentsByRotation({ assignments, rotations, residents,
               {grouped.map(({ resident, tutorIds }) => (
                 <div
                   key={resident.uid}
-                  className="border rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition"
+                  className="border rounded p-2 hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] transition"
                 >
                   <div className="text-sm font-medium flex items-center justify-between">
                     <span>{resident.fullName || resident.uid}</span>

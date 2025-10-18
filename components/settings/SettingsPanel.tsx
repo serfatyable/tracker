@@ -11,7 +11,6 @@ import {
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { applyLanguageToDocument } from '../../lib/i18n/applyLanguage';
-import { simpleHash } from '../../lib/ics/buildMorningMeetingsIcs';
 import Toast from '../ui/Toast';
 
 export default function SettingsPanel() {
@@ -28,8 +27,6 @@ export default function SettingsPanel() {
   });
   const [toast, setToast] = useState<string | null>(null);
   const [mmReminder, setMmReminder] = useState<boolean>(false);
-  const icsAllHref = '/api/ics/morning-meetings';
-  const [icsMyHref, setIcsMyHref] = useState<string>('');
 
   useEffect(() => {
     if (status !== 'ready') return;
@@ -39,8 +36,6 @@ export default function SettingsPanel() {
     setNotificationsInApp(profile.settings?.notifications?.inApp ?? true);
     setNotificationsEmail(profile.settings?.notifications?.email ?? true);
     setMmReminder(profile.settings?.morningMeetings?.reminderOptIn ?? false);
-    const token = profile.settings?.morningMeetings?.icsToken || '';
-    setIcsMyHref(token ? `/api/ics/morning-meetings/${token}` : '');
   }, [status, firebaseUser, profile]);
 
   async function handleSave(e: React.FormEvent) {
@@ -66,6 +61,11 @@ export default function SettingsPanel() {
       }
       applyLanguageToDocument(language);
       i18n.changeLanguage(language);
+      try {
+        document.cookie = `i18n_lang=${language}; path=/; SameSite=Lax`;
+      } catch {
+        // ignore
+      }
       // Apply theme immediately according to Tailwind dark mode class strategy
       const root = document.documentElement;
       if (theme === 'dark') {
@@ -87,25 +87,25 @@ export default function SettingsPanel() {
   }
 
   if (status !== 'ready') {
-    return <div className="text-sm text-gray-600">Loading…</div>;
+    return <div className="text-sm text-gray-600 dark:text-gray-300">Loading…</div>;
   }
 
   return (
     <form onSubmit={handleSave} className="space-y-4 card-levitate p-4">
       <Toast message={toast} onClear={() => setToast(null)} />
       <div>
-        <label className="block text-sm font-medium">{t('auth.language')}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('auth.language')}</label>
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value as 'en' | 'he')}
-          className="mt-1 input-levitate"
+          className="mt-1 input-levitate rtl:text-right"
         >
           <option value="en">English</option>
           <option value="he">עברית</option>
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium">Table density (default)</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('settings.tableDensity', { defaultValue: 'Table density' })}</label>
         <select
           value={defaultDensity}
           onChange={(e) => {
@@ -117,18 +117,18 @@ export default function SettingsPanel() {
               // localStorage may not be available
             }
           }}
-          className="mt-1 input-levitate"
+          className="mt-1 input-levitate rtl:text-right"
         >
-          <option value="normal">Normal</option>
-          <option value="compact">Compact</option>
+          <option value="normal">{t('ui.normal')}</option>
+          <option value="compact">{t('ui.compact')}</option>
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium">{t('settings.theme')}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('settings.theme')}</label>
         <select
           value={theme}
           onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
-          className="mt-1 input-levitate"
+          className="mt-1 input-levitate rtl:text-right"
         >
           <option value="system">{t('settings.theme.system')}</option>
           <option value="light">{t('settings.theme.light')}</option>
@@ -136,7 +136,7 @@ export default function SettingsPanel() {
         </select>
       </div>
       <div>
-        <label className="mt-2 inline-flex items-center gap-2 text-sm">
+        <label className="mt-2 inline-flex items-center gap-2 text-sm text-gray-900 dark:text-gray-50">
           <input
             type="checkbox"
             checked={mmReminder}
@@ -146,61 +146,9 @@ export default function SettingsPanel() {
         </label>
       </div>
       <div>
-        <label className="block text-sm font-medium">
-          {t('settings.exportToCalendar', { defaultValue: 'Export to calendar' })}
-        </label>
-        <div className="mt-2 flex flex-col gap-2 text-sm">
-          <a
-            className="text-blue-600 hover:underline"
-            href={icsAllHref}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t('morningMeetings.allMeetings', { defaultValue: 'All meetings' })}
-          </a>
-          {icsMyHref ? (
-            <a
-              className="text-blue-600 hover:underline"
-              href={icsMyHref}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t('morningMeetings.myLectures', { defaultValue: 'My lectures' })}
-            </a>
-          ) : (
-            <div className="opacity-70">
-              {t('morningMeetings.myLectures', { defaultValue: 'My lectures' })}
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          className="mt-2 text-xs text-muted hover:text-fg underline text-left"
-          onClick={async () => {
-            if (!firebaseUser) return;
-            try {
-              const token = simpleHash(firebaseUser.uid + ':' + Date.now().toString());
-              const db = getFirestore(getFirebaseApp());
-              await updateDoc(doc(db, 'users', firebaseUser.uid), {
-                'settings.morningMeetings.icsToken': token,
-                updatedAt: serverTimestamp(),
-              } as any);
-              setIcsMyHref(`/api/ics/morning-meetings/${token}`);
-              setToast(t('ui.saved'));
-            } catch {
-              setToast(t('settings.error'));
-            }
-          }}
-        >
-          {t('morningMeetings.generateCalendar', {
-            defaultValue: 'Generate a calendar for my lectures',
-          })}
-        </button>
-      </div>
-      <div>
-        <label className="block text-sm font-medium">{t('settings.notifications')}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('settings.notifications')}</label>
         <div className="mt-2 flex items-center gap-6">
-          <label className="inline-flex items-center gap-2 text-sm">
+          <label className="inline-flex items-center gap-2 text-sm text-gray-900 dark:text-gray-50">
             <input
               type="checkbox"
               checked={notificationsInApp}
@@ -208,7 +156,7 @@ export default function SettingsPanel() {
             />
             <span>{t('settings.notifications.inApp')}</span>
           </label>
-          <label className="inline-flex items-center gap-2 text-sm">
+          <label className="inline-flex items-center gap-2 text-sm text-gray-900 dark:text-gray-50">
             <input
               type="checkbox"
               checked={notificationsEmail}

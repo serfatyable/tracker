@@ -19,9 +19,9 @@ import { buildOnCallIcs } from '../../../../lib/ics/buildOnCallIcs';
  * Export on-call schedule as ICS calendar file
  *
  * SECURITY: Requires authentication via Firebase ID token
- * Returns only the authenticated user's assignments
+ * Returns only the authenticated user's shifts if personal=true
  *
- * @route GET /api/ics/on-call
+ * @route GET /api/ics/on-call?personal=true
  * @auth Required - Any authenticated user
  */
 export async function GET(req: NextRequest) {
@@ -44,22 +44,46 @@ export async function GET(req: NextRequest) {
       return new NextResponse('Account pending approval', { status: 403 });
     }
 
+    // Check if personal calendar is requested
+    const { searchParams } = new URL(req.url);
+    const personal = searchParams.get('personal') === 'true';
+    const userName = userData.fullName || userData.email;
+
+    // Fetch all on-call shifts
     const now = new Date();
-    const col = collection(db, 'onCallAssignments');
+    now.setMonth(now.getMonth() - 1); // Include past month
+    const startKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    
+    const col = collection(db, 'onCallShifts');
     const q = query(
       col,
-      where('userId', '==', uid),
-      where('endAt', '>=', now),
-      orderBy('userId'),
-      orderBy('startAt'),
+      where('dateKey', '>=', startKey),
+      orderBy('dateKey', 'asc')
     );
     const snap = await getDocs(q);
-    const assignments = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-    const ics = buildOnCallIcs(assignments as any, userData.fullName || userData.email);
+    
+    // Filter shifts for current user if personal
+    const myShifts: Array<{ date: Date; shiftType: string; dateKey: string }> = [];
+    snap.docs.forEach((d) => {
+      const data = d.data();
+      const shifts = data.shifts || {};
+      Object.entries(shifts).forEach(([shiftType, residentName]) => {
+        if (personal && !String(residentName).includes(userName)) {
+          return; // Skip if not user's shift
+        }
+        myShifts.push({
+          date: data.date.toDate(),
+          shiftType,
+          dateKey: data.dateKey
+        });
+      });
+    });
+
+    const ics = buildOnCallIcs(myShifts as any, userName);
     return new NextResponse(ics, {
       headers: {
         'content-type': 'text/calendar; charset=utf-8',
-        'content-disposition': 'attachment; filename="on-call.ics"',
+        'content-disposition': `attachment; filename="on-call${personal ? '-my-shifts' : ''}.ics"`,
         'cache-control': 'private, max-age=300',
       },
     });
@@ -74,6 +98,7 @@ export async function GET(req: NextRequest) {
       return createAuthErrorResponse(error);
     }
     // Handle other errors
+    console.error('ICS generation error:', error);
     return new NextResponse(
       error instanceof Error ? error.message : 'Failed to generate calendar',
       { status: 500 },

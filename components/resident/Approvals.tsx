@@ -44,7 +44,7 @@ export default function Approvals({
           ) : null}
           <option value="all">{t('ui.all') || 'All'}</option>
           <option value="pending">{t('ui.pending') || 'Pending'}</option>
-          <option value="rejected">Rejected</option>
+          <option value="rejected">{t('ui.rejected') || 'Rejected'}</option>
         </Select>
         <Select
           aria-label="Category"
@@ -82,7 +82,7 @@ export default function Approvals({
           {filtered.map((task) => (
             <li
               key={task.id}
-              className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-gray-800"
+              className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-[rgb(var(--border))]"
             >
               <span>{byId[task.itemId]?.name || task.itemId}</span>
               <span className="flex items-center gap-2">

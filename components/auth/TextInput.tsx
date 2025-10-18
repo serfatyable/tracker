@@ -27,7 +27,7 @@ export default function TextInput({
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="block text-sm font-medium">
-        {label}
+        <span suppressHydrationWarning>{label}</span>
       </label>
       <input
         type={type}

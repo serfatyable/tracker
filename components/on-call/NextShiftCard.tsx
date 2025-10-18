@@ -15,7 +15,7 @@ export default function NextShiftCard({ userId }: { userId?: string }) {
 
   if (loading) {
     return (
-      <div className="rounded border p-3 border-gray-200 dark:border-gray-800">
+      <div className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]">
         <Skeleton className="h-3 w-24 mb-2" />
         <Skeleton className="h-4 w-40" />
       </div>
@@ -41,7 +41,7 @@ export default function NextShiftCard({ userId }: { userId?: string }) {
   const stationLabel = t(stationI18nKeys[next.stationKey as StationKey]);
 
   return (
-    <div className="rounded border p-3 border-gray-200 dark:border-gray-800">
+    <div className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]">
       <div className="text-xs opacity-70">{t('onCall.yourNextShift')}</div>
       <div className="mt-1 text-sm">
         {dateStr} — {stationLabel}

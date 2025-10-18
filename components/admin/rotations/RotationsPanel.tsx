@@ -185,9 +185,9 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
                   className="btn-levitate border-amber-500 hover:bg-amber-50 text-amber-700 dark:border-amber-500 dark:text-amber-300 dark:hover:bg-amber-900/30"
                   variant="outline"
                   onClick={() => setMaintenanceDialog({ id: r.id, name })}
-                  title="Fix duplicates and invalid data"
+                  title={t('ui.fixData')}
                 >
-                  🔧 Maintenance
+                  🔧 {t('ui.maintenance')}
                 </Button>
               </div>
             </div>
@@ -215,7 +215,7 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
             onClick={async () => {
               // Validate: name must not be empty
               if (!form.name.trim()) {
-                alert('Please enter a rotation name');
+                alert(t('admin.rotations.enterName'));
                 return;
               }
 
@@ -233,9 +233,8 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
                 setOpen(false);
                 setSearch(''); // trigger refresh
               } catch (error) {
-                console.error('Failed to create rotation:', error);
                 alert(
-                  'Failed to create rotation: ' +
+                  t('admin.rotations.createFailed') + ': ' +
                     (error instanceof Error ? error.message : String(error)),
                 );
               }
@@ -260,7 +259,7 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
       />
 
       <Dialog open={!!ownersDialog} onClose={() => setOwnersDialog(null)}>
-        <DialogHeader>Manage owners</DialogHeader>
+        <DialogHeader>{t('admin.rotations.manageOwners')}</DialogHeader>
         <div className="p-2">
           {ownersDialog ? <RotationOwnersEditor rotationId={ownersDialog} /> : null}
         </div>
