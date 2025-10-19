@@ -1,20 +1,24 @@
 #!/usr/bin/env node
 /**
  * Migration Script: Add Hebrew Translations to Firestore
- * 
+ *
  * This script adds name_en and name_he fields to rotations and rotationNodes
- * 
+ *
  * Usage:
  *   node scripts/add-hebrew-translations.js [--dry-run] [--backup]
- * 
+ *
  * Options:
  *   --dry-run   Show what would be updated without making changes
  *   --backup    Create backup JSON files before updating
  */
 
-const admin = require('firebase-admin');
+/* eslint-env node */
+/* global require, process, __dirname, console */
+
 const fs = require('fs');
 const path = require('path');
+
+const admin = require('firebase-admin');
 
 // Load translations
 const translations = require('./translations.json');
@@ -32,7 +36,10 @@ try {
       if (eqIdx === -1) return;
       const key = trimmed.slice(0, eqIdx).trim();
       let value = trimmed.slice(eqIdx + 1).trim();
-      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith('\'') && value.endsWith('\''))) {
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
         value = value.slice(1, -1);
       }
       if (process.env[key] === undefined) {
@@ -61,20 +68,21 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     throw e;
   }
 } else if (
-  (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && (process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT))
-)
-{
+  process.env.FIREBASE_PRIVATE_KEY &&
+  process.env.FIREBASE_CLIENT_EMAIL &&
+  (process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT)
+) {
   credentialData = {
     projectId: process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT,
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
+    privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
   };
 } else {
   credentialData = require('../firebase-service-account.json');
 }
 
 admin.initializeApp({
-  credential: admin.credential.cert(credentialData)
+  credential: admin.credential.cert(credentialData),
 });
 
 const db = admin.firestore();
@@ -96,22 +104,22 @@ async function backupCollection(collectionName) {
   console.log(`📦 Backing up ${collectionName}...`);
   const snapshot = await db.collection(collectionName).get();
   const data = {};
-  
-  snapshot.forEach(doc => {
+
+  snapshot.forEach((doc) => {
     data[doc.id] = doc.data();
   });
-  
+
   const backupDir = path.join(__dirname, '../backups');
   if (!fs.existsSync(backupDir)) {
     fs.mkdirSync(backupDir, { recursive: true });
   }
-  
+
   const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
   const filename = path.join(backupDir, `${collectionName}_${timestamp}.json`);
-  
+
   fs.writeFileSync(filename, JSON.stringify(data, null, 2));
   console.log(`✅ Backup saved: ${filename}\n`);
-  
+
   return data;
 }
 
@@ -120,71 +128,71 @@ function getTranslation(type, key, fallback) {
   if (translations[type] && translations[type][key]) {
     return translations[type][key];
   }
-  
+
   // Try common translations
   if (translations.common && translations.common[key]) {
     return translations.common[key];
   }
-  
+
   // Try category translations
   if (translations.categories && translations.categories[key]) {
     return translations.categories[key];
   }
-  
+
   return fallback;
 }
 
 async function migrateRotations() {
   console.log('🔄 Processing rotations collection...');
-  
+
   const snapshot = await db.collection('rotations').get();
   let processed = 0;
   let updated = 0;
   let skipped = 0;
-  
+
   const batch = db.batch();
-  
+
   for (const doc of snapshot.docs) {
     processed++;
     const data = doc.data();
     const currentName = data.name;
-    
+
     // Skip if already has both name_en and name_he
     if (data.name_en && data.name_he) {
       skipped++;
       console.log(`  ⏭️  ${doc.id}: Already has translations`);
       continue;
     }
-    
+
     // Get translations
     const nameEn = data.name_en || currentName || doc.id;
     const nameHe = data.name_he || getTranslation('rotations', doc.id, currentName);
-    
+
     console.log(`  📝 ${doc.id}:`);
     console.log(`     EN: ${nameEn}`);
     console.log(`     HE: ${nameHe}`);
-    
+
     if (!isDryRun) {
       batch.update(doc.ref, {
         name_en: nameEn,
         name_he: nameHe,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       updated++;
     }
   }
-  
+
   if (!isDryRun && updated > 0) {
     await batch.commit();
     console.log(`\n✅ Updated ${updated} rotations`);
   }
-  
+
   console.log(`📊 Rotations: ${processed} total, ${updated} updated, ${skipped} skipped\n`);
 }
 
 async function migrateRotationNodes() {
   console.log('🔄 Processing rotationNodes collection...');
-  
+
   const snapshot = await db.collection('rotationNodes').get();
   let processed = 0;
   let updated = 0;
@@ -192,22 +200,22 @@ async function migrateRotationNodes() {
   let batches = [];
   let currentBatch = db.batch();
   let batchCount = 0;
-  
+
   for (const doc of snapshot.docs) {
     processed++;
     const data = doc.data();
     const currentName = data.name;
-    
+
     // Skip if already has both name_en and name_he, unless overwriting
     if (!overwriteNames && data.name_en && data.name_he) {
       skipped++;
       continue;
     }
-    
+
     // Get translations
     const nameEn = data.name_en || currentName || doc.id;
     let nameHe;
-    
+
     // If overwriting, always get translation from file first
     if (overwriteNames) {
       nameHe = getTranslation('nodes', doc.id, null);
@@ -225,24 +233,28 @@ async function migrateRotationNodes() {
         nameHe = getTranslation('common', currentName, currentName);
       }
     }
-    
+
     if (processed % 50 === 0) {
       console.log(`  📊 Processed ${processed} nodes...`);
     }
-    
+
     // Only write if overwriting or values are missing/different
     const shouldWrite =
-      overwriteNames || !data.name_he || !data.name_en || data.name_he !== nameHe || data.name_en !== nameEn;
+      overwriteNames ||
+      !data.name_he ||
+      !data.name_en ||
+      data.name_he !== nameHe ||
+      data.name_en !== nameEn;
     if (shouldWrite) {
       if (!isDryRun) {
         currentBatch.update(doc.ref, {
           name_en: nameEn,
           name_he: nameHe,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
         batchCount++;
         updated++;
-        
+
         // Firestore batch limit is 500
         if (batchCount >= 450) {
           batches.push(currentBatch);
@@ -255,13 +267,13 @@ async function migrateRotationNodes() {
       }
     }
   }
-  
+
   if (!isDryRun && updated > 0) {
     // Add last batch
     if (batchCount > 0) {
       batches.push(currentBatch);
     }
-    
+
     // Commit all batches
     console.log(`\n📤 Committing ${batches.length} batches...`);
     for (let i = 0; i < batches.length; i++) {
@@ -270,7 +282,7 @@ async function migrateRotationNodes() {
     }
     console.log(`\n✅ Updated ${updated} rotation nodes`);
   }
-  
+
   console.log(`📊 Rotation Nodes: ${processed} total, ${updated} updated, ${skipped} skipped\n`);
 }
 
@@ -307,17 +319,19 @@ async function migrateLinkLabels() {
 
     if (changed || overwriteLinks) {
       if (!isDryRun) {
-        const finalLinks = overwriteLinks ? nextLinks.map((lnk) => {
-          if (!lnk) return lnk;
-          const labelEn = lnk.label_en || lnk.label || null;
-          let labelHe = lnk.label_he || null;
-          if (labelEn && (!labelHe || overwriteLinks)) {
-            const tr = getTranslation('common', labelEn, labelHe || labelEn);
-            labelHe = tr;
-            return { ...lnk, label_en: labelEn, label_he: labelHe };
-          }
-          return lnk;
-        }) : nextLinks;
+        const finalLinks = overwriteLinks
+          ? nextLinks.map((lnk) => {
+              if (!lnk) return lnk;
+              const labelEn = lnk.label_en || lnk.label || null;
+              let labelHe = lnk.label_he || null;
+              if (labelEn && (!labelHe || overwriteLinks)) {
+                const tr = getTranslation('common', labelEn, labelHe || labelEn);
+                labelHe = tr;
+                return { ...lnk, label_en: labelEn, label_he: labelHe };
+              }
+              return lnk;
+            })
+          : nextLinks;
         currentBatch.update(doc.ref, {
           links: finalLinks,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -355,12 +369,12 @@ async function run() {
       await backupCollection('rotations');
       await backupCollection('rotationNodes');
     }
-    
+
     // Migrate collections
     await migrateRotations();
     await migrateRotationNodes();
     await migrateLinkLabels();
-    
+
     if (isDryRun) {
       console.log('\n🔍 DRY RUN COMPLETE - No changes were made');
       console.log('Run without --dry-run to apply changes');
@@ -371,7 +385,7 @@ async function run() {
       console.log('2. Verify rotation names appear in Hebrew');
       console.log('3. Update any missing translations in translations.json');
     }
-    
+
     process.exit(0);
   } catch (error) {
     console.error('\n❌ ERROR:', error);
@@ -380,4 +394,3 @@ async function run() {
 }
 
 run();
-
