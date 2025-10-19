@@ -38,7 +38,9 @@ export default function AuthPage() {
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
   const [language, setLanguage] = useState<'en' | 'he'>(
-    () => (typeof document !== 'undefined' && (document.documentElement.lang === 'he' ? 'he' : 'en')) || 'en',
+    () =>
+      (typeof document !== 'undefined' && (document.documentElement.lang === 'he' ? 'he' : 'en')) ||
+      'en',
   );
   // On mount, sync with <html lang> which is set server-side to avoid SSR/CSR mismatch
   useEffect(() => {
@@ -121,7 +123,8 @@ export default function AuthPage() {
       await signIn(siEmail, siPassword);
       const { profile } = await getCurrentUserWithProfile();
       // Prefer the user's current selection on the Auth page; fall back to profile
-      const nextLang: 'en' | 'he' = language || (profile?.settings?.language as 'en' | 'he') || 'en';
+      const nextLang: 'en' | 'he' =
+        language || (profile?.settings?.language as 'en' | 'he') || 'en';
       applyLanguageToDocument(nextLang);
       if (i18n.language !== nextLang) i18n.changeLanguage(nextLang);
       try {
@@ -206,7 +209,7 @@ export default function AuthPage() {
 
   if (!firebaseOk) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center p-6">
+      <div className="mx-auto flex min-h-dvh pad-safe-t pad-safe-b w-full max-w-2xl flex-col items-center justify-center px-4 py-6 sm:px-6">
         <Card className="w-full p-4 text-sm text-red-700">
           <div>{t('errors.firebaseNotConfigured')}</div>
           <div className="text-xs mt-1 opacity-75">{t('errors.firebaseNotConfiguredHint')}</div>
@@ -216,12 +219,9 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center p-6">
+    <div className="mx-auto flex min-h-dvh pad-safe-t pad-safe-b w-full max-w-2xl flex-col items-center justify-center px-4 py-6 sm:px-6">
       {/* Force brand header to LTR regardless of app language */}
-      <div
-        dir="ltr"
-        className="mb-6 flex w-full max-w-2xl items-center justify-between gap-4 text-fg"
-      >
+      <div dir="ltr" className="mb-6 flex w-full items-center justify-between gap-4 text-fg">
         <div className="flex items-center gap-4">
           <Image
             src="/logo.png"
@@ -315,7 +315,12 @@ export default function AuthPage() {
                   disabled={loading}
                   autoComplete="current-password"
                 />
-                <button type="submit" disabled={loading} className="btn-levitate w-full" suppressHydrationWarning>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-levitate w-full"
+                  suppressHydrationWarning
+                >
                   {t('auth.signIn')}
                 </button>
                 <div className="flex justify-end">
@@ -394,7 +399,12 @@ export default function AuthPage() {
                     autoComplete="off"
                   />
                 ) : null}
-                <button type="submit" disabled={loading} className="btn-levitate w-full" suppressHydrationWarning>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-levitate w-full"
+                  suppressHydrationWarning
+                >
                   {t('auth.submit')}
                 </button>
               </form>

@@ -948,58 +948,60 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
 
                     {/* Grid of all shift assignments */}
                     <div className="flex-1 min-w-0">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {Object.entries(day.shifts)
-                          .filter(([shiftType, residentName]) => {
-                            // Filter by shift type if filter is active
-                            if (shiftTypeFilter.length > 0) {
-                              const matchesFilter = shiftTypeFilter.some(
-                                (filter) =>
-                                  shiftType.toUpperCase().includes(filter.toUpperCase()) ||
-                                  filter.toUpperCase().includes(shiftType.toUpperCase()),
-                              );
-                              if (!matchesFilter) return false;
-                            }
+                      <div className="overflow-x-container">
+                        <div className="min-w-content grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                          {Object.entries(day.shifts)
+                            .filter(([shiftType, residentName]) => {
+                              // Filter by shift type if filter is active
+                              if (shiftTypeFilter.length > 0) {
+                                const matchesFilter = shiftTypeFilter.some(
+                                  (filter) =>
+                                    shiftType.toUpperCase().includes(filter.toUpperCase()) ||
+                                    filter.toUpperCase().includes(shiftType.toUpperCase()),
+                                );
+                                if (!matchesFilter) return false;
+                              }
 
-                            // Filter by my shifts if active
-                            if (myShiftsOnly && currentUser?.fullName) {
-                              if (!String(residentName).includes(currentUser.fullName))
-                                return false;
-                            }
+                              // Filter by my shifts if active
+                              if (myShiftsOnly && currentUser?.fullName) {
+                                if (!String(residentName).includes(currentUser.fullName))
+                                  return false;
+                              }
 
-                            return true;
-                          })
-                          .map(([shiftType, residentName]) => {
-                            const config = getShiftConfig(shiftType);
-                            const isMyShift =
-                              currentUser?.fullName &&
-                              String(residentName).includes(currentUser.fullName);
-                            return (
-                              <div
-                                key={shiftType}
-                                className={`p-3 rounded-lg border-2 ${config.bgColor} ${config.borderColor} ${isMyShift ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
-                              >
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-lg">{config.icon}</span>
-                                  <span className={`font-semibold text-xs ${config.color}`}>
-                                    {shiftType}
-                                  </span>
-                                  {isMyShift && (
-                                    <Badge className="bg-green-600 text-white text-xs">You</Badge>
-                                  )}
-                                </div>
-                                <div className="font-medium text-gray-900 dark:text-gray-100 mb-1">
-                                  {String(residentName)}
-                                </div>
-                                <a
-                                  href={`tel:${String(residentName)}`}
-                                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                              return true;
+                            })
+                            .map(([shiftType, residentName]) => {
+                              const config = getShiftConfig(shiftType);
+                              const isMyShift =
+                                currentUser?.fullName &&
+                                String(residentName).includes(currentUser.fullName);
+                              return (
+                                <div
+                                  key={shiftType}
+                                  className={`p-3 rounded-lg border-2 ${config.bgColor} ${config.borderColor} ${isMyShift ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
                                 >
-                                  <span>📞</span> Call
-                                </a>
-                              </div>
-                            );
-                          })}
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-lg">{config.icon}</span>
+                                    <span className={`font-semibold text-xs ${config.color}`}>
+                                      {shiftType}
+                                    </span>
+                                    {isMyShift && (
+                                      <Badge className="bg-green-600 text-white text-xs">You</Badge>
+                                    )}
+                                  </div>
+                                  <div className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+                                    {String(residentName)}
+                                  </div>
+                                  <a
+                                    href={`tel:${String(residentName)}`}
+                                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                                  >
+                                    <span>📞</span> Call
+                                  </a>
+                                </div>
+                              );
+                            })}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1027,28 +1029,32 @@ function AdminAnalytics({ stats }: { stats: any }) {
           {t('onCall.shiftsPerResident', { defaultValue: 'Shifts per Resident' })}
         </h3>
         <div className="space-y-2">
-          {Object.entries(stats.residentShiftCounts as Record<string, number>)
-            .sort((a, b) => b[1] - a[1])
-            .map(([resident, count]) => (
-              <div key={resident} className="flex items-center gap-3">
-                <div
-                  className="w-32 text-sm text-gray-700 dark:text-[rgb(var(--fg))] truncate"
-                  title={resident}
-                >
-                  {resident}
-                </div>
-                <div className="flex-1 relative">
-                  <div className="h-8 bg-gray-200 dark:bg-[rgb(var(--surface-depressed))] rounded-lg overflow-hidden">
+          <div className="overflow-x-container">
+            <div className="inline-block min-w-[56rem] align-top">
+              {Object.entries(stats.residentShiftCounts as Record<string, number>)
+                .sort((a, b) => b[1] - a[1])
+                .map(([resident, count]) => (
+                  <div key={resident} className="flex items-center gap-3">
                     <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-500 flex items-center justify-end px-2"
-                      style={{ width: `${(count / maxShifts) * 100}%` }}
+                      className="w-32 text-sm text-gray-700 dark:text-[rgb(var(--fg))] truncate"
+                      title={resident}
                     >
-                      <span className="text-xs font-bold text-white">{count}</span>
+                      {resident}
+                    </div>
+                    <div className="flex-1 relative">
+                      <div className="h-8 bg-gray-200 dark:bg-[rgb(var(--surface-depressed))] rounded-lg overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-500 flex items-center justify-end px-2"
+                          style={{ width: `${(count / maxShifts) * 100}%` }}
+                        >
+                          <span className="text-xs font-bold text-white">{count}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                ))}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -26,29 +26,31 @@ export default function TutorLoadTable({ assignments, tutors }: Props) {
   return (
     <div className="card-levitate p-3">
       <div className="font-semibold mb-2">{t('overview.tutorLoad')}</div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="text-left opacity-70">
-              <th className="py-1 pr-4">{t('overview.tutor')}</th>
-              <th className="py-1 pr-4">{t('tutor.tabs.residents')}</th>
-              <th className="py-1" />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ tutor, count }) => (
-              <tr key={tutor.uid} className="border-t border-gray-200/20">
-                <td className="py-1 pr-4">{tutor.fullName || tutor.uid}</td>
-                <td className="py-1 pr-4">{count}</td>
-                <td className="py-1">
-                  <Button size="sm" className="btn-levitate" variant="outline">
-                    Assign resident
-                  </Button>
-                </td>
+      <div className="overflow-x-container">
+        <div className="inline-block min-w-[56rem] align-top">
+          <table className="w-full text-sm md:text-base">
+            <thead>
+              <tr className="text-left opacity-70 text-sm md:text-base">
+                <th className="py-1 pr-4">{t('overview.tutor')}</th>
+                <th className="py-1 pr-4">{t('tutor.tabs.residents')}</th>
+                <th className="py-1" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map(({ tutor, count }) => (
+                <tr key={tutor.uid} className="border-t border-gray-200/20">
+                  <td className="py-1 pr-4 break-anywhere">{tutor.fullName || tutor.uid}</td>
+                  <td className="py-1 pr-4">{count}</td>
+                  <td className="py-1">
+                    <Button size="sm" className="btn-levitate" variant="outline">
+                      Assign resident
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

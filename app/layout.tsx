@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { cookies } from 'next/headers';
 
@@ -35,6 +35,14 @@ export const metadata: Metadata = {
     initialScale: 1,
     maximumScale: 5,
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+  interactiveWidget: 'resizes-visual',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
