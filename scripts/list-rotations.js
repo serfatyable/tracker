@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /**
  * List Current Rotations Script
- * 
+ *
  * This script lists all rotations and rotation nodes to help create translations
- * 
+ *
  * Usage:
  *   node scripts/list-rotations.js [--nodes] [--output translations-template.json]
  */
-
-const admin = require('firebase-admin');
+/* eslint-env node */
+/* global require, process, __dirname, console */
 const fs = require('fs');
 const path = require('path');
+
+const admin = require('firebase-admin');
 
 // Initialize Firebase Admin (supports .env.local and individual vars)
 try {
@@ -24,7 +26,10 @@ try {
       if (eqIdx === -1) return;
       const key = trimmed.slice(0, eqIdx).trim();
       let value = trimmed.slice(eqIdx + 1).trim();
-      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith('\'') && value.endsWith('\''))) {
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
         value = value.slice(1, -1);
       }
       if (process.env[key] === undefined) {
@@ -49,19 +54,21 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     throw e;
   }
 } else if (
-  (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && (process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT))
+  process.env.FIREBASE_PRIVATE_KEY &&
+  process.env.FIREBASE_CLIENT_EMAIL &&
+  (process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT)
 ) {
   credentialData = {
     projectId: process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT,
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
+    privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
   };
 } else {
   credentialData = require('../firebase-service-account.json');
 }
 
 admin.initializeApp({
-  credential: admin.credential.cert(credentialData)
+  credential: admin.credential.cert(credentialData),
 });
 
 const db = admin.firestore();
@@ -78,48 +85,48 @@ console.log('📋 Listing Current Rotations\n');
 async function listRotations() {
   console.log('🔍 Fetching rotations...');
   const snapshot = await db.collection('rotations').get();
-  
+
   const rotations = {};
   const rotationsList = [];
-  
-  snapshot.forEach(doc => {
+
+  snapshot.forEach((doc) => {
     const data = doc.data();
     const name = data.name || doc.id;
-    
+
     rotationsList.push({
       id: doc.id,
       name: name,
       name_en: data.name_en || null,
-      name_he: data.name_he || null
+      name_he: data.name_he || null,
     });
-    
+
     // Build template for translations.json
     if (!data.name_en || !data.name_he) {
       rotations[doc.id] = {
         name_en: data.name_en || name,
-        name_he: data.name_he || `[TRANSLATE: ${name}]`
+        name_he: data.name_he || `[TRANSLATE: ${name}]`,
       };
     }
   });
-  
+
   console.log('\n📊 Found', rotationsList.length, 'rotations:\n');
-  rotationsList.forEach(r => {
+  rotationsList.forEach((r) => {
     console.log(`  ${r.id}:`);
     console.log(`    Current: ${r.name}`);
     console.log(`    EN: ${r.name_en || '❌ MISSING'}`);
     console.log(`    HE: ${r.name_he || '❌ MISSING'}`);
     console.log('');
   });
-  
+
   return rotations;
 }
 
 async function listNodes() {
   if (!includeNodes) return {};
-  
+
   console.log('🔍 Fetching rotation nodes...');
   const snapshot = await db.collection('rotationNodes').get();
-  
+
   const categories = new Set();
   const uniqueNames = new Set();
   const common = {};
@@ -127,11 +134,11 @@ async function listNodes() {
 
   const isLikelyEnglish = (s) => {
     if (!s || typeof s !== 'string') return false;
-    // Heuristic: only ASCII characters → likely English
-    return /^[\x00-\x7F\s.,;:()'"\-\/+&]+$/.test(s);
+    // Heuristic: only printable ASCII characters → likely English
+    return /^[\x20-\x7E]+$/.test(s);
   };
-  
-  snapshot.forEach(doc => {
+
+  snapshot.forEach((doc) => {
     const data = doc.data();
     const name = data.name;
     nodesMap[doc.id] = {
@@ -140,33 +147,40 @@ async function listNodes() {
       name_he: data.name_he || null,
       type: data.type || null,
     };
-    
+
     if (data.type === 'category') {
       categories.add(name);
     }
-    
+
     if (name && !data.name_he) {
       uniqueNames.add(name);
     }
   });
-  
+
   console.log('\n📊 Found', snapshot.size, 'rotation nodes');
   console.log('\n📂 Categories found:');
-  categories.forEach(cat => {
+  categories.forEach((cat) => {
     console.log(`  - ${cat}`);
   });
-  
+
   console.log(`\n📝 ${uniqueNames.size} unique names need translation`);
   console.log('\nTop 20 most common:');
-  Array.from(uniqueNames).slice(0, 20).forEach(name => {
-    console.log(`  - ${name}`);
-    common[name] = `[TRANSLATE: ${name}]`;
-  });
-  
+  Array.from(uniqueNames)
+    .slice(0, 20)
+    .forEach((name) => {
+      console.log(`  - ${name}`);
+      common[name] = `[TRANSLATE: ${name}]`;
+    });
+
   // Build nodes needing attention: missing Hebrew OR Hebrew likely still English
   const nodesNeedingHebrew = {};
   Object.entries(nodesMap).forEach(([id, info]) => {
-    const needs = !info.name_he || (includeUnchanged && (info.name_he === info.name_en || info.name_he === info.name || isLikelyEnglish(info.name_he)));
+    const needs =
+      !info.name_he ||
+      (includeUnchanged &&
+        (info.name_he === info.name_en ||
+          info.name_he === info.name ||
+          isLikelyEnglish(info.name_he)));
     if (needs) {
       nodesNeedingHebrew[id] = `[TRANSLATE: ${info.name || id}]`;
     }
@@ -178,8 +192,8 @@ async function listNodes() {
 async function run() {
   try {
     const rotations = await listRotations();
-  const { categories, common, nodesMap, nodesNeedingHebrew } = await listNodes();
-    
+    const { categories, common, nodesNeedingHebrew } = await listNodes();
+
     if (outputFile) {
       const nodes = nodesNeedingHebrew || {};
 
@@ -187,16 +201,16 @@ async function run() {
         rotations,
         nodes,
         categories: {},
-        common: common || {}
+        common: common || {},
       };
-      
+
       // Add category translations if found
       if (categories) {
-        categories.forEach(cat => {
+        categories.forEach((cat) => {
           template.categories[cat] = `[TRANSLATE: ${cat}]`;
         });
       }
-      
+
       const outputPath = path.join(__dirname, outputFile);
       fs.writeFileSync(outputPath, JSON.stringify(template, null, 2));
       console.log(`\n✅ Template saved to: ${outputPath}`);
@@ -206,7 +220,7 @@ async function run() {
       console.log('3. Save as translations.json');
       console.log('4. Run: node scripts/add-hebrew-translations.js --dry-run');
     }
-    
+
     process.exit(0);
   } catch (error) {
     console.error('\n❌ ERROR:', error);
@@ -215,4 +229,3 @@ async function run() {
 }
 
 run();
-
