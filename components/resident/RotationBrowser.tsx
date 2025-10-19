@@ -9,12 +9,12 @@ import { createTask } from '../../lib/firebase/db';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
+import { getLocalized } from '../../lib/i18n/getLocalized';
 import type { RotationNode } from '../../types/rotations';
 import { SpinnerSkeleton } from '../dashboard/Skeleton';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import EmptyState, { EmptyIcon } from '../ui/EmptyState';
-import { getLocalized } from '../../lib/i18n/getLocalized';
 
 type Props = {
   selectedRotationId: string | null;
@@ -72,15 +72,23 @@ export default function RotationBrowser({
           fallback: n.name as any,
           lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
         }) || n.name;
-      const linkLabels = (n.links || []).map((l) =>
-        getLocalized<string>({
-          he: (l as any).label_he as any,
-          en: (l as any).label_en as any,
-          fallback: (l as any).label as any,
-          lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
-        }) || l.href || '',
+      const linkLabels = (n.links || []).map(
+        (l) =>
+          getLocalized<string>({
+            he: (l as any).label_he as any,
+            en: (l as any).label_en as any,
+            fallback: (l as any).label as any,
+            lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
+          }) ||
+          l.href ||
+          '',
       );
-      const hay = [displayName, n.mcqUrl || '', ...(n.links || []).map((l) => l.href || ''), ...linkLabels]
+      const hay = [
+        displayName,
+        n.mcqUrl || '',
+        ...(n.links || []).map((l) => l.href || ''),
+        ...linkLabels,
+      ]
         .join(' ')
         .toLowerCase();
       return hay.includes(needle);
@@ -96,7 +104,7 @@ export default function RotationBrowser({
       return out;
     }
     return filter(tree);
-  }, [tree, searchTerm]);
+  }, [tree, searchTerm, i18n.language]);
 
   const countsByItemId = useMemo(() => {
     const map: Record<string, { approved: number; pending: number }> = {};
@@ -132,7 +140,7 @@ export default function RotationBrowser({
     const curr = nodes.filter((n) => fields(n).includes(needle));
     const allR = allNodes.filter((n) => fields(n).includes(needle));
     return { results: searchScope === 'all' ? allR : curr, currentResults: curr, allResults: allR };
-  }, [searchTerm, nodes, allNodes, searchScope]);
+  }, [searchTerm, nodes, allNodes, searchScope, i18n.language]);
 
   useEffect(() => {
     if (searchScope !== 'current') return;
@@ -166,7 +174,10 @@ export default function RotationBrowser({
       {searchTerm.trim() && results.length > 0 ? (
         <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-2 text-sm">
           {results.slice(0, 10).map((n) => (
-            <div key={n.id} className="flex items-center justify-between py-1 text-gray-900 dark:text-gray-50">
+            <div
+              key={n.id}
+              className="flex items-center justify-between py-1 text-gray-900 dark:text-gray-50"
+            >
               <span>{highlight(n.name, searchTerm)}</span>
               {n.type === 'leaf' ? (
                 <Button

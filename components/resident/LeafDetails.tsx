@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { createTask, listRecentTasksByLeaf } from '../../lib/firebase/db';
+import { getLocalized } from '../../lib/i18n/getLocalized';
 import { logError } from '../../lib/utils/logger';
 import type { RotationNode } from '../../types/rotations';
 import Button from '../ui/Button';
@@ -12,7 +13,6 @@ import { Dialog, DialogHeader, DialogFooter } from '../ui/Dialog';
 import EmptyState, { DocumentIcon } from '../ui/EmptyState';
 import Input from '../ui/Input';
 import Toast from '../ui/Toast';
-import { getLocalized } from '../../lib/i18n/getLocalized';
 
 type Props = { leaf: RotationNode | null; canLog: boolean };
 
@@ -103,14 +103,14 @@ export default function LeafDetails({ leaf, canLog }: Props) {
   return (
     <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-4 space-y-4">
       <div className="flex items-center gap-2">
-        <div className="text-lg font-medium text-gray-900 dark:text-gray-50">{
-          getLocalized<string>({
+        <div className="text-lg font-medium text-gray-900 dark:text-gray-50">
+          {getLocalized<string>({
             he: (leaf as any).name_he as any,
             en: (leaf as any).name_en as any,
             fallback: leaf.name as any,
             lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
-          }) || leaf.name
-        }</div>
+          }) || leaf.name}
+        </div>
         {notes ? (
           <button
             onClick={() => setNotesDialogOpen(true)}
@@ -215,7 +215,9 @@ export default function LeafDetails({ leaf, canLog }: Props) {
         ) : null}
       </div>
       <div className="space-y-1">
-        <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{t('ui.recentLogs') || 'Recent logs'}</div>
+        <div className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          {t('ui.recentLogs') || 'Recent logs'}
+        </div>
         {loadingRecent ? (
           <div className="text-sm text-gray-600 dark:text-gray-300">{t('ui.loadingItems')}</div>
         ) : recent.length === 0 ? (
@@ -245,7 +247,9 @@ export default function LeafDetails({ leaf, canLog }: Props) {
       <Dialog open={notesDialogOpen} onClose={() => setNotesDialogOpen(false)}>
         <DialogHeader>{t('ui.notes')}</DialogHeader>
         <div className="p-4 space-y-3">
-          <div className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-50">{notes || t('ui.noNotes')}</div>
+          <div className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-50">
+            {notes || t('ui.noNotes')}
+          </div>
         </div>
         <DialogFooter>
           <Button onClick={() => setNotesDialogOpen(false)}>{t('ui.close')}</Button>

@@ -1,13 +1,14 @@
 'use client';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import Card from '../../ui/Card';
-import { getLocalized } from '../../../lib/i18n/getLocalized';
-import Badge from '../../ui/Badge';
-import Button from '../../ui/Button';
+
+import { useResidentProgress, type NodeProgress } from '../../../lib/hooks/useResidentProgress';
 import { useRotationNodes } from '../../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../../lib/hooks/useUserTasks';
-import { useResidentProgress, type NodeProgress } from '../../../lib/hooks/useResidentProgress';
+import { getLocalized } from '../../../lib/i18n/getLocalized';
+import Badge from '../../ui/Badge';
+// Unused import removed: Button
+import Card from '../../ui/Card';
 
 interface RotationDashboardProps {
   rotationId: string;
@@ -21,7 +22,7 @@ export default function RotationDashboard({
   const { t, i18n } = useTranslation();
   const { nodes } = useRotationNodes(rotationId);
   const { tasks } = useUserTasks();
-  const { roots, totals } = useResidentProgress(rotationId, tasks, nodes);
+  const { roots, totals: _totals } = useResidentProgress(rotationId, tasks, nodes);
 
   // Get all leaves from the tree
   const leaves = useMemo(() => getAllLeaves(roots), [roots]);
@@ -45,16 +46,17 @@ export default function RotationDashboard({
   const nodeNames = useMemo(() => {
     const map: Record<string, string> = {};
     nodes.forEach((n) => {
-      const display = getLocalized<string>({
-        he: (n as any).name_he as any,
-        en: (n as any).name_en as any,
-        fallback: n.name as any,
-        lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
-      }) || n.name;
+      const display =
+        getLocalized<string>({
+          he: (n as any).name_he as any,
+          en: (n as any).name_en as any,
+          fallback: n.name as any,
+          lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
+        }) || n.name;
       map[n.id] = display;
     });
     return map;
-  }, [nodes]);
+  }, [nodes, i18n.language]);
 
   return (
     <div className="space-y-4">
@@ -96,7 +98,9 @@ export default function RotationDashboard({
         <div className="space-y-4">
           {/* Priority 1: Items with partial progress */}
           <FocusGroup
-            title={t('resident.finishThese', { defaultValue: 'Finish These (Started but incomplete)' })}
+            title={t('resident.finishThese', {
+              defaultValue: 'Finish These (Started but incomplete)',
+            })}
             items={categorized.startedButLow.slice(0, 5)}
             icon="⚡"
             onNavigate={onNavigateToBrowse}
@@ -129,14 +133,14 @@ export default function RotationDashboard({
           {roots.map((cat) => (
             <div key={cat.id}>
               <div className="flex justify-between mb-1 text-sm text-gray-900 dark:text-gray-50">
-                <span className="font-medium">{
-                  getLocalized<string>({
+                <span className="font-medium">
+                  {getLocalized<string>({
                     he: (cat as any).name_he as any,
                     en: (cat as any).name_en as any,
                     fallback: cat.name as any,
                     lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
-                  }) || cat.name
-                }</span>
+                  }) || cat.name}
+                </span>
                 <span className="text-gray-600 dark:text-gray-300">
                   {cat.approvedCount}/{cat.requiredCount}
                 </span>
@@ -177,17 +181,26 @@ export default function RotationDashboard({
                 className="flex items-center justify-between py-2 px-3 rounded-md bg-gray-50 dark:bg-[rgb(var(--surface-depressed))] text-sm"
               >
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900 dark:text-gray-50">{nodeNames[task.itemId] || task.itemId}</div>
-                  {task.note && <div className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">{task.note}</div>}
+                  <div className="font-medium text-gray-900 dark:text-gray-50">
+                    {nodeNames[task.itemId] || task.itemId}
+                  </div>
+                  {task.note && (
+                    <div className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+                      {task.note}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200">
+                  <Badge
+                    variant="secondary"
+                    className="!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200"
+                  >
                     +{task.count}
                   </Badge>
                   <span className="text-xs text-gray-600 dark:text-gray-300">
                     {((task as any).createdAt?.toDate?.() || new Date()).toLocaleDateString(
                       i18n.language === 'he' ? 'he-IL' : 'en-US',
-                      { year: 'numeric', month: 'short', day: 'numeric' }
+                      { year: 'numeric', month: 'short', day: 'numeric' },
                     )}
                   </span>
                 </div>
@@ -284,11 +297,7 @@ function FocusGroup({
 
 function ProgressBar({ percent }: { percent: number }) {
   const color =
-    percent === 100
-      ? 'bg-green-500'
-      : percent > 0
-        ? 'bg-blue-500'
-        : 'bg-gray-300 dark:bg-gray-600';
+    percent === 100 ? 'bg-green-500' : percent > 0 ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600';
 
   return (
     <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -318,9 +327,7 @@ function getAllLeaves(nodes: NodeProgress[]): NodeProgress[] {
 function categorizeLeaves(leaves: NodeProgress[]) {
   return {
     notStarted: leaves.filter((l) => l.approvedCount === 0 && l.requiredCount > 0),
-    inProgress: leaves.filter(
-      (l) => l.approvedCount > 0 && l.approvedCount < l.requiredCount,
-    ),
+    inProgress: leaves.filter((l) => l.approvedCount > 0 && l.approvedCount < l.requiredCount),
     complete: leaves.filter((l) => l.approvedCount >= l.requiredCount && l.requiredCount > 0),
     nearlyComplete: leaves.filter(
       (l) =>
@@ -329,11 +336,7 @@ function categorizeLeaves(leaves: NodeProgress[]) {
         l.approvedCount < l.requiredCount,
     ),
     startedButLow: leaves.filter(
-      (l) =>
-        l.approvedCount > 0 &&
-        l.requiredCount > 0 &&
-        l.approvedCount / l.requiredCount < 0.5,
+      (l) => l.approvedCount > 0 && l.requiredCount > 0 && l.approvedCount / l.requiredCount < 0.5,
     ),
   };
 }
-

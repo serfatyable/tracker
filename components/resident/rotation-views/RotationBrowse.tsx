@@ -1,7 +1,7 @@
 'use client';
-import RotationBrowser from '../RotationBrowser';
-import LeafDetails from '../LeafDetails';
 import type { RotationNode } from '../../../types/rotations';
+import LeafDetails from '../LeafDetails';
+import RotationBrowser from '../RotationBrowser';
 
 interface RotationBrowseProps {
   rotationId: string;
@@ -39,4 +39,3 @@ export default function RotationBrowse({
     </div>
   );
 }
-

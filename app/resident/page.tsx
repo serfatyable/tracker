@@ -3,28 +3,25 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
+import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 import AuthGate from '../../components/auth/AuthGate';
 import AppShell from '../../components/layout/AppShell';
-import MiniCalendar from '../../components/on-call/MiniCalendar';
-import NextShiftCard from '../../components/on-call/NextShiftCard';
-import TeamForDate from '../../components/on-call/TeamForDate';
-import TodayPanel from '../../components/on-call/TodayPanel';
+// Unused imports removed: MiniCalendar, NextShiftCard, TeamForDate, TodayPanel
 import AnnouncementsCard from '../../components/resident/AnnouncementsCard';
 import Approvals from '../../components/resident/Approvals';
-import KPICardsResident from '../../components/resident/KPICardsResident';
-import LeafDetails from '../../components/resident/LeafDetails';
-import PendingTasksList from '../../components/resident/PendingTasksList';
-import Progress from '../../components/resident/Progress';
 import EnhancedProgress from '../../components/resident/EnhancedProgress';
+import KPICardsResident from '../../components/resident/KPICardsResident';
+// Unused import removed: LeafDetails
+import PendingTasksList from '../../components/resident/PendingTasksList';
+// Unused import removed: Progress
 import QuickActions from '../../components/resident/QuickActions';
 import RecentLogs from '../../components/resident/RecentLogs';
 import Resources from '../../components/resident/Resources';
-import RotationBrowser from '../../components/resident/RotationBrowser';
-import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
-import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
+import RotationBrowse from '../../components/resident/rotation-views/RotationBrowse';
 import RotationDashboard from '../../components/resident/rotation-views/RotationDashboard';
 import RotationTreeMap from '../../components/resident/rotation-views/RotationTreeMap';
-import RotationBrowse from '../../components/resident/rotation-views/RotationBrowse';
+// Unused import removed: RotationBrowser
 import SettingsPanel from '../../components/settings/SettingsPanel';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
@@ -85,7 +82,7 @@ export default function ResidentDashboard() {
 
   function getFavorites(
     nodes: RotationNode[] | null,
-    onSelect: (id: string) => void
+    onSelect: (id: string) => void,
   ): Array<{ id: string; name: string; onSelect: () => void }> {
     if (!nodes) return [];
     // Get favorite nodes (marked as favorite or recently accessed)
@@ -302,15 +299,13 @@ export default function ResidentDashboard() {
                                   : 'bg-gray-100 text-gray-800 dark:bg-[rgb(var(--surface-elevated))] dark:text-[rgb(var(--fg))]'
                             }
                           >
-                            {(
-                              r.status === 'active'
-                                ? t('ui.active')
-                                : r.status === 'inactive'
-                                  ? t('ui.inactive')
-                                  : r.status === 'finished'
-                                    ? t('ui.finished')
-                                    : (r.status as any)
-                            )}
+                            {r.status === 'active'
+                              ? t('ui.active')
+                              : r.status === 'inactive'
+                                ? t('ui.inactive')
+                                : r.status === 'finished'
+                                  ? t('ui.finished')
+                                  : (r.status as any)}
                           </Badge>
                         </div>
                         <div className="pt-2 text-right">
@@ -452,8 +447,14 @@ function ResidentReflectionsInline() {
   return (
     <div className="space-y-3">
       <Card>
-        <div className="font-semibold mb-2 text-gray-900 dark:text-gray-50">{t('resident.myReflections')}</div>
-        {loading ? <div className="text-sm opacity-70 text-gray-600 dark:text-gray-300">{t('common.loading')}</div> : null}
+        <div className="font-semibold mb-2 text-gray-900 dark:text-gray-50">
+          {t('resident.myReflections')}
+        </div>
+        {loading ? (
+          <div className="text-sm opacity-70 text-gray-600 dark:text-gray-300">
+            {t('common.loading')}
+          </div>
+        ) : null}
         <div className="space-y-2">
           {(list || []).map((r) => (
             <div
@@ -462,7 +463,9 @@ function ResidentReflectionsInline() {
             >
               <div>
                 <div className="font-medium text-gray-900 dark:text-gray-50">{r.taskType}</div>
-                <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">{r.taskOccurrenceId}</div>
+                <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">
+                  {r.taskOccurrenceId}
+                </div>
               </div>
               <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">
                 {(r as any).submittedAt?.toDate?.()?.toLocaleString?.() || ''}
@@ -471,7 +474,9 @@ function ResidentReflectionsInline() {
           ))}
           {!loading && !list?.length ? (
             <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-[rgb(var(--border))] bg-gray-50 dark:bg-[rgb(var(--surface-elevated))] p-6 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-300">{t('resident.noReflectionsYet')}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {t('resident.noReflectionsYet')}
+              </p>
             </div>
           ) : null}
         </div>
@@ -479,4 +484,3 @@ function ResidentReflectionsInline() {
     </div>
   );
 }
-

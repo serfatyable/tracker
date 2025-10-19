@@ -3,18 +3,15 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import TopBar from '../../../components/TopBar';
-import Button from '../../../components/ui/Button';
-import Toast from '../../../components/ui/Toast';
 import ImportPreviewDialog, {
   type PreviewRow,
   type ValidationError,
 } from '../../../components/admin/morning-meetings/ImportPreviewDialog';
+import TopBar from '../../../components/TopBar';
+import Button from '../../../components/ui/Button';
+import Toast from '../../../components/ui/Toast';
 import { getCurrentUserWithProfile } from '../../../lib/firebase/auth';
-import {
-  parseMorningMeetingsExcel,
-  parseExcelDate,
-} from '../../../lib/morning-meetings/excel';
+import { parseMorningMeetingsExcel } from '../../../lib/morning-meetings/excel';
 
 export default function AdminMorningMeetingsImportPage() {
   const { t } = useTranslation();
@@ -46,7 +43,7 @@ export default function AdminMorningMeetingsImportPage() {
     if (!file) return;
 
     setSelectedFile(file);
-    
+
     // Parse file for preview
     try {
       const buffer = await file.arrayBuffer();
@@ -68,7 +65,7 @@ export default function AdminMorningMeetingsImportPage() {
       setPreviewRows(previewData);
       setValidationErrors(errors);
       setShowPreview(true);
-    } catch (error) {
+    } catch {
       setToast(t('morningMeetings.import.parseError'));
       setSelectedFile(null);
     }
@@ -80,7 +77,7 @@ export default function AdminMorningMeetingsImportPage() {
     setImporting(true);
     try {
       const buffer = await selectedFile.arrayBuffer();
-      
+
       // ✅ SECURE: Use authenticated fetch with Bearer token
       const { fetchWithAuth } = await import('../../../lib/api/client');
       const res = await fetchWithAuth('/api/morning-meetings/import', {
@@ -90,20 +87,20 @@ export default function AdminMorningMeetingsImportPage() {
         },
         body: buffer,
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         // Translate error codes from API
         const translateError = (errorMsg: string) => {
           // Check if it's a structured error code (e.g., "INVALID_DAY:3:value")
           const parts = errorMsg.split(':');
           const errorCode = parts[0];
-          
+
           // Try to translate the error code
           const translationKey = `api.errors.${errorCode}`;
           const translated = t(translationKey, { defaultValue: errorMsg });
-          
+
           // If there's row info, append it
           if (parts.length > 1) {
             return `${t('morningMeetings.import.row', { defaultValue: 'Row' })} ${parts[1]}: ${translated}`;
@@ -112,10 +109,12 @@ export default function AdminMorningMeetingsImportPage() {
         };
 
         setValidationErrors(
-          data?.errors?.map((msg: string, idx: number) => ({
+          data?.errors?.map((msg: string, _idx: number) => ({
             row: 0,
             message: translateError(msg),
-          })) || [{ row: 0, message: translateError(data?.errorCode || data?.error || 'PARSE_ERROR') }]
+          })) || [
+            { row: 0, message: translateError(data?.errorCode || data?.error || 'PARSE_ERROR') },
+          ],
         );
       } else {
         setToast(t('morningMeetings.import.success', { count: data.imported }));
@@ -124,7 +123,7 @@ export default function AdminMorningMeetingsImportPage() {
         setPreviewRows([]);
         setValidationErrors([]);
         setImportSuccess(true);
-        
+
         // Reset file input
         const fileInput = document.getElementById('file-upload') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
@@ -141,7 +140,7 @@ export default function AdminMorningMeetingsImportPage() {
     setSelectedFile(null);
     setPreviewRows([]);
     setValidationErrors([]);
-    
+
     // Reset file input
     const fileInput = document.getElementById('file-upload') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
@@ -152,7 +151,7 @@ export default function AdminMorningMeetingsImportPage() {
       <TopBar />
       <div className="mx-auto max-w-4xl p-4 space-y-4">
         <Toast message={toast} onClear={() => setToast(null)} />
-        
+
         {/* Header with Back Button */}
         <div className="flex items-center gap-3">
           <Button
@@ -161,7 +160,12 @@ export default function AdminMorningMeetingsImportPage() {
             className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             {t('ui.back', { defaultValue: 'Back' })}
           </Button>
@@ -175,17 +179,29 @@ export default function AdminMorningMeetingsImportPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">
-                    {t('morningMeetings.import.successTitle', { defaultValue: 'Import Successful!' })}
+                    {t('morningMeetings.import.successTitle', {
+                      defaultValue: 'Import Successful!',
+                    })}
                   </h3>
                   <p className="text-sm text-green-700 dark:text-green-300">
-                    {t('morningMeetings.import.successMessage', { 
-                      defaultValue: 'Your meetings have been imported successfully.' 
+                    {t('morningMeetings.import.successMessage', {
+                      defaultValue: 'Your meetings have been imported successfully.',
                     })}
                   </p>
                 </div>
@@ -221,7 +237,9 @@ export default function AdminMorningMeetingsImportPage() {
                 <li>{t('morningMeetings.import.instructionColumns')}</li>
                 <li>{t('morningMeetings.import.instructionDateFormat')}</li>
                 <li>{t('morningMeetings.import.instructionHebrewDays')}</li>
-                <li className="font-medium text-blue-600">{t('morningMeetings.import.instructionCarryForward')}</li>
+                <li className="font-medium text-blue-600">
+                  {t('morningMeetings.import.instructionCarryForward')}
+                </li>
               </ul>
             </div>
           </div>
@@ -259,9 +277,7 @@ export default function AdminMorningMeetingsImportPage() {
                   />
                 </label>
               </div>
-              <p className="text-xs text-gray-500">
-                {t('morningMeetings.import.fileTypes')}
-              </p>
+              <p className="text-xs text-gray-500">{t('morningMeetings.import.fileTypes')}</p>
               {selectedFile && (
                 <p className="text-sm text-gray-700 font-medium">
                   {t('morningMeetings.import.selectedFile')}: {selectedFile.name}

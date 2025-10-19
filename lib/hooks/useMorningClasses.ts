@@ -114,41 +114,43 @@ export function useMorningMeetingsMultiMonth(monthsAhead: number = 6): {
       try {
         const now = new Date();
         const startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0));
-        
+
         // Calculate end date (start of month after the last month we want)
-        const endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + monthsAhead, 1, 0, 0, 0));
-        
+        const endDate = new Date(
+          Date.UTC(now.getFullYear(), now.getMonth() + monthsAhead, 1, 0, 0, 0),
+        );
+
         // Fetch all meetings in this range
         const allMeetings = await listMorningMeetingsByDateRange(startDate, endDate);
-        
+
         if (cancelled) return;
-        
+
         // Group by month
         const grouped = new Map<string, MorningMeeting[]>();
-        allMeetings.forEach(meeting => {
+        allMeetings.forEach((meeting) => {
           const date = meeting.date.toDate();
           const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-          
+
           if (!grouped.has(monthKey)) {
             grouped.set(monthKey, []);
           }
           grouped.get(monthKey)!.push(meeting);
         });
-        
+
         // Sort each month's meetings by date
-        grouped.forEach((meetings, key) => {
+        grouped.forEach((meetings) => {
           meetings.sort((a, b) => a.date.toMillis() - b.date.toMillis());
         });
-        
+
         // Sort the map by month keys (chronological order)
         const sortedGrouped = new Map(
           Array.from(grouped.entries()).sort((a, b) => {
             const [yearA, monthA] = a[0].split('-').map(Number);
             const [yearB, monthB] = b[0].split('-').map(Number);
             return yearA === yearB ? monthA! - monthB! : yearA! - yearB!;
-          })
+          }),
         );
-        
+
         setMeetingsByMonth(sortedGrouped);
       } catch (e) {
         if (!cancelled) setError(e as Error);

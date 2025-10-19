@@ -20,7 +20,7 @@ export type ParsedExcelResult = {
  * Parse Excel file for morning meetings
  * Required columns: יום, תאריך, נושא
  * Optional columns: מציג, מנחה, רכז, link, notes
- * 
+ *
  * Handles both Excel serial date numbers (45949, 45950, etc.) and DD/MM/YYYY strings
  */
 export function parseMorningMeetingsExcel(buffer: ArrayBuffer): ParsedExcelResult {
@@ -37,18 +37,26 @@ export function parseMorningMeetingsExcel(buffer: ArrayBuffer): ParsedExcelResul
 
     // Convert to JSON with header row
     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
-    
+
     if (jsonData.length < 2) {
-      errors.push({ row: 0, message: 'Excel file must have at least a header row and one data row' });
+      errors.push({
+        row: 0,
+        message: 'Excel file must have at least a header row and one data row',
+      });
       return { rows: [], errors };
     }
 
     const headerRow = jsonData[0] as string[];
-    
+
     // Find column indices (support both Hebrew and English headers)
     const findColumnIndex = (possibleNames: string[]): number => {
       return headerRow.findIndex((h) =>
-        possibleNames.some((name) => String(h || '').trim().toLowerCase().includes(name.toLowerCase()))
+        possibleNames.some((name) =>
+          String(h || '')
+            .trim()
+            .toLowerCase()
+            .includes(name.toLowerCase()),
+        ),
       );
     };
 
@@ -65,7 +73,8 @@ export function parseMorningMeetingsExcel(buffer: ArrayBuffer): ParsedExcelResul
     if (dayCol === -1) errors.push({ row: 0, message: 'Missing required column: יום (day)' });
     if (dateCol === -1) errors.push({ row: 0, message: 'Missing required column: תאריך (date)' });
     if (titleCol === -1) errors.push({ row: 0, message: 'Missing required column: נושא (title)' });
-    if (organizerCol === -1) errors.push({ row: 0, message: 'Missing required column: רכז (organizer)' });
+    if (organizerCol === -1)
+      errors.push({ row: 0, message: 'Missing required column: רכז (organizer)' });
     // Note: מציג (lecturer) and מנחה (moderator) are optional columns
 
     if (errors.length > 0) {
@@ -87,7 +96,8 @@ export function parseMorningMeetingsExcel(buffer: ArrayBuffer): ParsedExcelResul
       }
 
       // Extract raw values (keep date as original type - number or string)
-      let dayOfWeekRaw = row[dayCol] !== undefined && row[dayCol] !== null ? String(row[dayCol]).trim() : '';
+      let dayOfWeekRaw =
+        row[dayCol] !== undefined && row[dayCol] !== null ? String(row[dayCol]).trim() : '';
       let dateRaw = row[dateCol]; // Keep original type (number for Excel serial, string for DD/MM/YYYY)
       const title = String(row[titleCol] || '').trim();
       const lecturer = lecturerCol !== -1 ? String(row[lecturerCol] || '').trim() : '';
@@ -121,25 +131,25 @@ export function parseMorningMeetingsExcel(buffer: ArrayBuffer): ParsedExcelResul
         } else {
           dateStr = '';
         }
-      } catch (error) {
+      } catch {
         dateStr = '';
       }
 
       // Validate required fields only (day, date, title)
       if (!dayOfWeekRaw) {
-        errors.push({ 
-          row: rowNumber, 
-          message: lastDay 
-            ? `Missing day of week (יום). Previous day was: ${lastDay}` 
-            : 'Missing day of week (יום). No previous day to inherit from.' 
+        errors.push({
+          row: rowNumber,
+          message: lastDay
+            ? `Missing day of week (יום). Previous day was: ${lastDay}`
+            : 'Missing day of week (יום). No previous day to inherit from.',
         });
       }
       if (!dateStr) {
-        errors.push({ 
-          row: rowNumber, 
-          message: lastDate 
-            ? `Missing date (תאריך). Previous date was: ${lastDate}` 
-            : 'Missing date (תאריך). No previous date to inherit from.' 
+        errors.push({
+          row: rowNumber,
+          message: lastDate
+            ? `Missing date (תאריך). Previous date was: ${lastDate}`
+            : 'Missing date (תאריך). No previous date to inherit from.',
         });
       }
       if (!title) errors.push({ row: rowNumber, message: 'Missing title (נושא)' });
@@ -218,4 +228,3 @@ export function isValidHebrewDay(day: string): boolean {
   const validDays = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
   return validDays.includes(day.trim());
 }
-

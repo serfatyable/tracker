@@ -1,8 +1,11 @@
 'use client';
+// Unused import removed: Link
 import { useRouter } from 'next/navigation';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo as _useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
+import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
 import Avatar from '../../components/ui/Avatar';
@@ -10,6 +13,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { Dialog, DialogHeader, DialogFooter } from '../../components/ui/Dialog';
 import Drawer from '../../components/ui/Drawer';
+// Unused import removed: Input
 import Select from '../../components/ui/Select';
 import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/Table';
 import { TabsList, TabsTrigger } from '../../components/ui/Tabs';
@@ -26,13 +30,9 @@ import { getCurrentUserWithProfile } from '../../lib/firebase/auth';
 import { getFirebaseStatus } from '../../lib/firebase/client';
 import { useActiveAssignments } from '../../lib/hooks/useActiveAssignments';
 import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+// Unused import removed: useCurrentUserProfile
 import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
 import type { Role, UserProfile } from '../../types/auth';
-import Input from '../../components/ui/Input';
-import Link from 'next/link';
-import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
-import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 
 // Lazy load heavy tab components
 const KPICards = lazy(() => import('../../components/admin/overview/KPICards'));
@@ -50,10 +50,7 @@ const RotationOwnersEditor = lazy(
 );
 const RotationsPanel = lazy(() => import('../../components/admin/rotations/RotationsPanel'));
 const RotationTree = lazy(() => import('../../components/admin/rotations/RotationTree'));
-const MiniCalendar = lazy(() => import('../../components/on-call/MiniCalendar'));
-const NextShiftCard = lazy(() => import('../../components/on-call/NextShiftCard'));
-const TeamForDate = lazy(() => import('../../components/on-call/TeamForDate'));
-const TodayPanel = lazy(() => import('../../components/on-call/TodayPanel'));
+// Unused lazy imports removed
 const SettingsPanel = lazy(() => import('../../components/settings/SettingsPanel'));
 
 export default function AdminDashboard() {
@@ -553,11 +550,15 @@ export default function AdminDashboard() {
                       <span>{selectedUser.email || '-'}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500 dark:text-[rgb(var(--muted))]">{t('ui.role')}:</span>
+                      <span className="text-gray-500 dark:text-[rgb(var(--muted))]">
+                        {t('ui.role')}:
+                      </span>
                       {renderRoleBadge(selectedUser.role)}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500 dark:text-[rgb(var(--muted))]">{t('ui.status')}:</span>
+                      <span className="text-gray-500 dark:text-[rgb(var(--muted))]">
+                        {t('ui.status')}:
+                      </span>
                       {renderStatusBadge(selectedUser.status)}
                     </div>
                     <div className="flex items-center gap-2 pt-2">

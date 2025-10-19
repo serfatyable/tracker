@@ -1,5 +1,6 @@
 'use client';
 import { useTranslation } from 'react-i18next';
+
 import Button from '../../ui/Button';
 
 export type PreviewRow = {
@@ -34,7 +35,7 @@ function formatDate(dateStr: string): string {
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
     return dateStr;
   }
-  
+
   // If it's a number (Excel serial), convert it
   const num = parseFloat(dateStr);
   if (!isNaN(num) && num > 40000) {
@@ -46,7 +47,7 @@ function formatDate(dateStr: string): string {
     const year = date.getUTCFullYear();
     return `${day}/${month}/${year}`;
   }
-  
+
   // Return as-is if we can't parse it
   return dateStr;
 }
@@ -61,14 +62,14 @@ function parseDate(dateStr: string): Date | null {
     const year = parseInt(parts[2]!, 10);
     return new Date(year, month, day);
   }
-  
+
   // If it's a number (Excel serial), convert it
   const num = parseFloat(dateStr);
   if (!isNaN(num) && num > 40000) {
     const excelEpoch = new Date(Date.UTC(1899, 11, 30));
     return new Date(excelEpoch.getTime() + num * 86400000);
   }
-  
+
   return null;
 }
 
@@ -81,51 +82,51 @@ function getMonthKey(date: Date): string {
 function formatMonthYear(date: Date, language: string): string {
   return date.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US', {
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
   });
 }
 
 // Helper to get color for a specific month (guaranteed unique per month)
 function getMonthColor(date: Date): string {
   const month = date.getMonth(); // 0-11
-  
+
   const colors = [
-    'bg-blue-50 dark:bg-blue-950/30',      // January (0)
-    'bg-green-50 dark:bg-green-950/30',    // February (1)
-    'bg-purple-50 dark:bg-purple-950/30',  // March (2)
-    'bg-orange-50 dark:bg-orange-950/30',  // April (3)
-    'bg-pink-50 dark:bg-pink-950/30',      // May (4)
-    'bg-teal-50 dark:bg-teal-950/30',      // June (5)
-    'bg-indigo-50 dark:bg-indigo-950/30',  // July (6)
-    'bg-yellow-50 dark:bg-yellow-950/30',  // August (7)
-    'bg-red-50 dark:bg-red-950/30',        // September (8)
-    'bg-cyan-50 dark:bg-cyan-950/30',      // October (9)
-    'bg-lime-50 dark:bg-lime-950/30',      // November (10)
-    'bg-amber-50 dark:bg-amber-950/30',    // December (11)
+    'bg-blue-50 dark:bg-blue-950/30', // January (0)
+    'bg-green-50 dark:bg-green-950/30', // February (1)
+    'bg-purple-50 dark:bg-purple-950/30', // March (2)
+    'bg-orange-50 dark:bg-orange-950/30', // April (3)
+    'bg-pink-50 dark:bg-pink-950/30', // May (4)
+    'bg-teal-50 dark:bg-teal-950/30', // June (5)
+    'bg-indigo-50 dark:bg-indigo-950/30', // July (6)
+    'bg-yellow-50 dark:bg-yellow-950/30', // August (7)
+    'bg-red-50 dark:bg-red-950/30', // September (8)
+    'bg-cyan-50 dark:bg-cyan-950/30', // October (9)
+    'bg-lime-50 dark:bg-lime-950/30', // November (10)
+    'bg-amber-50 dark:bg-amber-950/30', // December (11)
   ];
-  
+
   return colors[month]!;
 }
 
 // Helper to get border color for a specific month (guaranteed unique per month)
 function getMonthBorder(date: Date): string {
   const month = date.getMonth(); // 0-11
-  
+
   const borders = [
-    'border-l-4 border-blue-400',      // January
-    'border-l-4 border-green-400',     // February
-    'border-l-4 border-purple-400',    // March
-    'border-l-4 border-orange-400',    // April
-    'border-l-4 border-pink-400',      // May
-    'border-l-4 border-teal-400',      // June
-    'border-l-4 border-indigo-400',    // July
-    'border-l-4 border-yellow-400',    // August
-    'border-l-4 border-red-400',       // September
-    'border-l-4 border-cyan-400',      // October
-    'border-l-4 border-lime-400',      // November
-    'border-l-4 border-amber-400',     // December
+    'border-l-4 border-blue-400', // January
+    'border-l-4 border-green-400', // February
+    'border-l-4 border-purple-400', // March
+    'border-l-4 border-orange-400', // April
+    'border-l-4 border-pink-400', // May
+    'border-l-4 border-teal-400', // June
+    'border-l-4 border-indigo-400', // July
+    'border-l-4 border-yellow-400', // August
+    'border-l-4 border-red-400', // September
+    'border-l-4 border-cyan-400', // October
+    'border-l-4 border-lime-400', // November
+    'border-l-4 border-amber-400', // December
   ];
-  
+
   return borders[month]!;
 }
 
@@ -141,7 +142,10 @@ export default function ImportPreviewDialog({
   const hasErrors = errors.length > 0;
 
   // Group rows by month
-  const rowsByMonth = new Map<string, { monthKey: string; monthLabel: string; rows: PreviewRow[] }>();
+  const rowsByMonth = new Map<
+    string,
+    { monthKey: string; monthLabel: string; rows: PreviewRow[] }
+  >();
   rows.forEach((row) => {
     const date = parseDate(row.date);
     if (date) {
@@ -203,11 +207,17 @@ export default function ImportPreviewDialog({
             <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
               <div className="flex items-center gap-2">
                 <span className="text-blue-600 dark:text-blue-400 font-medium text-sm">
-                  📅 {t('morningMeetings.import.multipleMonths', { count: monthCount, defaultValue: `Importing ${monthCount} months` })}
+                  📅{' '}
+                  {t('morningMeetings.import.multipleMonths', {
+                    count: monthCount,
+                    defaultValue: `Importing ${monthCount} months`,
+                  })}
                 </span>
               </div>
               <div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
-                {Array.from(rowsByMonth.values()).map(m => m.monthLabel).join(' • ')}
+                {Array.from(rowsByMonth.values())
+                  .map((m) => m.monthLabel)
+                  .join(' • ')}
               </div>
             </div>
           )}
@@ -264,10 +274,10 @@ export default function ImportPreviewDialog({
                       const date = parseDate(row.date);
                       const monthColor = date ? getMonthColor(date) : '';
                       const monthBorder = date ? getMonthBorder(date) : '';
-                      
+
                       return (
-                        <tr 
-                          key={row.rowNumber} 
+                        <tr
+                          key={row.rowNumber}
                           className={`${monthColor} ${monthBorder} hover:opacity-80 transition-opacity`}
                         >
                           <td className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 text-right">
@@ -276,7 +286,10 @@ export default function ImportPreviewDialog({
                           <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 text-right font-medium">
                             {row.dayOfWeek}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 text-right whitespace-nowrap" dir="ltr">
+                          <td
+                            className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 text-right whitespace-nowrap"
+                            dir="ltr"
+                          >
                             {formatDate(row.date)}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 text-right max-w-xs truncate">
@@ -312,9 +325,9 @@ export default function ImportPreviewDialog({
 
         {/* Dialog Footer */}
         <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[rgb(var(--border))]">
-          <Button 
-            variant="secondary" 
-            onClick={onClose} 
+          <Button
+            variant="secondary"
+            onClick={onClose}
             disabled={isLoading}
             className="border border-gray-300"
           >
@@ -328,8 +341,20 @@ export default function ImportPreviewDialog({
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 {t('ui.importing')}
               </span>
