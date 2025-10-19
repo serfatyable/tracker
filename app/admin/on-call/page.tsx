@@ -146,7 +146,7 @@ export default function AdminOnCallImportPage() {
   return (
     <div>
       <TopBar />
-      <div className="mx-auto max-w-4xl p-4 space-y-4">
+      <div className="app-container p-4 space-y-4">
         <Toast message={toast} onClear={() => setToast(null)} />
 
         {/* Header with back button */}

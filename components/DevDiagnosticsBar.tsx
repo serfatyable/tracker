@@ -25,7 +25,7 @@ export default function DevDiagnosticsBar() {
         {open ? 'Hide' : 'Show'} Dev Diagnostics
       </button>
       {open ? (
-        <div className="mt-2 w-[360px] rounded bg-white p-3 text-xs shadow-lg ring-1 ring-gray-200">
+        <div className="mt-2 w-[calc(100vw-2rem)] max-w-sm rounded bg-white p-3 text-xs shadow-lg ring-1 ring-gray-200">
           <div className="mb-2 font-semibold">Local Diagnostics</div>
           <div className="mb-1">
             Firebase configured:{' '}

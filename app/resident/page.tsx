@@ -121,7 +121,7 @@ export default function ResidentDashboard() {
   return (
     <AuthGate requiredRole="resident">
       <AppShell>
-        <div className="p-6">
+        <div className="app-container p-6">
           <div className="w-full">
             <h1 className="sr-only">
               {t('ui.residentDashboard', { defaultValue: 'Resident Dashboard' })}

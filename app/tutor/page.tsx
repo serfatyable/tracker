@@ -59,7 +59,7 @@ export default function TutorDashboard() {
         onClear={() => setToast(null)}
       />
       <AppShell>
-        <div className="p-6">
+        <div className="app-container p-6">
           <div className="w-full">
             <h1 className="sr-only">
               {t('ui.tutorDashboard', { defaultValue: 'Tutor Dashboard' })}

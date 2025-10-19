@@ -354,7 +354,7 @@ export default function AdminDashboard() {
 
   if (!firebaseOk) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="min-h-dvh pad-safe-t pad-safe-b flex items-center justify-center p-6">
         <div className="card-levitate p-4 text-sm text-red-700">
           Firebase is not configured. Check your .env.local.
         </div>
@@ -364,7 +364,7 @@ export default function AdminDashboard() {
 
   return (
     <AppShell>
-      <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-stretch justify-start p-6">
+      <div className="app-container flex min-h-dvh pad-safe-t pad-safe-b flex-col items-stretch justify-start p-6">
         <div className="w-full">
           <h1 className="sr-only">{t('ui.adminDashboard', { defaultValue: 'Admin Dashboard' })}</h1>
           <div className="mb-4 flex items-center justify-between">
@@ -449,88 +449,90 @@ export default function AdminDashboard() {
                   </Button>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <Table className={density === 'compact' ? 'table-compact' : ''}>
-                  <THead>
-                    <TR>
-                      <TH className="w-8">
-                        <input
-                          type="checkbox"
-                          checked={
-                            filteredUsers.length > 0 && filteredUsers.every((u) => userSel[u.uid])
-                          }
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            const next: Record<string, boolean> = {};
-                            filteredUsers.forEach((u) => {
-                              next[u.uid] = checked;
-                            });
-                            setUserSel(next);
-                          }}
-                        />
-                      </TH>
-                      <TH>{t('ui.fullName')}</TH>
-                      <TH>{t('ui.email')}</TH>
-                      <TH>
-                        <button
-                          className="inline-flex items-center gap-1"
-                          onClick={() => toggleSort('role')}
-                        >
-                          <span>{t('ui.role')}</span>
-                          <span className="text-xs text-gray-500 dark:text-[rgb(var(--muted))]">
-                            {orderBy === 'role' ? (orderDir === 'asc' ? '▲' : '▼') : ''}
-                          </span>
-                        </button>
-                      </TH>
-                      <TH>
-                        <button
-                          className="inline-flex items-center gap-1"
-                          onClick={() => toggleSort('status')}
-                        >
-                          <span>{t('ui.status')}</span>
-                          <span className="text-xs text-gray-500 dark:text-[rgb(var(--muted))]">
-                            {orderBy === 'status' ? (orderDir === 'asc' ? '▲' : '▼') : ''}
-                          </span>
-                        </button>
-                      </TH>
-                    </TR>
-                  </THead>
-                  <TBody>
-                    {filteredUsers.map((u) => (
-                      <TR
-                        key={u.uid}
-                        className="cursor-pointer"
-                        onClick={() => openUserDrawer(u)}
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            openUserDrawer(u);
-                          }
-                        }}
-                      >
-                        <TD className="w-8" onClick={(e) => e.stopPropagation()}>
+              <div className="overflow-x-container">
+                <div className="inline-block min-w-[56rem] align-top">
+                  <Table className={(density === 'compact' ? 'table-compact ' : '') + ' w-full'}>
+                    <THead>
+                      <TR>
+                        <TH className="w-8">
                           <input
                             type="checkbox"
-                            checked={!!userSel[u.uid]}
-                            onChange={(e) =>
-                              setUserSel((s) => ({ ...s, [u.uid]: e.target.checked }))
+                            checked={
+                              filteredUsers.length > 0 && filteredUsers.every((u) => userSel[u.uid])
                             }
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const next: Record<string, boolean> = {};
+                              filteredUsers.forEach((u) => {
+                                next[u.uid] = checked;
+                              });
+                              setUserSel(next);
+                            }}
                           />
-                        </TD>
-                        <TD>
-                          <div className="flex items-center gap-2">
-                            <Avatar name={u.fullName} />
-                            <span>{u.fullName || '-'}</span>
-                          </div>
-                        </TD>
-                        <TD>{u.email || '-'}</TD>
-                        <TD>{renderRoleBadge(u.role)}</TD>
-                        <TD>{renderStatusBadge(u.status)}</TD>
+                        </TH>
+                        <TH>{t('ui.fullName')}</TH>
+                        <TH>{t('ui.email')}</TH>
+                        <TH>
+                          <button
+                            className="inline-flex items-center gap-1"
+                            onClick={() => toggleSort('role')}
+                          >
+                            <span>{t('ui.role')}</span>
+                            <span className="text-xs text-gray-500 dark:text-[rgb(var(--muted))]">
+                              {orderBy === 'role' ? (orderDir === 'asc' ? '▲' : '▼') : ''}
+                            </span>
+                          </button>
+                        </TH>
+                        <TH>
+                          <button
+                            className="inline-flex items-center gap-1"
+                            onClick={() => toggleSort('status')}
+                          >
+                            <span>{t('ui.status')}</span>
+                            <span className="text-xs text-gray-500 dark:text-[rgb(var(--muted))]">
+                              {orderBy === 'status' ? (orderDir === 'asc' ? '▲' : '▼') : ''}
+                            </span>
+                          </button>
+                        </TH>
                       </TR>
-                    ))}
-                  </TBody>
-                </Table>
+                    </THead>
+                    <TBody>
+                      {filteredUsers.map((u) => (
+                        <TR
+                          key={u.uid}
+                          className="cursor-pointer"
+                          onClick={() => openUserDrawer(u)}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              openUserDrawer(u);
+                            }
+                          }}
+                        >
+                          <TD className="w-8" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={!!userSel[u.uid]}
+                              onChange={(e) =>
+                                setUserSel((s) => ({ ...s, [u.uid]: e.target.checked }))
+                              }
+                            />
+                          </TD>
+                          <TD>
+                            <div className="flex items-center gap-2">
+                              <Avatar name={u.fullName} />
+                              <span>{u.fullName || '-'}</span>
+                            </div>
+                          </TD>
+                          <TD className="break-anywhere">{u.email || '-'}</TD>
+                          <TD>{renderRoleBadge(u.role)}</TD>
+                          <TD>{renderStatusBadge(u.status)}</TD>
+                        </TR>
+                      ))}
+                    </TBody>
+                  </Table>
+                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <Button disabled={loadingMoreUsers || !hasMoreUsers} onClick={loadMoreUsers}>
@@ -674,54 +676,56 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <THead>
-                      <TR>
-                        <TH>
-                          <input
-                            type="checkbox"
-                            checked={tasks.length > 0 && tasks.every((t) => taskSel[t.id])}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              const next: Record<string, boolean> = {};
-                              tasks.forEach((t) => {
-                                next[t.id] = checked;
-                              });
-                              setTaskSel(next);
-                            }}
-                          />
-                        </TH>
-                        <TH>{t('ui.user')}</TH>
-                        <TH>{t('ui.rotation')}</TH>
-                        <TH>{t('ui.item')}</TH>
-                        <TH>{t('ui.count')}</TH>
-                        <TH>{t('ui.required')}</TH>
-                        <TH>{t('ui.status')}</TH>
-                      </TR>
-                    </THead>
-                    <TBody>
-                      {tasks.map((t) => (
-                        <TR key={t.id}>
-                          <TD>
+                <div className="overflow-x-container">
+                  <div className="inline-block min-w-[56rem] align-top">
+                    <Table className="w-full">
+                      <THead>
+                        <TR>
+                          <TH>
                             <input
                               type="checkbox"
-                              checked={!!taskSel[t.id]}
-                              onChange={(e) =>
-                                setTaskSel((s) => ({ ...s, [t.id]: e.target.checked }))
-                              }
+                              checked={tasks.length > 0 && tasks.every((t) => taskSel[t.id])}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                const next: Record<string, boolean> = {};
+                                tasks.forEach((t) => {
+                                  next[t.id] = checked;
+                                });
+                                setTaskSel(next);
+                              }}
                             />
-                          </TD>
-                          <TD>{t.userId}</TD>
-                          <TD>{t.rotationId}</TD>
-                          <TD>{t.itemId}</TD>
-                          <TD>{t.count}</TD>
-                          <TD>{t.requiredCount}</TD>
-                          <TD>{t.status}</TD>
+                          </TH>
+                          <TH>{t('ui.user')}</TH>
+                          <TH>{t('ui.rotation')}</TH>
+                          <TH>{t('ui.item')}</TH>
+                          <TH>{t('ui.count')}</TH>
+                          <TH>{t('ui.required')}</TH>
+                          <TH>{t('ui.status')}</TH>
                         </TR>
-                      ))}
-                    </TBody>
-                  </Table>
+                      </THead>
+                      <TBody>
+                        {tasks.map((t) => (
+                          <TR key={t.id}>
+                            <TD>
+                              <input
+                                type="checkbox"
+                                checked={!!taskSel[t.id]}
+                                onChange={(e) =>
+                                  setTaskSel((s) => ({ ...s, [t.id]: e.target.checked }))
+                                }
+                              />
+                            </TD>
+                            <TD>{t.userId}</TD>
+                            <TD>{t.rotationId}</TD>
+                            <TD>{t.itemId}</TD>
+                            <TD>{t.count}</TD>
+                            <TD>{t.requiredCount}</TD>
+                            <TD>{t.status}</TD>
+                          </TR>
+                        ))}
+                      </TBody>
+                    </Table>
+                  </div>
                 </div>
               )}
               <div className="flex justify-end gap-2">

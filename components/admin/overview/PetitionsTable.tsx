@@ -137,133 +137,135 @@ export default function PetitionsTable() {
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <THead>
-                <TR>
-                  <TH>
-                    <input
-                      type="checkbox"
-                      checked={items.length > 0 && items.every((x) => sel[x.id])}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        const next: Record<string, boolean> = {};
-                        items.forEach((x) => (next[x.id] = checked));
-                        setSel(next);
-                      }}
-                    />
-                  </TH>
-                  <TH>{t('ui.users')}</TH>
-                  <TH>{t('ui.rotations')}</TH>
-                  <TH>{t('overview.type') || 'Type'}</TH>
-                  <TH>{t('ui.status')}</TH>
-                  <TH>{t('ui.open')}</TH>
-                </TR>
-              </THead>
-              <TBody>
-                {items.map((p) => (
-                  <TR key={p.id}>
-                    <TD>
+          <div className="overflow-x-container">
+            <div className="inline-block min-w-[56rem] align-top">
+              <Table className="w-full">
+                <THead>
+                  <TR>
+                    <TH>
                       <input
                         type="checkbox"
-                        checked={!!sel[p.id]}
-                        onChange={(e) => setSel((s) => ({ ...s, [p.id]: e.target.checked }))}
+                        checked={items.length > 0 && items.every((x) => sel[x.id])}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const next: Record<string, boolean> = {};
+                          items.forEach((x) => (next[x.id] = checked));
+                          setSel(next);
+                        }}
                       />
-                    </TD>
-                    <TD>{p.residentId}</TD>
-                    <TD>{p.rotationId}</TD>
-                    <TD>
-                      <span
-                        className={
-                          'inline-flex rounded-full px-2 py-0.5 text-xs font-medium ' +
-                          (p.type === 'activate'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200')
-                        }
-                      >
-                        {p.type}
-                      </span>
-                    </TD>
-                    <TD>
-                      <span
-                        className={
-                          'inline-flex rounded-full px-2 py-0.5 text-xs font-medium ' +
-                          (p.status === 'pending'
-                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-                            : p.status === 'approved'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
-                              : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200')
-                        }
-                      >
-                        {p.status}
-                      </span>
-                    </TD>
-                    <TD className="text-right">
-                      <Button
-                        size="sm"
-                        className="btn-levitate border-green-500 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/30"
-                        variant="outline"
-                        loading={actionLoading[`approve-${p.id}`]}
-                        onClick={async () => {
-                          setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: true }));
-                          try {
-                            await approveRotationPetition(p.id, 'admin');
-                            setToast({
-                              message: t('overview.petitionApproved', {
-                                defaultValue: 'Petition approved successfully',
-                              }),
-                              variant: 'success',
-                            });
-                          } catch {
-                            setToast({
-                              message: t('overview.petitionApproveFailed', {
-                                defaultValue: 'Failed to approve petition. Please try again.',
-                              }),
-                              variant: 'error',
-                            });
-                          } finally {
-                            setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: false }));
-                            refresh();
-                          }
-                        }}
-                      >
-                        {t('overview.actions.approve') || 'Approve'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="btn-levitate border-red-500 text-red-700 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
-                        variant="outline"
-                        loading={actionLoading[`deny-${p.id}`]}
-                        onClick={async () => {
-                          setActionLoading((prev) => ({ ...prev, [`deny-${p.id}`]: true }));
-                          try {
-                            await denyRotationPetition(p.id, 'admin');
-                            setToast({
-                              message: t('overview.petitionDenied', {
-                                defaultValue: 'Petition denied',
-                              }),
-                              variant: 'success',
-                            });
-                          } catch {
-                            setToast({
-                              message: t('overview.petitionDenyFailed', {
-                                defaultValue: 'Failed to deny petition. Please try again.',
-                              }),
-                              variant: 'error',
-                            });
-                          } finally {
-                            setActionLoading((prev) => ({ ...prev, [`deny-${p.id}`]: false }));
-                            refresh();
-                          }
-                        }}
-                      >
-                        {t('overview.actions.deny') || 'Deny'}
-                      </Button>
-                    </TD>
+                    </TH>
+                    <TH>{t('ui.users')}</TH>
+                    <TH>{t('ui.rotations')}</TH>
+                    <TH>{t('overview.type') || 'Type'}</TH>
+                    <TH>{t('ui.status')}</TH>
+                    <TH>{t('ui.open')}</TH>
                   </TR>
-                ))}
-              </TBody>
-            </Table>
+                </THead>
+                <TBody>
+                  {items.map((p) => (
+                    <TR key={p.id}>
+                      <TD>
+                        <input
+                          type="checkbox"
+                          checked={!!sel[p.id]}
+                          onChange={(e) => setSel((s) => ({ ...s, [p.id]: e.target.checked }))}
+                        />
+                      </TD>
+                      <TD className="break-anywhere">{p.residentId}</TD>
+                      <TD className="break-anywhere">{p.rotationId}</TD>
+                      <TD>
+                        <span
+                          className={
+                            'inline-flex rounded-full px-2 py-0.5 text-xs font-medium ' +
+                            (p.type === 'activate'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200')
+                          }
+                        >
+                          {p.type}
+                        </span>
+                      </TD>
+                      <TD>
+                        <span
+                          className={
+                            'inline-flex rounded-full px-2 py-0.5 text-xs font-medium ' +
+                            (p.status === 'pending'
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+                              : p.status === 'approved'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
+                                : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200')
+                          }
+                        >
+                          {p.status}
+                        </span>
+                      </TD>
+                      <TD className="text-right">
+                        <Button
+                          size="sm"
+                          className="btn-levitate border-green-500 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/30"
+                          variant="outline"
+                          loading={actionLoading[`approve-${p.id}`]}
+                          onClick={async () => {
+                            setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: true }));
+                            try {
+                              await approveRotationPetition(p.id, 'admin');
+                              setToast({
+                                message: t('overview.petitionApproved', {
+                                  defaultValue: 'Petition approved successfully',
+                                }),
+                                variant: 'success',
+                              });
+                            } catch {
+                              setToast({
+                                message: t('overview.petitionApproveFailed', {
+                                  defaultValue: 'Failed to approve petition. Please try again.',
+                                }),
+                                variant: 'error',
+                              });
+                            } finally {
+                              setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: false }));
+                              refresh();
+                            }
+                          }}
+                        >
+                          {t('overview.actions.approve') || 'Approve'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="btn-levitate border-red-500 text-red-700 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
+                          variant="outline"
+                          loading={actionLoading[`deny-${p.id}`]}
+                          onClick={async () => {
+                            setActionLoading((prev) => ({ ...prev, [`deny-${p.id}`]: true }));
+                            try {
+                              await denyRotationPetition(p.id, 'admin');
+                              setToast({
+                                message: t('overview.petitionDenied', {
+                                  defaultValue: 'Petition denied',
+                                }),
+                                variant: 'success',
+                              });
+                            } catch {
+                              setToast({
+                                message: t('overview.petitionDenyFailed', {
+                                  defaultValue: 'Failed to deny petition. Please try again.',
+                                }),
+                                variant: 'error',
+                              });
+                            } finally {
+                              setActionLoading((prev) => ({ ...prev, [`deny-${p.id}`]: false }));
+                              refresh();
+                            }
+                          }}
+                        >
+                          {t('overview.actions.deny') || 'Deny'}
+                        </Button>
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            </div>
           </div>
         )}
 

@@ -1,14 +1,22 @@
 import type { HTMLAttributes, TableHTMLAttributes } from 'react';
 
 export function Table({ className, ...rest }: TableHTMLAttributes<HTMLTableElement>) {
-  return <table className={'min-w-full text-sm text-gray-900 dark:text-gray-50 ' + (className || '')} {...rest} />;
+  return (
+    <table
+      className={
+        'min-w-full text-sm md:text-base text-gray-900 dark:text-gray-50 min-w-content ' +
+        (className || '')
+      }
+      {...rest}
+    />
+  );
 }
 
 export function THead({ className, ...rest }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead
       className={
-        'text-left sticky top-0 z-10 bg-surface/90 backdrop-blur supports-[backdrop-filter]:bg-surface/70 border-b border-muted/20 ' +
+        'text-left sticky top-0 z-10 bg-surface/90 backdrop-blur supports-[backdrop-filter]:bg-surface/70 border-b border-muted/20 text-sm md:text-base ' +
         (className || '')
       }
       {...rest}
@@ -36,14 +44,24 @@ export function TR({ className, ...rest }: HTMLAttributes<HTMLTableRowElement>) 
 export function TH({ className, ...rest }: HTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={'px-2 sm:px-3 py-2 font-medium text-gray-900 dark:text-gray-50 whitespace-nowrap ' + (className || '')}
+      className={
+        'px-2 sm:px-3 py-2 font-medium text-gray-900 dark:text-gray-50 whitespace-nowrap ' +
+        (className || '')
+      }
       {...rest}
     />
   );
 }
 
 export function TD({ className, ...rest }: HTMLAttributes<HTMLTableCellElement>) {
-  return <td className={'px-2 sm:px-3 py-2 text-gray-900 dark:text-gray-50 ' + (className || '')} {...rest} />;
+  return (
+    <td
+      className={
+        'px-2 sm:px-3 py-2 text-gray-900 dark:text-gray-50 break-anywhere ' + (className || '')
+      }
+      {...rest}
+    />
+  );
 }
 
 // Wrapper for making tables scrollable on mobile
@@ -54,11 +72,7 @@ export function TableWrapper({
   className?: string;
   children: React.ReactNode;
 }) {
-  return (
-    <div className={'overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 ' + (className || '')}>
-      {children}
-    </div>
-  );
+  return <div className={'overflow-x-container ' + (className || '')}>{children}</div>;
 }
 
 export function TableEmpty({ children }: { children: React.ReactNode }) {

@@ -13,7 +13,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
   return (
     <html>
       <body>
-        <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-[rgb(var(--bg))]">
+        <div className="min-h-dvh pad-safe-t pad-safe-b flex items-center justify-center p-6 bg-gray-50 dark:bg-[rgb(var(--bg))]">
           <div className="max-w-lg w-full bg-white dark:bg-[rgb(var(--surface))] rounded-lg shadow-lg p-6 border border-gray-200 dark:border-[rgb(var(--border-strong))]">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-shrink-0">
@@ -31,7 +31,9 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
                   />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Application Error</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+                Application Error
+              </h2>
             </div>
             <p className="text-sm text-gray-700 dark:text-gray-300 break-words mb-4">
               {error?.message || t('errors.globalError')}
