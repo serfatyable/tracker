@@ -42,18 +42,7 @@ export default function MorningMeetingsPage() {
     return groupByWeek(filteredMeetings);
   }, [filteredMeetings]);
 
-  // Scroll to specific day
-  const _scrollToDay = (day: number) => {
-    const element = document.getElementById(`day-${day}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Add a brief highlight effect
-      element.classList.add('ring-2', 'ring-blue-500', 'ring-opacity-50');
-      setTimeout(() => {
-        element.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-50');
-      }, 2000);
-    }
-  };
+  // Format month name for display
 
   // Format month name for display
   const formatMonthTab = (monthKey: string) => {

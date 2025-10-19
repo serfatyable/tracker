@@ -50,7 +50,7 @@ export default function MorningMeetingsView({
   }, [filteredMeetings]);
 
   // Scroll to specific day
-  const _scrollToDay = (day: number) => {
+  const scrollToDay = (day: number) => {
     const element = document.getElementById(`day-${day}`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
