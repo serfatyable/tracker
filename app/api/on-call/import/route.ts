@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { NextResponse } from 'next/server';
 
 // Server-side Excel parsing
 async function parseOnCallExcelServer(buffer: ArrayBuffer) {
   const XLSX = await import('xlsx');
-  
+
   const workbook = XLSX.read(buffer, { type: 'array' });
   const firstSheetName = workbook.SheetNames[0];
   if (!firstSheetName) {
@@ -60,7 +60,7 @@ async function parseOnCallExcelServer(buffer: ArrayBuffer) {
       const year = parseInt(parts[2]!, 10);
       return new Date(year, month, day);
     }
-    
+
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) {
       throw new Error(`Cannot parse date: ${dateStr}`);
@@ -72,12 +72,12 @@ async function parseOnCallExcelServer(buffer: ArrayBuffer) {
   for (let i = 2; i < data.length; i++) {
     const row = data[i];
     if (!row || row.length === 0) continue;
-    
+
     const rowNum = i + 1;
     const dateRaw = row[1];
-    
+
     if (!dateRaw) continue; // Empty row
-    
+
     let parsedDate: Date;
     try {
       if (typeof dateRaw === 'number') {
@@ -86,11 +86,11 @@ async function parseOnCallExcelServer(buffer: ArrayBuffer) {
         parsedDate = dateRaw;
       } else if (typeof dateRaw === 'string') {
         parsedDate = parseDateString(dateRaw);
-    } else {
+      } else {
         errors.push({ row: rowNum, message: `Invalid date: ${dateRaw}` });
         continue;
       }
-      
+
       if (isNaN(parsedDate.getTime())) {
         errors.push({ row: rowNum, message: 'Invalid date value' });
         continue;
@@ -99,7 +99,7 @@ async function parseOnCallExcelServer(buffer: ArrayBuffer) {
       errors.push({ row: rowNum, message: `Date error: ${error}` });
       continue;
     }
-    
+
     const shifts: Record<string, string> = {};
     for (const [colIdx, shiftType] of Object.entries(SHIFT_COLUMNS)) {
       const value = row[parseInt(colIdx)];
@@ -107,9 +107,9 @@ async function parseOnCallExcelServer(buffer: ArrayBuffer) {
         shifts[shiftType] = value.trim();
       }
     }
-    
+
     const dayOfWeek = row[0] && typeof row[0] === 'string' ? row[0] : undefined;
-    
+
     rows.push({ date: parsedDate, dayOfWeek, shifts });
   }
 
@@ -134,95 +134,90 @@ export async function POST(request: Request) {
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
         { errorCode: 'MISSING_AUTH', error: 'MISSING_AUTH' },
-        { status: 401 }
+        { status: 401 },
       );
     }
-    
+
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await getAuth().verifyIdToken(token!);
     const uid = decodedToken.uid;
-    
+
     // Check if user is admin
     const adminDb = getFirestore();
     const userDoc = await adminDb.collection('users').doc(uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== 'admin') {
       return NextResponse.json(
         { errorCode: 'ADMIN_REQUIRED', error: 'ADMIN_REQUIRED' },
-        { status: 403 }
+        { status: 403 },
       );
     }
-    
+
     // Parse the Excel file
     const buffer = await request.arrayBuffer();
-    
+
     // File size limit: 10MB
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
     if (buffer.byteLength === 0) {
-      return NextResponse.json(
-        { errorCode: 'EMPTY_FILE', error: 'EMPTY_FILE' },
-        { status: 400 }
-      );
+      return NextResponse.json({ errorCode: 'EMPTY_FILE', error: 'EMPTY_FILE' }, { status: 400 });
     }
     if (buffer.byteLength > MAX_FILE_SIZE) {
       return NextResponse.json(
         { errorCode: 'FILE_TOO_LARGE', error: 'FILE_TOO_LARGE' },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    
+
     const { rows, errors } = await parseOnCallExcelServer(buffer);
-    
+
     if (errors.length > 0) {
       return NextResponse.json(
-        { errors: errors.map(e => `Row ${e.row}: ${e.message}`) },
-        { status: 400 }
+        { errors: errors.map((e) => `Row ${e.row}: ${e.message}`) },
+        { status: 400 },
       );
     }
-    
+
     if (rows.length === 0) {
-      return NextResponse.json(
-        { errorCode: 'NO_DATA', error: 'NO_DATA' },
-        { status: 400 }
-      );
+      return NextResponse.json({ errorCode: 'NO_DATA', error: 'NO_DATA' }, { status: 400 });
     }
-    
+
     // Get all unique months from the upload
     const monthsToReplace = new Set(
-      rows.map(r => `${r.date.getFullYear()}-${r.date.getMonth()}`)
+      rows.map((r) => `${r.date.getFullYear()}-${r.date.getMonth()}`),
     );
-    
+
     // Delete existing shifts for those months
     const deletePromises = Array.from(monthsToReplace).map(async (monthKey) => {
       const [year, month] = monthKey.split('-').map(Number);
       const startKey = `${year}-${String(month! + 1).padStart(2, '0')}-01`;
       const endKey = `${year}-${String(month! + 1).padStart(2, '0')}-31`;
-      
-      const snapshot = await adminDb.collection('onCallShifts')
+
+      const snapshot = await adminDb
+        .collection('onCallShifts')
         .where('dateKey', '>=', startKey)
         .where('dateKey', '<=', endKey)
         .get();
-      
+
       const batch = adminDb.batch();
-      snapshot.docs.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
-      
+      snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+
       return snapshot.size;
     });
-    
+
     await Promise.all(deletePromises);
-    
+
     // Create new shifts
     let totalShifts = 0;
-    
+
     for (const dayData of rows) {
       const date = dayData.date;
       const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      
+
       // Create one document per day with all shifts
       const docRef = adminDb.collection('onCallShifts').doc();
-      
+
       await docRef.set({
         date: date,
         dateKey: dateKey,
@@ -231,21 +226,20 @@ export async function POST(request: Request) {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      
+
       totalShifts += Object.keys(dayData.shifts).length;
     }
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       imported: rows.length,
       totalShifts: totalShifts,
-      months: Array.from(monthsToReplace).length
+      months: Array.from(monthsToReplace).length,
     });
-    
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

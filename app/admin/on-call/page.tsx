@@ -2,13 +2,14 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import TopBar from '../../../components/TopBar';
-import Button from '../../../components/ui/Button';
-import Toast from '../../../components/ui/Toast';
+
 import ImportPreviewDialog, {
   type PreviewRow,
   type ValidationError,
 } from '../../../components/admin/on-call/ImportPreviewDialog';
+import TopBar from '../../../components/TopBar';
+import Button from '../../../components/ui/Button';
+import Toast from '../../../components/ui/Toast';
 import { getCurrentUserWithProfile } from '../../../lib/firebase/auth';
 
 export default function AdminOnCallImportPage() {
@@ -42,10 +43,10 @@ export default function AdminOnCallImportPage() {
 
     setSelectedFile(file);
     setValidationErrors([]);
-    
+
     try {
       const buffer = await file.arrayBuffer();
-      
+
       // Dynamic import - only loads in browser
       const { parseOnCallExcel } = await import('../../../lib/on-call/excel');
       const { rows, errors } = await parseOnCallExcel(buffer);
@@ -73,27 +74,27 @@ export default function AdminOnCallImportPage() {
     setImporting(true);
     try {
       const buffer = await selectedFile.arrayBuffer();
-      
+
       const { fetchWithAuth } = await import('../../../lib/api/client');
       const res = await fetchWithAuth('/api/on-call/import', {
         method: 'POST',
         headers: { 'content-type': 'application/octet-stream' },
         body: buffer,
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         // Translate error codes from API
         const translateError = (errorMsg: string) => {
           // Check if it's a structured error code (e.g., "INVALID_DAY:3:value")
           const parts = errorMsg.split(':');
           const errorCode = parts[0];
-          
+
           // Try to translate the error code
           const translationKey = `api.errors.${errorCode}`;
           const translated = t(translationKey, { defaultValue: errorMsg });
-          
+
           // If there's row info, append it
           if (parts.length > 1) {
             return `${t('onCall.import.row', { defaultValue: 'Row' })} ${parts[1]}: ${translated}`;
@@ -105,19 +106,23 @@ export default function AdminOnCallImportPage() {
           data?.errors?.map((msg: string) => ({
             row: 0,
             message: translateError(msg),
-          })) || [{ row: 0, message: translateError(data?.errorCode || data?.error || 'PARSE_ERROR') }]
+          })) || [
+            { row: 0, message: translateError(data?.errorCode || data?.error || 'PARSE_ERROR') },
+          ],
         );
       } else {
-        setToast(t('onCall.import.success', { 
-          count: data.imported,
-          defaultValue: `Successfully imported ${data.imported} days with ${data.totalShifts} shifts`
-        }));
+        setToast(
+          t('onCall.import.success', {
+            count: data.imported,
+            defaultValue: `Successfully imported ${data.imported} days with ${data.totalShifts} shifts`,
+          }),
+        );
         setShowPreview(false);
         setSelectedFile(null);
         setPreviewRows([]);
         setValidationErrors([]);
         setImportSuccess(true);
-        
+
         const fileInput = document.getElementById('file-upload') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
       }
@@ -133,7 +138,7 @@ export default function AdminOnCallImportPage() {
     setSelectedFile(null);
     setPreviewRows([]);
     setValidationErrors([]);
-    
+
     const fileInput = document.getElementById('file-upload') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
   };
@@ -143,7 +148,7 @@ export default function AdminOnCallImportPage() {
       <TopBar />
       <div className="mx-auto max-w-4xl p-4 space-y-4">
         <Toast message={toast} onClear={() => setToast(null)} />
-        
+
         {/* Header with back button */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -154,7 +159,9 @@ export default function AdminOnCallImportPage() {
             >
               ← {t('ui.back')}
             </Button>
-            <h1 className="text-xl font-semibold">{t('onCall.import.title', { defaultValue: 'Import On-Call Schedule' })}</h1>
+            <h1 className="text-xl font-semibold">
+              {t('onCall.import.title', { defaultValue: 'Import On-Call Schedule' })}
+            </h1>
           </div>
         </div>
 
@@ -169,7 +176,9 @@ export default function AdminOnCallImportPage() {
                     {t('onCall.import.successTitle', { defaultValue: 'Import Successful!' })}
                   </h3>
                   <p className="text-sm text-green-700 dark:text-green-300">
-                    {t('onCall.import.successMessage', { defaultValue: 'On-call schedule imported successfully' })}
+                    {t('onCall.import.successMessage', {
+                      defaultValue: 'On-call schedule imported successfully',
+                    })}
                   </p>
                 </div>
               </div>
@@ -190,11 +199,27 @@ export default function AdminOnCallImportPage() {
               {t('onCall.import.uploadTitle', { defaultValue: 'Upload Schedule' })}
             </h2>
             <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <p>{t('onCall.import.instructions', { defaultValue: 'Upload an Excel file (.xlsx) with the on-call schedule' })}</p>
+              <p>
+                {t('onCall.import.instructions', {
+                  defaultValue: 'Upload an Excel file (.xlsx) with the on-call schedule',
+                })}
+              </p>
               <ul className="list-disc list-inside mr-4 space-y-1">
-                <li>{t('onCall.import.instructionFormat', { defaultValue: 'Column B must contain dates' })}</li>
-                <li>{t('onCall.import.instructionShifts', { defaultValue: 'Columns C-X contain shift assignments' })}</li>
-                <li>{t('onCall.import.instructionTemplate', { defaultValue: 'Download the template below for the correct format' })}</li>
+                <li>
+                  {t('onCall.import.instructionFormat', {
+                    defaultValue: 'Column B must contain dates',
+                  })}
+                </li>
+                <li>
+                  {t('onCall.import.instructionShifts', {
+                    defaultValue: 'Columns C-X contain shift assignments',
+                  })}
+                </li>
+                <li>
+                  {t('onCall.import.instructionTemplate', {
+                    defaultValue: 'Download the template below for the correct format',
+                  })}
+                </li>
               </ul>
             </div>
           </div>
@@ -236,7 +261,8 @@ export default function AdminOnCallImportPage() {
               </p>
               {selectedFile && (
                 <p className="text-sm text-gray-700 dark:text-[rgb(var(--fg))] font-medium">
-                  {t('onCall.import.selectedFile', { defaultValue: 'Selected' })}: {selectedFile.name}
+                  {t('onCall.import.selectedFile', { defaultValue: 'Selected' })}:{' '}
+                  {selectedFile.name}
                 </p>
               )}
             </div>

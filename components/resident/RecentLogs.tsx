@@ -2,10 +2,10 @@
 import { getAuth } from 'firebase/auth';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getLocalized } from '../../lib/i18n/getLocalized';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { listRecentTasksForUser, type TaskDoc } from '../../lib/firebase/db';
+// Unused import removed: getLocalized
 import { ListSkeleton } from '../dashboard/Skeleton';
 import EmptyState, { DocumentIcon } from '../ui/EmptyState';
 import { ErrorWithRetry } from '../ui/RetryButton';

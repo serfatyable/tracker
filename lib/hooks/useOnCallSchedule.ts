@@ -1,8 +1,8 @@
 'use client';
+import { collection, query, where, orderBy, getDocs, getFirestore } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+
 import { getFirebaseApp } from '../firebase/client';
-import { getFirestore } from 'firebase/firestore';
 
 export type OnCallShiftDay = {
   id: string;
@@ -22,26 +22,26 @@ export function useOnCallSchedule(startDate: Date, endDate: Date) {
       try {
         setLoading(true);
         const db = getFirestore(getFirebaseApp());
-        
+
         const startKey = formatDateKey(startDate);
         const endKey = formatDateKey(endDate);
-        
+
         const q = query(
           collection(db, 'onCallShifts'),
           where('dateKey', '>=', startKey),
           where('dateKey', '<=', endKey),
-          orderBy('dateKey', 'asc')
+          orderBy('dateKey', 'asc'),
         );
-        
+
         const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({
+        const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           date: doc.data().date.toDate(),
           dateKey: doc.data().dateKey,
           dayOfWeek: doc.data().dayOfWeek,
           shifts: doc.data().shifts || {},
         }));
-        
+
         setSchedule(data);
         setError(null);
       } catch (err) {
@@ -62,4 +62,3 @@ function formatDateKey(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-

@@ -1,20 +1,14 @@
 'use client';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import ReactFlow, {
-  Node,
-  Edge,
-  Background,
-  Controls,
-  MiniMap,
-  Position,
-  Panel,
-} from 'reactflow';
+import type { Node, Edge } from 'reactflow';
+import ReactFlow, { Background, Controls, MiniMap, Position, Panel } from 'reactflow';
+
 import 'reactflow/dist/style.css';
-import { useRotationNodes } from '../../../lib/hooks/useRotationNodes';
-import { getLocalized } from '../../../lib/i18n/getLocalized';
-import { useUserTasks } from '../../../lib/hooks/useUserTasks';
 import { useResidentProgress, type NodeProgress } from '../../../lib/hooks/useResidentProgress';
+import { useRotationNodes } from '../../../lib/hooks/useRotationNodes';
+import { useUserTasks } from '../../../lib/hooks/useUserTasks';
+import { getLocalized } from '../../../lib/i18n/getLocalized';
 import TextField from '../../ui/TextField';
 
 interface RotationTreeMapProps {
@@ -72,14 +66,12 @@ export default function RotationTreeMap({ rotationId, onSelectNode }: RotationTr
     // Calculate total progress for root
     const totalApproved = roots.reduce((sum, r) => sum + r.approvedCount, 0);
     const totalRequired = roots.reduce((sum, r) => sum + r.requiredCount, 0);
-    const totalPercent =
-      totalRequired > 0 ? Math.round((totalApproved / totalRequired) * 100) : 0;
+    const totalPercent = totalRequired > 0 ? Math.round((totalApproved / totalRequired) * 100) : 0;
 
     // Apply filters
     const shouldShowNode = (node: NodeProgress): boolean => {
       if (!node.requiredCount) return false;
-      const percent =
-        node.requiredCount > 0 ? (node.approvedCount / node.requiredCount) * 100 : 0;
+      const percent = node.requiredCount > 0 ? (node.approvedCount / node.requiredCount) * 100 : 0;
 
       switch (filter) {
         case 'incomplete':
@@ -96,12 +88,13 @@ export default function RotationTreeMap({ rotationId, onSelectNode }: RotationTr
     // Apply search filter
     const matchesSearch = (node: NodeProgress): boolean => {
       if (!searchTerm.trim()) return true;
-      const label = getLocalized<string>({
-        he: (node as any).name_he as any,
-        en: (node as any).name_en as any,
-        fallback: node.name as any,
-        lang: 'en',
-      }) || node.name;
+      const label =
+        getLocalized<string>({
+          he: (node as any).name_he as any,
+          en: (node as any).name_en as any,
+          fallback: node.name as any,
+          lang: 'en',
+        }) || node.name;
       return label.toLowerCase().includes(searchTerm.toLowerCase());
     };
 
@@ -435,7 +428,7 @@ function CustomNodeComponent({ data }: { data: any }) {
   // Hierarchy-based left border colors
   let leftBorderColor = '';
   let leftBorderWidth = 'border-l-4';
-  
+
   switch (data.nodeType) {
     case 'root':
       leftBorderColor = 'border-l-purple-600 dark:border-l-purple-400';
@@ -474,7 +467,7 @@ function CustomNodeComponent({ data }: { data: any }) {
 
   // Calculate stats for tooltip
   const notStarted = data.requiredCount - data.approvedCount;
-  const inProgress = data.approvedCount > 0 && data.approvedCount < data.requiredCount;
+  const _inProgress = data.approvedCount > 0 && data.approvedCount < data.requiredCount;
 
   return (
     <div
@@ -531,9 +524,7 @@ function layoutChildren(
 ) {
   if (parent.children.length === 0) return;
 
-  const filteredChildren = parent.children.filter(
-    (c) => shouldShowNode(c) && matchesSearch(c),
-  );
+  const filteredChildren = parent.children.filter((c) => shouldShowNode(c) && matchesSearch(c));
   if (filteredChildren.length === 0) return;
 
   const childSpacing = Math.max(200, 280 - depth * 20);
@@ -579,9 +570,7 @@ function layoutChildren(
       target: child.id,
       type: 'smoothstep',
       animated: false,
-      style: highlightedNodes.has(child.id)
-        ? { stroke: '#eab308', strokeWidth: 2 }
-        : undefined,
+      style: highlightedNodes.has(child.id) ? { stroke: '#eab308', strokeWidth: 2 } : undefined,
     });
 
     // Recursively layout deeper children if expanded and depth limit not reached

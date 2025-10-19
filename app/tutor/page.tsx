@@ -1,7 +1,9 @@
 'use client';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo as _useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
+import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 import AuthGate from '../../components/auth/AuthGate';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
@@ -18,14 +20,9 @@ import {
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { useReflectionsForTutor } from '../../lib/hooks/useReflections';
 import { useTutorDashboardData } from '../../lib/hooks/useTutorDashboardData';
-import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
-import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 
 // Lazy load heavy components
-const MiniCalendar = lazy(() => import('../../components/on-call/MiniCalendar'));
-const NextShiftCard = lazy(() => import('../../components/on-call/NextShiftCard'));
-const TeamForDate = lazy(() => import('../../components/on-call/TeamForDate'));
-const TodayPanel = lazy(() => import('../../components/on-call/TodayPanel'));
+// Unused lazy imports removed
 const SettingsPanel = lazy(() => import('../../components/settings/SettingsPanel'));
 const AssignedResidents = lazy(() => import('../../components/tutor/AssignedResidents'));
 const PendingApprovals = lazy(() => import('../../components/tutor/PendingApprovals'));
@@ -350,8 +347,12 @@ function TutorReflectionsInline() {
   return (
     <div className="space-y-3">
       <Card>
-        <div className="font-semibold mb-2 text-gray-900 dark:text-gray-50">{t('tutor.reflectionsIWrote')}</div>
-        {loading ? <div className="text-sm opacity-70 text-gray-600 dark:text-gray-300">Loading…</div> : null}
+        <div className="font-semibold mb-2 text-gray-900 dark:text-gray-50">
+          {t('tutor.reflectionsIWrote')}
+        </div>
+        {loading ? (
+          <div className="text-sm opacity-70 text-gray-600 dark:text-gray-300">Loading…</div>
+        ) : null}
         <div className="space-y-2">
           {(list || []).map((r) => (
             <div
@@ -360,7 +361,9 @@ function TutorReflectionsInline() {
             >
               <div>
                 <div className="font-medium text-gray-900 dark:text-gray-50">{r.taskType}</div>
-                <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">{r.taskOccurrenceId}</div>
+                <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">
+                  {r.taskOccurrenceId}
+                </div>
               </div>
               <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">
                 {(r as any).submittedAt?.toDate?.()?.toLocaleString?.() || ''}
@@ -369,7 +372,9 @@ function TutorReflectionsInline() {
           ))}
           {!loading && !list?.length ? (
             <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-[rgb(var(--border))] bg-gray-50 dark:bg-[rgb(var(--surface-elevated))] p-6 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-300">{t('tutor.noReflectionsYet')}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {t('tutor.noReflectionsYet')}
+              </p>
             </div>
           ) : null}
         </div>
@@ -377,5 +382,3 @@ function TutorReflectionsInline() {
     </div>
   );
 }
-
-

@@ -3,10 +3,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
+import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import Badge from '../../ui/Badge';
-import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
 
 interface OnCallScheduleViewProps {
   showUploadButton?: boolean;
@@ -23,27 +23,75 @@ const ALLOWED_SHIFT_TYPES = [
   'חדר לידה',
   'חנ בכיר',
   'חדר ניתוח',
-  'חדר ניתוח נשים'
+  'חדר ניתוח נשים',
 ];
 
 // Shift type icon and color mapping
-const SHIFT_TYPE_CONFIG: Record<string, { icon: string; color: string; bgColor: string; borderColor: string }> = {
-  PACU: { icon: '🛏️', color: 'text-purple-700 dark:text-purple-300', bgColor: 'bg-purple-50 dark:bg-purple-950/30', borderColor: 'border-purple-300 dark:border-purple-700' },
-  'טיפול נמרץ': { icon: '🏥', color: 'text-red-700 dark:text-red-300', bgColor: 'bg-red-50 dark:bg-red-950/30', borderColor: 'border-red-300 dark:border-red-700' },
-  'מנהל תורן': { icon: '⭐', color: 'text-yellow-700 dark:text-yellow-300', bgColor: 'bg-yellow-50 dark:bg-yellow-950/30', borderColor: 'border-yellow-300 dark:border-yellow-700' },
-  'תורן שליש': { icon: '🌙', color: 'text-indigo-700 dark:text-indigo-300', bgColor: 'bg-indigo-50 dark:bg-indigo-950/30', borderColor: 'border-indigo-300 dark:border-indigo-700' },
-  'כונן': { icon: '📱', color: 'text-cyan-700 dark:text-cyan-300', bgColor: 'bg-cyan-50 dark:bg-cyan-950/30', borderColor: 'border-cyan-300 dark:border-cyan-700' },
-  'חדר לידה': { icon: '👶', color: 'text-pink-700 dark:text-pink-300', bgColor: 'bg-pink-50 dark:bg-pink-950/30', borderColor: 'border-pink-300 dark:border-pink-700' },
-  'חנ בכיר': { icon: '🎖️', color: 'text-amber-700 dark:text-amber-300', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-300 dark:border-amber-700' },
-  'חדר ניתוח': { icon: '🔪', color: 'text-blue-700 dark:text-blue-300', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-300 dark:border-blue-700' },
-  'חדר ניתוח נשים': { icon: '⚕️', color: 'text-green-700 dark:text-green-300', bgColor: 'bg-green-50 dark:bg-green-950/30', borderColor: 'border-green-300 dark:border-green-700' },
+const SHIFT_TYPE_CONFIG: Record<
+  string,
+  { icon: string; color: string; bgColor: string; borderColor: string }
+> = {
+  PACU: {
+    icon: '🛏️',
+    color: 'text-purple-700 dark:text-purple-300',
+    bgColor: 'bg-purple-50 dark:bg-purple-950/30',
+    borderColor: 'border-purple-300 dark:border-purple-700',
+  },
+  'טיפול נמרץ': {
+    icon: '🏥',
+    color: 'text-red-700 dark:text-red-300',
+    bgColor: 'bg-red-50 dark:bg-red-950/30',
+    borderColor: 'border-red-300 dark:border-red-700',
+  },
+  'מנהל תורן': {
+    icon: '⭐',
+    color: 'text-yellow-700 dark:text-yellow-300',
+    bgColor: 'bg-yellow-50 dark:bg-yellow-950/30',
+    borderColor: 'border-yellow-300 dark:border-yellow-700',
+  },
+  'תורן שליש': {
+    icon: '🌙',
+    color: 'text-indigo-700 dark:text-indigo-300',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-950/30',
+    borderColor: 'border-indigo-300 dark:border-indigo-700',
+  },
+  כונן: {
+    icon: '📱',
+    color: 'text-cyan-700 dark:text-cyan-300',
+    bgColor: 'bg-cyan-50 dark:bg-cyan-950/30',
+    borderColor: 'border-cyan-300 dark:border-cyan-700',
+  },
+  'חדר לידה': {
+    icon: '👶',
+    color: 'text-pink-700 dark:text-pink-300',
+    bgColor: 'bg-pink-50 dark:bg-pink-950/30',
+    borderColor: 'border-pink-300 dark:border-pink-700',
+  },
+  'חנ בכיר': {
+    icon: '🎖️',
+    color: 'text-amber-700 dark:text-amber-300',
+    bgColor: 'bg-amber-50 dark:bg-amber-950/30',
+    borderColor: 'border-amber-300 dark:border-amber-700',
+  },
+  'חדר ניתוח': {
+    icon: '🔪',
+    color: 'text-blue-700 dark:text-blue-300',
+    bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+    borderColor: 'border-blue-300 dark:border-blue-700',
+  },
+  'חדר ניתוח נשים': {
+    icon: '⚕️',
+    color: 'text-green-700 dark:text-green-300',
+    bgColor: 'bg-green-50 dark:bg-green-950/30',
+    borderColor: 'border-green-300 dark:border-green-700',
+  },
 };
 
 // Fallback for unmapped shift types
 const getShiftConfig = (shiftType: string) => {
   // Direct match
   if (SHIFT_TYPE_CONFIG[shiftType]) return SHIFT_TYPE_CONFIG[shiftType];
-  
+
   // Check for partial matches
   const upperType = shiftType.toUpperCase();
   for (const [key, config] of Object.entries(SHIFT_TYPE_CONFIG)) {
@@ -52,7 +100,12 @@ const getShiftConfig = (shiftType: string) => {
     }
   }
   // Default
-  return { icon: '👤', color: 'text-gray-700 dark:text-[rgb(var(--fg))]', bgColor: 'bg-gray-50 dark:bg-[rgb(var(--surface-depressed))]', borderColor: 'border-gray-300 dark:border-[rgb(var(--border))]' };
+  return {
+    icon: '👤',
+    color: 'text-gray-700 dark:text-[rgb(var(--fg))]',
+    bgColor: 'bg-gray-50 dark:bg-[rgb(var(--surface-depressed))]',
+    borderColor: 'border-gray-300 dark:border-[rgb(var(--border))]',
+  };
 };
 
 export default function OnCallScheduleView({ showUploadButton = false }: OnCallScheduleViewProps) {
@@ -62,51 +115,51 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
   const [searchTerm, setSearchTerm] = useState('');
   const [myShiftsOnly, setMyShiftsOnly] = useState(false);
   const [shiftTypeFilter, setShiftTypeFilter] = useState<string[]>([]);
-  const [residentFilter, setResidentFilter] = useState('');
+  const [residentFilter, _setResidentFilter] = useState('');
   const [showCalendarView, setShowCalendarView] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${now.getMonth()}`;
   });
-  
+
   // Fetch schedule for multiple months
   const [allSchedule, setAllSchedule] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     (async () => {
       try {
         const { getFirestore } = await import('firebase/firestore');
         const { collection, query, where, orderBy, getDocs } = await import('firebase/firestore');
         const { getFirebaseApp } = await import('../../../lib/firebase/client');
-        
+
         const db = getFirestore(getFirebaseApp());
-        
+
         // Get schedule from 3 months ago to 6 months ahead
         const startDate = new Date();
         startDate.setMonth(startDate.getMonth() - 3);
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + 6);
-        
+
         const startKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-01`;
         const endKey = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-31`;
-        
+
         const q = query(
           collection(db, 'onCallShifts'),
           where('dateKey', '>=', startKey),
           where('dateKey', '<=', endKey),
-          orderBy('dateKey', 'asc')
+          orderBy('dateKey', 'asc'),
         );
-        
+
         const snapshot = await getDocs(q);
-        const schedule = snapshot.docs.map(doc => ({
+        const schedule = snapshot.docs.map((doc) => ({
           id: doc.id,
           date: doc.data().date.toDate(),
           dateKey: doc.data().dateKey,
           dayOfWeek: doc.data().dayOfWeek,
           shifts: doc.data().shifts || {},
         }));
-        
+
         setAllSchedule(schedule);
         setLoading(false);
       } catch (error) {
@@ -115,47 +168,48 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
       }
     })();
   }, []);
-  
+
   // Get today's team
   const todaysTeam = useMemo(() => {
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    return allSchedule.find(day => day.dateKey === todayKey);
+    return allSchedule.find((day) => day.dateKey === todayKey);
   }, [allSchedule]);
-  
+
   // Get unique shift types and residents (filtered by allowed types)
-  const { uniqueShiftTypes, uniqueResidents } = useMemo(() => {
+  const { uniqueShiftTypes, uniqueResidents: _uniqueResidents } = useMemo(() => {
     const shiftTypes = new Set<string>();
     const residents = new Set<string>();
-    
-    allSchedule.forEach(day => {
+
+    allSchedule.forEach((day) => {
       Object.entries(day.shifts).forEach(([type, name]) => {
         // Include if it's in allowed list OR contains any of the allowed keywords
-        const isAllowed = ALLOWED_SHIFT_TYPES.some(allowedType => 
-          type === allowedType || 
-          type.includes(allowedType) || 
-          allowedType.includes(type) ||
-          type.toLowerCase().includes(allowedType.toLowerCase()) ||
-          allowedType.toLowerCase().includes(type.toLowerCase())
+        const isAllowed = ALLOWED_SHIFT_TYPES.some(
+          (allowedType) =>
+            type === allowedType ||
+            type.includes(allowedType) ||
+            allowedType.includes(type) ||
+            type.toLowerCase().includes(allowedType.toLowerCase()) ||
+            allowedType.toLowerCase().includes(type.toLowerCase()),
         );
-        
+
         if (isAllowed) {
           shiftTypes.add(type);
         }
         residents.add(String(name));
       });
     });
-    
+
     return {
       uniqueShiftTypes: Array.from(shiftTypes).sort(),
-      uniqueResidents: Array.from(residents).sort()
+      uniqueResidents: Array.from(residents).sort(),
     };
   }, [allSchedule]);
-  
+
   // Group by month
   const scheduleByMonth = useMemo(() => {
     const groups = new Map<string, typeof allSchedule>();
-    allSchedule.forEach(day => {
+    allSchedule.forEach((day) => {
       const date = day.date;
       const key = `${date.getFullYear()}-${date.getMonth()}`;
       if (!groups.has(key)) {
@@ -163,16 +217,16 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
       }
       groups.get(key)!.push(day);
     });
-    
+
     return new Map(
       Array.from(groups.entries()).sort((a, b) => {
         const [yearA, monthA] = a[0].split('-').map(Number);
         const [yearB, monthB] = b[0].split('-').map(Number);
-        return (yearA! - yearB!) || (monthA! - monthB!);
-      })
+        return yearA! - yearB! || monthA! - monthB!;
+      }),
     );
   }, [allSchedule]);
-  
+
   // Calculate statistics
   const stats = useMemo(() => {
     const userName = currentUser?.fullName || '';
@@ -181,104 +235,112 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
     const shiftTypeCounts: Record<string, number> = {};
     const residentShiftCounts: Record<string, number> = {};
     const weekendShifts: Record<string, number> = {};
-    
-    allSchedule.forEach(day => {
+
+    allSchedule.forEach((day) => {
       const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
       Object.entries(day.shifts).forEach(([type, name]) => {
         totalShifts++;
         shiftTypeCounts[type] = (shiftTypeCounts[type] || 0) + 1;
         const residentName = String(name);
         residentShiftCounts[residentName] = (residentShiftCounts[residentName] || 0) + 1;
-        
+
         if (isWeekend) {
           weekendShifts[residentName] = (weekendShifts[residentName] || 0) + 1;
         }
-        
+
         if (userName && residentName.includes(userName)) {
           myShifts++;
         }
       });
     });
-    
+
     const mostCommonShift = Object.entries(shiftTypeCounts).sort((a, b) => b[1] - a[1])[0];
-    
+
     return {
       totalShifts,
       myShifts,
       mostCommonShift: mostCommonShift ? `${mostCommonShift[0]} (${mostCommonShift[1]})` : 'N/A',
       shiftTypeCounts,
       residentShiftCounts,
-      weekendShifts
+      weekendShifts,
     };
   }, [allSchedule, currentUser]);
-  
+
   // Filter by search, my shifts, shift type, and resident
   const filteredSchedule = useMemo(() => {
     const monthSchedule = scheduleByMonth.get(selectedMonth) || [];
     const userName = currentUser?.fullName || '';
-    
-    return monthSchedule.filter(day => {
+
+    return monthSchedule.filter((day) => {
       // My shifts filter
       if (myShiftsOnly && userName) {
         const hasMyShift = Object.values(day.shifts).some((name: any) =>
-          String(name).includes(userName)
+          String(name).includes(userName),
         );
         if (!hasMyShift) return false;
       }
-      
+
       // Shift type filter
       if (shiftTypeFilter.length > 0) {
-        const hasMatchingType = Object.keys(day.shifts).some(type =>
-          shiftTypeFilter.some(filter => type.toUpperCase().includes(filter.toUpperCase()))
+        const hasMatchingType = Object.keys(day.shifts).some((type) =>
+          shiftTypeFilter.some((filter) => type.toUpperCase().includes(filter.toUpperCase())),
         );
         if (!hasMatchingType) return false;
       }
-      
+
       // Resident filter
       if (residentFilter) {
         const hasResident = Object.values(day.shifts).some((name: any) =>
-          String(name).toLowerCase().includes(residentFilter.toLowerCase())
+          String(name).toLowerCase().includes(residentFilter.toLowerCase()),
         );
         if (!hasResident) return false;
       }
-      
+
       // Search filter
       if (searchTerm.trim()) {
         const needle = searchTerm.toLowerCase();
         return Object.values(day.shifts).some((name: any) =>
-          String(name).toLowerCase().includes(needle)
+          String(name).toLowerCase().includes(needle),
         );
       }
-      
+
       return true;
     });
-  }, [scheduleByMonth, selectedMonth, searchTerm, myShiftsOnly, shiftTypeFilter, residentFilter, currentUser]);
-  
+  }, [
+    scheduleByMonth,
+    selectedMonth,
+    searchTerm,
+    myShiftsOnly,
+    shiftTypeFilter,
+    residentFilter,
+    currentUser,
+  ]);
+
   // Group schedule by day for calendar view
   const scheduleByDay = useMemo(() => {
     const [year, month] = selectedMonth.split('-').map(Number);
     const allMonthSchedule = scheduleByMonth.get(selectedMonth) || [];
     const daysInMonth = new Date(year!, month! + 1, 0).getDate();
-    
+
     const map: Record<number, any> = {};
     allMonthSchedule.forEach((day) => {
       const d = day.date.getDate();
       map[d] = day;
     });
-    
+
     return { daysInMonth, map };
   }, [scheduleByMonth, selectedMonth]);
-  
+
   // Format month for tabs
   const formatMonthTab = (monthKey: string) => {
     const [year, month] = monthKey.split('-').map(Number);
     const date = new Date(year!, month!);
     return date.toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
-  
+
   // Scroll to specific day
   const scrollToDay = (day: number) => {
     setShowCalendarView(false);
@@ -293,7 +355,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
       }
     }, 100);
   };
-  
+
   const getMonthColor = (month: number) => {
     const colors = [
       'bg-blue-50 dark:bg-blue-950/30',
@@ -311,7 +373,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
     ];
     return colors[month] || colors[0];
   };
-  
+
   const getMonthBorderColor = (month: number) => {
     const borders = [
       'border-l-4 border-blue-400',
@@ -329,7 +391,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
     ];
     return borders[month] || borders[0];
   };
-  
+
   if (loading) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -337,7 +399,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
       </div>
     );
   }
-  
+
   if (scheduleByMonth.size === 0) {
     return (
       <div className="card-levitate p-12 text-center">
@@ -346,10 +408,9 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
           {t('onCall.noSchedule', { defaultValue: 'No schedule uploaded' })}
         </h3>
         <p className="text-sm text-gray-500 mb-4">
-          {showUploadButton 
+          {showUploadButton
             ? 'Upload an Excel file to add on-call assignments'
-            : 'No on-call schedule is currently available'
-          }
+            : 'No on-call schedule is currently available'}
         </p>
         {showUploadButton && (
           <Button
@@ -362,7 +423,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-4">
       {/* Today's Team Hero Card */}
@@ -381,37 +442,39 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                   {new Date().toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
                     weekday: 'long',
                     month: 'long',
-                    day: 'numeric'
+                    day: 'numeric',
                   })}
                 </p>
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {Object.entries(todaysTeam.shifts)
               .filter(([shiftType, residentName]) => {
                 // Filter by shift type if filter is active
                 if (shiftTypeFilter.length > 0) {
-                  const matchesFilter = shiftTypeFilter.some(filter => 
-                    shiftType.toUpperCase().includes(filter.toUpperCase()) ||
-                    filter.toUpperCase().includes(shiftType.toUpperCase())
+                  const matchesFilter = shiftTypeFilter.some(
+                    (filter) =>
+                      shiftType.toUpperCase().includes(filter.toUpperCase()) ||
+                      filter.toUpperCase().includes(shiftType.toUpperCase()),
                   );
                   if (!matchesFilter) return false;
                 }
-                
+
                 // Filter by my shifts if active
                 if (myShiftsOnly && currentUser?.fullName) {
                   if (!String(residentName).includes(currentUser.fullName)) return false;
                 }
-                
+
                 return true;
               })
               .map(([shiftType, residentName]) => {
                 const config = getShiftConfig(shiftType);
-                const isMyShift = currentUser?.fullName && String(residentName).includes(currentUser.fullName);
+                const isMyShift =
+                  currentUser?.fullName && String(residentName).includes(currentUser.fullName);
                 return (
-                  <div 
+                  <div
                     key={shiftType}
                     className={`p-3 rounded-lg border-2 ${config.bgColor} ${config.borderColor} ${isMyShift ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
                   >
@@ -420,7 +483,9 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                       <span className={`font-semibold text-sm ${config.color}`}>{shiftType}</span>
                       {isMyShift && <Badge className="bg-green-600 text-white text-xs">You</Badge>}
                     </div>
-                    <div className="font-medium text-gray-900 dark:text-gray-100">{String(residentName)}</div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      {String(residentName)}
+                    </div>
                     <a
                       href={`tel:${String(residentName)}`}
                       className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 mt-1"
@@ -433,32 +498,42 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
           </div>
         </div>
       )}
-      
+
       {/* Quick Stats Card */}
       {!showUploadButton && stats.myShifts > 0 && (
         <div className="card-levitate p-4 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-950/30 dark:to-teal-950/30 border border-green-200 dark:border-green-800">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <div className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.myShifts}</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">{t('onCall.yourShifts', { defaultValue: 'Your Shifts' })}</div>
+              <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                {stats.myShifts}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                {t('onCall.yourShifts', { defaultValue: 'Your Shifts' })}
+              </div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.totalShifts}</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">{t('onCall.totalShifts', { defaultValue: 'Total Shifts' })}</div>
+              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                {stats.totalShifts}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                {t('onCall.totalShifts', { defaultValue: 'Total Shifts' })}
+              </div>
             </div>
             <div className="col-span-2">
-              <div className="text-lg font-bold text-purple-700 dark:text-purple-300">{stats.mostCommonShift}</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">{t('onCall.mostCommon', { defaultValue: 'Most Common' })}</div>
+              <div className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                {stats.mostCommonShift}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                {t('onCall.mostCommon', { defaultValue: 'Most Common' })}
+              </div>
             </div>
           </div>
         </div>
       )}
-      
+
       {/* Admin Analytics */}
-      {showUploadButton && (
-        <AdminAnalytics stats={stats} />
-      )}
-      
+      {showUploadButton && <AdminAnalytics stats={stats} />}
+
       {/* Header with Upload, Filters, Calendar Export, and Search */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -472,7 +547,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                 📤 {t('onCall.import.uploadExcel', { defaultValue: 'Upload Schedule' })}
               </Button>
             )}
-            
+
             {/* My Shifts Toggle */}
             {currentUser && (
               <Button
@@ -487,17 +562,20 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                 )}
               </Button>
             )}
-            
+
             {/* Calendar View Toggle */}
             <Button
               onClick={() => setShowCalendarView(!showCalendarView)}
               className={`btn-levitate ${showCalendarView ? 'bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-600 dark:text-blue-300' : 'border-gray-300 text-gray-700 dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))]'}`}
               variant="outline"
             >
-              📅 {showCalendarView ? t('ui.listView', { defaultValue: 'List View' }) : t('ui.calendarView', { defaultValue: 'Calendar View' })}
+              📅{' '}
+              {showCalendarView
+                ? t('ui.listView', { defaultValue: 'List View' })
+                : t('ui.calendarView', { defaultValue: 'Calendar View' })}
             </Button>
           </div>
-          
+
           <div className="flex gap-2 items-center">
             <Input
               type="text"
@@ -516,7 +594,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
             )}
           </div>
         </div>
-        
+
         {/* Calendar Export */}
         {currentUser && (
           <div className="card-levitate p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border border-purple-200 dark:border-purple-800">
@@ -530,11 +608,13 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                     {t('onCall.exportToCalendar', { defaultValue: 'Export to Calendar' })}
                   </h3>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {t('onCall.exportDescription', { defaultValue: 'Subscribe to get your shifts in your calendar app' })}
+                    {t('onCall.exportDescription', {
+                      defaultValue: 'Subscribe to get your shifts in your calendar app',
+                    })}
                   </p>
                 </div>
               </div>
-              
+
               <a
                 href="/api/ics/on-call?personal=true"
                 target="_blank"
@@ -542,27 +622,31 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                 className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 rounded-lg text-white transition-all shadow-sm hover:shadow-md font-medium"
               >
                 <span className="text-sm">👤</span>
-                <span className="text-sm">{t('onCall.exportMyShifts', { defaultValue: 'My Shifts Calendar' })}</span>
+                <span className="text-sm">
+                  {t('onCall.exportMyShifts', { defaultValue: 'My Shifts Calendar' })}
+                </span>
               </a>
             </div>
           </div>
         )}
-        
+
         {/* Multi-Filter System */}
         <div className="flex flex-wrap gap-2 items-center">
           {/* Shift Type Filter */}
           {uniqueShiftTypes.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">{t('onCall.shiftType', { defaultValue: 'Shift Type' })}:</span>
-              {uniqueShiftTypes.map(type => {
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {t('onCall.shiftType', { defaultValue: 'Shift Type' })}:
+              </span>
+              {uniqueShiftTypes.map((type) => {
                 const config = getShiftConfig(type);
                 const isActive = shiftTypeFilter.includes(type);
                 return (
                   <button
                     key={type}
                     onClick={() => {
-                      setShiftTypeFilter(prev =>
-                        isActive ? prev.filter(t => t !== type) : [...prev, type]
+                      setShiftTypeFilter((prev) =>
+                        isActive ? prev.filter((t) => t !== type) : [...prev, type],
                       );
                     }}
                     className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
@@ -588,38 +672,42 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
           )}
         </div>
       </div>
-      
+
       {/* Month tabs */}
       <div className="border-b border-gray-200 dark:border-[rgb(var(--border))] -mx-2 px-2">
         <div className="flex overflow-x-auto gap-2 pb-2">
-          {Array.from(scheduleByMonth.keys()).map(monthKey => {
+          {Array.from(scheduleByMonth.keys()).map((monthKey) => {
             const count = scheduleByMonth.get(monthKey)?.length || 0;
             const [year, month] = monthKey.split('-').map(Number);
             const isCurrentMonth = monthKey === selectedMonth;
             const now = new Date();
             const isTodaysMonth = year === now.getFullYear() && month === now.getMonth();
-            
+
             return (
               <button
                 key={monthKey}
                 onClick={() => setSelectedMonth(monthKey)}
                 className={`
                   flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all
-                  ${isCurrentMonth 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'bg-gray-100 dark:bg-[rgb(var(--surface-elevated))] text-gray-700 dark:text-[rgb(var(--fg))] hover:bg-gray-200 dark:hover:bg-[rgb(var(--surface-depressed))]'
+                  ${
+                    isCurrentMonth
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'bg-gray-100 dark:bg-[rgb(var(--surface-elevated))] text-gray-700 dark:text-[rgb(var(--fg))] hover:bg-gray-200 dark:hover:bg-[rgb(var(--surface-depressed))]'
                   }
                 `}
               >
                 {isTodaysMonth && <span className="text-xs">📍</span>}
                 <span className="font-medium">{formatMonthTab(monthKey)}</span>
-                <span className={`
+                <span
+                  className={`
                   text-xs px-2 py-0.5 rounded-full
-                  ${isCurrentMonth 
-                    ? 'bg-white/20 text-white' 
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  ${
+                    isCurrentMonth
+                      ? 'bg-white/20 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                   }
-                `}>
+                `}
+                >
                   {count}
                 </span>
               </button>
@@ -627,7 +715,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
           })}
         </div>
       </div>
-      
+
       {/* Calendar Grid View */}
       {showCalendarView && (
         <div className="card-levitate p-4">
@@ -638,75 +726,94 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
           <div className="grid grid-cols-7 gap-2 text-sm">
             {/* Day headers */}
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-1">
+              <div
+                key={day}
+                className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-1"
+              >
                 {t(`common.days.${day.toLowerCase()}`, { defaultValue: day })}
               </div>
             ))}
-            
+
             {/* Calendar days */}
             {Array.from({ length: scheduleByDay.daysInMonth }, (_, i) => i + 1).map((d) => {
               const daySchedule = scheduleByDay.map[d];
               const isToday = (() => {
                 const today = new Date();
                 const [year, month] = selectedMonth.split('-').map(Number);
-                return today.getDate() === d && 
-                       today.getMonth() === month && 
-                       today.getFullYear() === year;
+                return (
+                  today.getDate() === d &&
+                  today.getMonth() === month &&
+                  today.getFullYear() === year
+                );
               })();
-              
+
               // Calculate shift count based on filters
-              const shiftCount = daySchedule ? Object.entries(daySchedule.shifts).filter(([type, name]) => {
-                if (shiftTypeFilter.length > 0) {
-                  const matchesFilter = shiftTypeFilter.some(filter => 
-                    type.toUpperCase().includes(filter.toUpperCase()) ||
-                    filter.toUpperCase().includes(type.toUpperCase())
-                  );
-                  if (!matchesFilter) return false;
-                }
-                {
-                  const myName = currentUser?.fullName ?? '';
-                  if (myShiftsOnly && myName) {
-                    const displayName = typeof name === 'string' ? name : '';
-                    if (!displayName.includes(myName)) return false;
-                  }
-                }
-                return true;
-              }).length : 0;
-              
+              const shiftCount = daySchedule
+                ? Object.entries(daySchedule.shifts).filter(([type, name]) => {
+                    if (shiftTypeFilter.length > 0) {
+                      const matchesFilter = shiftTypeFilter.some(
+                        (filter) =>
+                          type.toUpperCase().includes(filter.toUpperCase()) ||
+                          filter.toUpperCase().includes(type.toUpperCase()),
+                      );
+                      if (!matchesFilter) return false;
+                    }
+                    {
+                      const myName = currentUser?.fullName ?? '';
+                      if (myShiftsOnly && myName) {
+                        const displayName = typeof name === 'string' ? name : '';
+                        if (!displayName.includes(myName)) return false;
+                      }
+                    }
+                    return true;
+                  }).length
+                : 0;
+
               const myName = currentUser?.fullName ?? '';
-              const hasMyShift = !!(daySchedule && myName && 
+              const hasMyShift = !!(
+                daySchedule &&
+                myName &&
                 Object.entries(daySchedule.shifts).some(([type, name]) => {
                   // Apply filters
                   if (shiftTypeFilter.length > 0) {
-                    const matchesFilter = shiftTypeFilter.some(filter => 
-                      type.toUpperCase().includes(filter.toUpperCase()) ||
-                      filter.toUpperCase().includes(type.toUpperCase())
+                    const matchesFilter = shiftTypeFilter.some(
+                      (filter) =>
+                        type.toUpperCase().includes(filter.toUpperCase()) ||
+                        filter.toUpperCase().includes(type.toUpperCase()),
                     );
                     if (!matchesFilter) return false;
                   }
                   const displayName = typeof name === 'string' ? name : '';
                   return displayName.includes(myName);
-                }));
-              
+                })
+              );
+
               return (
-                <div 
+                <div
                   key={d}
                   onClick={() => shiftCount > 0 && scrollToDay(d)}
                   className={`
                     rounded-lg border p-2 min-h-[80px] transition-all hover:shadow-md hover:scale-105
                     ${shiftCount > 0 ? 'cursor-pointer' : 'cursor-default'}
-                    ${isToday 
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 ring-2 ring-blue-500 ring-opacity-50' 
-                      : 'border-gray-200 dark:border-[rgb(var(--border))] hover:border-gray-300 dark:hover:border-[rgb(var(--border-strong))]'
+                    ${
+                      isToday
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 ring-2 ring-blue-500 ring-opacity-50'
+                        : 'border-gray-200 dark:border-[rgb(var(--border))] hover:border-gray-300 dark:hover:border-[rgb(var(--border-strong))]'
                     }
                     ${hasMyShift ? 'ring-2 ring-green-500 ring-opacity-30' : ''}
                   `}
-                  title={shiftCount > 0 ? t('onCall.clickToView', { defaultValue: 'Click to view details' }) : ''}
+                  title={
+                    shiftCount > 0
+                      ? t('onCall.clickToView', { defaultValue: 'Click to view details' })
+                      : ''
+                  }
                 >
-                  <div className={`
+                  <div
+                    className={`
                     text-xs font-medium mb-1 flex items-center justify-between
                     ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}
-                  `}>
+                  `}
+                  >
                     <span>{d}</span>
                     {isToday && (
                       <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]">
@@ -720,25 +827,26 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                         .filter(([type, name]) => {
                           // Filter by shift type if filter is active
                           if (shiftTypeFilter.length > 0) {
-                            const matchesFilter = shiftTypeFilter.some(filter => 
-                              type.toUpperCase().includes(filter.toUpperCase()) ||
-                              filter.toUpperCase().includes(type.toUpperCase())
+                            const matchesFilter = shiftTypeFilter.some(
+                              (filter) =>
+                                type.toUpperCase().includes(filter.toUpperCase()) ||
+                                filter.toUpperCase().includes(type.toUpperCase()),
                             );
                             if (!matchesFilter) return false;
                           }
-                          
+
                           // Filter by my shifts if active
                           if (myShiftsOnly && currentUser?.fullName) {
                             if (!String(name).includes(currentUser.fullName)) return false;
                           }
-                          
+
                           return true;
                         })
                         .slice(0, 3)
                         .map(([type, name]) => {
                           const config = getShiftConfig(type);
                           return (
-                            <div 
+                            <div
                               key={type}
                               className={`truncate text-xs p-1 rounded ${config.bgColor} border-l-2 ${config.borderColor.replace('border-', 'border-l-')}`}
                               title={`${type}: ${String(name)}`}
@@ -749,23 +857,28 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                           );
                         })}
                       {(() => {
-                        const filteredCount = Object.entries(daySchedule.shifts).filter(([type, name]) => {
-                          if (shiftTypeFilter.length > 0) {
-                            const matchesFilter = shiftTypeFilter.some(filter => 
-                              type.toUpperCase().includes(filter.toUpperCase()) ||
-                              filter.toUpperCase().includes(type.toUpperCase())
-                            );
-                            if (!matchesFilter) return false;
-                          }
-                          if (myShiftsOnly && currentUser?.fullName) {
-                            if (!String(name).includes(currentUser.fullName)) return false;
-                          }
-                          return true;
-                        }).length;
-                        return filteredCount > 3 && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 italic">
-                            +{filteredCount - 3} more
-                          </div>
+                        const filteredCount = Object.entries(daySchedule.shifts).filter(
+                          ([type, name]) => {
+                            if (shiftTypeFilter.length > 0) {
+                              const matchesFilter = shiftTypeFilter.some(
+                                (filter) =>
+                                  type.toUpperCase().includes(filter.toUpperCase()) ||
+                                  filter.toUpperCase().includes(type.toUpperCase()),
+                              );
+                              if (!matchesFilter) return false;
+                            }
+                            if (myShiftsOnly && currentUser?.fullName) {
+                              if (!String(name).includes(currentUser.fullName)) return false;
+                            }
+                            return true;
+                          },
+                        ).length;
+                        return (
+                          filteredCount > 3 && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 italic">
+                              +{filteredCount - 3} more
+                            </div>
+                          )
                         );
                       })()}
                     </div>
@@ -781,7 +894,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
           </div>
         </div>
       )}
-      
+
       {/* Schedule list */}
       {filteredSchedule.length === 0 ? (
         <div className="card-levitate p-8 text-center">
@@ -789,8 +902,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
           <p className="text-gray-500">
             {searchTerm || myShiftsOnly || shiftTypeFilter.length > 0
               ? t('ui.noResults', { defaultValue: 'No results found' })
-              : t('onCall.noScheduleThisMonth', { defaultValue: 'No schedule for this month' })
-            }
+              : t('onCall.noScheduleThisMonth', { defaultValue: 'No schedule for this month' })}
           </p>
           {(myShiftsOnly || shiftTypeFilter.length > 0) && (
             <Button
@@ -806,84 +918,96 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
             </Button>
           )}
         </div>
-      ) : !showCalendarView && (
-        <div className="space-y-2">
-          {filteredSchedule.map((day: any) => {
-            const date = day.date;
-            const monthColor = getMonthColor(date.getMonth());
-            const borderColor = getMonthBorderColor(date.getMonth());
-            
-            return (
-              <div
-                key={day.id}
-                id={`oncall-day-${date.getDate()}`}
-                className={`card-levitate p-4 ${monthColor} ${borderColor} hover:shadow-lg transition-all scroll-mt-24`}
-              >
-                <div className="flex gap-4">
-                  {/* Date badge */}
-                  <div className="flex-shrink-0 w-16 text-center">
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg py-2 shadow-md">
-                      <div className="text-xs font-medium">{day.dayOfWeek || ''}</div>
-                      <div className="text-2xl font-bold">{date.getDate()}</div>
-                      <div className="text-xs">
-                        {date.toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
-                          month: 'short'
-                        })}
+      ) : (
+        !showCalendarView && (
+          <div className="space-y-2">
+            {filteredSchedule.map((day: any) => {
+              const date = day.date;
+              const monthColor = getMonthColor(date.getMonth());
+              const borderColor = getMonthBorderColor(date.getMonth());
+
+              return (
+                <div
+                  key={day.id}
+                  id={`oncall-day-${date.getDate()}`}
+                  className={`card-levitate p-4 ${monthColor} ${borderColor} hover:shadow-lg transition-all scroll-mt-24`}
+                >
+                  <div className="flex gap-4">
+                    {/* Date badge */}
+                    <div className="flex-shrink-0 w-16 text-center">
+                      <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg py-2 shadow-md">
+                        <div className="text-xs font-medium">{day.dayOfWeek || ''}</div>
+                        <div className="text-2xl font-bold">{date.getDate()}</div>
+                        <div className="text-xs">
+                          {date.toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
+                            month: 'short',
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Grid of all shift assignments */}
+                    <div className="flex-1 min-w-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {Object.entries(day.shifts)
+                          .filter(([shiftType, residentName]) => {
+                            // Filter by shift type if filter is active
+                            if (shiftTypeFilter.length > 0) {
+                              const matchesFilter = shiftTypeFilter.some(
+                                (filter) =>
+                                  shiftType.toUpperCase().includes(filter.toUpperCase()) ||
+                                  filter.toUpperCase().includes(shiftType.toUpperCase()),
+                              );
+                              if (!matchesFilter) return false;
+                            }
+
+                            // Filter by my shifts if active
+                            if (myShiftsOnly && currentUser?.fullName) {
+                              if (!String(residentName).includes(currentUser.fullName))
+                                return false;
+                            }
+
+                            return true;
+                          })
+                          .map(([shiftType, residentName]) => {
+                            const config = getShiftConfig(shiftType);
+                            const isMyShift =
+                              currentUser?.fullName &&
+                              String(residentName).includes(currentUser.fullName);
+                            return (
+                              <div
+                                key={shiftType}
+                                className={`p-3 rounded-lg border-2 ${config.bgColor} ${config.borderColor} ${isMyShift ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
+                              >
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-lg">{config.icon}</span>
+                                  <span className={`font-semibold text-xs ${config.color}`}>
+                                    {shiftType}
+                                  </span>
+                                  {isMyShift && (
+                                    <Badge className="bg-green-600 text-white text-xs">You</Badge>
+                                  )}
+                                </div>
+                                <div className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+                                  {String(residentName)}
+                                </div>
+                                <a
+                                  href={`tel:${String(residentName)}`}
+                                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                                >
+                                  <span>📞</span> Call
+                                </a>
+                              </div>
+                            );
+                          })}
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Grid of all shift assignments */}
-                  <div className="flex-1 min-w-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {Object.entries(day.shifts)
-                        .filter(([shiftType, residentName]) => {
-                          // Filter by shift type if filter is active
-                          if (shiftTypeFilter.length > 0) {
-                            const matchesFilter = shiftTypeFilter.some(filter => 
-                              shiftType.toUpperCase().includes(filter.toUpperCase()) ||
-                              filter.toUpperCase().includes(shiftType.toUpperCase())
-                            );
-                            if (!matchesFilter) return false;
-                          }
-                          
-                          // Filter by my shifts if active
-                          if (myShiftsOnly && currentUser?.fullName) {
-                            if (!String(residentName).includes(currentUser.fullName)) return false;
-                          }
-                          
-                          return true;
-                        })
-                        .map(([shiftType, residentName]) => {
-                          const config = getShiftConfig(shiftType);
-                          const isMyShift = currentUser?.fullName && String(residentName).includes(currentUser.fullName);
-                          return (
-                            <div 
-                              key={shiftType}
-                              className={`p-3 rounded-lg border-2 ${config.bgColor} ${config.borderColor} ${isMyShift ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
-                            >
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg">{config.icon}</span>
-                                <span className={`font-semibold text-xs ${config.color}`}>{shiftType}</span>
-                                {isMyShift && <Badge className="bg-green-600 text-white text-xs">You</Badge>}
-                              </div>
-                              <div className="font-medium text-gray-900 dark:text-gray-100 mb-1">{String(residentName)}</div>
-                              <a
-                                href={`tel:${String(residentName)}`}
-                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                              >
-                                <span>📞</span> Call
-                              </a>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )
       )}
     </div>
   );
@@ -893,7 +1017,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
 function AdminAnalytics({ stats }: { stats: any }) {
   const { t } = useTranslation();
   const maxShifts = Math.max(...Object.values(stats.residentShiftCounts as Record<string, number>));
-  
+
   return (
     <div className="space-y-4">
       {/* Shifts per Resident Bar Chart */}
@@ -907,7 +1031,10 @@ function AdminAnalytics({ stats }: { stats: any }) {
             .sort((a, b) => b[1] - a[1])
             .map(([resident, count]) => (
               <div key={resident} className="flex items-center gap-3">
-                <div className="w-32 text-sm text-gray-700 dark:text-[rgb(var(--fg))] truncate" title={resident}>
+                <div
+                  className="w-32 text-sm text-gray-700 dark:text-[rgb(var(--fg))] truncate"
+                  title={resident}
+                >
                   {resident}
                 </div>
                 <div className="flex-1 relative">
@@ -924,7 +1051,7 @@ function AdminAnalytics({ stats }: { stats: any }) {
             ))}
         </div>
       </div>
-      
+
       {/* Weekend Distribution */}
       <div className="card-levitate p-6">
         <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -935,9 +1062,16 @@ function AdminAnalytics({ stats }: { stats: any }) {
           {Object.entries(stats.weekendShifts as Record<string, number>)
             .sort((a, b) => b[1] - a[1])
             .map(([resident, count]) => (
-              <div key={resident} className="p-3 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-700">
-                <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">{count}</div>
-                <div className="text-xs text-gray-600 dark:text-gray-400 truncate" title={resident}>{resident}</div>
+              <div
+                key={resident}
+                className="p-3 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-700"
+              >
+                <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                  {count}
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400 truncate" title={resident}>
+                  {resident}
+                </div>
               </div>
             ))}
         </div>
