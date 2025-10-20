@@ -111,13 +111,15 @@ export default function MorningMeetingsView({
               {t('morningMeetings.import.uploadExcel')}
             </Button>
           )}
-          <div className={`flex gap-2 items-center ${!showUploadButton ? 'sm:ml-auto' : ''}`}>
+          <div
+            className={`flex gap-2 items-center w-full sm:w-auto ${!showUploadButton ? 'sm:ml-auto' : ''}`}
+          >
             <Input
               type="text"
               placeholder={t('ui.search', { defaultValue: 'Search' }) + '...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-64"
+              className="w-full sm:w-64"
             />
             {searchTerm && (
               <Button variant="ghost" onClick={() => setSearchTerm('')} className="px-2">

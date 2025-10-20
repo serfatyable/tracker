@@ -242,11 +242,11 @@ export default function ImportPreviewDialog({
           {/* Preview Table */}
           {rows.length > 0 && (
             <div className="border border-gray-200 dark:border-[rgb(var(--border))] rounded-lg overflow-hidden">
-              <div className="overflow-x-auto max-h-96">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-[rgb(var(--border))]">
+              <div className="overflow-x-container max-h-96">
+                <table className="min-w-content sm:min-w-0 w-full table-auto divide-y divide-gray-200 dark:divide-[rgb(var(--border))]">
                   <thead className="bg-gray-50 dark:bg-[rgb(var(--surface-elevated))] sticky top-0">
                     <tr>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase sticky left-0 rtl:left-auto rtl:right-0 z-10 bg-gray-50 dark:bg-[rgb(var(--surface-elevated))]">
                         #
                       </th>
                       <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
@@ -258,13 +258,13 @@ export default function ImportPreviewDialog({
                       <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         {t('morningMeetings.import.title')}
                       </th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase hidden sm:table-cell">
                         {t('morningMeetings.import.lecturer')}
                       </th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase hidden md:table-cell">
                         {t('morningMeetings.import.moderator')}
                       </th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase hidden md:table-cell">
                         {t('morningMeetings.import.organizer')}
                       </th>
                     </tr>
@@ -280,7 +280,7 @@ export default function ImportPreviewDialog({
                           key={row.rowNumber}
                           className={`${monthColor} ${monthBorder} hover:opacity-80 transition-opacity`}
                         >
-                          <td className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 text-right">
+                          <td className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 text-right sticky left-0 rtl:left-auto rtl:right-0 z-10 bg-white dark:bg-[rgb(var(--surface))]">
                             {row.rowNumber}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 text-right font-medium">
@@ -295,13 +295,13 @@ export default function ImportPreviewDialog({
                           <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 text-right max-w-xs truncate">
                             {row.title}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 text-right">
+                          <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 text-right hidden sm:table-cell">
                             {row.lecturer || '-'}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 text-right">
+                          <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 text-right hidden md:table-cell">
                             {row.moderator || '-'}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 text-right">
+                          <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 text-right hidden md:table-cell">
                             {row.organizer || '-'}
                           </td>
                         </tr>

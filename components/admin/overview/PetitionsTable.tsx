@@ -15,7 +15,7 @@ import Button from '../../ui/Button';
 import EmptyState, { ChecklistIcon } from '../../ui/EmptyState';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
-import { Table, THead, TBody, TR, TH, TD } from '../../ui/Table';
+import { Table, THead, TBody, TR, TH, TD, TableWrapper } from '../../ui/Table';
 import Toast from '../../ui/Toast';
 
 export default function PetitionsTable() {
@@ -83,8 +83,8 @@ export default function PetitionsTable() {
         onClear={() => setToast(null)}
       />
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Select value={rotationId} onChange={(e) => setRotationId(e.target.value)}>
               <option value="" disabled>
                 Rotations
@@ -111,11 +111,12 @@ export default function PetitionsTable() {
               <option value="denied">{t('overview.status.denied') || 'Denied'}</option>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Input
               placeholder={t('ui.users') as string}
               value={residentQuery}
               onChange={(e) => setResidentQuery(e.target.value)}
+              className="w-full sm:w-64"
             />
           </div>
         </div>
@@ -137,12 +138,12 @@ export default function PetitionsTable() {
             }
           />
         ) : (
-          <div className="overflow-x-container">
-            <div className="inline-block min-w-[56rem] align-top">
-              <Table className="w-full">
+          <TableWrapper className="-mx-4 sm:mx-0">
+            <div className="inline-block min-w-[56rem] align-top w-full">
+              <Table className="w-full table-auto">
                 <THead>
                   <TR>
-                    <TH>
+                    <TH className="sticky left-0 rtl:left-auto rtl:right-0 z-10 bg-bg/95">
                       <input
                         type="checkbox"
                         checked={items.length > 0 && items.every((x) => sel[x.id])}
@@ -154,26 +155,30 @@ export default function PetitionsTable() {
                         }}
                       />
                     </TH>
-                    <TH>{t('ui.users')}</TH>
-                    <TH>{t('ui.rotations')}</TH>
-                    <TH>{t('overview.type') || 'Type'}</TH>
-                    <TH>{t('ui.status')}</TH>
-                    <TH>{t('ui.open')}</TH>
+                    <TH className="sticky left-[2.25rem] rtl:left-auto rtl:right-[2.25rem] z-10 bg-bg/95">
+                      {t('ui.users')}
+                    </TH>
+                    <TH className="hidden sm:table-cell">{t('ui.rotations')}</TH>
+                    <TH className="hidden md:table-cell">{t('overview.type') || 'Type'}</TH>
+                    <TH className="hidden md:table-cell">{t('ui.status')}</TH>
+                    <TH className="text-right">{t('ui.open')}</TH>
                   </TR>
                 </THead>
                 <TBody>
                   {items.map((p) => (
                     <TR key={p.id}>
-                      <TD>
+                      <TD className="sticky left-0 rtl:left-auto rtl:right-0 z-10 bg-bg/95">
                         <input
                           type="checkbox"
                           checked={!!sel[p.id]}
                           onChange={(e) => setSel((s) => ({ ...s, [p.id]: e.target.checked }))}
                         />
                       </TD>
-                      <TD className="break-anywhere">{p.residentId}</TD>
-                      <TD className="break-anywhere">{p.rotationId}</TD>
-                      <TD>
+                      <TD className="break-anywhere sticky left-[2.25rem] rtl:left-auto rtl:right-[2.25rem] z-10 bg-bg/95">
+                        {p.residentId}
+                      </TD>
+                      <TD className="break-anywhere hidden sm:table-cell">{p.rotationId}</TD>
+                      <TD className="hidden md:table-cell">
                         <span
                           className={
                             'inline-flex rounded-full px-2 py-0.5 text-xs font-medium ' +
@@ -185,7 +190,7 @@ export default function PetitionsTable() {
                           {p.type}
                         </span>
                       </TD>
-                      <TD>
+                      <TD className="hidden md:table-cell">
                         <span
                           className={
                             'inline-flex rounded-full px-2 py-0.5 text-xs font-medium ' +
@@ -266,7 +271,7 @@ export default function PetitionsTable() {
                 </TBody>
               </Table>
             </div>
-          </div>
+          </TableWrapper>
         )}
 
         <div className="flex justify-end gap-2">

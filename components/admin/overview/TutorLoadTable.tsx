@@ -26,22 +26,24 @@ export default function TutorLoadTable({ assignments, tutors }: Props) {
   return (
     <div className="card-levitate p-3">
       <div className="font-semibold mb-2">{t('overview.tutorLoad')}</div>
-      <div className="overflow-x-container">
-        <div className="inline-block min-w-[56rem] align-top">
-          <table className="w-full text-sm md:text-base">
+      <div className="overflow-x-container -mx-4 sm:mx-0">
+        <div className="inline-block min-w-[40rem] sm:min-w-[56rem] align-top w-full">
+          <table className="w-full table-auto text-sm md:text-base">
             <thead>
               <tr className="text-left opacity-70 text-sm md:text-base">
-                <th className="py-1 pr-4">{t('overview.tutor')}</th>
+                <th className="py-1 pr-4 sticky left-0 z-10 bg-bg/95">{t('overview.tutor')}</th>
                 <th className="py-1 pr-4">{t('tutor.tabs.residents')}</th>
-                <th className="py-1" />
+                <th className="py-1 hidden md:table-cell" />
               </tr>
             </thead>
             <tbody>
               {rows.map(({ tutor, count }) => (
                 <tr key={tutor.uid} className="border-t border-gray-200/20">
-                  <td className="py-1 pr-4 break-anywhere">{tutor.fullName || tutor.uid}</td>
+                  <td className="py-1 pr-4 break-anywhere sticky left-0 z-10 bg-bg/95">
+                    {tutor.fullName || tutor.uid}
+                  </td>
                   <td className="py-1 pr-4">{count}</td>
-                  <td className="py-1">
+                  <td className="py-1 hidden md:table-cell">
                     <Button size="sm" className="btn-levitate" variant="outline">
                       Assign resident
                     </Button>

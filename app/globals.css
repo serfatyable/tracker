@@ -119,6 +119,34 @@ textarea {
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+
+  /* Safe area padding helper */
+  .safe-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Momentum scrolling helper (iOS) */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent parent scroll chaining in overlays/drawers */
+  .overscroll-contain {
+    overscroll-behavior: contain;
+  }
+
+  /* Prevent flex items from shrinking (e.g., icons/labels) */
+  .no-shrink {
+    flex-shrink: 0;
+  }
+}
+
+/* Basic RTL helpers if Tailwind RTL plugin is not used */
+[dir='rtl'] .rtl\:left-auto {
+  left: auto;
+}
+[dir='rtl'] .rtl\:right-0 {
+  right: 0;
 }
 
 @layer components {
