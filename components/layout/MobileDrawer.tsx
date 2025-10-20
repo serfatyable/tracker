@@ -34,9 +34,12 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       if (!focusables || focusables.length === 0) return;
-      const list = Array.from(focusables).filter((el) => !el.hasAttribute('disabled'));
-      const firstEl = list[0];
-      const lastEl = list[list.length - 1];
+      const list = Array.from(focusables).filter(
+        (el) => !el.hasAttribute('disabled'),
+      ) as HTMLElement[];
+      if (list.length === 0) return;
+      const firstEl = list[0]!;
+      const lastEl = list[list.length - 1]!;
       const active = document.activeElement as HTMLElement | null;
       if (e.shiftKey) {
         if (active === firstEl) {
