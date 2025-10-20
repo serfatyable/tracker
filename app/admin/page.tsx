@@ -1,11 +1,13 @@
 'use client';
 // Unused import removed: Link
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { lazy, Suspense, useCallback, useEffect, useMemo as _useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo as _useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
 import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
+import RotationsPanel from '../../components/admin/rotations/RotationsPanel';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
 import Avatar from '../../components/ui/Avatar';
@@ -34,24 +36,44 @@ import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
 import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
 import type { Role, UserProfile } from '../../types/auth';
 
-// Lazy load heavy tab components
-const KPICards = lazy(() => import('../../components/admin/overview/KPICards'));
-const PetitionsTable = lazy(() => import('../../components/admin/overview/PetitionsTable'));
-const ResidentsByRotation = lazy(
+// Dynamically load heavy tab components (avoid React.lazy chunk issues in dev)
+const KPICards = dynamic(() => import('../../components/admin/overview/KPICards'), {
+  loading: () => <CardSkeleton />,
+  ssr: false,
+});
+const PetitionsTable = dynamic(() => import('../../components/admin/overview/PetitionsTable'), {
+  loading: () => <SpinnerSkeleton />,
+  ssr: false,
+});
+const ResidentsByRotation = dynamic(
   () => import('../../components/admin/overview/ResidentsByRotation'),
+  { loading: () => <CardSkeleton />, ssr: false },
 );
-const TutorLoadTable = lazy(() => import('../../components/admin/overview/TutorLoadTable'));
-const UnassignedQueues = lazy(() => import('../../components/admin/overview/UnassignedQueues'));
-const AdminReflectionsTabs = lazy(
+const TutorLoadTable = dynamic(() => import('../../components/admin/overview/TutorLoadTable'), {
+  loading: () => <SpinnerSkeleton />,
+  ssr: false,
+});
+const UnassignedQueues = dynamic(() => import('../../components/admin/overview/UnassignedQueues'), {
+  loading: () => <SpinnerSkeleton />,
+  ssr: false,
+});
+const AdminReflectionsTabs = dynamic(
   () => import('../../components/admin/reflections/AdminReflectionsTabs'),
+  { loading: () => <SpinnerSkeleton />, ssr: false },
 );
-const RotationOwnersEditor = lazy(
+const RotationOwnersEditor = dynamic(
   () => import('../../components/admin/rotations/RotationOwnersEditor'),
+  { loading: () => <SpinnerSkeleton />, ssr: false },
 );
-const RotationsPanel = lazy(() => import('../../components/admin/rotations/RotationsPanel'));
-const RotationTree = lazy(() => import('../../components/admin/rotations/RotationTree'));
-// Unused lazy imports removed
-const SettingsPanel = lazy(() => import('../../components/settings/SettingsPanel'));
+// RotationsPanel loads synchronously to avoid dev ChunkLoadError during frequent rebuilds
+const RotationTree = dynamic(() => import('../../components/admin/rotations/RotationTree'), {
+  loading: () => <SpinnerSkeleton />,
+  ssr: false,
+});
+const SettingsPanel = dynamic(() => import('../../components/settings/SettingsPanel'), {
+  loading: () => <CardSkeleton />,
+  ssr: false,
+});
 
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation();

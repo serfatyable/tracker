@@ -3,7 +3,8 @@
 html,
 body {
   min-height: 100%;
-  overflow-x: clip;
+  /* Avoid clipping wide content on small screens; allow horizontal scroll if any overflows */
+  overflow-x: auto;
 }
 
 html {

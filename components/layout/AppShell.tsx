@@ -15,7 +15,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="mx-auto flex w-full max-w-6xl">
-        <main className="flex-1 p-3 sm:p-4 md:p-6 pb-20 md:pb-6" role="main">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 pb-20 md:pb-6 min-w-0" role="main">
           {children}
         </main>
       </div>

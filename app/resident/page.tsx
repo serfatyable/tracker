@@ -4,10 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
-import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 import AuthGate from '../../components/auth/AuthGate';
 import AppShell from '../../components/layout/AppShell';
 // Unused imports removed: MiniCalendar, NextShiftCard, TeamForDate, TodayPanel
+import MiniCalendar from '../../components/on-call/MiniCalendar';
+import NextShiftCard from '../../components/on-call/NextShiftCard';
+import TeamForDate from '../../components/on-call/TeamForDate';
+import TodayPanel from '../../components/on-call/TodayPanel';
 import AnnouncementsCard from '../../components/resident/AnnouncementsCard';
 import Approvals from '../../components/resident/Approvals';
 import EnhancedProgress from '../../components/resident/EnhancedProgress';
@@ -21,6 +24,7 @@ import Resources from '../../components/resident/Resources';
 import RotationBrowse from '../../components/resident/rotation-views/RotationBrowse';
 import RotationDashboard from '../../components/resident/rotation-views/RotationDashboard';
 import RotationTreeMap from '../../components/resident/rotation-views/RotationTreeMap';
+// Mobile-friendly On-call overview components (instead of admin desktop view)
 // Unused import removed: RotationBrowser
 import SettingsPanel from '../../components/settings/SettingsPanel';
 import Badge from '../../components/ui/Badge';
@@ -37,6 +41,7 @@ import type { RotationNode } from '../../types/rotations';
 
 export default function ResidentDashboard() {
   const searchParams = useSearchParams();
+  const { data: me } = useCurrentUserProfile();
   const initialTab = (searchParams.get('tab') as any) || 'dashboard';
   const [tab, setTab] = useState<
     | 'dashboard'
@@ -121,7 +126,7 @@ export default function ResidentDashboard() {
   return (
     <AuthGate requiredRole="resident">
       <AppShell>
-        <div className="app-container p-6">
+        <div className="app-container p-3 sm:p-4 md:p-6">
           <div className="w-full">
             <h1 className="sr-only">
               {t('ui.residentDashboard', { defaultValue: 'Resident Dashboard' })}
@@ -198,7 +203,29 @@ export default function ResidentDashboard() {
             ) : tab === 'morning' ? (
               <MorningMeetingsView showUploadButton={false} />
             ) : tab === 'oncall' ? (
-              <OnCallScheduleView showUploadButton={false} />
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-2">
+                    <Card className="space-y-3">
+                      <div className="text-sm font-medium">{t('onCall.today')}</div>
+                      <TodayPanel highlightUserId={me?.uid} />
+                    </Card>
+                  </div>
+                  <div className="md:col-span-1">
+                    <Card>
+                      <NextShiftCard userId={me?.uid} />
+                    </Card>
+                  </div>
+                </div>
+                <Card className="space-y-3">
+                  <div className="text-sm font-medium">{t('onCall.teamOnDate', { date: '' })}</div>
+                  <TeamForDate />
+                </Card>
+                <Card className="space-y-3">
+                  <div className="text-sm font-medium">Timeline</div>
+                  <MiniCalendar />
+                </Card>
+              </div>
             ) : tab === 'settings' ? (
               <div className="space-y-3">
                 <SettingsPanel />
