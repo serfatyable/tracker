@@ -1,4 +1,6 @@
 'use client';
+import { Bars3Icon } from '@heroicons/react/24/outline';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -10,11 +12,14 @@ import { useTomorrowLecturerReminder } from '../lib/hooks/useTomorrowLecturerRem
 
 import Avatar from './ui/Avatar';
 
+const MobileDrawer = dynamic(() => import('./layout/MobileDrawer'), { ssr: false });
+
 export default function TopBar() {
   const router = useRouter();
   const { data: me } = useCurrentUserProfile();
   const { t, i18n: i18next } = useTranslation();
   const { show, meeting } = useTomorrowLecturerReminder();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   async function handleSignOut() {
     try {
@@ -75,6 +80,14 @@ export default function TopBar() {
       className={`sticky top-0 z-40 flex h-12 items-center justify-between px-4 transition-colors duration-200 bg-surface/95 text-fg shadow-elev1`}
     >
       <div className="flex items-center gap-2 text-base flex-shrink-0">
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-surface/70 lg:hidden"
+          aria-label={t('ui.openMenu', { defaultValue: 'Open menu' })}
+          onClick={() => setDrawerOpen(true)}
+        >
+          <Bars3Icon className="h-6 w-6" />
+        </button>
         <div className="relative h-7 w-7 overflow-hidden rounded-full ring border-primary-token shadow-[0_0_0_1px_rgba(0,0,0,0.04)] flex-shrink-0">
           <Image
             src="/logo.png"
@@ -125,6 +138,7 @@ export default function TopBar() {
           <span className="sm:hidden">{t('auth.signOut')}</span>
         </button>
       </nav>
+      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </header>
   );
 }

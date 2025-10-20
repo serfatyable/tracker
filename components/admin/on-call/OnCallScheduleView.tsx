@@ -576,13 +576,13 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
             </Button>
           </div>
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center w-full sm:w-auto">
             <Input
               type="text"
               placeholder={t('ui.search', { defaultValue: 'Search' }) + '...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-48"
+              className="w-full sm:w-48"
             />
             {searchTerm && (
               <button
