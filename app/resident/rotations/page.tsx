@@ -8,6 +8,7 @@ import AppShell from '../../../components/layout/AppShell';
 import LargeTitleHeader from '../../../components/layout/LargeTitleHeader';
 import { CardSkeleton } from '../../../components/dashboard/Skeleton';
 import RotationBrowser from '../../../components/resident/RotationBrowser';
+import RotationTreeMap from '../../../components/resident/rotation-views/RotationTreeMap';
 import RotationDashboard from '../../../components/resident/rotation-views/RotationDashboard';
 import { useResidentActiveRotation } from '../../../lib/hooks/useResidentActiveRotation';
 import type { RotationNode } from '../../../types/rotations';
@@ -17,6 +18,7 @@ export default function ResidentRotationsPage() {
   const { rotationId } = useResidentActiveRotation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLeaf, setSelectedLeaf] = useState<RotationNode | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   return (
     <AuthGate requiredRole="resident">
@@ -36,9 +38,14 @@ export default function ResidentRotationsPage() {
               <RotationDashboard
                 rotationId={rotationId}
                 onNavigateToBrowse={(leafId) => {
-                  /* no-op in page context */
+                  setSelectedNodeId(leafId);
                 }}
               />
+            ) : null}
+            {rotationId ? (
+              <div className="mt-4">
+                <RotationTreeMap rotationId={rotationId} onSelectNode={(nodeId) => setSelectedNodeId(nodeId)} />
+              </div>
             ) : null}
             <RotationBrowser
               selectedRotationId={rotationId || null}

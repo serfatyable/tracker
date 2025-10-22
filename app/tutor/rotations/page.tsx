@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
 import AuthGate from '../../../components/auth/AuthGate';
@@ -31,6 +32,11 @@ export default function TutorRotationsPage() {
               <CardSkeleton />
             )}
           </Suspense>
+          <div className="mt-4 flex justify-end">
+            <Link href="/tutor/residents" className="pill text-xs">
+              {t('tutor.tabs.residents')}
+            </Link>
+          </div>
         </div>
       </AppShell>
     </AuthGate>
