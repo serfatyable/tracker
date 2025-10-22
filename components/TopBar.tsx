@@ -106,7 +106,7 @@ export default function TopBar() {
           <LangToggle />
         </div>
         <div className="min-w-0">
-          <Avatar name={me?.fullName} size={32} className="h-8 w-8 rounded-full" />
+          <Avatar name={me?.fullName} email={me?.email} size={32} className="h-8 w-8 rounded-full" />
         </div>
       </nav>
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />

@@ -65,7 +65,7 @@ export default function TutorDashboard() {
               </Link>
             </div>
 
-            {/* Stacked sections */}
+            {/* 1) Overview (personal KPIs/sections) */}
             <Suspense
               fallback={
                 <div className="space-y-3">
@@ -79,21 +79,24 @@ export default function TutorDashboard() {
               </div>
             </Suspense>
 
+            {/* 2) On-Call today/tonight */}
+            <OnCallScheduleView showUploadButton={false} />
+
+            {/* 3) Rotations progress */}
             <Suspense fallback={<SpinnerSkeleton />}> 
               <TutorRotationsTab />
             </Suspense>
 
+            {/* 4) Reflections queue */}
             <TutorReflectionsInline />
 
+            {/* 5) Morning Meetings */}
             <MorningMeetingsView showUploadButton={false} />
 
-            <OnCallScheduleView showUploadButton={false} />
-
-            <Suspense fallback={<SpinnerSkeleton />}>
-              <div className="space-y-3">
-                <SettingsPanel />
-              </div>
-            </Suspense>
+            {/* 6) Settings link only */}
+            <div className="flex justify-end">
+              <Link href="/settings" className="pill text-xs">{t('ui.settings')}</Link>
+            </div>
           </div>
         </div>
       </AppShell>
