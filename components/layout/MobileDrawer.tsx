@@ -83,6 +83,12 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
       : role === 'tutor'
         ? '/tutor/reflections'
         : '/resident/reflections';
+  const rotationsHref =
+    role === 'admin'
+      ? '/admin/rotations'
+      : role === 'tutor'
+        ? '/tutor/rotations'
+        : '/resident/rotations';
 
   const isRTL = typeof window !== 'undefined' && document?.documentElement?.dir === 'rtl';
 
@@ -142,6 +148,7 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
         <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
           <NavItem href={homeHref} label={t('ui.dashboard')} />
           <NavItem href={reflectionsHref} label={t('ui.reflections')} />
+          <NavItem href={rotationsHref} label={t('ui.rotations', { defaultValue: 'Rotations' })} />
           <NavItem href="/morning-meetings" label={t('ui.morningMeetings')} />
           <NavItem href="/on-call" label={t('ui.onCall')} />
           <NavItem href="/settings" label={t('ui.settings')} />
