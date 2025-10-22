@@ -38,6 +38,7 @@ export default function RotationBrowser({
   const { nodes, loading } = useRotationNodes(selectedRotationId || null);
   const { tasks } = useUserTasks();
   const [allNodes, setAllNodes] = useState<RotationNode[]>([]);
+  const [allLoading, setAllLoading] = useState(false);
 
   // Load all nodes lazily when needed for global search
   useEffect(() => {
@@ -45,6 +46,7 @@ export default function RotationBrowser({
       if (searchScope !== 'all') return;
       if (allNodes.length > 0) return;
       try {
+        setAllLoading(true);
         const db = getFirestore(getFirebaseApp());
         const snap = await getDocs(collection(db, 'rotationNodes'));
         const list = snap.docs.map((d) => ({
@@ -54,11 +56,14 @@ export default function RotationBrowser({
         setAllNodes(list);
       } catch {
         // ignore; results list will just be empty
+      } finally {
+        setAllLoading(false);
       }
     })();
   }, [searchScope, allNodes.length]);
 
-  const tree = useMemo(() => buildTree(nodes), [nodes]);
+  const nodesToUse = searchScope === 'all' ? allNodes : nodes;
+  const tree = useMemo(() => buildTree(nodesToUse), [nodesToUse]);
 
   // Filter tree by search term: keep branches that have any matching descendant
   const filteredTree = useMemo(() => {
@@ -203,7 +208,7 @@ export default function RotationBrowser({
         </div>
       ) : null}
       <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-2">
-        {loading ? (
+        {loading || (searchScope === 'all' && allLoading) ? (
           <SpinnerSkeleton />
         ) : filteredTree.length === 0 ? (
           <EmptyState
@@ -212,7 +217,7 @@ export default function RotationBrowser({
             description={
               searchTerm
                 ? t('ui.tryDifferentSearch', { defaultValue: 'Try a different search term.' })
-                : t('ui.noItemsAvailable', { defaultValue: 'No items available in this rotation.' })
+                : t('ui.noItemsAvailable', { defaultValue: 'No items available.' })
             }
             className="py-4"
           />
