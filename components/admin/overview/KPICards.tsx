@@ -94,20 +94,20 @@ export default function KPICards({ assignments, residents, tutors }: Props) {
         <div key={k.key} className="rounded-2xl border p-4">
           <div className="flex items-center gap-2 mb-2 rtl:flex-row-reverse rtl:justify-end">
             <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <k.Icon className="h-4 w-4" aria-hidden />
+              <k.Icon className="h-4 w-4" stroke="currentColor" aria-hidden />
             </div>
-            <div className="text-xs opacity-70">{k.label}</div>
+            <div className="text-xs font-medium text-foreground/80 dark:text-white/80">{k.label}</div>
           </div>
           <div className="flex items-baseline gap-2">
-            <div className="text-2xl font-semibold tracking-tight">{k.value}</div>
+            <div className="text-3xl font-semibold tracking-tight text-foreground dark:text-white">{k.value}</div>
             {k.trend == null ? null : k.trend >= 0 ? (
               <div className="inline-flex items-center text-xs text-green-600">
-                <ArrowTrendingUpIcon className="h-3.5 w-3.5" />
+                <ArrowTrendingUpIcon className="h-3.5 w-3.5" stroke="currentColor" />
                 <span className="ml-0.5">+{k.trend}</span>
               </div>
             ) : (
               <div className="inline-flex items-center text-xs text-red-600">
-                <ArrowTrendingDownIcon className="h-3.5 w-3.5" />
+                <ArrowTrendingDownIcon className="h-3.5 w-3.5" stroke="currentColor" />
                 <span className="ml-0.5">{k.trend}</span>
               </div>
             )}
