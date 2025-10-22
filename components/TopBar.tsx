@@ -1,7 +1,6 @@
 'use client';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
