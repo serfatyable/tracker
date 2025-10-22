@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { cookies } from 'next/headers';
 
-import DevDiagnosticsBar from '../components/DevDiagnosticsBar';
 import { I18nProvider } from '../lib/i18n/Provider';
 
 export const metadata: Metadata = {
@@ -50,7 +49,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body suppressHydrationWarning>
         <I18nProvider>
           {children}
-          <DevDiagnosticsBar />
+          {/* Dev diagnostics are gated and default-off */}
+          {process.env.NEXT_PUBLIC_SHOW_DEV === 'true' ? (await import('../components/DevDiagnosticsBar')).default({}) : null}
         </I18nProvider>
       </body>
     </html>

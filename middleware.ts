@@ -8,6 +8,32 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  const pathname = url.pathname;
+  const tab = url.searchParams.get('tab');
+
+  // 90-day redirects for old ?tab= links → new routes (bridge period)
+  if (pathname === '/resident' && tab === 'progress') {
+    url.searchParams.delete('tab');
+    url.pathname = '/progress';
+    return NextResponse.redirect(url);
+  }
+  if (pathname === '/tutor' && tab === 'residents') {
+    url.searchParams.delete('tab');
+    url.pathname = '/tutor/residents';
+    return NextResponse.redirect(url);
+  }
+  if (pathname === '/tutor' && tab === 'tasks') {
+    url.searchParams.delete('tab');
+    url.pathname = '/tutor/tasks';
+    return NextResponse.redirect(url);
+  }
+  if (pathname === '/admin' && tab === 'tasks') {
+    url.searchParams.delete('tab');
+    url.pathname = '/admin/tasks';
+    return NextResponse.redirect(url);
+  }
+
   const response = NextResponse.next();
 
   // Add security headers to all responses

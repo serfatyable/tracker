@@ -507,7 +507,8 @@
     },
     "yourNextShift": "התורנות הבאה שלך",
     "teamOnDate": "הצוות ב-{{date}}",
-    "noShifts": "אין תורנויות"
+    "noShifts": "אין תורנויות",
+    "team": "צוות"
   },
   "api": {
     "errors": {

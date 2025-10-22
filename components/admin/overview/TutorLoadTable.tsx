@@ -26,12 +26,12 @@ export default function TutorLoadTable({ assignments, tutors }: Props) {
   return (
     <div className="card-levitate p-3">
       <div className="font-semibold mb-2">{t('overview.tutorLoad')}</div>
-      <div className="overflow-x-container -mx-4 sm:mx-0">
+      <div className="overflow-x-auto overflow-y-auto max-h-[60vh]">
         <div className="inline-block min-w-[40rem] sm:min-w-[56rem] align-top w-full">
           <table className="w-full table-auto text-sm md:text-base">
-            <thead>
+            <thead className="sticky top-0 bg-white dark:bg-neutral-950 z-10">
               <tr className="text-left opacity-70 text-sm md:text-base">
-                <th className="py-1 pr-4 sticky left-0 z-10 bg-bg/95">{t('overview.tutor')}</th>
+                <th className="py-1 pr-4 sticky left-0 z-10 bg-white dark:bg-neutral-950">{t('overview.tutor')}</th>
                 <th className="py-1 pr-4">{t('tutor.tabs.residents')}</th>
                 <th className="py-1 hidden md:table-cell" />
               </tr>
@@ -39,13 +39,13 @@ export default function TutorLoadTable({ assignments, tutors }: Props) {
             <tbody>
               {rows.map(({ tutor, count }) => (
                 <tr key={tutor.uid} className="border-t border-gray-200/20">
-                  <td className="py-1 pr-4 break-anywhere sticky left-0 z-10 bg-bg/95">
+                  <td className="py-1 pr-4 break-anywhere sticky left-0 z-10 bg-white dark:bg-neutral-950">
                     {tutor.fullName || tutor.uid}
                   </td>
-                  <td className="py-1 pr-4">{count}</td>
+                  <td className="py-1 pr-4 whitespace-nowrap leading-normal">{count}</td>
                   <td className="py-1 hidden md:table-cell">
                     <Button size="sm" className="btn-levitate" variant="outline">
-                      Assign resident
+                      {t('overview.assignResident', { defaultValue: 'Assign resident' })}
                     </Button>
                   </td>
                 </tr>

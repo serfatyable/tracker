@@ -9,24 +9,21 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { useMorningMeetingsMultiMonth } from '../../lib/hooks/useMorningClasses';
 import type { MorningMeeting } from '../../types/morningMeetings';
+import { haptic } from '../../lib/utils/haptics';
+// Header composed inline for precise alignment
 
 export default function MorningMeetingsPage() {
   const { t, i18n } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Get current month key
+  const [attendanceOpen, setAttendanceOpen] = useState(false);
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
-
-  // Fetch meetings for the next 6 months
   const { meetingsByMonth, loading } = useMorningMeetingsMultiMonth(6);
 
-  // Filter meetings by search term
   const filteredMeetings = useMemo(() => {
     const monthMeetings = meetingsByMonth.get(selectedMonth) || [];
     if (!searchTerm.trim()) return monthMeetings;
-
     const needle = searchTerm.toLowerCase();
     return monthMeetings.filter(
       (m) =>
@@ -37,14 +34,8 @@ export default function MorningMeetingsPage() {
     );
   }, [meetingsByMonth, selectedMonth, searchTerm]);
 
-  // Group meetings by week
-  const meetingsByWeek = useMemo(() => {
-    return groupByWeek(filteredMeetings);
-  }, [filteredMeetings]);
+  const meetingsByWeek = useMemo(() => groupByWeek(filteredMeetings), [filteredMeetings]);
 
-  // Format month name for display
-
-  // Format month name for display
   const formatMonthTab = (monthKey: string) => {
     const [year, month] = monthKey.split('-').map(Number);
     const date = new Date(year!, month!);
@@ -54,28 +45,50 @@ export default function MorningMeetingsPage() {
     });
   };
 
+  // nextMeeting reserved for future enhancements
+
   return (
     <AppShell>
-      <div className="app-container p-4 space-y-6">
-        {/* Header with search */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {t('morningMeetings.title')}
-          </h1>
-          <div className="flex gap-2 items-center">
-            <Input
-              type="text"
-              placeholder={t('ui.search', { defaultValue: 'Search' }) + '...'}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-64"
-            />
-            {searchTerm && (
-              <Button variant="ghost" onClick={() => setSearchTerm('')} className="px-2">
-                ✕
+      <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-2 backdrop-blur-md bg-bg/85 supports-[backdrop-filter]:bg-bg/75 border-b border-muted/20">
+        <div className="app-container px-0">
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="font-bold text-2xl sm:text-3xl leading-tight truncate">
+              {t('morningMeetings.title')}
+            </h1>
+            <div className="flex gap-2 min-w-0">
+              <Button
+                onClick={() => {
+                  haptic('light');
+                  setAttendanceOpen(true);
+                }}
+                className="min-h-[40px]"
+                variant="outline"
+                aria-label={t('morningMeetings.startAttendance', { defaultValue: 'Start attendance' })}
+              >
+                {t('morningMeetings.startAttendance', { defaultValue: 'Start attendance' })}
               </Button>
-            )}
+              <Button asChild className="min-h-[40px]" onClick={() => haptic('light')}>
+                <Link href="#">{t('morningMeetings.addAgenda', { defaultValue: 'Add agenda' })}</Link>
+              </Button>
+            </div>
           </div>
+        </div>
+      </div>
+      <div className="app-container p-4 space-y-6">
+        {/* Header search */}
+        <div className="flex gap-2 items-center">
+          <Input
+            type="text"
+            placeholder={t('ui.search', { defaultValue: 'Search' }) + '...'}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+          />
+          {searchTerm ? (
+            <Button variant="ghost" onClick={() => setSearchTerm('')} className="px-2">
+              ✕
+            </Button>
+          ) : null}
         </div>
 
         {loading ? (
@@ -110,9 +123,12 @@ export default function MorningMeetingsPage() {
                   return (
                     <button
                       key={monthKey}
-                      onClick={() => setSelectedMonth(monthKey)}
+                      onClick={() => {
+                        setSelectedMonth(monthKey);
+                        haptic('light');
+                      }}
                       className={`
-                        flex items-center gap-2 px-4 py-2 rounded-t-lg border-b-2 transition-all whitespace-nowrap
+                        flex items-center gap-2 px-4 py-2 rounded-t-lg border-b-2 transition-all whitespace-nowrap min-h-[44px]
                         ${
                           isSelected
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 font-medium'
@@ -184,6 +200,31 @@ export default function MorningMeetingsPage() {
           </>
         )}
       </div>
+
+      {/* Attendance bottom sheet */}
+      {attendanceOpen && (
+        <div className="fixed inset-0 z-[60] md:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => { haptic('light'); setAttendanceOpen(false); }} />
+          <div className="absolute inset-x-0 bottom-0 bg-bg text-fg rounded-t-2xl shadow-elev2 p-4 safe-area-inset-bottom overscroll-contain">
+            <div className="mx-auto max-w-6xl">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">
+                  {t('morningMeetings.attendance', { defaultValue: 'Attendance' })}
+                </h2>
+                <Button variant="ghost" onClick={() => { haptic('light'); setAttendanceOpen(false); }} aria-label={t('ui.close')}>
+                  ✕
+                </Button>
+              </div>
+              <div className="mt-3">
+                <Input placeholder={t('ui.search', { defaultValue: 'Search' }) + '...'} className="w-full" />
+              </div>
+              <div className="mt-4 text-sm text-[rgb(var(--muted))]">
+                {t('ui.comingSoon', { defaultValue: 'Coming soon' })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
