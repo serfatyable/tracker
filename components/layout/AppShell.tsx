@@ -19,7 +19,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-      {me?.role === 'resident' ? <BottomBar /> : null}
+      {/* Show bottom tabs for all roles (role-based items inside the bar) */}
+      <BottomBar />
       <NetworkStatusIndicator show="offline-only" position="bottom" />
     </div>
   );

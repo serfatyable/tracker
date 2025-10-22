@@ -1,14 +1,17 @@
 'use client';
-import { lazy, Suspense, useMemo as _useMemo, useState } from 'react';
+import Link from 'next/link';
+import { lazy, Suspense, useMemo as _useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+// Link import moved above per import order
 
 import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
 import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 import AuthGate from '../../components/auth/AuthGate';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
+import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 import Card from '../../components/ui/Card';
-import { TabsTrigger } from '../../components/ui/Tabs';
+// Tabs removed per mobile-first stacked sections
 import Toast from '../../components/ui/Toast';
 import {
   approveRotationPetition,
@@ -32,16 +35,6 @@ const TasksTab = lazy(() => import('../../components/tutor/tabs/TasksTab'));
 const TutorTodos = lazy(() => import('../../components/tutor/TutorTodos'));
 
 export default function TutorDashboard() {
-  const [tab, setTab] = useState<
-    | 'dashboard'
-    | 'residents'
-    | 'tasks'
-    | 'rotations'
-    | 'reflections'
-    | 'settings'
-    | 'morning'
-    | 'oncall'
-  >('dashboard');
   const { t } = useTranslation();
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(
     null,
@@ -59,77 +52,48 @@ export default function TutorDashboard() {
         onClear={() => setToast(null)}
       />
       <AppShell>
+        <LargeTitleHeader title={t('ui.home', { defaultValue: 'Home' }) as string} />
         <div className="app-container p-6">
-          <div className="w-full">
-            <h1 className="sr-only">
-              {t('ui.tutorDashboard', { defaultValue: 'Tutor Dashboard' })}
-            </h1>
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex gap-2">
-                <TabsTrigger active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>
-                  {t('ui.dashboard') || 'Dashboard'}
-                </TabsTrigger>
-                <TabsTrigger active={tab === 'residents'} onClick={() => setTab('residents')}>
-                  {t('tutor.tabs.residents') || t('roles.resident') || 'Residents'}
-                </TabsTrigger>
-                <TabsTrigger active={tab === 'tasks'} onClick={() => setTab('tasks')}>
-                  {t('ui.tasks') || 'Tasks'}
-                </TabsTrigger>
-                <TabsTrigger active={tab === 'rotations'} onClick={() => setTab('rotations')}>
-                  {t('ui.rotations') || 'Rotations'}
-                </TabsTrigger>
-                <TabsTrigger active={tab === 'reflections'} onClick={() => setTab('reflections')}>
-                  {t('ui.reflections') || 'Reflections'}
-                </TabsTrigger>
-                <TabsTrigger active={tab === 'morning'} onClick={() => setTab('morning')}>
-                  {t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}
-                </TabsTrigger>
-                <TabsTrigger active={tab === 'oncall'} onClick={() => setTab('oncall')}>
-                  {t('ui.onCall', { defaultValue: 'On Call' })}
-                </TabsTrigger>
-                <TabsTrigger active={tab === 'settings'} onClick={() => setTab('settings')}>
-                  {t('ui.settings') || 'Settings'}
-                </TabsTrigger>
-              </div>
+          <div className="w-full space-y-6">
+            {/* Quick links */}
+            <div className="flex items-center justify-end gap-2">
+              <Link href="/tutor/residents" className="pill text-xs">
+                {t('tutor.tabs.residents')}
+              </Link>
+              <Link href="/tutor/tasks" className="pill text-xs">
+                {t('ui.tasks')}
+              </Link>
             </div>
-            {tab === 'dashboard' ? (
-              <Suspense
-                fallback={
-                  <div className="space-y-3">
-                    <CardSkeleton />
-                    <CardSkeleton />
-                  </div>
-                }
-              >
+
+            {/* Stacked sections */}
+            <Suspense
+              fallback={
                 <div className="space-y-3">
-                  <TutorDashboardSections />
+                  <CardSkeleton />
+                  <CardSkeleton />
                 </div>
-              </Suspense>
-            ) : tab === 'residents' ? (
-              <Suspense fallback={<SpinnerSkeleton />}>
-                <TutorResidentsTab onToast={handleToast} />
-              </Suspense>
-            ) : tab === 'tasks' ? (
-              <Suspense fallback={<SpinnerSkeleton />}>
-                <TutorTasksTab onToast={handleToast} />
-              </Suspense>
-            ) : tab === 'rotations' ? (
-              <Suspense fallback={<SpinnerSkeleton />}>
-                <TutorRotationsTab />
-              </Suspense>
-            ) : tab === 'reflections' ? (
-              <TutorReflectionsInline />
-            ) : tab === 'morning' ? (
-              <MorningMeetingsView showUploadButton={false} />
-            ) : tab === 'oncall' ? (
-              <OnCallScheduleView showUploadButton={false} />
-            ) : (
-              <Suspense fallback={<SpinnerSkeleton />}>
-                <div className="space-y-3">
-                  <SettingsPanel />
-                </div>
-              </Suspense>
-            )}
+              }
+            >
+              <div className="space-y-3">
+                <TutorDashboardSections />
+              </div>
+            </Suspense>
+
+            <Suspense fallback={<SpinnerSkeleton />}> 
+              <TutorRotationsTab />
+            </Suspense>
+
+            <TutorReflectionsInline />
+
+            <MorningMeetingsView showUploadButton={false} />
+
+            <OnCallScheduleView showUploadButton={false} />
+
+            <Suspense fallback={<SpinnerSkeleton />}>
+              <div className="space-y-3">
+                <SettingsPanel />
+              </div>
+            </Suspense>
           </div>
         </div>
       </AppShell>

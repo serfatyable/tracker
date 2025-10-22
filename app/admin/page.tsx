@@ -10,6 +10,7 @@ import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleVie
 import RotationsPanel from '../../components/admin/rotations/RotationsPanel';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
+import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 import Avatar from '../../components/ui/Avatar';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
@@ -18,7 +19,7 @@ import Drawer from '../../components/ui/Drawer';
 // Unused import removed: Input
 import Select from '../../components/ui/Select';
 import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/Table';
-import { TabsList, TabsTrigger } from '../../components/ui/Tabs';
+// Tabs removed per mobile-first stacked sections
 import TextField from '../../components/ui/TextField';
 import Toast from '../../components/ui/Toast';
 import {
@@ -79,9 +80,7 @@ export default function AdminDashboard() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const firebaseOk = getFirebaseStatus().ok;
-  const [tab, setTab] = useState<
-    'overview' | 'users' | 'tasks' | 'rotations' | 'reflections' | 'settings' | 'morning' | 'oncall'
-  >('overview');
+  // Removed dashboard tabs; render stacked sections inline
   const [openRotationId, setOpenRotationId] = useState<string | null>(null);
   const [openRotationName, setOpenRotationName] = useState<string>('');
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -187,7 +186,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [tab, userSearch, roleFilter, statusFilter, orderBy, orderDir, taskFilter]);
+  }, [userSearch, roleFilter, statusFilter, orderBy, orderDir, taskFilter, tab]);
 
   useEffect(() => {
     if (!firebaseOk) return;
@@ -386,9 +385,9 @@ export default function AdminDashboard() {
 
   return (
     <AppShell>
+      <LargeTitleHeader title={t('ui.dashboard', { defaultValue: 'Dashboard' }) as string} />
       <div className="app-container flex min-h-dvh pad-safe-t pad-safe-b flex-col items-stretch justify-start p-6">
         <div className="w-full">
-          <h1 className="sr-only">{t('ui.adminDashboard', { defaultValue: 'Admin Dashboard' })}</h1>
           <div className="mb-4 flex items-center justify-between">
             <TabsList>
               <TabsTrigger active={tab === 'overview'} onClick={() => setTab('overview')}>
@@ -471,7 +470,45 @@ export default function AdminDashboard() {
                   </Button>
                 </div>
               </div>
-              <div className="overflow-x-container">
+              {/* Mobile cards */}
+              <div className="md:hidden grid grid-cols-1 gap-2">
+                {filteredUsers.map((u) => (
+                  <button
+                    key={u.uid}
+                    type="button"
+                    onClick={() => openUserDrawer(u)}
+                    className="card-levitate p-3 text-left"
+                    aria-label={u.fullName || u.email || 'User'}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Avatar name={u.fullName} />
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{u.fullName || '-'}</div>
+                          <div className="text-xs opacity-70 break-anywhere">{u.email || '-'}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {renderRoleBadge(u.role)}
+                        {renderStatusBadge(u.status)}
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <label className="inline-flex items-center gap-2 text-xs opacity-80" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={!!userSel[u.uid]}
+                          onChange={(e) => setUserSel((s) => ({ ...s, [u.uid]: e.target.checked }))}
+                        />
+                        <span>{t('ui.select') || 'Select'}</span>
+                      </label>
+                      <span className="text-xs opacity-60">{t('ui.open') || 'Open'}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-container">
                 <div className="inline-block min-w-[56rem] align-top">
                   <Table className={(density === 'compact' ? 'table-compact ' : '') + ' w-full'}>
                     <THead>
@@ -698,57 +735,87 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-container">
-                  <div className="inline-block min-w-[56rem] align-top">
-                    <Table className="w-full">
-                      <THead>
-                        <TR>
-                          <TH>
+                <>
+                  {/* Mobile cards */}
+                  <div className="md:hidden grid grid-cols-1 gap-2">
+                    {tasks.map((t) => (
+                      <div key={t.id} className="card-levitate p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{t.userId}</div>
+                            <div className="text-xs opacity-70 truncate">{t.rotationId} · {t.itemId}</div>
+                          </div>
+                          <div className="text-xs opacity-80">{t.status}</div>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-xs opacity-80">
+                          <div>
+                            {t.count}/{t.requiredCount}
+                          </div>
+                          <label className="inline-flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
-                              checked={tasks.length > 0 && tasks.every((t) => taskSel[t.id])}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                const next: Record<string, boolean> = {};
-                                tasks.forEach((t) => {
-                                  next[t.id] = checked;
-                                });
-                                setTaskSel(next);
-                              }}
+                              checked={!!taskSel[t.id]}
+                              onChange={(e) => setTaskSel((s) => ({ ...s, [t.id]: e.target.checked }))}
                             />
-                          </TH>
-                          <TH>{t('ui.user')}</TH>
-                          <TH>{t('ui.rotation')}</TH>
-                          <TH>{t('ui.item')}</TH>
-                          <TH>{t('ui.count')}</TH>
-                          <TH>{t('ui.required')}</TH>
-                          <TH>{t('ui.status')}</TH>
-                        </TR>
-                      </THead>
-                      <TBody>
-                        {tasks.map((t) => (
-                          <TR key={t.id}>
-                            <TD>
+                            <span>{t('ui.select') || 'Select'}</span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-container">
+                    <div className="inline-block min-w-[56rem] align-top">
+                      <Table className="w-full">
+                        <THead>
+                          <TR>
+                            <TH>
                               <input
                                 type="checkbox"
-                                checked={!!taskSel[t.id]}
-                                onChange={(e) =>
-                                  setTaskSel((s) => ({ ...s, [t.id]: e.target.checked }))
-                                }
+                                checked={tasks.length > 0 && tasks.every((t) => taskSel[t.id])}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  const next: Record<string, boolean> = {};
+                                  tasks.forEach((t) => {
+                                    next[t.id] = checked;
+                                  });
+                                  setTaskSel(next);
+                                }}
                               />
-                            </TD>
-                            <TD>{t.userId}</TD>
-                            <TD>{t.rotationId}</TD>
-                            <TD>{t.itemId}</TD>
-                            <TD>{t.count}</TD>
-                            <TD>{t.requiredCount}</TD>
-                            <TD>{t.status}</TD>
+                            </TH>
+                            <TH>{t('ui.user')}</TH>
+                            <TH>{t('ui.rotation')}</TH>
+                            <TH>{t('ui.item')}</TH>
+                            <TH>{t('ui.count')}</TH>
+                            <TH>{t('ui.required')}</TH>
+                            <TH>{t('ui.status')}</TH>
                           </TR>
-                        ))}
-                      </TBody>
-                    </Table>
+                        </THead>
+                        <TBody>
+                          {tasks.map((t) => (
+                            <TR key={t.id}>
+                              <TD>
+                                <input
+                                  type="checkbox"
+                                  checked={!!taskSel[t.id]}
+                                  onChange={(e) =>
+                                    setTaskSel((s) => ({ ...s, [t.id]: e.target.checked }))
+                                  }
+                                />
+                              </TD>
+                              <TD>{t.userId}</TD>
+                              <TD>{t.rotationId}</TD>
+                              <TD>{t.itemId}</TD>
+                              <TD>{t.count}</TD>
+                              <TD>{t.requiredCount}</TD>
+                              <TD>{t.status}</TD>
+                            </TR>
+                          ))}
+                        </TBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
               <div className="flex justify-end gap-2">
                 <Button

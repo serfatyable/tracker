@@ -88,6 +88,40 @@ export async function signOut() {
   await fbSignOut(auth);
 }
 
+export async function signOutAndRedirect() {
+  try {
+    await signOut();
+  } finally {
+    try {
+      localStorage.removeItem('i18n_lang');
+    } catch {
+      /* noop */
+    }
+    try {
+      // expire cookie
+      if (typeof document !== 'undefined') {
+        document.cookie = 'i18n_lang=; Max-Age=0; path=/; SameSite=Lax';
+      }
+    } catch {
+      /* noop */
+    }
+    if (typeof window !== 'undefined') {
+      // soft redirect
+      window.location.replace('/auth');
+      // hard assert after a short delay
+      setTimeout(async () => {
+        try {
+          const { getAuth } = await import('firebase/auth');
+          const auth = getAuth();
+          if (auth.currentUser) window.location.href = '/auth';
+        } catch {
+          window.location.href = '/auth';
+        }
+      }, 300);
+    }
+  }
+}
+
 async function ensureUserProfileExists(user: User) {
   const { db } = getAuthDb();
   const ref = doc(db, 'users', user.uid);

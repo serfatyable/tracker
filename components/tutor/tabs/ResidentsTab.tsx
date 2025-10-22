@@ -35,6 +35,7 @@ export default function ResidentsTab({
 }: Props) {
   const [search, setSearch] = useState('');
   const [onlyWithPetitions, setOnlyWithPetitions] = useState(false);
+  const [onlyOwned, setOnlyOwned] = useState(false);
 
   const resById = useMemo(() => new Map(residents.map((r) => [r.uid, r])), [residents]);
   const rotById = useMemo(() => new Map(rotations.map((r) => [r.id, r])), [rotations]);
@@ -76,6 +77,7 @@ export default function ResidentsTab({
         const hay = `${x.resident.fullName || ''} ${x.resident.email || ''}`.toLowerCase();
         if (q && !hay.includes(q)) return false;
         if (onlyWithPetitions && (x.petitions || []).length === 0) return false;
+        if (onlyOwned && !ownedRotationIds.has(x.rotation.id)) return false;
         return true;
       })
       .sort((a, b) =>
@@ -83,7 +85,7 @@ export default function ResidentsTab({
           b.resident.fullName || b.resident.uid,
         ),
       );
-  }, [myAssignments, resById, rotById, petitionsByResident, search, onlyWithPetitions]);
+  }, [myAssignments, resById, rotById, petitionsByResident, search, onlyWithPetitions, onlyOwned, ownedRotationIds]);
 
   return (
     <div className="space-y-3">
@@ -94,14 +96,23 @@ export default function ResidentsTab({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <label className="text-sm flex items-center gap-2 text-gray-900 dark:text-gray-50">
-          <input
-            type="checkbox"
-            checked={onlyWithPetitions}
-            onChange={(e) => setOnlyWithPetitions(e.target.checked)}
-          />
-          <span>Has pending petition</span>
-        </label>
+      </div>
+      {/* Quick filters */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+        <button
+          type="button"
+          onClick={() => setOnlyWithPetitions((v) => !v)}
+          className={`pill text-xs ${onlyWithPetitions ? 'ring-2 ring-primary' : ''}`}
+        >
+          Has pending petition
+        </button>
+        <button
+          type="button"
+          onClick={() => setOnlyOwned((v) => !v)}
+          className={`pill text-xs ${onlyOwned ? 'ring-2 ring-primary' : ''}`}
+        >
+          My owned rotations
+        </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {cards.map(({ assignment, resident, rotation, petitions }) => {

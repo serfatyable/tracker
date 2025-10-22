@@ -131,7 +131,12 @@
     "toggleLanguage": "Toggle language",
     "maintenance": "Maintenance",
     "fixData": "Fix duplicates and invalid data",
-    "auth": "Authentication"
+    "auth": "Authentication",
+    "primaryNavigation": "Primary navigation",
+    "menu": "Menu",
+    "comingSoon": "Coming soon",
+    "more": "More",
+    "mine": "Mine"
   },
   "morningMeetings": {
     "title": "Morning Meetings",
@@ -508,7 +513,9 @@
     },
     "yourNextShift": "Your Next Shift",
     "teamOnDate": "Team on {{date}}",
-    "noShifts": "No shifts"
+    "noShifts": "No shifts",
+    "nextShift": "Next shift",
+    "team": "Team"
   },
   "api": {
     "errors": {

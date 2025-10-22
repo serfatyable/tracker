@@ -1,12 +1,10 @@
 'use client';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { signOut } from '../lib/firebase/auth';
 import { useCurrentUserProfile } from '../lib/hooks/useCurrentUserProfile';
 import { useTomorrowLecturerReminder } from '../lib/hooks/useTomorrowLecturerReminder';
 
@@ -15,20 +13,25 @@ import Avatar from './ui/Avatar';
 const MobileDrawer = dynamic(() => import('./layout/MobileDrawer'), { ssr: false });
 
 export default function TopBar() {
-  const router = useRouter();
+  // Router retained only for future navigations; unused currently
   const { data: me } = useCurrentUserProfile();
   const { t, i18n: i18next } = useTranslation();
   const { show, meeting } = useTomorrowLecturerReminder();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  async function handleSignOut() {
-    try {
-      await signOut();
-      router.replace('/auth');
-    } catch {
-      // Sign out failed - silent failure
+  useEffect(() => {
+    const onOpen = () => setDrawerOpen(true);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('tracker:open-drawer', onOpen as any);
     }
-  }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('tracker:open-drawer', onOpen as any);
+      }
+    };
+  }, []);
+
+  // No sign-out action in TopBar; handled from MobileDrawer
 
   function LangToggle() {
     const [lang, setLang] = useState<'en' | 'he'>(() => {
@@ -40,25 +43,24 @@ export default function TopBar() {
       try {
         localStorage.setItem('i18n_lang', next);
       } catch {
-        /* noop */
+        // Ignore localStorage errors (e.g., in private browsing)
       }
       setLang(next);
       try {
         i18next.changeLanguage(next);
       } catch {
-        /* noop */
+        // Ignore i18n change errors
       }
       try {
         document.cookie = `i18n_lang=${next}; path=/; SameSite=Lax`;
       } catch {
-        /* noop */
+        // Ignore cookie errors
       }
-      // Update document dir attribute
       try {
         document.documentElement.dir = next === 'he' ? 'rtl' : 'ltr';
         document.documentElement.lang = next;
       } catch {
-        /* noop */
+        // Ignore DOM manipulation errors
       }
     };
     return (
@@ -76,43 +78,22 @@ export default function TopBar() {
 
   return (
     <header
-      dir="ltr"
-      className={`sticky top-0 z-40 flex h-12 items-center justify-between px-4 transition-colors duration-200 bg-surface/95 text-fg shadow-elev1`}
+      className={`sticky top-0 z-40 flex h-12 items-center justify-between px-2 transition-colors duration-200 bg-surface/95 text-fg shadow-elev1`}
     >
       <div className="flex items-center gap-2 text-base flex-shrink-0">
         <button
           type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-surface/70 lg:hidden"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-md hover:bg-surface/70 lg:hidden pl-2"
           aria-label={t('ui.openMenu', { defaultValue: 'Open menu' })}
           onClick={() => setDrawerOpen(true)}
         >
           <Bars3Icon className="h-6 w-6" />
         </button>
-        <div className="relative h-7 w-7 overflow-hidden rounded-full ring border-primary-token shadow-[0_0_0_1px_rgba(0,0,0,0.04)] flex-shrink-0">
-          <Image
-            src="/logo.png"
-            alt="Tracker logo"
-            fill
-            className="object-cover"
-            sizes="28px"
-            priority
-          />
-        </div>
         <span
-          className="font-medium hidden sm:inline"
-          style={{
-            backgroundImage:
-              'linear-gradient(180deg, rgba(210,216,224,0.95) 0%, rgba(160,170,184,0.92) 50%, rgba(110,120,135,0.9) 100%)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            color: 'transparent',
-            textShadow: '0 1px 2px rgba(0,0,0,0.45)',
-            WebkitFontSmoothing: 'antialiased',
-            MozOsxFontSmoothing: 'grayscale',
-            filter: 'none',
-          }}
+          className="font-semibold sm:font-bold tracking-tight text-fg"
+          aria-label="TRACKER"
         >
-          Tracker
+          TRACKER
         </span>
       </div>
       <nav className="flex items-center gap-1 sm:gap-2 flex-shrink min-w-0" aria-label="User menu">
@@ -121,22 +102,12 @@ export default function TopBar() {
             {t('morningMeetings.lecturerReminder')} — {meeting?.title}
           </div>
         ) : null}
-        {/* Morning Meetings tab moved to Sidebar */}
-        <LangToggle />
-        <div className="pill text-sm min-w-0">
-          <Avatar name={me?.fullName} size={20} className="flex-shrink-0" />
-          <span className="max-w-[12ch] sm:max-w-[16ch] truncate">
-            {me?.fullName || me?.email || t('ui.user')}
-          </span>
+        <div className="hidden md:block">
+          <LangToggle />
         </div>
-        <button
-          onClick={handleSignOut}
-          className="pill text-sm px-2 sm:px-3 py-1 whitespace-nowrap flex-shrink-0"
-          aria-label={t('auth.signOut')}
-        >
-          <span className="hidden sm:inline">{t('auth.signOut')}</span>
-          <span className="sm:hidden">{t('auth.signOut')}</span>
-        </button>
+        <div className="min-w-0">
+          <Avatar name={me?.fullName} size={32} className="h-8 w-8 rounded-full" />
+        </div>
       </nav>
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </header>

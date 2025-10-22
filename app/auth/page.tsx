@@ -1,6 +1,5 @@
 'use client';
 import { Tab } from '@headlessui/react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -223,15 +222,7 @@ export default function AuthPage() {
       {/* Force brand header to LTR regardless of app language */}
       <div dir="ltr" className="mb-6 flex w-full items-center justify-between gap-4 text-fg">
         <div className="flex items-center gap-4">
-          <Image
-            src="/logo.png"
-            alt="Tracker logo"
-            width={64}
-            height={64}
-            className="rounded-full object-cover ring-1 ring-gray-300 shadow-md"
-            priority
-          />
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-50">Tracker</h1>
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-primary" aria-label="TRACKER">TRACKER</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
