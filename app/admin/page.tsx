@@ -88,71 +88,7 @@ export default function AdminDashboard() {
 
   // User/task actions removed from dashboard
 
-  async function loadMoreUsers() {
-    if (!userCursor || loadingMoreUsers) return;
-    setLoadingMoreUsers(true);
-    try {
-      const u = await listUsers({
-        limit: 25,
-        startAfter: userCursor,
-        search: userSearch || undefined,
-        role: roleFilter || undefined,
-        status: statusFilter || undefined,
-        orderBy,
-        orderDir,
-      });
-      setUsers((prev) => [...prev, ...u.items]);
-      setUserCursor(u.lastCursor as any);
-      setHasMoreUsers((u.items?.length || 0) >= 25);
-      setUserSel({});
-    } catch (error) {
-      console.error('Failed to load more users:', error);
-      setToastMessage(
-        t('toasts.failedToLoadMoreUsers') +
-          ': ' +
-          (error instanceof Error ? error.message : String(error)),
-      );
-    } finally {
-      setLoadingMoreUsers(false);
-    }
-  }
-
-  function toggleSort(field: 'role' | 'status') {
-    if (orderBy === field) {
-      setOrderDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setOrderBy(field);
-      setOrderDir('asc');
-    }
-  }
-  async function bulkApproveTasks() {
-    if (!idsFrom(taskSel).length) return;
-    try {
-      await updateTasksStatus({ taskIds: idsFrom(taskSel), status: 'approved' });
-      await refresh();
-    } catch (error) {
-      console.error('Failed to approve tasks:', error);
-      setToastMessage(
-        t('toasts.failedToApproveTasks') +
-          ': ' +
-          (error instanceof Error ? error.message : String(error)),
-      );
-    }
-  }
-  async function bulkRejectTasks() {
-    if (!idsFrom(taskSel).length) return;
-    try {
-      await updateTasksStatus({ taskIds: idsFrom(taskSel), status: 'rejected' });
-      await refresh();
-    } catch (error) {
-      console.error('Failed to reject tasks:', error);
-      setToastMessage(
-        t('toasts.failedToRejectTasks') +
-          ': ' +
-          (error instanceof Error ? error.message : String(error)),
-      );
-    }
-  }
+  // Tab-era functions removed
 
   if (!firebaseOk) {
     return (
@@ -222,6 +158,8 @@ function OverviewTab() {
           <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
         {/* Tutors with zero load */}
         <ZeroLoadTutors assignments={assignments} tutors={tutors} />
+        {/* Tasks snapshot */}
+        <TasksSnapshot />
         {/* Tasks snapshot placeholder (pending approvals/upcoming) can be added here when data is ready */}
       </div>
     </Suspense>
@@ -248,6 +186,21 @@ function ZeroLoadTutors({ assignments, tutors }: { assignments: any[]; tutors: U
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function TasksSnapshot() {
+  const { t } = useTranslation();
+  return (
+    <div className="card-levitate p-3">
+      <div className="flex items-center justify-between">
+        <div className="font-semibold">{t('ui.tasks')}</div>
+        <Button asChild variant="outline"><a href="/admin/tasks">{t('ui.open')}</a></Button>
+      </div>
+      <div className="mt-2 text-sm opacity-80">
+        {t('overview.tasksSnapshot', { defaultValue: 'Pending approvals and upcoming items' })}
+      </div>
     </div>
   );
 }
