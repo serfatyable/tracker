@@ -5,35 +5,18 @@ import { useRouter } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo as _useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
-import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
-import RotationsPanel from '../../components/admin/rotations/RotationsPanel';
+// Full modules omitted on dashboard; snapshots only
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
 import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
-import Avatar from '../../components/ui/Avatar';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
-import { Dialog, DialogHeader, DialogFooter } from '../../components/ui/Dialog';
-import Drawer from '../../components/ui/Drawer';
-// Unused import removed: Input
-import Select from '../../components/ui/Select';
-import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/Table';
 // Tabs removed per mobile-first stacked sections
-import TextField from '../../components/ui/TextField';
-import Toast from '../../components/ui/Toast';
-import {
-  listUsers,
-  listTasks,
-  updateUsersStatus,
-  updateUsersRole,
-  updateTasksStatus,
-} from '../../lib/firebase/admin';
+import { listUsers, listTasks } from '../../lib/firebase/admin';
 import { getCurrentUserWithProfile } from '../../lib/firebase/auth';
 import { getFirebaseStatus } from '../../lib/firebase/client';
 import { useActiveAssignments } from '../../lib/hooks/useActiveAssignments';
 import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
-// Unused import removed: useCurrentUserProfile
 import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
 import type { Role, UserProfile } from '../../types/auth';
 
@@ -46,64 +29,18 @@ const PetitionsTable = dynamic(() => import('../../components/admin/overview/Pet
   loading: () => <SpinnerSkeleton />,
   ssr: false,
 });
-const ResidentsByRotation = dynamic(
-  () => import('../../components/admin/overview/ResidentsByRotation'),
-  { loading: () => <CardSkeleton />, ssr: false },
-);
-const TutorLoadTable = dynamic(() => import('../../components/admin/overview/TutorLoadTable'), {
-  loading: () => <SpinnerSkeleton />,
-  ssr: false,
-});
+// TutorLoadTable replaced by compact zero-load snapshot
 const UnassignedQueues = dynamic(() => import('../../components/admin/overview/UnassignedQueues'), {
   loading: () => <SpinnerSkeleton />,
   ssr: false,
 });
-const AdminReflectionsTabs = dynamic(
-  () => import('../../components/admin/reflections/AdminReflectionsTabs'),
-  { loading: () => <SpinnerSkeleton />, ssr: false },
-);
-const RotationOwnersEditor = dynamic(
-  () => import('../../components/admin/rotations/RotationOwnersEditor'),
-  { loading: () => <SpinnerSkeleton />, ssr: false },
-);
-// RotationsPanel loads synchronously to avoid dev ChunkLoadError during frequent rebuilds
-const RotationTree = dynamic(() => import('../../components/admin/rotations/RotationTree'), {
-  loading: () => <SpinnerSkeleton />,
-  ssr: false,
-});
-const SettingsPanel = dynamic(() => import('../../components/settings/SettingsPanel'), {
-  loading: () => <CardSkeleton />,
-  ssr: false,
-});
+// Reflections/Rotations/Settings are standalone pages (not on dashboard)
 
 export default function AdminDashboard() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const router = useRouter();
   const firebaseOk = getFirebaseStatus().ok;
-  // Removed dashboard tabs; render stacked sections inline
-  const [openRotationId, setOpenRotationId] = useState<string | null>(null);
-  const [openRotationName, setOpenRotationName] = useState<string>('');
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [userSel, setUserSel] = useState<Record<string, boolean>>({});
-  const [userSearch, setUserSearch] = useState('');
-  const [userCursor, setUserCursor] = useState<any | undefined>(undefined);
-  const [hasMoreUsers, setHasMoreUsers] = useState(false);
-  const [roleFilter, setRoleFilter] = useState<Role | ''>('');
-  const [statusFilter, setStatusFilter] = useState<'' | 'pending' | 'active' | 'disabled'>('');
-  const [orderBy, setOrderBy] = useState<'createdAt' | 'role' | 'status'>('role');
-  const [orderDir, setOrderDir] = useState<'asc' | 'desc'>('asc');
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'approve' | 'disable' | 'role' | null>(null);
-  const [confirmRole, setConfirmRole] = useState<Role | null>(null);
-  const [confirmTarget, setConfirmTarget] = useState<UserProfile | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [lastAction, setLastAction] = useState<{
-    type: 'disable';
-    userId: string;
-    prevStatus: 'pending' | 'active' | 'disabled';
-  } | null>(null);
-  const [loadingMoreUsers, setLoadingMoreUsers] = useState(false);
+  // Render stacked dashboard; remove tab-era state
 
   function renderRoleBadge(role: Role) {
     const roleClass =
@@ -132,61 +69,18 @@ export default function AdminDashboard() {
       </Badge>
     );
   }
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [taskSel, setTaskSel] = useState<Record<string, boolean>>({});
-  const [taskFilter, setTaskFilter] = useState<'pending' | 'approved' | 'rejected' | ''>('');
-  const [taskCursor, setTaskCursor] = useState<any | undefined>(undefined);
-  const [hasMoreTasks, setHasMoreTasks] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [density, setDensity] = useState<'normal' | 'compact'>(() => {
-    if (typeof window === 'undefined') return 'normal';
-    return (localStorage.getItem('ui_density') as 'normal' | 'compact') || 'normal';
-  });
-  useEffect(() => {
-    try {
-      localStorage.setItem('ui_density', density);
-    } catch {
-      // localStorage may not be available
-    }
-  }, [density]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      if (tab === 'users') {
-        try {
-          const u = await listUsers({
-            limit: 25,
-            search: userSearch || undefined,
-            role: roleFilter || undefined,
-            status: statusFilter || undefined,
-            orderBy,
-            orderDir,
-          });
-          setUsers(u.items);
-          setUserCursor(u.lastCursor as any);
-          setHasMoreUsers((u.items?.length || 0) >= 25);
-          setUserSel({});
-        } catch {
-          // Fallback: minimal query to avoid index issues
-          const u = await listUsers({ limit: 25 });
-          setUsers(u.items);
-          setUserCursor(u.lastCursor as any);
-          setHasMoreUsers((u.items?.length || 0) >= 25);
-          setUserSel({});
-        }
-      }
-      if (tab === 'tasks') {
-        const t = await listTasks({ limit: 25, status: taskFilter || undefined });
-        setTasks(t.items);
-        setTaskCursor(t.lastCursor as any);
-        setHasMoreTasks((t.items?.length || 0) >= 25);
-        setTaskSel({});
-      }
+      // Lightweight prefetch for possible snapshot metrics (optional)
+      await listUsers({ limit: 1 });
+      await listTasks({ limit: 1 });
     } finally {
       setLoading(false);
     }
-  }, [userSearch, roleFilter, statusFilter, orderBy, orderDir, taskFilter, tab]);
+  }, []);
 
   useEffect(() => {
     if (!firebaseOk) return;
@@ -211,101 +105,15 @@ export default function AdminDashboard() {
     })();
   }, [router, firebaseOk, refresh]);
 
-  // Fetch rotation name when opening rotation editor
-  useEffect(() => {
-    if (!openRotationId) {
-      setOpenRotationName('');
-      return;
-    }
+  // Rotation editor removed from dashboard
 
-    (async () => {
-      try {
-        const { listRotations } = await import('../../lib/firebase/admin');
-        const result = await listRotations({ limit: 100 });
-        const rotation = result.items.find((r: any) => r.id === openRotationId);
-
-        if (rotation) {
-          const name = String(
-            i18n.language === 'he'
-              ? (rotation as any).name_he || (rotation as any).name_en || (rotation as any).name
-              : (rotation as any).name_en || (rotation as any).name,
-          );
-          setOpenRotationName(name);
-        } else {
-          setOpenRotationName('Unknown Rotation');
-        }
-      } catch (error) {
-        console.error('Failed to fetch rotation name:', error);
-        setOpenRotationName('Rotation');
-      }
-    })();
-  }, [openRotationId, i18n.language]);
-
-  const filteredUsers = users; // server-side search
+  // Users/tasks tables removed from dashboard
 
   function idsFrom(sel: Record<string, boolean>) {
     return Object.keys(sel).filter((k) => sel[k]);
   }
 
-  function openUserDrawer(u: UserProfile) {
-    setSelectedUser(u);
-  }
-  function closeUserDrawer() {
-    setSelectedUser(null);
-  }
-
-  function askConfirm(action: 'approve' | 'disable' | 'role', user: UserProfile, role?: Role) {
-    setConfirmAction(action);
-    setConfirmTarget(user);
-    setConfirmRole(role || null);
-    setConfirmOpen(true);
-  }
-
-  async function executeConfirm() {
-    if (!confirmTarget || !confirmAction) return;
-    const target = confirmTarget;
-    setConfirmOpen(false);
-    try {
-      if (confirmAction === 'approve') {
-        await updateUsersStatus({ userIds: [target.uid], status: 'active' });
-        await refresh();
-      } else if (confirmAction === 'disable') {
-        const prev = target.status;
-        await updateUsersStatus({ userIds: [target.uid], status: 'disabled' });
-        setLastAction({ type: 'disable', userId: target.uid, prevStatus: prev });
-        setToastMessage(t('toasts.disabledUser'));
-        await refresh();
-      } else if (confirmAction === 'role' && confirmRole) {
-        await updateUsersRole({ userIds: [target.uid], role: confirmRole });
-        await refresh();
-      }
-    } catch (error) {
-      console.error('Failed to execute action:', error);
-      setToastMessage(
-        t('toasts.failed') + ': ' + (error instanceof Error ? error.message : String(error)),
-      );
-    } finally {
-      setConfirmAction(null);
-      setConfirmTarget(null);
-      setConfirmRole(null);
-    }
-  }
-
-  async function undoLast() {
-    if (!lastAction) return;
-    try {
-      if (lastAction.type === 'disable') {
-        await updateUsersStatus({ userIds: [lastAction.userId], status: lastAction.prevStatus });
-        await refresh();
-      }
-      setLastAction(null);
-    } catch (error) {
-      console.error('Failed to undo action:', error);
-      setToastMessage(
-        t('toasts.failedToUndo') + ': ' + (error instanceof Error ? error.message : String(error)),
-      );
-    }
-  }
+  // User/task actions removed from dashboard
 
   async function loadMoreUsers() {
     if (!userCursor || loadingMoreUsers) return;
@@ -437,19 +245,36 @@ function OverviewTab() {
     >
       <div className="space-y-4">
         <KPICards assignments={assignments} residents={residents} tutors={tutors} />
-        <ResidentsByRotation
-          assignments={assignments}
-          rotations={rotations}
-          residents={residents}
-          tutors={tutors}
-        />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-          <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
-          <div className="lg:col-span-2">
-            <TutorLoadTable assignments={assignments} tutors={tutors} />
-          </div>
-        </div>
+        {/* Users snapshot: unassigned residents */}
+        <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
+        {/* Tutors with zero load */}
+        <ZeroLoadTutors assignments={assignments} tutors={tutors} />
+        {/* Tasks snapshot placeholder (pending approvals/upcoming) can be added here when data is ready */}
       </div>
     </Suspense>
+  );
+}
+
+function ZeroLoadTutors({ assignments, tutors }: { assignments: any[]; tutors: UserProfile[] }) {
+  const { t } = useTranslation();
+  const zero = (() => {
+    const load = new Map<string, number>();
+    for (const t of tutors) load.set(t.uid, 0);
+    for (const a of assignments) for (const tid of a.tutorIds || []) load.set(tid, (load.get(tid) || 0) + 1);
+    return tutors.filter((t) => (load.get(t.uid) || 0) === 0);
+  })();
+  return (
+    <div className="card-levitate p-3">
+      <div className="font-semibold mb-2">{t('overview.tutorsWithZeroLoad', { defaultValue: 'Tutors with zero load' })}</div>
+      {zero.length === 0 ? (
+        <div className="text-sm opacity-70">{t('overview.none', { defaultValue: 'None' })}</div>
+      ) : (
+        <ul className="text-sm list-disc pl-5">
+          {zero.map((u) => (
+            <li key={u.uid}>{u.fullName || u.uid}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
