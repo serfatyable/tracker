@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { lazy, Suspense, useMemo as _useMemo } from 'react';
+import { lazy, Suspense, useMemo as _useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // Link import moved above per import order
 
@@ -13,25 +13,14 @@ import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 import Card from '../../components/ui/Card';
 // Tabs removed per mobile-first stacked sections
 import Toast from '../../components/ui/Toast';
-import {
-  approveRotationPetition,
-  denyRotationPetition,
-  assignTutorToResident,
-  unassignTutorFromResident,
-  updateTasksStatus,
-} from '../../lib/firebase/admin';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { useReflectionsForTutor } from '../../lib/hooks/useReflections';
 import { useTutorDashboardData } from '../../lib/hooks/useTutorDashboardData';
 
 // Lazy load heavy components
-// Unused lazy imports removed
-const SettingsPanel = lazy(() => import('../../components/settings/SettingsPanel'));
 const AssignedResidents = lazy(() => import('../../components/tutor/AssignedResidents'));
 const PendingApprovals = lazy(() => import('../../components/tutor/PendingApprovals'));
-const ResidentsTab = lazy(() => import('../../components/tutor/tabs/ResidentsTab'));
 const RotationsTab = lazy(() => import('../../components/tutor/tabs/RotationsTab'));
-const TasksTab = lazy(() => import('../../components/tutor/tabs/TasksTab'));
 const TutorTodos = lazy(() => import('../../components/tutor/TutorTodos'));
 
 export default function TutorDashboard() {
