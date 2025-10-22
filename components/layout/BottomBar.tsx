@@ -57,7 +57,7 @@ export default function BottomBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-primary-token/20 bg-bg/85 backdrop-blur supports-[backdrop-filter]:bg-bg/75 text-fg px-1 py-1.5 md:hidden safe-area-inset-bottom"
+      className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-black/10 dark:border-white/10 bg-white/90 dark:bg-neutral-900/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur text-foreground/70 dark:text-white/70 px-1 py-1.5 md:hidden safe-area-inset-bottom"
       aria-label={t('ui.primaryNavigation', { defaultValue: 'Primary navigation' })}
       role="tablist"
     >
@@ -72,9 +72,14 @@ export default function BottomBar() {
             aria-selected={active}
             aria-label={label}
             onClick={() => haptic('light')}
-            className={`flex flex-col items-center text-[11px] min-w-[60px] min-h-[48px] justify-center gap-1 transition-transform transition-colors ${active ? 'text-primary scale-95' : 'opacity-90 hover:text-primary active:scale-95'}`}
+            className={`flex flex-col items-center justify-center h-14 min-w-0 px-3 text-xs font-medium transition-transform transition-colors ${
+              active 
+                ? 'text-foreground dark:text-white scale-95' 
+                : 'text-foreground/70 dark:text-white/70 hover:text-foreground dark:hover:text-white active:scale-95'
+            }`}
+            data-active={active}
           >
-            <Icon className="h-6 w-6" />
+            <Icon className="h-5 w-5" stroke="currentColor" />
             <span className="truncate w-full text-center">{label}</span>
           </Link>
         );
@@ -88,9 +93,9 @@ export default function BottomBar() {
             haptic('light');
             dispatchOpenDrawer();
           }}
-          className="flex flex-col items-center text-[11px] min-w-[60px] min-h-[48px] justify-center gap-1 transition-transform transition-colors opacity-90 hover:text-primary active:scale-95"
+          className="flex flex-col items-center justify-center h-14 min-w-0 px-3 text-xs font-medium transition-transform transition-colors text-foreground/70 dark:text-white/70 hover:text-foreground dark:hover:text-white active:scale-95"
         >
-          <MoreSolid className="h-6 w-6" />
+          <MoreSolid className="h-5 w-5" stroke="currentColor" />
           <span className="truncate w-full text-center">{t('ui.more', { defaultValue: 'More' })}</span>
         </button>
       )}

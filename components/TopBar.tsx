@@ -77,19 +77,19 @@ export default function TopBar() {
 
   return (
     <header
-      className={`sticky top-0 z-40 flex h-12 items-center justify-between px-2 transition-colors duration-200 bg-surface/95 text-fg shadow-elev1`}
+      className={`sticky top-0 z-40 flex h-12 items-center justify-between px-2 transition-colors duration-200 bg-background border-b dark:border-white/10 text-foreground dark:text-white shadow-elev1`}
     >
       <div className="flex items-center gap-2 text-base flex-shrink-0">
         <button
           type="button"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-md hover:bg-surface/70 lg:hidden pl-2"
+          className="h-11 w-11 grid place-items-center rounded-full hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 text-foreground dark:text-white lg:hidden"
           aria-label={t('ui.openMenu', { defaultValue: 'Open menu' })}
           onClick={() => setDrawerOpen(true)}
         >
-          <Bars3Icon className="h-6 w-6" />
+          <Bars3Icon className="h-5 w-5" stroke="currentColor" />
         </button>
         <span
-          className="font-semibold sm:font-bold tracking-tight text-fg"
+          className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white"
           aria-label="TRACKER"
         >
           TRACKER

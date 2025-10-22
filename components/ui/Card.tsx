@@ -24,7 +24,7 @@ export default function Card({ title, subtitle, actions, className, children, ..
       {(title || actions || subtitle) && (
         <header className="flex items-start justify-between gap-3 border-b border-muted/15 p-4">
           <div>
-            {title ? <h2 className="text-base font-semibold leading-6">{title}</h2> : null}
+            {title ? <h2 className="text-base font-semibold leading-6 text-foreground dark:text-white">{title}</h2> : null}
             {subtitle ? <p className="mt-1 text-sm text-muted">{subtitle}</p> : null}
           </div>
           {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
