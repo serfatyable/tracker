@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
 import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
-import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 // Tabs removed per mobile-first stacked sections
 import { listUsers, listTasks } from '../../lib/firebase/admin';
@@ -18,7 +17,7 @@ import { getFirebaseStatus } from '../../lib/firebase/client';
 import { useActiveAssignments } from '../../lib/hooks/useActiveAssignments';
 import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
 import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
-import type { Role, UserProfile } from '../../types/auth';
+import type { UserProfile } from '../../types/auth';
 
 // Dynamically load heavy tab components (avoid React.lazy chunk issues in dev)
 const KPICards = dynamic(() => import('../../components/admin/overview/KPICards'), {
@@ -42,34 +41,8 @@ export default function AdminDashboard() {
   const firebaseOk = getFirebaseStatus().ok;
   // Render stacked dashboard; remove tab-era state
 
-  function renderRoleBadge(role: Role) {
-    const roleClass =
-      role === 'resident'
-        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
-        : role === 'tutor'
-          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'
-          : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200';
-    return (
-      <Badge variant="outline" className={roleClass}>
-        {t(`roles.${role}`)}
-      </Badge>
-    );
-  }
-
-  function renderStatusBadge(status: 'pending' | 'active' | 'disabled') {
-    const statusClass =
-      status === 'active'
-        ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
-        : status === 'pending'
-          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-          : 'bg-gray-100 text-gray-800 dark:bg-[rgb(var(--surface-elevated))] dark:text-[rgb(var(--fg))]';
-    return (
-      <Badge variant="outline" className={statusClass}>
-        {status}
-      </Badge>
-    );
-  }
-  const [loading, setLoading] = useState(false);
+  // Badge helpers removed (not used on dashboard)
+  const [, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -246,7 +219,7 @@ function OverviewTab() {
       <div className="space-y-4">
         <KPICards assignments={assignments} residents={residents} tutors={tutors} />
         {/* Users snapshot: unassigned residents */}
-        <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
+          <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
         {/* Tutors with zero load */}
         <ZeroLoadTutors assignments={assignments} tutors={tutors} />
         {/* Tasks snapshot placeholder (pending approvals/upcoming) can be added here when data is ready */}
