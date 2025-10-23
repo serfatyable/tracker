@@ -1,6 +1,6 @@
 'use client';
-// Unused import removed: Link
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo as _useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
 import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
-import Button from '../../components/ui/Button';
 // Tabs removed per mobile-first stacked sections
 import { listUsers, listTasks } from '../../lib/firebase/admin';
 import { getCurrentUserWithProfile } from '../../lib/firebase/auth';
@@ -35,7 +34,7 @@ const UnassignedQueues = dynamic(() => import('../../components/admin/overview/U
 });
 // Reflections/Rotations/Settings are standalone pages (not on dashboard)
 
-export default function AdminDashboard() {
+export default function AdminDashboard(): React.ReactElement {
   const { t } = useTranslation();
   const router = useRouter();
   const firebaseOk = getFirebaseStatus().ok;
@@ -82,9 +81,7 @@ export default function AdminDashboard() {
 
   // Users/tasks tables removed from dashboard
 
-  function idsFrom(sel: Record<string, boolean>) {
-    return Object.keys(sel).filter((k) => sel[k]);
-  }
+  // Removed unused idsFrom function
 
   // User/task actions removed from dashboard
 
@@ -106,32 +103,48 @@ export default function AdminDashboard() {
       <div className="app-container flex min-h-dvh pad-safe-t pad-safe-b flex-col items-stretch justify-start p-6">
         <div className="w-full space-y-6">
           {/* 1) Overview */}
-            <div className="space-y-4">
-              <div className="card-levitate p-4">
-                <Suspense fallback={<SpinnerSkeleton />}>
-                  <PetitionsTable />
-                </Suspense>
-              </div>
-              <OverviewTab />
-              </div>
+          <div className="space-y-4">
+            <div className="card-levitate p-4">
+              <Suspense fallback={<SpinnerSkeleton />}>
+                <PetitionsTable />
+              </Suspense>
+            </div>
+            <OverviewTab />
+          </div>
 
           {/* 4) Morning Meetings snapshot (CTA to full page) */}
           <div className="card-levitate p-4">
             <div className="flex items-center justify-between">
-              <div className="font-semibold">{t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}</div>
-              <Button asChild variant="outline"><a href="/morning-meetings">{t('ui.open')}</a></Button>
+              <div className="font-semibold">
+                {t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}
+              </div>
+              <Link
+                href="/morning-meetings"
+                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              >
+                {t('ui.open')}
+              </Link>
             </div>
-            <div className="mt-2 text-sm opacity-80">{t('overview.next7', { defaultValue: 'Snapshot of today and this month' })}</div>
-                    </div>
+            <div className="mt-2 text-sm opacity-80">
+              {t('overview.next7', { defaultValue: 'Snapshot of today and this month' })}
+            </div>
+          </div>
 
           {/* 5) On-Call snapshot (CTA to full page) */}
           <div className="card-levitate p-4">
             <div className="flex items-center justify-between">
               <div className="font-semibold">{t('ui.onCall', { defaultValue: 'On Call' })}</div>
-              <Button asChild variant="outline"><a href="/on-call">{t('ui.open')}</a></Button>
+              <Link
+                href="/on-call"
+                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              >
+                {t('ui.open')}
+              </Link>
             </div>
-            <div className="mt-2 text-sm opacity-80">{t('overview.todaysTeam', { defaultValue: "Today's team snapshot" })}</div>
-              </div>
+            <div className="mt-2 text-sm opacity-80">
+              {t('overview.todaysTeam', { defaultValue: "Today's team snapshot" })}
+            </div>
+          </div>
         </div>
       </div>
     </AppShell>
@@ -155,7 +168,7 @@ function OverviewTab() {
       <div className="space-y-4">
         <KPICards assignments={assignments} residents={residents} tutors={tutors} />
         {/* Users snapshot: unassigned residents */}
-          <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
+        <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
         {/* Tutors with zero load */}
         <ZeroLoadTutors assignments={assignments} tutors={tutors} />
         {/* Tasks snapshot */}
@@ -171,12 +184,15 @@ function ZeroLoadTutors({ assignments, tutors }: { assignments: any[]; tutors: U
   const zero = (() => {
     const load = new Map<string, number>();
     for (const t of tutors) load.set(t.uid, 0);
-    for (const a of assignments) for (const tid of a.tutorIds || []) load.set(tid, (load.get(tid) || 0) + 1);
+    for (const a of assignments)
+      for (const tid of a.tutorIds || []) load.set(tid, (load.get(tid) || 0) + 1);
     return tutors.filter((t) => (load.get(t.uid) || 0) === 0);
   })();
   return (
     <div className="card-levitate p-3">
-      <div className="font-semibold mb-2">{t('overview.tutorsWithZeroLoad', { defaultValue: 'Tutors with zero load' })}</div>
+      <div className="font-semibold mb-2">
+        {t('overview.tutorsWithZeroLoad', { defaultValue: 'Tutors with zero load' })}
+      </div>
       {zero.length === 0 ? (
         <div className="text-sm opacity-70">{t('overview.none', { defaultValue: 'None' })}</div>
       ) : (
@@ -190,13 +206,18 @@ function ZeroLoadTutors({ assignments, tutors }: { assignments: any[]; tutors: U
   );
 }
 
-function TasksSnapshot() {
+function TasksSnapshot(): React.ReactElement {
   const { t } = useTranslation();
   return (
     <div className="card-levitate p-3">
       <div className="flex items-center justify-between">
         <div className="font-semibold">{t('ui.tasks')}</div>
-        <Button asChild variant="outline"><a href="/admin/tasks">{t('ui.open')}</a></Button>
+        <Link
+          href="/admin/tasks"
+          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+        >
+          {t('ui.open')}
+        </Link>
       </div>
       <div className="mt-2 text-sm opacity-80">
         {t('overview.tasksSnapshot', { defaultValue: 'Pending approvals and upcoming items' })}

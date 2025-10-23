@@ -1,17 +1,17 @@
 'use client';
+import dynamic from 'next/dynamic';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AppShell from '../../components/layout/AppShell';
-import dynamic from 'next/dynamic';
 const MiniCalendar = dynamic(() => import('../../components/on-call/MiniCalendar'), { ssr: false });
+import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 import NextShiftCard from '../../components/on-call/NextShiftCard';
 import TeamForDate from '../../components/on-call/TeamForDate';
 import TodayPanel from '../../components/on-call/TodayPanel';
 import Card from '../../components/ui/Card';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
-import { useRef, useState } from 'react';
 import { haptic } from '../../lib/utils/haptics';
-import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 
 export default function OnCallPage() {
   const { data: me } = useCurrentUserProfile();
@@ -88,7 +88,9 @@ export default function OnCallPage() {
         )}
         {tab === 'timeline' && (
           <Card className="space-y-3">
-            <div className="text-sm font-medium">{t('onCall.timeline', { defaultValue: 'Timeline' })}</div>
+            <div className="text-sm font-medium">
+              {t('onCall.timeline', { defaultValue: 'Timeline' })}
+            </div>
             <MiniCalendar />
           </Card>
         )}

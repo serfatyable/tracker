@@ -2,11 +2,12 @@
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+// @ts-ignore - react-dom types not available
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { signOutAndRedirect } from '../../lib/firebase/auth';
+import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 
 import NavItem from './NavItem';
 
@@ -44,8 +45,9 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
         (el) => !el.hasAttribute('disabled'),
       ) as HTMLElement[];
       if (list.length === 0) return;
-      const firstEl = list[0]!;
-      const lastEl = list[list.length - 1]!;
+      const firstEl = list[0];
+      const lastEl = list[list.length - 1];
+      if (!firstEl || !lastEl) return;
       const active = document.activeElement as HTMLElement | null;
       if (e.shiftKey) {
         if (active === firstEl) {
@@ -135,7 +137,9 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
         tabIndex={-1}
       >
         <div className="flex items-center justify-between px-3 py-3 border-b border-muted/20">
-          <span className="font-medium text-foreground dark:text-white">{t('ui.menu', { defaultValue: 'Menu' })}</span>
+          <span className="font-medium text-foreground dark:text-white">
+            {t('ui.menu', { defaultValue: 'Menu' })}
+          </span>
           <button
             type="button"
             onClick={onClose}

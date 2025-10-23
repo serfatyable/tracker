@@ -1,7 +1,8 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 
 export default function CommandPalette() {
@@ -14,7 +15,10 @@ export default function CommandPalette() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      if ((isMac && e.metaKey && e.key.toLowerCase() === 'k') || (!isMac && e.ctrlKey && e.key.toLowerCase() === 'k')) {
+      if (
+        (isMac && e.metaKey && e.key.toLowerCase() === 'k') ||
+        (!isMac && e.ctrlKey && e.key.toLowerCase() === 'k')
+      ) {
         e.preventDefault();
         setOpen((v) => !v);
       }
@@ -30,7 +34,10 @@ export default function CommandPalette() {
       return [
         { label: t('ui.home') as string, href: '/resident' },
         { label: t('ui.onCall', { defaultValue: 'On Call' }) as string, href: '/on-call' },
-        { label: t('ui.morningMeetings', { defaultValue: 'Morning Meetings' }) as string, href: '/morning-meetings' },
+        {
+          label: t('ui.morningMeetings', { defaultValue: 'Morning Meetings' }) as string,
+          href: '/morning-meetings',
+        },
         { label: (t('resident.progress') as any) || 'Progress', href: '/resident?tab=progress' },
         { label: t('ui.search') as string, href: '/search' },
         { label: t('ui.settings') as string, href: '/settings' },
@@ -42,14 +49,20 @@ export default function CommandPalette() {
         { label: t('tutor.tabs.residents') as string, href: '/tutor?tab=residents' },
         { label: t('ui.tasks') as string, href: '/tutor?tab=tasks' },
         { label: t('ui.onCall', { defaultValue: 'On Call' }) as string, href: '/on-call' },
-        { label: t('ui.morningMeetings', { defaultValue: 'Morning Meetings' }) as string, href: '/morning-meetings' },
+        {
+          label: t('ui.morningMeetings', { defaultValue: 'Morning Meetings' }) as string,
+          href: '/morning-meetings',
+        },
         { label: t('ui.settings') as string, href: '/settings' },
       ];
     }
     return [
       { label: t('ui.home') as string, href: '/admin' },
       { label: t('ui.tasks') as string, href: '/admin?tab=tasks' },
-      { label: t('ui.morningMeetings', { defaultValue: 'Morning Meetings' }) as string, href: '/morning-meetings' },
+      {
+        label: t('ui.morningMeetings', { defaultValue: 'Morning Meetings' }) as string,
+        href: '/morning-meetings',
+      },
       { label: t('ui.users', { defaultValue: 'Users' }) as string, href: '/admin?tab=users' },
       { label: t('ui.rotations') as string, href: '/admin?tab=rotations' },
       { label: t('ui.settings') as string, href: '/settings' },

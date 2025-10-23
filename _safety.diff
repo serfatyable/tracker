@@ -1,0 +1,22 @@
+diff --git a/components/resident/RotationBrowser.tsx b/components/resident/RotationBrowser.tsx
+index 394ad8a..91f2619 100644
+--- a/components/resident/RotationBrowser.tsx
++++ b/components/resident/RotationBrowser.tsx
+@@ -506,7 +506,7 @@ export default function RotationBrowser({
+   );
+ }
+ 
+-function _NodeItem({
++function NodeItem({
+   node,
+   onSelectLeaf,
+   onLog,
+@@ -691,7 +691,7 @@ function _NodeItem({
+           {node.children
+             .sort((a, b) => a.order - b.order)
+             .map((c) => (
+-              <_NodeItem
++              <NodeItem
+                 key={c.id}
+                 node={c}
+                 onSelectLeaf={onSelectLeaf}

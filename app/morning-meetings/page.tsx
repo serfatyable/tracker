@@ -8,11 +8,11 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { useMorningMeetingsMultiMonth } from '../../lib/hooks/useMorningClasses';
-import type { MorningMeeting } from '../../types/morningMeetings';
 import { haptic } from '../../lib/utils/haptics';
+import type { MorningMeeting } from '../../types/morningMeetings';
 // Header composed inline for precise alignment
 
-export default function MorningMeetingsPage() {
+export default function MorningMeetingsPage(): React.ReactElement {
   const { t, i18n } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [attendanceOpen, setAttendanceOpen] = useState(false);
@@ -63,13 +63,19 @@ export default function MorningMeetingsPage() {
                 }}
                 className="min-h-[40px]"
                 variant="outline"
-                aria-label={t('morningMeetings.startAttendance', { defaultValue: 'Start attendance' })}
+                aria-label={t('morningMeetings.startAttendance', {
+                  defaultValue: 'Start attendance',
+                })}
               >
                 {t('morningMeetings.startAttendance', { defaultValue: 'Start attendance' })}
               </Button>
-              <Button asChild className="min-h-[40px]" onClick={() => haptic('light')}>
-                <Link href="#">{t('morningMeetings.addAgenda', { defaultValue: 'Add agenda' })}</Link>
-              </Button>
+              <Link
+                href="#"
+                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 min-h-[40px]"
+                onClick={() => haptic('light')}
+              >
+                {t('morningMeetings.addAgenda', { defaultValue: 'Add agenda' })}
+              </Link>
             </div>
           </div>
         </div>
@@ -204,19 +210,35 @@ export default function MorningMeetingsPage() {
       {/* Attendance bottom sheet */}
       {attendanceOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => { haptic('light'); setAttendanceOpen(false); }} />
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => {
+              haptic('light');
+              setAttendanceOpen(false);
+            }}
+          />
           <div className="absolute inset-x-0 bottom-0 bg-bg text-fg rounded-t-2xl shadow-elev2 p-4 safe-area-inset-bottom overscroll-contain">
             <div className="mx-auto max-w-6xl">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">
                   {t('morningMeetings.attendance', { defaultValue: 'Attendance' })}
                 </h2>
-                <Button variant="ghost" onClick={() => { haptic('light'); setAttendanceOpen(false); }} aria-label={t('ui.close')}>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    haptic('light');
+                    setAttendanceOpen(false);
+                  }}
+                  aria-label={t('ui.close')}
+                >
                   ✕
                 </Button>
               </div>
               <div className="mt-3">
-                <Input placeholder={t('ui.search', { defaultValue: 'Search' }) + '...'} className="w-full" />
+                <Input
+                  placeholder={t('ui.search', { defaultValue: 'Search' }) + '...'}
+                  className="w-full"
+                />
               </div>
               <div className="mt-4 text-sm text-[rgb(var(--muted))]">
                 {t('ui.comingSoon', { defaultValue: 'Coming soon' })}

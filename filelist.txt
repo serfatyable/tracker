@@ -1,0 +1,8 @@
+lib/types.ts
+lib/**/types.ts
+lib/**/queries/**
+lib/**/actions/**
+components/rotation/**
+components/resident/QuickLogDialog.tsx
+components/resident/ItemDetailSheet.tsx
+components/resident/RotationBrowser.tsx

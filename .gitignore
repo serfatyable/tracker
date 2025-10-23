@@ -153,3 +153,5 @@ firebase-service-account.json
 # Migration script backups
 scripts/backups/
 backups/
+mobile-rotation-audit/**
+item-wiring-audit/**

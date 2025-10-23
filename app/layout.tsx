@@ -50,7 +50,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <I18nProvider>
           {children}
           {/* Dev diagnostics are gated and default-off */}
-          {process.env.NEXT_PUBLIC_SHOW_DEV === 'true' ? (await import('../components/DevDiagnosticsBar')).default({}) : null}
+          {process.env.NEXT_PUBLIC_SHOW_DEV === 'true'
+            ? (await import('../components/DevDiagnosticsBar')).default()
+            : null}
         </I18nProvider>
       </body>
     </html>
