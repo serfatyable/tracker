@@ -11,7 +11,7 @@ import globals from "globals";
 const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
 
 export default [
-	{ ignores: [".next/**", "node_modules/**", "dist/**"] },
+	{ ignores: [".next/**", "node_modules/**", "dist/**", "item-wiring-audit/**"] },
 	js.configs.recommended,
 	...compat.extends("plugin:@next/next/core-web-vitals"),
 	// Base rules/plugins for all files
