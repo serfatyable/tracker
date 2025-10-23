@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { createTask } from '../../lib/firebase/db';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
+import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
 import { getLocalized } from '../../lib/i18n/getLocalized';
@@ -35,6 +36,7 @@ export default function RotationBrowser({
 }: Props) {
   const { t, i18n } = useTranslation();
   const { rotationId: activeRotationId } = useResidentActiveRotation();
+  const { rotations } = useActiveRotations();
   const { nodes, loading } = useRotationNodes(selectedRotationId || null);
   const { tasks } = useUserTasks();
   const [allNodes, setAllNodes] = useState<RotationNode[]>([]);
@@ -65,8 +67,22 @@ export default function RotationBrowser({
   const nodesToUse = searchScope === 'all' ? allNodes : nodes;
   const tree = useMemo(() => buildTree(nodesToUse), [nodesToUse]);
 
+  // For "All" scope, group nodes by rotation and build a tree per rotation
+  const groupedTrees = useMemo(() => {
+    if (searchScope !== 'all') return [] as Array<{ rotationId: string; roots: TreeNode[] }>;
+    const byRotation = new Map<string, RotationNode[]>();
+    for (const n of allNodes) {
+      const rid = (n as any).rotationId as string;
+      if (!rid) continue;
+      const arr = byRotation.get(rid) || [];
+      arr.push(n);
+      byRotation.set(rid, arr);
+    }
+    return Array.from(byRotation.entries()).map(([rid, list]) => ({ rotationId: rid, roots: buildTree(list) }));
+  }, [searchScope, allNodes]);
+
   // Filter tree by search term: keep branches that have any matching descendant
-  const filteredTree = useMemo(() => {
+  function filterRoots(rootsIn: TreeNode[]): TreeNode[] {
     if (!searchTerm.trim()) return tree;
     const needle = searchTerm.trim().toLowerCase();
     function nodeMatches(n: RotationNode): boolean {
@@ -109,7 +125,14 @@ export default function RotationBrowser({
       return out;
     }
     return filter(tree);
-  }, [tree, searchTerm, i18n.language]);
+  }
+
+  const filteredTree = useMemo(() => filterRoots(tree), [tree, searchTerm, i18n.language]);
+
+  const filteredGroupedTrees = useMemo(() => {
+    if (searchScope !== 'all') return [] as Array<{ rotationId: string; roots: TreeNode[] }>;
+    return groupedTrees.map(({ rotationId: rid, roots }) => ({ rotationId: rid, roots: filterRoots(roots) }));
+  }, [groupedTrees, searchScope, searchTerm, i18n.language]);
 
   const countsByItemId = useMemo(() => {
     const map: Record<string, { approved: number; pending: number }> = {};
@@ -210,6 +233,40 @@ export default function RotationBrowser({
       <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-2">
         {loading || (searchScope === 'all' && allLoading) ? (
           <SpinnerSkeleton />
+        ) : searchScope === 'all' ? (
+          filteredGroupedTrees.length === 0 ? (
+            <EmptyState
+              icon={<EmptyIcon size={36} />}
+              title={t('ui.noItemsMatch', { defaultValue: 'No items match' })}
+              description={
+                searchTerm
+                  ? t('ui.tryDifferentSearch', { defaultValue: 'Try a different search term.' })
+                  : t('ui.noItemsAvailable', { defaultValue: 'No items available.' })
+              }
+              className="py-4"
+            />
+          ) : (
+            filteredGroupedTrees.map(({ rotationId: rid, roots }) => (
+              <div key={rid} className="mb-3">
+                <div className="px-2 py-1 text-sm font-semibold opacity-80">
+                  {rotations.find((r) => r.id === rid)?.name || rid}
+                </div>
+                {roots.map((n) => (
+                  <NodeItem
+                    key={n.id}
+                    node={n}
+                    onSelectLeaf={onSelectLeaf}
+                    onLog={onLog}
+                    canLog={canLog}
+                    countsByItemId={countsByItemId}
+                    searchTerm={searchTerm}
+                    categoryColor={null}
+                    parentName={undefined}
+                  />
+                ))}
+              </div>
+            ))
+          )
         ) : filteredTree.length === 0 ? (
           <EmptyState
             icon={<EmptyIcon size={36} />}
