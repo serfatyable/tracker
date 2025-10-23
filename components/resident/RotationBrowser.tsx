@@ -1,138 +1,109 @@
 'use client';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, getFirestore } from 'firebase/firestore';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { createTask } from '../../lib/firebase/db';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
-import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
 import { getLocalized } from '../../lib/i18n/getLocalized';
 import type { RotationNode } from '../../types/rotations';
-import { SpinnerSkeleton } from '../dashboard/Skeleton';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
-import EmptyState, { EmptyIcon } from '../ui/EmptyState';
+import { EmptyIcon } from '../ui/EmptyState';
+import ProgressRing from '../ui/ProgressRing';
 
 type Props = {
-  selectedRotationId: string | null;
+  activeRotationId: string | null;
   searchTerm: string;
-  searchScope?: 'current' | 'all';
-  onSelectLeaf: (leaf: RotationNode | null) => void;
-  onAutoScopeAll?: () => void;
+  domainFilter: string | 'all';
+  onSelectLeaf: (leaf: RotationNode) => void;
+  onOpenDomainPicker: () => void;
+  // New: allow parent to directly set a domain from top chips
+  onSelectDomain?: (domain: string | 'all') => void;
+  // New: report computed domains to parent for the bottom sheet
+  onDomainsComputed?: (domains: string[]) => void;
+  optimisticCounts?: Record<string, { pending: number }>;
 };
 
 type TreeNode = RotationNode & { children: TreeNode[] };
 
 export default function RotationBrowser({
-  selectedRotationId,
+  activeRotationId,
   searchTerm,
-  searchScope = 'current',
+  domainFilter,
   onSelectLeaf,
-  onAutoScopeAll,
+  onOpenDomainPicker,
+  onSelectDomain,
+  onDomainsComputed,
+  optimisticCounts,
 }: Props) {
   const { t, i18n } = useTranslation();
-  const { rotationId: activeRotationId } = useResidentActiveRotation();
-  const { rotations } = useActiveRotations();
-  const { nodes, loading } = useRotationNodes(selectedRotationId || null);
+  const { rotationId: residentActiveRotationId } = useResidentActiveRotation();
   const { tasks } = useUserTasks();
-  const [allNodes, setAllNodes] = useState<RotationNode[]>([]);
-  const [allLoading, setAllLoading] = useState(false);
+  const { nodes, loading } = useRotationNodes(activeRotationId || null);
+  const [debouncedTerm, setDebouncedTerm] = useState('');
 
-  // Load all nodes lazily when needed for global search
+  // Debounce search term for smoother global search UX
   useEffect(() => {
-    (async () => {
-      if (searchScope !== 'all') return;
-      if (allNodes.length > 0) return;
-      try {
-        setAllLoading(true);
-        const db = getFirestore(getFirebaseApp());
-        const snap = await getDocs(collection(db, 'rotationNodes'));
-        const list = snap.docs.map((d) => ({
-          id: d.id,
-          ...(d.data() as any),
-        })) as unknown as RotationNode[];
-        setAllNodes(list);
-      } catch {
-        // ignore; results list will just be empty
-      } finally {
-        setAllLoading(false);
-      }
-    })();
-  }, [searchScope, allNodes.length]);
+    const handle = setTimeout(() => setDebouncedTerm(searchTerm), 250);
+    return () => clearTimeout(handle);
+  }, [searchTerm]);
 
-  const nodesToUse = searchScope === 'all' ? allNodes : nodes;
+  // Extract domain from ancestors (skip top-level category, take next ancestor)
+  const getDomain = (ancestors: string[]): string => {
+    // Skip the top-level category (Knowledge/Skills/Guidance)
+    const filtered = ancestors.filter(
+      (a) =>
+        !a.toLowerCase().includes('knowledge') &&
+        !a.toLowerCase().includes('skill') &&
+        !a.toLowerCase().includes('guidance') &&
+        !a.toLowerCase().includes('ידע') &&
+        !a.toLowerCase().includes('מיומנויות') &&
+        !a.toLowerCase().includes('הנחיות'),
+    );
+    return filtered[0] || 'General';
+  };
+
+  // When activeRotationId is null, we need to load all nodes for "all rotations" view
+  const { nodes: allNodes, loading: allLoading } = useRotationNodes(null);
+  const nodesToUse = activeRotationId ? nodes : allNodes;
+  const loadingToUse = activeRotationId ? loading : allLoading;
+
   const tree = useMemo(() => buildTree(nodesToUse), [nodesToUse]);
 
-  // For "All" scope, group nodes by rotation and build a tree per rotation
-  const groupedTrees = useMemo(() => {
-    if (searchScope !== 'all') return [] as Array<{ rotationId: string; roots: TreeNode[] }>;
-    const byRotation = new Map<string, RotationNode[]>();
-    for (const n of allNodes) {
-      const rid = (n as any).rotationId as string;
-      if (!rid) continue;
-      const arr = byRotation.get(rid) || [];
-      arr.push(n);
-      byRotation.set(rid, arr);
-    }
-    return Array.from(byRotation.entries()).map(([rid, list]) => ({ rotationId: rid, roots: buildTree(list) }));
-  }, [searchScope, allNodes]);
+  // Build flat leaves with ancestry info for mobile card list
+  type FlatLeaf = RotationNode & {
+    categoryName: string | null;
+    subjectName: string | null;
+    domain: string;
+    ancestors: string[];
+  };
 
-  // Filter tree by search term: keep branches that have any matching descendant
-  function filterRoots(rootsIn: TreeNode[]): TreeNode[] {
-    if (!searchTerm.trim()) return tree;
-    const needle = searchTerm.trim().toLowerCase();
-    function nodeMatches(n: RotationNode): boolean {
-      const displayName =
-        getLocalized<string>({
-          he: (n as any).name_he as any,
-          en: (n as any).name_en as any,
-          fallback: n.name as any,
-          lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
-        }) || n.name;
-      const linkLabels = (n.links || []).map(
-        (l) =>
-          getLocalized<string>({
-            he: (l as any).label_he as any,
-            en: (l as any).label_en as any,
-            fallback: (l as any).label as any,
-            lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
-          }) ||
-          l.href ||
-          '',
-      );
-      const hay = [
-        displayName,
-        n.mcqUrl || '',
-        ...(n.links || []).map((l) => l.href || ''),
-        ...linkLabels,
-      ]
-        .join(' ')
-        .toLowerCase();
-      return hay.includes(needle);
-    }
-    function filter(nodesIn: TreeNode[]): TreeNode[] {
-      const out: TreeNode[] = [];
-      for (const n of nodesIn) {
-        const children = filter(n.children);
-        if (children.length || nodeMatches(n)) {
-          out.push({ ...n, children });
-        }
+  const flatLeaves: FlatLeaf[] = useMemo(() => {
+    const out: FlatLeaf[] = [];
+    function walk(n: TreeNode, ancestors: TreeNode[]) {
+      const nextAnc = [...ancestors, n];
+      if (n.type === 'leaf') {
+        const cat = ancestors.find((a) => a.type === 'category')?.name || null;
+        const subj = ancestors.find((a) => a.type === 'subject')?.name || null;
+        const ancestorNames = nextAnc.map((a) => a.name);
+        const domain = getDomain(ancestorNames);
+        out.push({
+          ...(n as RotationNode),
+          categoryName: cat,
+          subjectName: subj,
+          domain,
+          ancestors: ancestorNames,
+        });
       }
-      return out;
+      n.children.forEach((c) => walk(c as TreeNode, nextAnc));
     }
-    return filter(tree);
-  }
-
-  const filteredTree = useMemo(() => filterRoots(tree), [tree, searchTerm, i18n.language]);
-
-  const filteredGroupedTrees = useMemo(() => {
-    if (searchScope !== 'all') return [] as Array<{ rotationId: string; roots: TreeNode[] }>;
-    return groupedTrees.map(({ rotationId: rid, roots }) => ({ rotationId: rid, roots: filterRoots(roots) }));
-  }, [groupedTrees, searchScope, searchTerm, i18n.language]);
+    tree.forEach((r) => walk(r, []));
+    return out;
+  }, [tree]);
 
   const countsByItemId = useMemo(() => {
     const map: Record<string, { approved: number; pending: number }> = {};
@@ -144,42 +115,68 @@ export default function RotationBrowser({
     return map;
   }, [tasks]);
 
-  const { results, currentResults, allResults } = useMemo(() => {
-    const empty = {
-      results: [] as RotationNode[],
-      currentResults: [] as RotationNode[],
-      allResults: [] as RotationNode[],
-    };
-    if (!searchTerm.trim()) return empty;
-    const needle = searchTerm.trim().toLowerCase();
-    const fields = (n: RotationNode) =>
-      [
-        getLocalized<string>({
-          he: (n as any).name_he as any,
-          en: (n as any).name_en as any,
-          fallback: n.name as any,
-          lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
-        }) || n.name,
-        ...(n.mcqUrl ? [n.mcqUrl] : []),
-        ...(n.links || []).map((l) => l.href),
-      ]
-        .join(' ')
-        .toLowerCase();
-    const curr = nodes.filter((n) => fields(n).includes(needle));
-    const allR = allNodes.filter((n) => fields(n).includes(needle));
-    return { results: searchScope === 'all' ? allR : curr, currentResults: curr, allResults: allR };
-  }, [searchTerm, nodes, allNodes, searchScope, i18n.language]);
-
-  useEffect(() => {
-    if (searchScope !== 'current') return;
-    if (!searchTerm.trim()) return;
-    if (currentResults.length === 0 && allResults.length > 0) {
-      onAutoScopeAll && onAutoScopeAll();
+  const effectiveCounts = useMemo(() => {
+    if (!optimisticCounts) return countsByItemId;
+    const map = { ...countsByItemId };
+    for (const [id, delta] of Object.entries(optimisticCounts)) {
+      const bucket = (map[id] = map[id] || { approved: 0, pending: 0 });
+      bucket.pending += delta.pending || 0;
     }
-  }, [searchScope, searchTerm, currentResults.length, allResults.length, onAutoScopeAll]);
+    return map;
+  }, [countsByItemId, optimisticCounts]);
+
+  // Overall rotation progress (across all leaves in the selected rotation only)
+  const overall = useMemo(() => {
+    let approved = 0;
+    let required = 0;
+    flatLeaves.forEach((n) => {
+      const req = n.requiredCount || 0;
+      const appr = effectiveCounts[n.id]?.approved || 0;
+      required += req;
+      approved += Math.min(appr, req);
+    });
+    const percent = required > 0 ? Math.round((approved / required) * 100) : 0;
+    const remaining = Math.max(0, required - approved);
+    return { approved, required, percent, remaining };
+  }, [flatLeaves, effectiveCounts]);
+
+  // Filters: category, domain, and status
+  type CategoryFilter = 'all' | 'knowledge' | 'skills' | 'guidance';
+  type StatusFilter = 'all' | 'pending' | 'approved';
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  // Get unique domains from current leaves with counts
+  const availableDomains = useMemo(() => {
+    const domainCounts: Record<string, number> = {};
+    const domains = new Set<string>();
+
+    flatLeaves.forEach((leaf) => {
+      domains.add(leaf.domain);
+      domainCounts[leaf.domain] = (domainCounts[leaf.domain] || 0) + 1;
+    });
+
+    return {
+      domains: Array.from(domains).sort(),
+      counts: domainCounts,
+    };
+  }, [flatLeaves]);
+
+  // Inform parent about currently available domains for the picker
+  useEffect(() => {
+    onDomainsComputed && onDomainsComputed(availableDomains.domains);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableDomains.domains.join('|')]);
+
+  // Get top domains (most frequent in current results)
+  const topDomains = useMemo(() => {
+    return availableDomains.domains
+      .sort((a, b) => (availableDomains.counts[b] || 0) - (availableDomains.counts[a] || 0))
+      .slice(0, 4);
+  }, [availableDomains]);
 
   function canLog(leaf: RotationNode): boolean {
-    return Boolean(activeRotationId && leaf.rotationId === activeRotationId);
+    return Boolean(residentActiveRotationId && leaf.rotationId === residentActiveRotationId);
   }
 
   async function onLog(leaf: RotationNode, count: number, note?: string) {
@@ -197,304 +194,366 @@ export default function RotationBrowser({
     });
   }
 
+  // Compute filtered list for cards based on rotation, search, category, domain, and status
+  const filteredCards: FlatLeaf[] = useMemo(() => {
+    const term = debouncedTerm.trim().toLowerCase();
+    function matchesRotation(n: FlatLeaf) {
+      if (!activeRotationId) return true; // Show all when no rotation selected
+      return n.rotationId === activeRotationId;
+    }
+    function matchesTerm(n: FlatLeaf) {
+      if (!term) return true;
+      const display =
+        getLocalized<string>({
+          he: (n as any).name_he as any,
+          en: (n as any).name_en as any,
+          fallback: n.name as any,
+          lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
+        }) || n.name;
+      const hay = [display, n.mcqUrl || '', ...(n.links || []).map((l) => l.href || '')]
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(term);
+    }
+    function matchesCategory(n: FlatLeaf) {
+      if (categoryFilter === 'all') return true;
+      const cat = (n.categoryName || '').toLowerCase();
+      if (categoryFilter === 'knowledge') return cat.includes('knowledge') || cat.includes('ידע');
+      if (categoryFilter === 'skills') return cat.includes('skill') || cat.includes('מיומנויות');
+      if (categoryFilter === 'guidance') return cat.includes('guidance') || cat.includes('הנחיות');
+      return true;
+    }
+    function matchesDomain(n: FlatLeaf) {
+      if (domainFilter === 'all') return true;
+      return n.domain === domainFilter;
+    }
+    function matchesStatus(n: FlatLeaf) {
+      const approved = effectiveCounts[n.id]?.approved || 0;
+      const pending = effectiveCounts[n.id]?.pending || 0;
+      const req = n.requiredCount || 0;
+      switch (statusFilter) {
+        case 'approved':
+          return req > 0 && approved >= req;
+        case 'pending':
+          return pending > 0;
+        default:
+          return true;
+      }
+    }
+    const base = flatLeaves.filter(
+      (n) =>
+        matchesRotation(n) &&
+        matchesTerm(n) &&
+        matchesCategory(n) &&
+        matchesDomain(n) &&
+        matchesStatus(n),
+    );
+    return base;
+  }, [
+    flatLeaves,
+    activeRotationId,
+    debouncedTerm,
+    i18n.language,
+    categoryFilter,
+    domainFilter,
+    statusFilter,
+    effectiveCounts,
+  ]);
+
+  // Group by domain for section headers with progress
+  const groupedByDomain = useMemo(() => {
+    const by: Record<
+      string,
+      { items: FlatLeaf[]; totals: { approved: number; required: number } }
+    > = {};
+    for (const n of filteredCards) {
+      const key = n.domain;
+      const bucket = by[key] || { items: [], totals: { approved: 0, required: 0 } };
+      bucket.items.push(n);
+      const req = n.requiredCount || 0;
+      const appr = effectiveCounts[n.id]?.approved || 0;
+      bucket.totals.required += req;
+      bucket.totals.approved += Math.min(appr, req);
+      by[key] = bucket;
+    }
+    return by;
+  }, [filteredCards, effectiveCounts]);
+
+  // Simple windowing (50 per batch per spec)
+  const BATCH = 50;
+  const [visibleCount, setVisibleCount] = useState(BATCH);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset windowing when activeRotationId changes
+  useEffect(() => setVisibleCount(BATCH), [activeRotationId]);
+  useEffect(
+    () => setVisibleCount(BATCH),
+    [debouncedTerm, categoryFilter, statusFilter, domainFilter],
+  );
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          setVisibleCount((v) => v + BATCH);
+        }
+      }
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [sentinelRef]);
+
+  const domainKeys = useMemo(() => Object.keys(groupedByDomain), [groupedByDomain]);
+  const flatForWindowing = useMemo(
+    () => domainKeys.flatMap((k) => groupedByDomain[k]!.items.map((it) => ({ key: k, item: it }))),
+    [domainKeys, groupedByDomain],
+  );
+
+  const windowed = flatForWindowing.slice(0, visibleCount);
+  const hasMore = flatForWindowing.length > windowed.length;
+
+  const clearFilters = useCallback(() => {
+    setCategoryFilter('all');
+    setStatusFilter('all');
+    // Note: domainFilter is controlled by parent, so we don't reset it here
+  }, []);
+
   return (
     <div className="space-y-3">
-      {searchTerm.trim() && results.length > 0 ? (
-        <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-2 text-sm">
-          {results.slice(0, 10).map((n) => (
-            <div
-              key={n.id}
-              className="flex items-center justify-between py-1 text-gray-900 dark:text-gray-50"
-            >
-              <span>{highlight(n.name, searchTerm)}</span>
-              {n.type === 'leaf' ? (
-                <Button
-                  size="sm"
-                  disabled={!canLog(n)}
-                  onClick={() => onLog(n, 1)}
-                  title={
-                    !canLog(n)
-                      ? (t('ui.loggingOnlyInActiveRotation') as string)
-                      : (t('ui.plusOne') as string)
-                  }
-                >
-                  {t('ui.plusOne')}
-                </Button>
-              ) : null}
-            </div>
-          ))}
-          {results.length > 10 ? (
-            <div className="text-xs text-gray-600 dark:text-gray-300">
-              {t('ui.showingMatches', { shown: 10, total: results.length })}
-            </div>
+      {/* Header bar: rotation title + tiny progress ring (overall, not filtered) + remaining count */}
+      {activeRotationId ? (
+        <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <ProgressRing
+            size={18}
+            stroke={2}
+            percent={overall.percent}
+            label={`${overall.percent}%`}
+          />
+          <span aria-hidden className="text-xs">
+            {overall.approved}/{overall.required}
+          </span>
+          {overall.remaining > 0 ? (
+            <span className="text-xs text-gray-600 dark:text-gray-400">
+              {t('ui.remainingShort', {
+                count: overall.remaining,
+                defaultValue: `Remaining ${overall.remaining}`,
+              })}
+            </span>
           ) : null}
         </div>
       ) : null}
-      <div className="rounded-md border border-gray-200 dark:border-[rgb(var(--border))] p-2">
-        {loading || (searchScope === 'all' && allLoading) ? (
-          <SpinnerSkeleton />
-        ) : searchScope === 'all' ? (
-          filteredGroupedTrees.length === 0 ? (
-            <EmptyState
-              icon={<EmptyIcon size={36} />}
-              title={t('ui.noItemsMatch', { defaultValue: 'No items match' })}
-              description={
-                searchTerm
-                  ? t('ui.tryDifferentSearch', { defaultValue: 'Try a different search term.' })
-                  : t('ui.noItemsAvailable', { defaultValue: 'No items available.' })
-              }
-              className="py-4"
-            />
-          ) : (
-            filteredGroupedTrees.map(({ rotationId: rid, roots }) => (
-              <div key={rid} className="mb-3">
-                <div className="px-2 py-1 text-sm font-semibold opacity-80">
-                  {rotations.find((r) => r.id === rid)?.name || rid}
-                </div>
-                {roots.map((n) => (
-                  <NodeItem
-                    key={n.id}
-                    node={n}
-                    onSelectLeaf={onSelectLeaf}
-                    onLog={onLog}
-                    canLog={canLog}
-                    countsByItemId={countsByItemId}
-                    searchTerm={searchTerm}
-                    categoryColor={null}
-                    parentName={undefined}
-                  />
-                ))}
-              </div>
-            ))
-          )
-        ) : filteredTree.length === 0 ? (
-          <EmptyState
-            icon={<EmptyIcon size={36} />}
-            title={t('ui.noItemsMatch', { defaultValue: 'No items match' })}
-            description={
-              searchTerm
-                ? t('ui.tryDifferentSearch', { defaultValue: 'Try a different search term.' })
-                : t('ui.noItemsAvailable', { defaultValue: 'No items available.' })
-            }
-            className="py-4"
-          />
-        ) : (
-          filteredTree.map((n) => (
-            <NodeItem
-              key={n.id}
-              node={n}
-              onSelectLeaf={onSelectLeaf}
-              onLog={onLog}
-              canLog={canLog}
-              countsByItemId={countsByItemId}
-              searchTerm={searchTerm}
-              categoryColor={null}
-              parentName={undefined}
+      {/* Filter chips: categories */}
+      <div
+        className="flex gap-2 overflow-x-auto scrollbar-hide"
+        aria-label={t('ui.filters', { defaultValue: 'Filters' }) as string}
+      >
+        {(
+          [
+            { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
+            { key: 'knowledge', label: t('ui.knowledge', { defaultValue: 'Knowledge' }) },
+            { key: 'skills', label: t('ui.skills', { defaultValue: 'Skills' }) },
+            { key: 'guidance', label: t('ui.guidance', { defaultValue: 'Guidance' }) },
+          ] as Array<{ key: CategoryFilter; label: string }>
+        ).map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            className={`pill text-xs whitespace-nowrap ${categoryFilter === c.key ? 'ring-1 ring-primary-token' : ''}`}
+            onClick={() => setCategoryFilter(c.key)}
+            aria-pressed={categoryFilter === c.key}
+            aria-label={`Filter: ${c.label} ${categoryFilter === c.key ? 'selected' : 'unselected'}`}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Top domains + More domains button */}
+      <div
+        className="flex gap-2 overflow-x-auto scrollbar-hide"
+        aria-label={t('ui.domains', { defaultValue: 'Domains' }) as string}
+      >
+        {topDomains.map((domain) => (
+          <button
+            key={domain}
+            type="button"
+            className={`pill text-xs whitespace-nowrap ${domainFilter === domain ? 'ring-1 ring-primary-token' : ''}`}
+            onClick={() => (onSelectDomain ? onSelectDomain(domain) : onOpenDomainPicker())}
+            aria-pressed={domainFilter === domain}
+            aria-label={`Domain: ${domain} ${domainFilter === domain ? 'selected' : 'unselected'}`}
+          >
+            {domain}
+            {availableDomains.counts[domain] && (
+              <span className="ml-1 text-xs opacity-75">({availableDomains.counts[domain]})</span>
+            )}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="pill text-xs whitespace-nowrap bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          onClick={onOpenDomainPicker}
+          aria-label={t('ui.moreDomains', { defaultValue: 'More domains' })}
+        >
+          {t('ui.moreDomains', { defaultValue: 'More domains' })}
+        </button>
+      </div>
+
+      {/* Status chips */}
+      <div
+        className="flex gap-2 overflow-x-auto scrollbar-hide"
+        aria-label={t('ui.status', { defaultValue: 'Status' }) as string}
+      >
+        {(
+          [
+            { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
+            { key: 'pending', label: t('ui.pending', { defaultValue: 'Pending' }) },
+            { key: 'approved', label: t('ui.approved', { defaultValue: 'Approved' }) },
+          ] as Array<{ key: StatusFilter; label: string }>
+        ).map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            className={`pill text-xs whitespace-nowrap ${statusFilter === s.key ? 'ring-1 ring-primary-token' : ''}`}
+            onClick={() => setStatusFilter(s.key)}
+            aria-pressed={statusFilter === s.key}
+            aria-label={`Filter: ${s.label} ${statusFilter === s.key ? 'selected' : 'unselected'}`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Cards list */}
+      <div role="list" className="space-y-2">
+        {loadingToUse ? (
+          // Skeletons for first screenful
+          Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="card-levitate h-16 animate-pulse"
+              role="listitem"
+              aria-busy="true"
             />
           ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-function NodeItem({
-  node,
-  onSelectLeaf,
-  onLog,
-  canLog,
-  countsByItemId,
-  searchTerm,
-  categoryColor,
-  parentName,
-}: {
-  node: TreeNode;
-  onSelectLeaf: (leaf: RotationNode) => void;
-  onLog: (leaf: RotationNode, count: number) => void;
-  canLog: (leaf: RotationNode) => boolean;
-  countsByItemId: Record<string, { approved: number; pending: number }>;
-  searchTerm: string;
-  categoryColor: { bg: string; border: string; baseColor: string } | null;
-  parentName?: string;
-}) {
-  const [open, setOpen] = useState(false); // Start collapsed by default
-  const hasChildren = node.children.length > 0;
-  const isLeaf = node.type === 'leaf';
-  const isCategory = node.type === 'category';
-
-  // Check if this leaf has the same name as its parent (duplicate display issue)
-  const isDuplicateName =
-    isLeaf && parentName && node.name.toLowerCase().trim() === parentName.toLowerCase().trim();
-
-  // If this is a category node, get its color scheme
-  // Otherwise, inherit from parent
-  const currentCategoryColor = isCategory ? getCategoryColor(node.name) : categoryColor;
-
-  // Determine background opacity based on node type
-  let bgClass = '';
-  if (currentCategoryColor) {
-    if (isCategory) {
-      // Category itself: full color with border
-      bgClass = `${currentCategoryColor.bg} ${currentCategoryColor.border}`;
-    } else if (node.type === 'subject') {
-      // Direct children (subjects): medium opacity
-      if (currentCategoryColor.baseColor === 'blue') {
-        bgClass = 'bg-blue-50/50 dark:bg-blue-950/15';
-      } else if (currentCategoryColor.baseColor === 'green') {
-        bgClass = 'bg-green-50/50 dark:bg-green-950/15';
-      } else if (currentCategoryColor.baseColor === 'purple') {
-        bgClass = 'bg-purple-50/50 dark:bg-purple-950/15';
-      }
-    } else {
-      // Deeper children (topics, subtopics, leaves): light opacity
-      if (currentCategoryColor.baseColor === 'blue') {
-        bgClass = 'bg-blue-50/30 dark:bg-blue-950/10';
-      } else if (currentCategoryColor.baseColor === 'green') {
-        bgClass = 'bg-green-50/30 dark:bg-green-950/10';
-      } else if (currentCategoryColor.baseColor === 'purple') {
-        bgClass = 'bg-purple-50/30 dark:bg-purple-950/10';
-      }
-    }
-  }
-
-  const totals = branchTotals(node, countsByItemId);
-
-  const handleRowClick = () => {
-    if (hasChildren) {
-      setOpen((v) => !v);
-    }
-    if (isLeaf) {
-      onSelectLeaf(node);
-    }
-  };
-
-  return (
-    <div className="pl-2">
-      <div
-        className={
-          'flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] ' +
-          bgClass
-        }
-        onClick={handleRowClick}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleRowClick();
-          }
-        }}
-      >
-        {hasChildren ? (
-          <span className="text-xs text-gray-600 dark:text-gray-300 select-none">
-            {open ? '▾' : '▸'}
-          </span>
+        ) : windowed.length === 0 ? (
+          <div className="py-6 text-center">
+            <EmptyIcon size={36} />
+            <div className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-50">
+              {t('ui.noResults', { defaultValue: 'No results' })}
+            </div>
+            <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+              {t('ui.clearFiltersToSeeAll', {
+                defaultValue: 'Try clearing filters or changing your search.',
+              })}
+            </div>
+            <div className="mt-3">
+              <Button onClick={clearFilters} size="sm">
+                {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
+              </Button>
+            </div>
+          </div>
         ) : (
-          <span className="text-xs text-transparent">▸</span>
-        )}
-        <span
-          className={`text-sm ${isCategory ? 'font-semibold' : ''} ${isLeaf ? 'hover:text-primary hover:underline' : ''} ${isDuplicateName ? 'text-gray-500 dark:text-gray-400 italic' : 'text-gray-900 dark:text-gray-50'}`}
-        >
-          {isDuplicateName ? (
-            <span className="flex items-center gap-1">
-              <span className="text-xs">↳</span>
-              <span className="text-xs">(practice activities)</span>
-            </span>
-          ) : searchTerm.trim() ? (
-            highlight(node.name, searchTerm)
-          ) : (
-            node.name
-          )}
-        </span>
-        {!isLeaf ? (
-          // Branch nodes: Show aggregated progress (approved / required)
-          <Badge
-            variant="secondary"
-            className={`ml-auto text-xs font-bold px-2.5 py-1 ${
-              totals.required === 0
-                ? '!bg-gray-100 !text-gray-600 dark:!bg-gray-800 dark:!text-gray-400'
-                : totals.approved >= totals.required
-                  ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200 border border-green-300 dark:border-green-700'
-                  : totals.approved > 0
-                    ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200 border border-amber-300 dark:border-amber-700'
-                    : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200 border border-red-300 dark:border-red-700'
-            }`}
-            title={`Completed: ${totals.approved} / Required: ${totals.required}`}
-          >
-            {totals.approved >= totals.required && totals.required > 0 ? '✓ ' : ''}
-            {totals.approved} / {totals.required}
-          </Badge>
-        ) : node.requiredCount ? (
-          // Leaf nodes: Show individual progress (approved / required)
           <>
-            {(() => {
-              const leafApproved = countsByItemId[node.id]?.approved || 0;
-              const leafRequired = node.requiredCount;
-              const isComplete = leafApproved >= leafRequired;
-              const hasProgress = leafApproved > 0;
-
+            {windowed.map(({ key, item }, idx) => {
+              const approved = effectiveCounts[item.id]?.approved || 0;
+              const _pending = effectiveCounts[item.id]?.pending || 0;
+              const req = item.requiredCount || 0;
+              const isComplete = req > 0 && approved >= req;
+              const subtitle =
+                item.subjectName ||
+                item.ancestors.slice(0, -1).slice(-1)[0] ||
+                item.categoryName ||
+                '';
+              // Section header when first item of a domain in windowed sequence
+              const isFirstInDomain = idx === 0 || windowed[idx - 1]!.key !== key;
+              const groupTotals = groupedByDomain[key]?.totals || { approved: 0, required: 0 };
               return (
-                <Badge
-                  variant="secondary"
-                  className={`ml-1 text-xs font-bold px-2.5 py-1 ${
-                    isComplete
-                      ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200 border border-green-300 dark:border-green-700'
-                      : hasProgress
-                        ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200 border border-amber-300 dark:border-amber-700'
-                        : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200 border border-red-300 dark:border-red-700'
-                  }`}
-                  title={`${isComplete ? 'Complete!' : 'In progress'} - Approved: ${leafApproved}, Required: ${leafRequired}`}
-                >
-                  {isComplete ? '✓ ' : hasProgress ? '⚠ ' : '• '}
-                  {leafApproved} / {leafRequired}
-                </Badge>
+                <div key={item.id}>
+                  {isFirstInDomain ? (
+                    <div className="flex items-center justify-between mt-3 mb-1 px-0">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-50">
+                        {key}
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {groupTotals.approved}/{groupTotals.required}
+                      </Badge>
+                    </div>
+                  ) : null}
+                  <div
+                    role="listitem"
+                    tabIndex={0}
+                    onClick={() => onSelectLeaf(item)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectLeaf(item);
+                      }
+                    }}
+                    className={`card-levitate w-full text-left flex items-center gap-3 min-h-[56px] hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]`}
+                    aria-label={item.name}
+                  >
+                    <div
+                      className="h-9 w-9 rounded-full grid place-items-center border text-xs font-semibold"
+                      aria-hidden
+                    >
+                      {req > 0 ? (
+                        <span
+                          className={`${isComplete ? 'text-green-600' : approved > 0 ? 'text-blue-600' : 'text-gray-500'}`}
+                        >
+                          {Math.min(100, Math.round((approved / Math.max(1, req)) * 100))}%
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">–</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                        {debouncedTerm.trim() ? highlight(item.name, debouncedTerm) : item.name}
+                      </div>
+                      {subtitle ? (
+                        <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                          {subtitle}
+                        </div>
+                      ) : null}
+                    </div>
+                    {req > 0 ? (
+                      <Badge
+                        variant="secondary"
+                        className={`text-xs font-bold ${isComplete ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200' : approved > 0 ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200' : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200'}`}
+                        title={`${approved}/${req}`}
+                        aria-label={`${approved} of ${req} approved`}
+                      >
+                        {approved}/{req}
+                      </Badge>
+                    ) : null}
+                    <Button
+                      size="sm"
+                      className="ml-auto"
+                      disabled={!canLog(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onLog(item, 1);
+                      }}
+                      title={!canLog(item) ? (t('ui.loggingOnlyInActiveRotation') as string) : '+1'}
+                    >
+                      +1
+                    </Button>
+                  </div>
+                </div>
               );
-            })()}
-            <Button
-              size="sm"
-              className="ml-auto"
-              disabled={!canLog(node)}
-              onClick={(e) => {
-                e.stopPropagation();
-                onLog(node, 1);
-              }}
-              title={!canLog(node) ? 'Logging allowed only in your active rotation' : '+1'}
-            >
-              +1
-            </Button>
+            })}
+            {hasMore ? <div ref={sentinelRef} className="h-8 w-full" aria-hidden /> : null}
           </>
-        ) : (
-          <Button
-            size="sm"
-            className="ml-auto"
-            disabled={!canLog(node)}
-            onClick={(e) => {
-              e.stopPropagation();
-              onLog(node, 1);
-            }}
-            title={!canLog(node) ? 'Logging allowed only in your active rotation' : '+1'}
-          >
-            +1
-          </Button>
         )}
       </div>
-      {hasChildren && open ? (
-        <div className="pl-4">
-          {node.children
-            .sort((a, b) => a.order - b.order)
-            .map((c) => (
-              <NodeItem
-                key={c.id}
-                node={c}
-                onSelectLeaf={onSelectLeaf}
-                onLog={onLog}
-                canLog={canLog}
-                countsByItemId={countsByItemId}
-                searchTerm={searchTerm}
-                categoryColor={currentCategoryColor}
-                parentName={node.name}
-              />
-            ))}
+
+      {/* Load more fallback */}
+      {hasMore ? (
+        <div className="flex justify-center pt-1">
+          <Button size="sm" onClick={() => setVisibleCount((v) => v + BATCH)}>
+            {t('ui.loadMore', { defaultValue: 'Load more' })}
+          </Button>
         </div>
       ) : null}
     </div>
@@ -518,28 +577,6 @@ function buildTree(nodes: RotationNode[]): TreeNode[] {
   return roots.sort((a, b) => a.order - b.order);
 }
 
-function branchTotals(
-  node: TreeNode,
-  countsByItemId: Record<string, { approved: number; pending: number }>,
-): { approved: number; required: number; pending: number } {
-  let pending = 0;
-  let approved = 0;
-  let required = 0;
-  function walk(n: TreeNode) {
-    if (n.type === 'leaf') {
-      required += n.requiredCount || 0;
-      const c = countsByItemId[n.id];
-      if (c) {
-        approved += c.approved;
-        pending += c.pending;
-      }
-    }
-    n.children.forEach(walk);
-  }
-  walk(node);
-  return { approved, required, pending };
-}
-
 function highlight(text: string, query: string) {
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
   if (idx < 0) return text;
@@ -552,30 +589,4 @@ function highlight(text: string, query: string) {
       {text.slice(idx + query.length)}
     </span>
   );
-}
-
-function getCategoryColor(name: string): { bg: string; border: string; baseColor: string } | null {
-  const normalized = name.toLowerCase();
-  if (normalized.includes('knowledge')) {
-    return {
-      bg: 'bg-blue-50 dark:bg-blue-950/30',
-      border: 'border-l-4 border-blue-400 dark:border-blue-600',
-      baseColor: 'blue',
-    };
-  }
-  if (normalized.includes('skill')) {
-    return {
-      bg: 'bg-green-50 dark:bg-green-950/30',
-      border: 'border-l-4 border-green-400 dark:border-green-600',
-      baseColor: 'green',
-    };
-  }
-  if (normalized.includes('guidance')) {
-    return {
-      bg: 'bg-purple-50 dark:bg-purple-950/30',
-      border: 'border-l-4 border-purple-400 dark:border-purple-600',
-      baseColor: 'purple',
-    };
-  }
-  return null;
 }

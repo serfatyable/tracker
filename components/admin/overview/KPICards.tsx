@@ -1,11 +1,11 @@
 'use client';
-import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/solid';
 import {
   UserGroupIcon,
   ExclamationTriangleIcon,
   ChartBarIcon,
   CalendarDaysIcon,
 } from '@heroicons/react/24/outline';
+import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/solid';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,10 +23,10 @@ type KPI = {
   label: string;
   value: number;
   trend?: number | null;
-  Icon: (props: any) => JSX.Element;
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
-export default function KPICards({ assignments, residents, tutors }: Props) {
+export default function KPICards({ assignments, residents, tutors }: Props): React.ReactElement {
   const { t } = useTranslation();
 
   const { unassignedResidentsCount, tutorLoadBalance, upcomingMeetings, pendingApprovals } =
@@ -49,10 +49,10 @@ export default function KPICards({ assignments, residents, tutors }: Props) {
       const pending = 0;
       const upcoming = 0;
       return {
-        unassignedResidentsCount: unassigned.length,
+        unassignedResidentsCount: Number(unassigned.length ?? 0),
         tutorLoadBalance: Number.isFinite(stdDev) ? Number(stdDev.toFixed(1)) : 0,
-        upcomingMeetings: upcoming,
-        pendingApprovals: pending,
+        upcomingMeetings: Number(upcoming ?? 0),
+        pendingApprovals: Number(pending ?? 0),
       };
     }, [assignments, residents, tutors]);
 
@@ -96,10 +96,14 @@ export default function KPICards({ assignments, residents, tutors }: Props) {
             <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
               <k.Icon className="h-4 w-4" stroke="currentColor" aria-hidden />
             </div>
-            <div className="text-xs font-medium text-foreground/80 dark:text-white/80">{k.label}</div>
+            <div className="text-xs font-medium text-foreground/80 dark:text-white/80">
+              {k.label}
+            </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <div className="text-3xl font-semibold tracking-tight text-foreground dark:text-white">{k.value}</div>
+            <div className="text-3xl font-semibold tracking-tight text-foreground dark:text-white">
+              {k.value}
+            </div>
             {k.trend == null ? null : k.trend >= 0 ? (
               <div className="inline-flex items-center text-xs text-green-600">
                 <ArrowTrendingUpIcon className="h-3.5 w-3.5" stroke="currentColor" />

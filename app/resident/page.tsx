@@ -5,17 +5,17 @@ import AuthGate from '../../components/auth/AuthGate';
 import AppShell from '../../components/layout/AppShell';
 import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 import AnnouncementsCard from '../../components/resident/AnnouncementsCard';
+import KPICardsResident from '../../components/resident/KPICardsResident';
 import PendingTasksList from '../../components/resident/PendingTasksList';
 import QuickActions from '../../components/resident/QuickActions';
 import RecentLogs from '../../components/resident/RecentLogs';
-import KPICardsResident from '../../components/resident/KPICardsResident';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 
 export default function ResidentDashboard() {
   const { t } = useTranslation();
-  const { data: me } = useCurrentUserProfile();
+  const { data: _me } = useCurrentUserProfile();
   const { rotationId: activeRotationId } = useResidentActiveRotation();
   const { nodes: activeNodes } = useRotationNodes(activeRotationId || null);
 
@@ -46,7 +46,9 @@ export default function ResidentDashboard() {
             nodesById={Object.fromEntries((activeNodes || []).map((n: any) => [n.id, n])) as any}
           />
           <RecentLogs
-            itemIdsToNames={Object.fromEntries((activeNodes || []).map((n: any) => [n.id, n.name])) as any}
+            itemIdsToNames={
+              Object.fromEntries((activeNodes || []).map((n: any) => [n.id, n.name])) as any
+            }
           />
           <AnnouncementsCard />
         </div>

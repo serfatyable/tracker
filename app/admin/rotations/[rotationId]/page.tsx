@@ -3,10 +3,10 @@
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
+import RotationTree from '../../../../components/admin/rotations/RotationTree';
 import AuthGate from '../../../../components/auth/AuthGate';
 import AppShell from '../../../../components/layout/AppShell';
 import LargeTitleHeader from '../../../../components/layout/LargeTitleHeader';
-import RotationTree from '../../../../components/admin/rotations/RotationTree';
 
 export default function AdminRotationEditorPage() {
   const { t } = useTranslation();
@@ -16,7 +16,9 @@ export default function AdminRotationEditorPage() {
   return (
     <AuthGate requiredRole="admin">
       <AppShell>
-        <LargeTitleHeader title={t('admin.rotations.edit', { defaultValue: 'Edit Rotation' }) as string} />
+        <LargeTitleHeader
+          title={t('admin.rotations.edit', { defaultValue: 'Edit Rotation' }) as string}
+        />
         <div className="app-container p-4">
           {rotationId ? <RotationTree rotationId={rotationId} /> : null}
         </div>
@@ -24,5 +26,3 @@ export default function AdminRotationEditorPage() {
     </AuthGate>
   );
 }
-
-

@@ -106,7 +106,9 @@ textarea {
 
 /* Motion accessibility */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
@@ -149,6 +151,22 @@ textarea {
   /* Prevent flex items from shrinking (e.g., icons/labels) */
   .no-shrink {
     flex-shrink: 0;
+  }
+
+  /* Sheet utilities for mobile scrolling */
+  .sheet-max-h {
+    max-height: min(90svh, 680px); /* iOS-safe viewport */
+  }
+  .scroll-y-touch {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .scrollbar-stable {
+    scrollbar-gutter: stable;
   }
 }
 

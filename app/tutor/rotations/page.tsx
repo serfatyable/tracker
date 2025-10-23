@@ -1,15 +1,15 @@
 'use client';
 
-import { Suspense } from 'react';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AuthGate from '../../../components/auth/AuthGate';
+import { CardSkeleton } from '../../../components/dashboard/Skeleton';
 import AppShell from '../../../components/layout/AppShell';
 import LargeTitleHeader from '../../../components/layout/LargeTitleHeader';
-import { CardSkeleton } from '../../../components/dashboard/Skeleton';
-import { useTutorDashboardData } from '../../../lib/hooks/useTutorDashboardData';
 import RotationsTab from '../../../components/tutor/tabs/RotationsTab';
+import { useTutorDashboardData } from '../../../lib/hooks/useTutorDashboardData';
 
 export default function TutorRotationsPage() {
   const { t } = useTranslation();
@@ -19,7 +19,7 @@ export default function TutorRotationsPage() {
       <AppShell>
         <LargeTitleHeader title={t('ui.rotations', { defaultValue: 'Rotations' }) as string} />
         <div className="app-container p-4">
-          <Suspense fallback={<CardSkeleton />}> 
+          <Suspense fallback={<CardSkeleton />}>
             {me ? (
               <RotationsTab
                 meUid={me.uid}
@@ -42,5 +42,3 @@ export default function TutorRotationsPage() {
     </AuthGate>
   );
 }
-
-

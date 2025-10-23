@@ -1,9 +1,9 @@
 'use client';
 import { useMemo, useState, useEffect } from 'react';
 
+import { haptic } from '../../lib/utils/haptics';
 import type { Audience, ReflectionTemplate } from '../../types/reflections';
 import Button from '../ui/Button';
-import { haptic } from '../../lib/utils/haptics';
 
 type Props = {
   audience: Audience;
@@ -149,7 +149,11 @@ export default function ReflectionForm({
             <Button variant="ghost" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               Top
             </Button>
-            <Button onClick={handleSubmit} disabled={disabled || busy} className="active:scale-95 transition-transform">
+            <Button
+              onClick={handleSubmit}
+              disabled={disabled || busy}
+              className="active:scale-95 transition-transform"
+            >
               {busy ? 'Submitting…' : 'Submit'}
             </Button>
           </div>
@@ -158,7 +162,11 @@ export default function ReflectionForm({
 
       {/* Desktop submit */}
       <div className="hidden md:flex gap-2">
-        <Button onClick={handleSubmit} disabled={disabled || busy} className="active:scale-95 transition-transform">
+        <Button
+          onClick={handleSubmit}
+          disabled={disabled || busy}
+          className="active:scale-95 transition-transform"
+        >
           {busy ? 'Submitting…' : 'Submit reflection'}
         </Button>
       </div>
