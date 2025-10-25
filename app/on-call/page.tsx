@@ -1,5 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -34,9 +35,20 @@ export default function OnCallPage() {
       <LargeTitleHeader
         title={t('onCall.title') as string}
         rightSlot={
-          <button onClick={onScrollToNext} className="pill text-sm">
-            {t('onCall.nextShift', { defaultValue: 'Next shift' })}
-          </button>
+          <div className="flex gap-2">
+            {me?.role === 'admin' && (
+              <Link
+                href="/admin/on-call"
+                className="inline-flex items-center justify-center rounded-md border border-blue-500 bg-blue-50 px-2 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[32px]"
+                onClick={() => haptic('light')}
+              >
+                📤 Upload
+              </Link>
+            )}
+            <button onClick={onScrollToNext} className="pill text-sm">
+              {t('onCall.nextShift', { defaultValue: 'Next shift' })}
+            </button>
+          </div>
         }
       />
       <div className="app-container p-3 sm:p-4 space-y-4">

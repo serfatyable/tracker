@@ -7,6 +7,7 @@ import AppShell from '../../components/layout/AppShell';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { useMorningMeetingsMultiMonth } from '../../lib/hooks/useMorningClasses';
 import { haptic } from '../../lib/utils/haptics';
 import type { MorningMeeting } from '../../types/morningMeetings';
@@ -14,8 +15,8 @@ import type { MorningMeeting } from '../../types/morningMeetings';
 
 export default function MorningMeetingsPage(): React.ReactElement {
   const { t, i18n } = useTranslation();
+  const { data: currentUser } = useCurrentUserProfile();
   const [searchTerm, setSearchTerm] = useState('');
-  const [attendanceOpen, setAttendanceOpen] = useState(false);
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
@@ -56,26 +57,15 @@ export default function MorningMeetingsPage(): React.ReactElement {
               {t('morningMeetings.title')}
             </h1>
             <div className="flex gap-2 min-w-0">
-              <Button
-                onClick={() => {
-                  haptic('light');
-                  setAttendanceOpen(true);
-                }}
-                className="min-h-[40px]"
-                variant="outline"
-                aria-label={t('morningMeetings.startAttendance', {
-                  defaultValue: 'Start attendance',
-                })}
-              >
-                {t('morningMeetings.startAttendance', { defaultValue: 'Start attendance' })}
-              </Button>
-              <Link
-                href="#"
-                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 min-h-[40px]"
-                onClick={() => haptic('light')}
-              >
-                {t('morningMeetings.addAgenda', { defaultValue: 'Add agenda' })}
-              </Link>
+              {currentUser?.role === 'admin' && (
+                <Link
+                  href="/admin/morning-meetings"
+                  className="inline-flex items-center justify-center rounded-md border border-blue-500 bg-blue-50 px-2 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[32px]"
+                  onClick={() => haptic('light')}
+                >
+                  📤 Upload
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -206,47 +196,6 @@ export default function MorningMeetingsPage(): React.ReactElement {
           </>
         )}
       </div>
-
-      {/* Attendance bottom sheet */}
-      {attendanceOpen && (
-        <div className="fixed inset-0 z-[60] md:hidden">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => {
-              haptic('light');
-              setAttendanceOpen(false);
-            }}
-          />
-          <div className="absolute inset-x-0 bottom-0 bg-bg text-fg rounded-t-2xl shadow-elev2 p-4 safe-area-inset-bottom overscroll-contain">
-            <div className="mx-auto max-w-6xl">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">
-                  {t('morningMeetings.attendance', { defaultValue: 'Attendance' })}
-                </h2>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    haptic('light');
-                    setAttendanceOpen(false);
-                  }}
-                  aria-label={t('ui.close')}
-                >
-                  ✕
-                </Button>
-              </div>
-              <div className="mt-3">
-                <Input
-                  placeholder={t('ui.search', { defaultValue: 'Search' }) + '...'}
-                  className="w-full"
-                />
-              </div>
-              <div className="mt-4 text-sm text-[rgb(var(--muted))]">
-                {t('ui.comingSoon', { defaultValue: 'Coming soon' })}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </AppShell>
   );
 }

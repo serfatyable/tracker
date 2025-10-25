@@ -7,6 +7,7 @@ import {
   Bars3Icon as MoreSolid,
   UserGroupIcon as ResidentsSolid,
   ClipboardDocumentCheckIcon as TasksSolid,
+  DocumentTextIcon as DocumentSolid,
 } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -28,25 +29,65 @@ export default function BottomBar() {
   };
 
   const residentTabs = [
-    { key: 'home', href: '/resident', label: t('ui.home', { defaultValue: 'Home' }), Icon: HomeSolid },
-    { key: 'oncall', href: '/on-call', label: t('ui.onCall', { defaultValue: 'On Call' }), Icon: CalendarSolid },
-    { key: 'meetings', href: '/morning-meetings', label: t('ui.morningMeetings', { defaultValue: 'Meetings' }), Icon: ChatSolid },
-    { key: 'progress', href: '/progress', label: t('resident.progress', { defaultValue: 'Progress' }), Icon: TasksSolid },
-    { key: 'search', href: '/search', label: t('ui.search', { defaultValue: 'Search' }), Icon: SearchSolid },
+    {
+      key: 'home',
+      href: '/resident',
+      label: t('ui.home', { defaultValue: 'Home' }),
+      Icon: HomeSolid,
+    },
+    {
+      key: 'exams',
+      href: '/exams',
+      label: t('exams.title', { defaultValue: 'Exams' }),
+      Icon: DocumentSolid,
+    },
+    {
+      key: 'oncall',
+      href: '/on-call',
+      label: t('ui.onCall', { defaultValue: 'On Call' }),
+      Icon: CalendarSolid,
+    },
+    {
+      key: 'meetings',
+      href: '/morning-meetings',
+      label: t('ui.morningMeetings', { defaultValue: 'Meetings' }),
+      Icon: ChatSolid,
+    },
+    {
+      key: 'search',
+      href: '/search',
+      label: t('ui.search', { defaultValue: 'Search' }),
+      Icon: SearchSolid,
+    },
   ];
 
   const tutorTabs = [
     { key: 'home', href: '/tutor', label: t('ui.home', { defaultValue: 'Home' }), Icon: HomeSolid },
-    { key: 'residents', href: '/tutor/residents', label: t('tutor.tabs.residents', { defaultValue: 'Residents' }) as string, Icon: ResidentsSolid },
+    {
+      key: 'exams',
+      href: '/exams',
+      label: t('exams.title', { defaultValue: 'Exams' }),
+      Icon: DocumentSolid,
+    },
+    {
+      key: 'residents',
+      href: '/tutor/residents',
+      label: t('tutor.tabs.residents', { defaultValue: 'Residents' }) as string,
+      Icon: ResidentsSolid,
+    },
     { key: 'tasks', href: '/tutor/tasks', label: t('ui.tasks'), Icon: TasksSolid },
-    { key: 'oncall', href: '/on-call', label: t('ui.onCall', { defaultValue: 'On Call' }), Icon: CalendarSolid },
     // More is a trigger instead of Link
   ];
 
   const adminTabs = [
     { key: 'home', href: '/admin', label: t('ui.home', { defaultValue: 'Home' }), Icon: HomeSolid },
+    {
+      key: 'exams',
+      href: '/exams',
+      label: t('exams.title', { defaultValue: 'Exams' }),
+      Icon: DocumentSolid,
+    },
     { key: 'tasks', href: '/admin/tasks', label: t('ui.tasks'), Icon: TasksSolid },
-    { key: 'meetings', href: '/morning-meetings', label: t('ui.morningMeetings', { defaultValue: 'Meetings' }), Icon: ChatSolid },
     // More is a trigger instead of Link
   ];
 
@@ -73,8 +114,8 @@ export default function BottomBar() {
             aria-label={label}
             onClick={() => haptic('light')}
             className={`flex flex-col items-center justify-center h-14 min-w-0 px-3 text-xs font-medium transition-transform transition-colors ${
-              active 
-                ? 'text-foreground dark:text-white scale-95' 
+              active
+                ? 'text-foreground dark:text-white scale-95'
                 : 'text-foreground/70 dark:text-white/70 hover:text-foreground dark:hover:text-white active:scale-95'
             }`}
             data-active={active}
@@ -96,7 +137,9 @@ export default function BottomBar() {
           className="flex flex-col items-center justify-center h-14 min-w-0 px-3 text-xs font-medium transition-transform transition-colors text-foreground/70 dark:text-white/70 hover:text-foreground dark:hover:text-white active:scale-95"
         >
           <MoreSolid className="h-5 w-5" stroke="currentColor" />
-          <span className="truncate w-full text-center">{t('ui.more', { defaultValue: 'More' })}</span>
+          <span className="truncate w-full text-center">
+            {t('ui.more', { defaultValue: 'More' })}
+          </span>
         </button>
       )}
     </nav>

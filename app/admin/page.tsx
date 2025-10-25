@@ -112,7 +112,7 @@ export default function AdminDashboard(): React.ReactElement {
             <OverviewTab />
           </div>
 
-          {/* 4) Morning Meetings snapshot (CTA to full page) */}
+          {/* 4) Morning Meetings snapshot (CTA to main page) */}
           <div className="card-levitate p-4">
             <div className="flex items-center justify-between">
               <div className="font-semibold">
@@ -130,7 +130,7 @@ export default function AdminDashboard(): React.ReactElement {
             </div>
           </div>
 
-          {/* 5) On-Call snapshot (CTA to full page) */}
+          {/* 5) On-Call snapshot (CTA to main page) */}
           <div className="card-levitate p-4">
             <div className="flex items-center justify-between">
               <div className="font-semibold">{t('ui.onCall', { defaultValue: 'On Call' })}</div>

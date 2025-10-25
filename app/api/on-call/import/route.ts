@@ -194,7 +194,7 @@ export async function POST(request: Request) {
       const endKey = `${year}-${String(month! + 1).padStart(2, '0')}-31`;
 
       const snapshot = await adminDb
-        .collection('onCallShifts')
+        .collection('onCallDays')
         .where('dateKey', '>=', startKey)
         .where('dateKey', '<=', endKey)
         .get();
@@ -211,23 +211,62 @@ export async function POST(request: Request) {
     // Create new shifts
     let totalShifts = 0;
 
+    // Mapping from Hebrew shift names to station keys
+    const shiftToStationKey: Record<string, string> = {
+      'ת.חדר ניתוח': 'or_main',
+      'ת. חדר לידה': 'labor_delivery',
+      'תורן טיפול נמרץ': 'icu',
+      'ת.חדר ניתוח נשים': 'or_gyne',
+      'תורן PACU': 'pacu',
+      'מנהל תורן': 'on_call_manager',
+      'תורן חנ בכיר': 'senior_or',
+      'תורן חצי חנ בכיר': 'senior_or_half',
+      כונן: 'on_call_manager', // Map to on_call_manager for now
+      'תורן שליש': 'on_call_manager', // Map to on_call_manager for now
+      'כיסוי טפנץ': 'spine',
+      'עובד נוסף': 'on_call_manager', // Map to on_call_manager for now
+      'אורתו שצי': 'ortho_shatzi',
+      'אורתו טראומה': 'ortho_trauma',
+      'אורתו מפרק': 'ortho_joint',
+      SUR: 'surgery',
+      Urol: 'urology',
+      'עמ"ש': 'spine',
+      'כלי דם / חזה': 'vascular_thoracic',
+      כאב: 'pain_service',
+      'זריקות עמ"ש': 'spine_injections',
+      'יום מנוחה שבועי': 'weekly_day_off',
+    };
+
     for (const dayData of rows) {
       const date = dayData.date;
       const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-      // Create one document per day with all shifts
-      const docRef = adminDb.collection('onCallShifts').doc();
+      // Convert shifts to stations format
+      const stations: Record<string, { userId: string; userDisplayName: string }> = {};
+
+      for (const [hebrewShift, personName] of Object.entries(dayData.shifts)) {
+        const stationKey = shiftToStationKey[hebrewShift];
+        if (stationKey) {
+          // For now, use the person name as both userId and userDisplayName
+          // In a real system, you'd want to look up the actual user ID
+          stations[stationKey] = {
+            userId: personName, // This should be looked up from users collection
+            userDisplayName: personName,
+          };
+        }
+      }
+
+      // Create one document per day with all stations
+      const docRef = adminDb.collection('onCallDays').doc(dateKey);
 
       await docRef.set({
-        date: date,
         dateKey: dateKey,
-        dayOfWeek: dayData.dayOfWeek || null,
-        shifts: dayData.shifts,
+        date: date,
+        stations: stations,
         createdAt: new Date(),
-        updatedAt: new Date(),
       });
 
-      totalShifts += Object.keys(dayData.shifts).length;
+      totalShifts += Object.keys(stations).length;
     }
 
     return NextResponse.json({

@@ -153,6 +153,7 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
           <NavItem href={homeHref} label={t('ui.dashboard')} />
           <NavItem href={reflectionsHref} label={t('ui.reflections')} />
           <NavItem href={rotationsHref} label={t('ui.rotations', { defaultValue: 'Rotations' })} />
+          <NavItem href="/exams" label={t('exams.title', { defaultValue: 'Exams' })} />
           <NavItem href="/morning-meetings" label={t('ui.morningMeetings')} />
           <NavItem href="/on-call" label={t('ui.onCall')} />
           <NavItem href="/settings" label={t('ui.settings')} />
