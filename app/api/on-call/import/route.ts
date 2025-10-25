@@ -246,12 +246,12 @@ export async function POST(request: Request) {
 
       for (const [hebrewShift, personName] of Object.entries(dayData.shifts)) {
         const stationKey = shiftToStationKey[hebrewShift];
-        if (stationKey) {
+        if (stationKey && typeof personName === 'string' && personName.trim()) {
           // For now, use the person name as both userId and userDisplayName
           // In a real system, you'd want to look up the actual user ID
           stations[stationKey] = {
-            userId: personName, // This should be looked up from users collection
-            userDisplayName: personName,
+            userId: personName.trim(), // This should be looked up from users collection
+            userDisplayName: personName.trim(),
           };
         }
       }
