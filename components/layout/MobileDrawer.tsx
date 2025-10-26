@@ -156,6 +156,9 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
           <NavItem href="/exams" label={t('exams.title', { defaultValue: 'Exams' })} />
           <NavItem href="/morning-meetings" label={t('ui.morningMeetings')} />
           <NavItem href="/on-call" label={t('ui.onCall')} />
+          {role === 'admin' && (
+            <NavItem href="/admin/users" label={t('ui.userManagement', { defaultValue: 'User Management' })} />
+          )}
           <NavItem href="/settings" label={t('ui.settings')} />
         </nav>
         <div className="p-3 border-t border-muted/20 grid grid-cols-2 gap-2">

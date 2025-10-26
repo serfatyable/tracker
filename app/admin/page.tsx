@@ -18,20 +18,19 @@ import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
 import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
 import type { UserProfile } from '../../types/auth';
 
-// Dynamically load heavy tab components (avoid React.lazy chunk issues in dev)
-const KPICards = dynamic(() => import('../../components/admin/overview/KPICards'), {
-  loading: () => <CardSkeleton />,
-  ssr: false,
-});
-const PetitionsTable = dynamic(() => import('../../components/admin/overview/PetitionsTable'), {
-  loading: () => <SpinnerSkeleton />,
-  ssr: false,
-});
-// TutorLoadTable replaced by compact zero-load snapshot
-const UnassignedQueues = dynamic(() => import('../../components/admin/overview/UnassignedQueues'), {
-  loading: () => <SpinnerSkeleton />,
-  ssr: false,
-});
+// Fallback component for failed dynamic imports
+const ComponentError = ({ componentName }: { componentName: string }) => (
+  <div className="card-levitate p-4 text-center">
+    <p className="text-red-600 dark:text-red-400">
+      Failed to load {componentName}. Please refresh the page.
+    </p>
+  </div>
+);
+
+// Temporarily use regular imports to avoid chunk loading issues
+import KPICards from '../../components/admin/overview/KPICards';
+import PetitionsTable from '../../components/admin/overview/PetitionsTable';
+import UnassignedQueues from '../../components/admin/overview/UnassignedQueues';
 // Reflections/Rotations/Settings are standalone pages (not on dashboard)
 
 export default function AdminDashboard(): React.ReactElement {

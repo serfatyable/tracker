@@ -1,8 +1,10 @@
-import { CalendarIcon, DocumentTextIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { CalendarIcon, DocumentTextIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Card from '@/components/ui/Card';
+import DeleteExamDialog from '@/components/exams/DeleteExamDialog';
 import { getLocalized } from '@/lib/i18n/getLocalized';
 import { haptic } from '@/lib/utils/haptics';
 import type { Exam } from '@/types/exam';
@@ -10,11 +12,14 @@ import type { Exam } from '@/types/exam';
 interface ExamCardProps {
   exam: Exam;
   isAdmin: boolean;
+  userId?: string;
+  onDelete?: () => void;
 }
 
-export default function ExamCard({ exam, isAdmin }: ExamCardProps) {
+export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const examDate = exam.examDate.toDate();
   const now = new Date();
@@ -42,6 +47,18 @@ export default function ExamCard({ exam, isAdmin }: ExamCardProps) {
     e.stopPropagation(); // Prevent card click
     haptic('light');
     window.open(link, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    haptic('light');
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteSuccess = () => {
+    if (onDelete) {
+      onDelete();
+    }
   };
 
   // Aggregate all topics and chapters from all subjects
@@ -86,7 +103,20 @@ export default function ExamCard({ exam, isAdmin }: ExamCardProps) {
               );
             })}
           </div>
-          {isAdmin && <PencilIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />}
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <PencilIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              {userId && (
+                <button
+                  onClick={handleDeleteClick}
+                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  title={t('exams.admin.delete')}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Exam Date */}
@@ -163,6 +193,17 @@ export default function ExamCard({ exam, isAdmin }: ExamCardProps) {
           )}
         </div>
       </div>
+
+      {/* Delete Dialog */}
+      {userId && (
+        <DeleteExamDialog
+          isOpen={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
+          onSuccess={handleDeleteSuccess}
+          exams={[exam]}
+          userId={userId}
+        />
+      )}
     </Card>
   );
 }

@@ -126,14 +126,14 @@ export async function POST(request: NextRequest) {
           .split(',')
           .map((c) => c.trim())
           .filter(Boolean),
-        examLink: subject.examLink || undefined,
+        ...(subject.examLink && { examLink: subject.examLink }),
       }));
 
       if (existingDoc) {
         // Update existing exam
         const docRef = db.collection('exams').doc(existingDoc.id);
         batch.update(docRef, {
-          examLink: examGroup.examLink || null,
+          ...(examGroup.examLink && { examLink: examGroup.examLink }),
           subjects,
           updatedAt: Timestamp.now(),
           updatedBy: uid,
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         batch.set(newExamRef, {
           id: newExamRef.id,
           examDate: Timestamp.fromDate(examDate),
-          examLink: examGroup.examLink || null,
+          ...(examGroup.examLink && { examLink: examGroup.examLink }),
           subjects,
           pastExams: [],
           studyMaterials: [],

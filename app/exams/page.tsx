@@ -5,11 +5,13 @@ import {
   XMarkIcon,
   CalendarIcon,
   ArrowUpTrayIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import CreateExamDialog from '@/components/exams/CreateExamDialog';
+import DeleteExamDialog from '@/components/exams/DeleteExamDialog';
 import ExamCard from '@/components/exams/ExamCard';
 import ExportCalendarDialog from '@/components/exams/ExportCalendarDialog';
 import ImportExamsDialog from '@/components/exams/ImportExamsDialog';
@@ -30,8 +32,10 @@ export default function ExamsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [selectedExams, setSelectedExams] = useState<Set<string>>(new Set());
 
   const isAdmin = me?.role === 'admin' || me?.role === 'tutor';
 
@@ -109,6 +113,39 @@ export default function ExamsPage() {
     setSearchQuery('');
   };
 
+  const handleSelectExam = (examId: string, selected: boolean) => {
+    haptic('light');
+    setSelectedExams(prev => {
+      const newSet = new Set(prev);
+      if (selected) {
+        newSet.add(examId);
+      } else {
+        newSet.delete(examId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    haptic('light');
+    if (selectedExams.size === filteredExams.length) {
+      setSelectedExams(new Set());
+    } else {
+      setSelectedExams(new Set(filteredExams.map(exam => exam.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    haptic('light');
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteSuccess = () => {
+    setSelectedExams(new Set());
+  };
+
+  const selectedExamsList = filteredExams.filter(exam => selectedExams.has(exam.id));
+
   if (loading) {
     return (
       <AppShell>
@@ -139,13 +176,13 @@ export default function ExamsPage() {
         title={t('exams.title')}
         subtitle={t('exams.subtitle')}
         rightSlot={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1">
             {hasExams && (
               <button
                 onClick={handleExportClick}
-                className="inline-flex items-center gap-1.5 justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[32px]"
+                className="inline-flex items-center gap-1 justify-center rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[24px]"
               >
-                <CalendarIcon className="h-4 w-4" />
+                <CalendarIcon className="h-3 w-3" />
                 {t('exams.export.exportButton')}
               </button>
             )}
@@ -153,17 +190,17 @@ export default function ExamsPage() {
               <>
                 <button
                   onClick={handleImportClick}
-                  className="inline-flex items-center gap-1.5 justify-center rounded-md border border-green-500 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 min-h-[32px]"
+                  className="inline-flex items-center gap-1 justify-center rounded-md border border-green-500 bg-green-50 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 min-h-[24px]"
                 >
-                  <ArrowUpTrayIcon className="h-4 w-4" />
-                  {t('exams.import.uploadButton')}
+                  <ArrowUpTrayIcon className="h-3 w-3" />
+                  Import
                 </button>
                 <button
                   onClick={handleCreateClick}
-                  className="inline-flex items-center gap-1.5 justify-center rounded-md border border-blue-500 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[32px]"
+                  className="inline-flex items-center gap-1 justify-center rounded-md border border-blue-500 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[24px]"
                 >
-                  <PlusIcon className="h-4 w-4" />
-                  {t('exams.admin.addExam')}
+                  <PlusIcon className="h-3 w-3" />
+                  Add New
                 </button>
               </>
             )}
@@ -240,11 +277,59 @@ export default function ExamsPage() {
               </div>
             </Card>
 
+            {/* Bulk Actions Bar */}
+            {isAdmin && filteredExams.length > 0 && (
+              <Card className="flex items-center justify-between p-3">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedExams.size === filteredExams.length && filteredExams.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      {selectedExams.size === filteredExams.length
+                        ? t('exams.admin.deselectAll')
+                        : t('exams.admin.selectAll')}
+                    </span>
+                  </label>
+                  {selectedExams.size > 0 && (
+                    <span className="text-sm text-gray-500">
+                      {selectedExams.size} {t('exams.admin.selected')}
+                    </span>
+                  )}
+                </div>
+                {selectedExams.size > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                    {t('exams.admin.deleteSelected', { count: selectedExams.size })}
+                  </button>
+                )}
+              </Card>
+            )}
+
             {/* Filtered Results */}
             {filteredExams.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredExams.map((exam) => (
-                  <ExamCard key={exam.id} exam={exam} isAdmin={isAdmin} />
+                  <ExamCard 
+                    key={exam.id} 
+                    exam={exam} 
+                    isAdmin={isAdmin}
+                    userId={me?.uid}
+                    onDelete={() => {
+                      // Refresh the list after individual delete
+                      setSelectedExams(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(exam.id);
+                        return newSet;
+                      });
+                    }}
+                  />
                 ))}
               </div>
             ) : (
@@ -309,6 +394,17 @@ export default function ExamsPage() {
           onSuccess={() => {
             // Exams will refresh automatically via real-time hooks
           }}
+        />
+      )}
+
+      {/* Bulk Delete Dialog (Admin only) */}
+      {isAdmin && showDeleteDialog && selectedExamsList.length > 0 && (
+        <DeleteExamDialog
+          isOpen={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
+          onSuccess={handleDeleteSuccess}
+          exams={selectedExamsList}
+          userId={me?.uid || ''}
         />
       )}
     </AppShell>
