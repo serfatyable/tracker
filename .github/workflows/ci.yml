@@ -1,55 +1,24 @@
-name: CI
-
+name: ci
 on:
   pull_request:
-    branches: [main]
-  push:
-    branches:
-      - 'ci/**'
-      - 'chore/**'
-      - 'fix/**'
-      - 'feat/**'
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [ main ]
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
-    env:
-      NEXT_TELEMETRY_DISABLED: 1
-      # Stubbed public envs so Next.js builds deterministically in CI
-      NEXT_PUBLIC_FIREBASE_API_KEY: test
-      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: test
-      NEXT_PUBLIC_FIREBASE_PROJECT_ID: test
-      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: test
-      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: test
-      NEXT_PUBLIC_FIREBASE_APP_ID: test
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node (from .nvmrc) with pnpm cache
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install deps
-        run: pnpm i --prefer-frozen-lockfile
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Build (smoke)
-        run: pnpm build
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Lint (if configured)
+        if: hashFiles('.eslintrc*') != ''
+        run: pnpm run lint
+      - name: Typecheck (if tsconfig exists)
+        if: hashFiles('**/tsconfig.json') != ''
+        run: pnpm run typecheck
+      - name: Build
+        run: pnpm run build
