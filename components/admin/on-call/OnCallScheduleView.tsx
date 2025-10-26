@@ -145,20 +145,30 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
         const endKey = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-31`;
 
         const q = query(
-          collection(db, 'onCallShifts'),
+          collection(db, 'onCallDays'),
           where('dateKey', '>=', startKey),
           where('dateKey', '<=', endKey),
           orderBy('dateKey', 'asc'),
         );
 
         const snapshot = await getDocs(q);
-        const schedule = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          date: doc.data().date.toDate(),
-          dateKey: doc.data().dateKey,
-          dayOfWeek: doc.data().dayOfWeek,
-          shifts: doc.data().shifts || {},
-        }));
+        const schedule = snapshot.docs.map((doc) => {
+          const data = doc.data() as any;
+          return {
+            id: doc.id,
+            date: data.date.toDate(),
+            dateKey: data.dateKey,
+            dayOfWeek: data.dayOfWeek,
+            // flatten stations to shift-type label map for UI compatibility
+            shifts: Object.fromEntries(
+              Object.entries(data.stations || {}).map(([stationKey, entry]: any) => [
+                stationKey,
+                entry.userDisplayName,
+              ]),
+            ),
+            stations: data.stations || {},
+          } as any;
+        });
 
         setAllSchedule(schedule);
         setLoading(false);
@@ -229,7 +239,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
 
   // Calculate statistics
   const stats = useMemo(() => {
-    const userName = currentUser?.fullName || '';
+    const _userId = currentUser?.uid || '';
     let totalShifts = 0;
     let myShifts = 0;
     const shiftTypeCounts: Record<string, number> = {};
@@ -269,14 +279,16 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
   // Filter by search, my shifts, shift type, and resident
   const filteredSchedule = useMemo(() => {
     const monthSchedule = scheduleByMonth.get(selectedMonth) || [];
-    const userName = currentUser?.fullName || '';
+    const _userName = currentUser?.fullName || '';
 
     return monthSchedule.filter((day) => {
       // My shifts filter
-      if (myShiftsOnly && userName) {
-        const hasMyShift = Object.values(day.shifts).some((name: any) =>
-          String(name).includes(userName),
-        );
+      if (myShiftsOnly && currentUser?.uid) {
+        const stations = (day.stations || {}) as Record<
+          string,
+          { userId: string; userDisplayName: string }
+        >;
+        const hasMyShift = Object.values(stations).some((e) => e.userId === currentUser.uid);
         if (!hasMyShift) return false;
       }
 
@@ -769,12 +781,11 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                   }).length
                 : 0;
 
-              const myName = currentUser?.fullName ?? '';
+              const myUid = currentUser?.uid ?? '';
               const hasMyShift = !!(
                 daySchedule &&
-                myName &&
-                Object.entries(daySchedule.shifts).some(([type, name]) => {
-                  // Apply filters
+                myUid &&
+                Object.entries(daySchedule.stations || {}).some(([type, entry]: any) => {
                   if (shiftTypeFilter.length > 0) {
                     const matchesFilter = shiftTypeFilter.some(
                       (filter) =>
@@ -783,8 +794,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                     );
                     if (!matchesFilter) return false;
                   }
-                  const displayName = typeof name === 'string' ? name : '';
-                  return displayName.includes(myName);
+                  return entry && entry.userId === myUid;
                 })
               );
 
@@ -824,7 +834,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                   {daySchedule && (
                     <div className="space-y-1">
                       {Object.entries(daySchedule.shifts)
-                        .filter(([type, name]) => {
+                        .filter(([type]) => {
                           // Filter by shift type if filter is active
                           if (shiftTypeFilter.length > 0) {
                             const matchesFilter = shiftTypeFilter.some(
@@ -836,8 +846,13 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                           }
 
                           // Filter by my shifts if active
-                          if (myShiftsOnly && currentUser?.fullName) {
-                            if (!String(name).includes(currentUser.fullName)) return false;
+                          if (myShiftsOnly && currentUser?.uid) {
+                            const stations = (daySchedule.stations || {}) as Record<
+                              string,
+                              { userId: string; userDisplayName: string }
+                            >;
+                            const entry = stations[type];
+                            if (!entry || entry.userId !== currentUser.uid) return false;
                           }
 
                           return true;
@@ -972,9 +987,10 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                             })
                             .map(([shiftType, residentName]) => {
                               const config = getShiftConfig(shiftType);
-                              const isMyShift =
-                                currentUser?.fullName &&
-                                String(residentName).includes(currentUser.fullName);
+                              const isMyShift = !!(
+                                currentUser?.uid &&
+                                day.stations?.[shiftType]?.userId === currentUser.uid
+                              );
                               return (
                                 <div
                                   key={shiftType}

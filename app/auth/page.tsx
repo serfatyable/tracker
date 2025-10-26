@@ -87,6 +87,7 @@ export default function AuthPage() {
   const [resetSent, setResetSent] = useState(false);
 
   const [fullName, setFullName] = useState('');
+  const [fullNameHe, setFullNameHe] = useState('');
   const [suEmail, setSuEmail] = useState('');
   const [suPassword, setSuPassword] = useState('');
   const [role, setRole] = useState<Role>('resident');
@@ -179,6 +180,7 @@ export default function AuthPage() {
       setLoading(true);
       await signUp({
         fullName,
+        fullNameHe,
         email: suEmail,
         password: suPassword,
         role,
@@ -222,7 +224,12 @@ export default function AuthPage() {
       {/* Force brand header to LTR regardless of app language */}
       <div dir="ltr" className="mb-6 flex w-full items-center justify-between gap-4 text-fg">
         <div className="flex items-center gap-4">
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-primary" aria-label="TRACKER">TRACKER</h1>
+          <h1
+            className="text-4xl sm:text-5xl font-extrabold tracking-tight text-primary"
+            aria-label="TRACKER"
+          >
+            TRACKER
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -355,6 +362,14 @@ export default function AuthPage() {
                   required
                   disabled={loading}
                   autoComplete="name"
+                />
+                <TextInput
+                  id="su-fullname-he"
+                  value={fullNameHe}
+                  onChange={setFullNameHe}
+                  label={t('auth.fullName') + ' (HE)'}
+                  disabled={loading}
+                  autoComplete="off"
                 />
                 <TextInput
                   id="su-email"
