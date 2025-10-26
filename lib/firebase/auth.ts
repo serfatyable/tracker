@@ -32,6 +32,7 @@ export async function signIn(email: string, password: string) {
 
 export async function signUp(params: {
   fullName: string;
+  fullNameHe?: string;
   email: string;
   password: string;
   role: Role;
@@ -39,7 +40,7 @@ export async function signUp(params: {
   residencyStartDate?: string; // YYYY-MM-DD when role is resident
 }) {
   const { auth, db } = getAuthDb();
-  const { email, password, fullName, role, language, residencyStartDate } = params;
+  const { email, password, fullName, fullNameHe, role, language, residencyStartDate } = params;
   const cred = await createUserWithEmailAndPassword(auth, email, password);
 
   let userDoc: UserProfile;
@@ -47,6 +48,7 @@ export async function signUp(params: {
     const residentDoc: ResidentProfile = {
       uid: cred.user.uid,
       fullName,
+      fullNameHe,
       email,
       role: 'resident',
       status: 'pending',
@@ -59,6 +61,7 @@ export async function signUp(params: {
     const tutorDoc: TutorProfile = {
       uid: cred.user.uid,
       fullName,
+      fullNameHe,
       email,
       role: 'tutor',
       status: 'pending',
@@ -70,6 +73,7 @@ export async function signUp(params: {
     const adminDoc: AdminProfile = {
       uid: cred.user.uid,
       fullName,
+      fullNameHe,
       email,
       role: 'admin',
       status: 'pending',

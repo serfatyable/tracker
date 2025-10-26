@@ -111,7 +111,8 @@ async function parseOnCallExcelServer(buffer: ArrayBuffer) {
 
     const dayOfWeek = row[0] && typeof row[0] === 'string' ? row[0] : undefined;
 
-    rows.push({ date: parsedDate, dayOfWeek, shifts });
+    // Include original row number to surface precise validation errors to the client
+    rows.push({ rowNumber: rowNum, date: parsedDate, dayOfWeek, shifts });
   }
 
   return { rows, errors };
@@ -132,6 +133,10 @@ export async function POST(request: Request) {
         { status: 401 },
       );
     }
+
+    // Flags via query params
+    const url = new URL(request.url);
+    const deferUnknown = url.searchParams.get('deferUnknown') === 'true';
 
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await getAuth().verifyIdToken(token!);
@@ -206,6 +211,69 @@ export async function POST(request: Request) {
     // Create new shifts
     let totalShifts = 0;
 
+    // Build a normalized name -> users map for uid resolution
+    const normalizeName = (s: string) => {
+      const normalized = String(s || '')
+        .normalize('NFD')
+        .replace(/\p{M}/gu, '') // remove diacritics (including Hebrew niqqud)
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/[\u200E\u200F]/g, '') // strip LRM/RLM
+        .toLowerCase();
+      const tokens = normalized.split(/\s+/).filter(Boolean);
+      // Use last token (family name) for matching
+      return tokens.length > 0 ? tokens[tokens.length - 1] || normalized : normalized;
+    };
+
+    // Fetch all users (across roles) to match names
+    const usersSnap = await adminDb.collection('users').get();
+    const userByName = new Map<
+      string,
+      Array<{ uid: string; fullName: string; role?: string; status?: string }>
+    >();
+    usersSnap.docs.forEach((d) => {
+      const u = d.data() as any;
+      const uid = d.id;
+      const enName = String(u.fullName || '').trim();
+      const heName = String(u.fullNameHe || '').trim();
+      const add = (name: string) => {
+        if (!name) return;
+        const key = normalizeName(name);
+        const arr = userByName.get(key) || [];
+        // keep canonical fullName for display; if only Hebrew provided, fallback to that
+        arr.push({ uid, fullName: enName || heName, role: u.role, status: u.status });
+        userByName.set(key, arr);
+      };
+      add(enName);
+      add(heName);
+    });
+
+    // Validate all referenced names are resolvable to a unique uid
+    const importValidationErrors: string[] = [];
+    for (const dayData of rows) {
+      for (const [_, personName] of Object.entries(dayData.shifts as Record<string, string>)) {
+        if (!personName || typeof personName !== 'string') continue;
+        const key = normalizeName(personName);
+        const matches = userByName.get(key) || [];
+        if (matches.length === 0) {
+          // UNKNOWN_USER:<row>
+          if (!deferUnknown) importValidationErrors.push(`UNKNOWN_USER:${dayData.rowNumber}`);
+        } else if (matches.length > 1) {
+          // Try auto-resolve: exactly one active resident
+          const narrowed = matches.filter((m) => m.role === 'resident' && m.status === 'active');
+          if (narrowed.length === 1) {
+            continue; // acceptable
+          }
+          // AMBIGUOUS_USER:<row>
+          importValidationErrors.push(`AMBIGUOUS_USER:${dayData.rowNumber}`);
+        }
+      }
+    }
+
+    if (importValidationErrors.length > 0) {
+      return NextResponse.json({ errors: importValidationErrors }, { status: 400 });
+    }
+
     // Mapping from Hebrew shift names to station keys
     const shiftToStationKey: Record<string, string> = {
       'ת.חדר ניתוח': 'or_main',
@@ -239,15 +307,29 @@ export async function POST(request: Request) {
       // Convert shifts to stations format
       const stations: Record<string, { userId: string; userDisplayName: string }> = {};
 
-      for (const [hebrewShift, personName] of Object.entries(dayData.shifts)) {
+      for (const [hebrewShift, personName] of Object.entries(
+        dayData.shifts as Record<string, string>,
+      )) {
         const stationKey = shiftToStationKey[hebrewShift];
         if (stationKey && typeof personName === 'string' && personName.trim()) {
-          // For now, use the person name as both userId and userDisplayName
-          // In a real system, you'd want to look up the actual user ID
-          stations[stationKey] = {
-            userId: personName.trim(), // This should be looked up from users collection
-            userDisplayName: personName.trim(),
-          };
+          const key = normalizeName(personName);
+          const matches = userByName.get(key) || [];
+          // Prefer unique active resident if ambiguous
+          const narrowed = matches.filter((m) => m.role === 'resident' && m.status === 'active');
+          if (matches.length === 0 && deferUnknown) {
+            // Store unresolved name; backfill will resolve later
+            stations[stationKey] = {
+              userId: personName.trim(),
+              userDisplayName: personName.trim(),
+            };
+          } else if (matches.length > 0) {
+            const chosen = (narrowed.length === 1 ? narrowed[0] : matches[0])!;
+            const { uid, fullName } = chosen;
+            stations[stationKey] = {
+              userId: uid,
+              userDisplayName: fullName || personName.trim(),
+            };
+          }
         }
       }
 

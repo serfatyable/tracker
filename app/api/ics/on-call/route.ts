@@ -47,39 +47,31 @@ export async function GET(req: NextRequest) {
     // Check if personal calendar is requested
     const { searchParams } = new URL(req.url);
     const personal = searchParams.get('personal') === 'true';
-    const userName = userData.fullName || userData.email;
 
-    // Fetch all on-call shifts
+    // Fetch all on-call days
     const now = new Date();
     now.setMonth(now.getMonth() - 1); // Include past month
     const startKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-    
-    const col = collection(db, 'onCallShifts');
-    const q = query(
-      col,
-      where('dateKey', '>=', startKey),
-      orderBy('dateKey', 'asc')
-    );
+
+    const col = collection(db, 'onCallDays');
+    const q = query(col, where('dateKey', '>=', startKey), orderBy('dateKey', 'asc'));
     const snap = await getDocs(q);
-    
-    // Filter shifts for current user if personal
+
+    // Build shifts, filtering by uid when personal=true
     const myShifts: Array<{ date: Date; shiftType: string; dateKey: string }> = [];
     snap.docs.forEach((d) => {
-      const data = d.data();
-      const shifts = data.shifts || {};
-      Object.entries(shifts).forEach(([shiftType, residentName]) => {
-        if (personal && !String(residentName).includes(userName)) {
-          return; // Skip if not user's shift
-        }
-        myShifts.push({
-          date: data.date.toDate(),
-          shiftType,
-          dateKey: data.dateKey
-        });
+      const data = d.data() as any;
+      const stations = (data.stations || {}) as Record<
+        string,
+        { userId: string; userDisplayName: string }
+      >;
+      Object.entries(stations).forEach(([stationKey, entry]) => {
+        if (personal && entry.userId !== uid) return;
+        myShifts.push({ date: data.date.toDate(), shiftType: stationKey, dateKey: data.dateKey });
       });
     });
 
-    const ics = buildOnCallIcs(myShifts as any, userName);
+    const ics = buildOnCallIcs(myShifts as any, userData.fullName || userData.email);
     return new NextResponse(ics, {
       headers: {
         'content-type': 'text/calendar; charset=utf-8',

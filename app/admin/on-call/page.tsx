@@ -76,7 +76,7 @@ export default function AdminOnCallImportPage() {
       const buffer = await selectedFile.arrayBuffer();
 
       const { fetchWithAuth } = await import('../../../lib/api/client');
-      const res = await fetchWithAuth('/api/on-call/import', {
+      const res = await fetchWithAuth('/api/on-call/import?deferUnknown=true', {
         method: 'POST',
         headers: { 'content-type': 'application/octet-stream' },
         body: buffer,

@@ -16,6 +16,7 @@ export type UserSettings = {
 export type BaseUserProfile = {
   uid: string;
   fullName?: string;
+  fullNameHe?: string; // Optional Hebrew display name for matching Excel rosters
   email?: string | null;
   role: Role;
   status: 'pending' | 'active' | 'disabled';
