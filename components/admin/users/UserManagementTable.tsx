@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { listUsers, updateUsersStatus, updateUsersRole } from '../../../lib/firebase/admin';
+import { listUsers, updateUsersStatus, updateUsersRole, listAssignmentsWithDetails } from '../../../lib/firebase/admin';
 import type { UserProfile, Role } from '../../../types/auth';
+import type { AssignmentWithDetails } from '../../../types/assignments';
+import AssignmentBadges from './AssignmentBadges';
 import { TableSkeleton } from '../../dashboard/Skeleton';
 import Button from '../../ui/Button';
 import EmptyState, { ChecklistIcon } from '../../ui/EmptyState';
@@ -23,6 +25,7 @@ function UserCard({
   onDeny,
   onRoleChange,
   actionLoading,
+  assignments,
   t,
 }: {
   user: UserProfile;
@@ -33,6 +36,7 @@ function UserCard({
   onDeny: () => void;
   onRoleChange: (role: Role) => void;
   actionLoading: Record<string, boolean>;
+  assignments: AssignmentWithDetails[];
   t: any;
 }) {
   return (
@@ -79,6 +83,20 @@ function UserCard({
         </Select>
       </div>
 
+      {/* Assignment Badges (for residents only) */}
+      {user.role === 'resident' && (
+        <div>
+          <div className="text-xs font-medium text-muted mb-1">
+            {t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })}
+          </div>
+          <AssignmentBadges 
+            assignments={assignments} 
+            maxVisible={3}
+            className="text-xs"
+          />
+        </div>
+      )}
+
       {/* Action Buttons (only for pending) */}
       {user.status === 'pending' && (
         <div className="flex gap-2">
@@ -109,6 +127,7 @@ function UserCard({
 export default function UserManagementTable() {
   const { t } = useTranslation();
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
@@ -123,13 +142,17 @@ export default function UserManagementTable() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await listUsers({
-        status: statusFilter || undefined,
-        role: roleFilter || undefined,
-        search: searchQuery || undefined,
-        limit: 100,
-      });
-      setUsers(res.items);
+      const [usersRes, assignmentsRes] = await Promise.all([
+        listUsers({
+          status: statusFilter || undefined,
+          role: roleFilter || undefined,
+          search: searchQuery || undefined,
+          limit: 100,
+        }),
+        listAssignmentsWithDetails(),
+      ]);
+      setUsers(usersRes.items);
+      setAssignments(assignmentsRes);
       setSel({});
     } catch (error) {
       console.error('Failed to load users:', error);
@@ -148,6 +171,10 @@ export default function UserManagementTable() {
 
   function idsSelected() {
     return Object.keys(sel).filter((k) => sel[k]);
+  }
+
+  function getAssignmentsForResident(residentId: string): AssignmentWithDetails[] {
+    return assignments.filter(a => a.residentId === residentId);
   }
 
   const handleApproveUser = async (userId: string) => {
@@ -370,6 +397,7 @@ export default function UserManagementTable() {
                     onDeny={() => handleDenyUser(userId)}
                     onRoleChange={(role) => handleRoleChange(userId, role)}
                     actionLoading={actionLoading}
+                    assignments={getAssignmentsForResident(userId)}
                     t={t}
                   />
                 );
@@ -401,6 +429,7 @@ export default function UserManagementTable() {
                         <TH className="hidden sm:table-cell">{t('ui.email')}</TH>
                         <TH className="hidden md:table-cell">{t('ui.role')}</TH>
                         <TH className="hidden md:table-cell">{t('ui.status')}</TH>
+                        <TH className="hidden lg:table-cell">{t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })}</TH>
                         <TH className="text-right">{t('ui.open')}</TH>
                       </TR>
                     </THead>
@@ -454,6 +483,16 @@ export default function UserManagementTable() {
                               >
                                 {user.status}
                               </span>
+                            </TD>
+                            <TD className="hidden lg:table-cell">
+                              {user.role === 'resident' ? (
+                                <AssignmentBadges 
+                                  assignments={getAssignmentsForResident(userId)} 
+                                  maxVisible={2}
+                                />
+                              ) : (
+                                <span className="text-sm text-muted">-</span>
+                              )}
                             </TD>
                             <TD className="text-right">
                               <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">

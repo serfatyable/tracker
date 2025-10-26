@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 
 import type { UserProfile } from '../../types/auth';
+import type { RotationPetition } from '../../types/rotationPetitions';
 
 import { getFirebaseApp } from './client';
 
@@ -198,4 +199,46 @@ export async function toggleTutorTodoDone(todoId: string, done: boolean): Promis
 export async function deleteTutorTodo(todoId: string): Promise<void> {
   const db = getFirestore(getFirebaseApp());
   await deleteDoc(doc(db, 'tutorTodos', todoId));
+}
+
+export async function createRotationPetition(params: {
+  residentId: string;
+  rotationId: string;
+  type: 'activate' | 'finish';
+  reason?: string;
+}): Promise<{ id: string }> {
+  const db = getFirestore(getFirebaseApp());
+  const ref = await addDoc(collection(db, 'rotationPetitions'), {
+    residentId: params.residentId,
+    rotationId: params.rotationId,
+    type: params.type,
+    reason: params.reason || '',
+    status: 'pending',
+    requestedAt: serverTimestamp(),
+  } as any);
+  return { id: ref.id };
+}
+
+export async function getResidentPetitions(residentId: string): Promise<RotationPetition[]> {
+  const db = getFirestore(getFirebaseApp());
+  const qRef = query(
+    collection(db, 'rotationPetitions'),
+    where('residentId', '==', residentId),
+    orderBy('createdAt', 'desc'),
+    qLimit(100),
+  );
+  const snap = await getDocs(qRef);
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+}
+
+export async function getPetitionsForApprover(approverId: string): Promise<RotationPetition[]> {
+  const db = getFirestore(getFirebaseApp());
+  const qRef = query(
+    collection(db, 'rotationPetitions'),
+    where('approverId', '==', approverId),
+    orderBy('createdAt', 'desc'),
+    qLimit(100),
+  );
+  const snap = await getDocs(qRef);
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
 }

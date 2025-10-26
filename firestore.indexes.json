@@ -88,6 +88,13 @@
       ]
     },
     {
+      "collectionId": "rotations",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "name_en", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionId": "assignments",
       "fields": [
         { "fieldPath": "residentId", "order": "ASCENDING" },

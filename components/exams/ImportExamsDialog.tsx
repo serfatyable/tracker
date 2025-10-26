@@ -228,30 +228,30 @@ export default function ImportExamsDialog({ isOpen, onClose, onSuccess }: Import
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <div className="text-sm text-gray-600">{t('exams.import.totalExams')}</div>
                     <div className="text-2xl font-bold text-blue-600">
-                      {parseResult.exams.length}
+                      {parseResult.exams?.length || 0}
                     </div>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
                     <div className="text-sm text-gray-600">{t('exams.import.totalSubjects')}</div>
                     <div className="text-2xl font-bold text-green-600">
-                      {parseResult.exams.reduce((sum, exam) => sum + exam.subjects.length, 0)}
+                      {parseResult.exams?.reduce((sum, exam) => sum + exam.subjects.length, 0) || 0}
                     </div>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg">
                     <div className="text-sm text-gray-600">{t('exams.import.errors')}</div>
                     <div className="text-2xl font-bold text-red-600">
-                      {parseResult.errors.length}
+                      {parseResult.errors?.length || 0}
                     </div>
                   </div>
                 </div>
 
-                {parseResult.warnings.length > 0 && (
+                {(parseResult.warnings?.length || 0) > 0 && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <h3 className="font-semibold text-yellow-800 mb-2">
                       {t('exams.import.warnings')}
                     </h3>
                     <div className="space-y-1 text-sm text-yellow-700 max-h-32 overflow-y-auto">
-                      {parseResult.warnings.map((warn, idx) => (
+                      {(parseResult.warnings || []).map((warn, idx) => (
                         <div key={idx}>{warn.message}</div>
                       ))}
                     </div>

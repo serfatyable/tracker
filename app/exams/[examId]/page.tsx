@@ -1,10 +1,11 @@
 'use client';
-import { ArrowLeftIcon, CalendarIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, CalendarIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import CurrentExamTab from '@/components/exams/CurrentExamTab';
+import DeleteExamDialog from '@/components/exams/DeleteExamDialog';
 import EditExamDialog from '@/components/exams/EditExamDialog';
 import PastExamsTab from '@/components/exams/PastExamsTab';
 import StudyMaterialsTab from '@/components/exams/StudyMaterialsTab';
@@ -25,6 +26,7 @@ export default function ExamDetailPage() {
   const { exam, loading, error } = useExam(examId);
   const [activeTab, setActiveTab] = useState<'current' | 'study' | 'archive'>('current');
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const isAdmin = me?.role === 'admin' || me?.role === 'tutor';
 
@@ -36,6 +38,15 @@ export default function ExamDetailPage() {
   const handleEdit = () => {
     haptic('light');
     setShowEditDialog(true);
+  };
+
+  const handleDelete = () => {
+    haptic('light');
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteSuccess = () => {
+    router.push('/exams');
   };
 
   const handleTabChange = (tab: 'current' | 'study' | 'archive') => {
@@ -99,13 +110,22 @@ export default function ExamDetailPage() {
               {t('exams.backToList')}
             </button>
             {isAdmin && (
-              <button
-                onClick={handleEdit}
-                className="inline-flex items-center gap-1.5 justify-center rounded-md border border-blue-500 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[32px]"
-              >
-                <PencilIcon className="h-4 w-4" />
-                {t('exams.admin.editExam')}
-              </button>
+              <>
+                <button
+                  onClick={handleEdit}
+                  className="inline-flex items-center gap-1.5 justify-center rounded-md border border-blue-500 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[32px]"
+                >
+                  <PencilIcon className="h-4 w-4" />
+                  {t('exams.admin.editExam')}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="inline-flex items-center gap-1.5 justify-center rounded-md border border-red-500 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 min-h-[32px]"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  {t('exams.admin.delete')}
+                </button>
+              </>
             )}
           </div>
         }
@@ -296,6 +316,17 @@ export default function ExamDetailPage() {
           isOpen={showEditDialog}
           onClose={() => setShowEditDialog(false)}
           exam={exam}
+          userId={me?.uid || ''}
+        />
+      )}
+
+      {/* Delete Dialog */}
+      {isAdmin && showDeleteDialog && exam && (
+        <DeleteExamDialog
+          isOpen={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
+          onSuccess={handleDeleteSuccess}
+          exams={[exam]}
           userId={me?.uid || ''}
         />
       )}

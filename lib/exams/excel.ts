@@ -113,9 +113,7 @@ export function parseExamsExcel(
     if (titleEnCol === -1) errors.push({ row: 0, message: 'Missing required column: Title (EN)' });
     if (titleHeCol === -1) errors.push({ row: 0, message: 'Missing required column: Title (HE)' });
     if (examDateCol === -1) errors.push({ row: 0, message: 'Missing required column: Exam Date' });
-    if (topicsCol === -1) errors.push({ row: 0, message: 'Missing required column: Topics' });
-    if (chaptersCol === -1)
-      errors.push({ row: 0, message: 'Missing required column: Book Chapters' });
+    // Topics and Book Chapters are optional per simplified model
 
     if (errors.length > 0) {
       return { exams: [], errors, warnings, duplicates };
@@ -136,8 +134,8 @@ export function parseExamsExcel(
       const titleHe = row[titleHeCol] ? String(row[titleHeCol]).trim() : '';
       const examDateRaw = row[examDateCol];
       const examLink = row[examLinkCol] ? String(row[examLinkCol]).trim() : '';
-      const topics = row[topicsCol] ? String(row[topicsCol]).trim() : '';
-      const bookChapters = row[chaptersCol] ? String(row[chaptersCol]).trim() : '';
+      const topics = topicsCol !== -1 && row[topicsCol] ? String(row[topicsCol]).trim() : '';
+      const bookChapters = chaptersCol !== -1 && row[chaptersCol] ? String(row[chaptersCol]).trim() : '';
       const descriptionEn =
         descEnCol !== -1 && row[descEnCol] ? String(row[descEnCol]).trim() : undefined;
       const descriptionHe =
@@ -152,14 +150,7 @@ export function parseExamsExcel(
         errors.push({ row: rowNumber, message: 'Title (HE) is required' });
         continue;
       }
-      if (!topics) {
-        errors.push({ row: rowNumber, message: 'Topics is required' });
-        continue;
-      }
-      if (!bookChapters) {
-        errors.push({ row: rowNumber, message: 'Book Chapters is required' });
-        continue;
-      }
+      // Topics and Book Chapters are optional
 
       // Parse and validate date
       let examDate: string;
@@ -168,40 +159,31 @@ export function parseExamsExcel(
         const jsDate = XLSX.SSF.parse_date_code(examDateRaw);
         examDate = `${String(jsDate.d).padStart(2, '0')}/${String(jsDate.m).padStart(2, '0')}/${jsDate.y}`;
       } else if (typeof examDateRaw === 'string') {
-        examDate = examDateRaw.trim();
+        const s = String(examDateRaw).trim();
+        // Support DD/MM or DD/MM/YYYY
+        const m1 = s.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+        if (m1) {
+          const d = parseInt(m1[1]!, 10);
+          const m = parseInt(m1[2]!, 10);
+          let y = m1[3] ? parseInt(m1[3]!, 10) : new Date().getFullYear();
+          if (y < 100) y += 2000; // handle YY
+          const dt = new Date(y, m - 1, d);
+          examDate = `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
+        } else {
+          // Fallback to JS Date parser (supports formats like 17-Sep, 06-Nov, etc.)
+          const dt = new Date(s);
+          if (isNaN(dt.getTime())) {
+            errors.push({ row: rowNumber, message: `Invalid date format: "${s}"` });
+            continue;
+          }
+          examDate = `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
+        }
       } else {
         errors.push({ row: rowNumber, message: 'Exam Date is required' });
         continue;
       }
 
-      // Validate date format DD/MM/YYYY
-      const datePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-      const match = examDate.match(datePattern);
-      if (!match) {
-        errors.push({
-          row: rowNumber,
-          message: `Invalid date format: "${examDate}". Expected DD/MM/YYYY`,
-        });
-        continue;
-      }
-
-      const [, day, month, year] = match;
-      const dayNum = parseInt(day!, 10);
-      const monthNum = parseInt(month!, 10);
-      const yearNum = parseInt(year!, 10);
-
-      if (dayNum < 1 || dayNum > 31) {
-        errors.push({ row: rowNumber, message: `Invalid day: ${dayNum}` });
-        continue;
-      }
-      if (monthNum < 1 || monthNum > 12) {
-        errors.push({ row: rowNumber, message: `Invalid month: ${monthNum}` });
-        continue;
-      }
-      if (yearNum < 2000 || yearNum > 2100) {
-        errors.push({ row: rowNumber, message: `Invalid year: ${yearNum}` });
-        continue;
-      }
+      // examDate is already normalized to DD/MM/YYYY at this point
 
       // Validate URL format if provided
       if (examLink) {
