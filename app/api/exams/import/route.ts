@@ -1,25 +1,13 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+// import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { parseExamsExcel } from '@/lib/exams/excel';
+import { initializeFirebaseAdmin } from '@/lib/firebase/admin-init';
 
-// Initialize Firebase Admin
-if (!getApps().length) {
-  try {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  } catch (error) {
-    console.error('Firebase admin initialization error:', error);
-  }
-}
+// Firebase Admin initialization moved to shared utility
 
 /**
  * POST /api/exams/import
@@ -27,6 +15,9 @@ if (!getApps().length) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Initialize Firebase Admin
+    initializeFirebaseAdmin();
+
     // Verify authentication
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

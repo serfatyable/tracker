@@ -1,35 +1,36 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-  ArrowPathIcon, 
+import {
+  ArrowPathIcon,
   MagnifyingGlassIcon,
   UserGroupIcon,
-  AcademicCapIcon
+  AcademicCapIcon,
 } from '@heroicons/react/24/outline';
+import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { 
-  listAssignmentsWithDetails, 
+import {
+  listAssignmentsWithDetails,
   listUsers,
   assignTutorToResidentGlobal,
   assignTutorToResidentForRotation,
   unassignTutorFromResident,
-  listRotations
+  listRotations,
 } from '../../../lib/firebase/admin';
 import type { AssignmentWithDetails } from '../../../types/assignments';
-import type { UserProfile, Role } from '../../../types/auth';
+import type { UserProfile } from '../../../types/auth';
 import type { Rotation } from '../../../types/rotations';
-import AssignmentCard from './AssignmentCard';
-import TutorAssignmentCard from './TutorAssignmentCard';
-import AssignTutorDialog from './AssignTutorDialog';
-import AssignResidentDialog from './AssignResidentDialog';
-import UnassignConfirmDialog from './UnassignConfirmDialog';
 import Button from '../../ui/Button';
+import EmptyState, { ChecklistIcon } from '../../ui/EmptyState';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
 import Toast from '../../ui/Toast';
-import EmptyState, { ChecklistIcon } from '../../ui/EmptyState';
+
+import AssignmentCard from './AssignmentCard';
+import AssignResidentDialog from './AssignResidentDialog';
+import AssignTutorDialog from './AssignTutorDialog';
+import TutorAssignmentCard from './TutorAssignmentCard';
+import UnassignConfirmDialog from './UnassignConfirmDialog';
 
 type ViewMode = 'byResident' | 'byTutor';
 
@@ -43,8 +44,10 @@ export default function AssignmentsView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [rotationFilter, setRotationFilter] = useState('');
   const [unassignedOnly, setUnassignedOnly] = useState(false);
-  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null);
-  
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(
+    null,
+  );
+
   // Dialog states
   const [assignTutorDialog, setAssignTutorDialog] = useState<{
     isOpen: boolean;
@@ -52,14 +55,14 @@ export default function AssignmentsView() {
     residentName?: string;
     existingTutorIds: string[];
   }>({ isOpen: false, residentId: '', existingTutorIds: [] });
-  
+
   const [assignResidentDialog, setAssignResidentDialog] = useState<{
     isOpen: boolean;
     tutorId: string;
     tutorName?: string;
     existingResidentIds: string[];
   }>({ isOpen: false, tutorId: '', existingResidentIds: [] });
-  
+
   const [unassignDialog, setUnassignDialog] = useState<{
     isOpen: boolean;
     residentId: string;
@@ -78,7 +81,7 @@ export default function AssignmentsView() {
         listUsers({ role: 'tutor', status: 'active', limit: 100 }),
         listRotations({ status: 'active', limit: 100 }),
       ]);
-      
+
       setAssignments(assignmentsRes);
       setTutors(tutorsRes.items);
       setRotations(rotationsRes.items);
@@ -98,55 +101,62 @@ export default function AssignmentsView() {
   }, [loadData]);
 
   // Filter assignments based on search and filters
-  const filteredAssignments = assignments.filter(assignment => {
-    const matchesSearch = !searchQuery || 
+  const filteredAssignments = assignments.filter((assignment) => {
+    const matchesSearch =
+      !searchQuery ||
       assignment.residentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      assignment.tutorNames?.some(name => name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesRotation = !rotationFilter || 
+      assignment.tutorNames?.some((name) => name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesRotation =
+      !rotationFilter ||
       assignment.rotationId === rotationFilter ||
       (rotationFilter === 'global' && assignment.isGlobal);
-    
-    const matchesUnassigned = !unassignedOnly || 
-      (assignment.tutorIds.length === 0);
-    
+
+    const matchesUnassigned = !unassignedOnly || assignment.tutorIds.length === 0;
+
     return matchesSearch && matchesRotation && matchesUnassigned;
   });
 
   // Group assignments by resident for resident view
-  const assignmentsByResident = filteredAssignments.reduce((acc, assignment) => {
-    const residentId = assignment.residentId;
-    if (!acc[residentId]) {
-      acc[residentId] = {
-        residentName: assignment.residentName,
-        assignments: [],
-      };
-    }
-    acc[residentId]!.assignments.push(assignment);
-    return acc;
-  }, {} as Record<string, { residentName?: string; assignments: AssignmentWithDetails[] }>);
-
-  // Group assignments by tutor for tutor view
-  const assignmentsByTutor = filteredAssignments.reduce((acc, assignment) => {
-    assignment.tutorIds.forEach(tutorId => {
-      if (!acc[tutorId]) {
-        const tutor = tutors.find(t => t.uid === tutorId);
-        acc[tutorId] = {
-          tutorName: tutor?.fullName,
+  const assignmentsByResident = filteredAssignments.reduce(
+    (acc, assignment) => {
+      const residentId = assignment.residentId;
+      if (!acc[residentId]) {
+        acc[residentId] = {
+          residentName: assignment.residentName,
           assignments: [],
         };
       }
-      acc[tutorId]!.assignments.push(assignment);
-    });
-    return acc;
-  }, {} as Record<string, { tutorName?: string; assignments: AssignmentWithDetails[] }>);
+      acc[residentId]!.assignments.push(assignment);
+      return acc;
+    },
+    {} as Record<string, { residentName?: string; assignments: AssignmentWithDetails[] }>,
+  );
+
+  // Group assignments by tutor for tutor view
+  const assignmentsByTutor = filteredAssignments.reduce(
+    (acc, assignment) => {
+      assignment.tutorIds.forEach((tutorId) => {
+        if (!acc[tutorId]) {
+          const tutor = tutors.find((t) => t.uid === tutorId);
+          acc[tutorId] = {
+            tutorName: tutor?.fullName,
+            assignments: [],
+          };
+        }
+        acc[tutorId]!.assignments.push(assignment);
+      });
+      return acc;
+    },
+    {} as Record<string, { tutorName?: string; assignments: AssignmentWithDetails[] }>,
+  );
 
   const handleAssignTutor = (residentId: string) => {
-    const resident = Object.values(assignmentsByResident).find(r => 
-      r.assignments.some(a => a.residentId === residentId)
+    const resident = Object.values(assignmentsByResident).find((r) =>
+      r.assignments.some((a) => a.residentId === residentId),
     );
-    const existingTutorIds = resident?.assignments.flatMap(a => a.tutorIds) || [];
-    
+    const existingTutorIds = resident?.assignments.flatMap((a) => a.tutorIds) || [];
+
     setAssignTutorDialog({
       isOpen: true,
       residentId,
@@ -156,11 +166,11 @@ export default function AssignmentsView() {
   };
 
   const handleAssignResident = (tutorId: string) => {
-    const tutor = Object.values(assignmentsByTutor).find(t => 
-      t.assignments.some(a => a.tutorIds.includes(tutorId))
+    const tutor = Object.values(assignmentsByTutor).find((t) =>
+      t.assignments.some((a) => a.tutorIds.includes(tutorId)),
     );
-    const existingResidentIds = tutor?.assignments.map(a => a.residentId) || [];
-    
+    const existingResidentIds = tutor?.assignments.map((a) => a.residentId) || [];
+
     setAssignResidentDialog({
       isOpen: true,
       tutorId,
@@ -169,11 +179,16 @@ export default function AssignmentsView() {
     });
   };
 
-  const handleUnassign = (residentId: string, tutorId: string, rotationId: string, isGlobal?: boolean) => {
-    const assignment = assignments.find(a => 
-      a.residentId === residentId && a.tutorIds.includes(tutorId)
+  const handleUnassign = (
+    residentId: string,
+    tutorId: string,
+    rotationId: string,
+    isGlobal?: boolean,
+  ) => {
+    const assignment = assignments.find(
+      (a) => a.residentId === residentId && a.tutorIds.includes(tutorId),
     );
-    
+
     setUnassignDialog({
       isOpen: true,
       residentId,
@@ -192,12 +207,12 @@ export default function AssignmentsView() {
       } else {
         await assignTutorToResidentGlobal(assignTutorDialog.residentId, tutorId);
       }
-      
+
       setToast({
         message: t('ui.assignmentSuccess', { defaultValue: 'Assignment created successfully' }),
         variant: 'success',
       });
-      
+
       await loadData();
     } catch (error) {
       console.error('Failed to assign tutor:', error);
@@ -211,16 +226,20 @@ export default function AssignmentsView() {
   const handleConfirmAssignResident = async (residentId: string, rotationId: string | null) => {
     try {
       if (rotationId) {
-        await assignTutorToResidentForRotation(residentId, assignResidentDialog.tutorId, rotationId);
+        await assignTutorToResidentForRotation(
+          residentId,
+          assignResidentDialog.tutorId,
+          rotationId,
+        );
       } else {
         await assignTutorToResidentGlobal(residentId, assignResidentDialog.tutorId);
       }
-      
+
       setToast({
         message: t('ui.assignmentSuccess', { defaultValue: 'Assignment created successfully' }),
         variant: 'success',
       });
-      
+
       await loadData();
     } catch (error) {
       console.error('Failed to assign resident:', error);
@@ -234,12 +253,12 @@ export default function AssignmentsView() {
   const handleConfirmUnassign = async () => {
     try {
       await unassignTutorFromResident(unassignDialog.residentId, unassignDialog.tutorId);
-      
+
       setToast({
         message: t('ui.unassignmentSuccess', { defaultValue: 'Assignment removed successfully' }),
         variant: 'success',
       });
-      
+
       await loadData();
     } catch (error) {
       console.error('Failed to unassign tutor:', error);
@@ -257,7 +276,7 @@ export default function AssignmentsView() {
         variant={toast?.variant}
         onClear={() => setToast(null)}
       />
-      
+
       <div className="space-y-4">
         {/* Header with View Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -279,7 +298,7 @@ export default function AssignmentsView() {
               {t('ui.byTutor', { defaultValue: 'By Tutor' })}
             </Button>
           </div>
-          
+
           <Button
             onClick={loadData}
             loading={loading}
@@ -322,7 +341,9 @@ export default function AssignmentsView() {
               onChange={(e) => setUnassignedOnly(e.target.checked)}
               className="w-4 h-4"
             />
-            <span className="text-sm">{t('ui.unassignedOnly', { defaultValue: 'Unassigned Only' })}</span>
+            <span className="text-sm">
+              {t('ui.unassignedOnly', { defaultValue: 'Unassigned Only' })}
+            </span>
           </label>
         </div>
 
@@ -345,45 +366,59 @@ export default function AssignmentsView() {
               description={
                 searchQuery || rotationFilter || unassignedOnly
                   ? t('ui.tryDifferentFilters', { defaultValue: 'Try adjusting your filters' })
-                  : t('ui.noAssignmentsYet', { defaultValue: 'No assignments have been created yet' })
+                  : t('ui.noAssignmentsYet', {
+                      defaultValue: 'No assignments have been created yet',
+                    })
               }
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(assignmentsByResident).map(([residentId, { residentName, assignments: residentAssignments }]) => {
-                const firstAssignment = residentAssignments[0];
-                if (!firstAssignment) return null;
-                return (
-                  <AssignmentCard
-                    key={residentId}
-                    assignment={firstAssignment}
-                    onAssignTutor={handleAssignTutor}
-                    onUnassignTutor={(_, tutorId) => {
-                      const assignment = residentAssignments.find(a => a.tutorIds.includes(tutorId));
-                      if (assignment) {
-                        handleUnassign(residentId, tutorId, assignment.rotationId, assignment.isGlobal);
-                      }
-                    }}
-                    loading={loading}
-                  />
-                );
-              })}
+              {Object.entries(assignmentsByResident).map(
+                ([
+                  residentId,
+                  { residentName: _residentName, assignments: residentAssignments },
+                ]) => {
+                  const firstAssignment = residentAssignments[0];
+                  if (!firstAssignment) return null;
+                  return (
+                    <AssignmentCard
+                      key={residentId}
+                      assignment={firstAssignment}
+                      onAssignTutor={handleAssignTutor}
+                      onUnassignTutor={(_, tutorId) => {
+                        const assignment = residentAssignments.find((a) =>
+                          a.tutorIds.includes(tutorId),
+                        );
+                        if (assignment) {
+                          handleUnassign(
+                            residentId,
+                            tutorId,
+                            assignment.rotationId,
+                            assignment.isGlobal,
+                          );
+                        }
+                      }}
+                      loading={loading}
+                    />
+                  );
+                },
+              )}
             </div>
           )
+        ) : Object.keys(assignmentsByTutor).length === 0 ? (
+          <EmptyState
+            icon={<ChecklistIcon />}
+            title={t('ui.noAssignmentsFound', { defaultValue: 'No assignments found' })}
+            description={
+              searchQuery || rotationFilter || unassignedOnly
+                ? t('ui.tryDifferentFilters', { defaultValue: 'Try adjusting your filters' })
+                : t('ui.noAssignmentsYet', { defaultValue: 'No assignments have been created yet' })
+            }
+          />
         ) : (
-          Object.keys(assignmentsByTutor).length === 0 ? (
-            <EmptyState
-              icon={<ChecklistIcon />}
-              title={t('ui.noAssignmentsFound', { defaultValue: 'No assignments found' })}
-              description={
-                searchQuery || rotationFilter || unassignedOnly
-                  ? t('ui.tryDifferentFilters', { defaultValue: 'Try adjusting your filters' })
-                  : t('ui.noAssignmentsYet', { defaultValue: 'No assignments have been created yet' })
-              }
-            />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(assignmentsByTutor).map(([tutorId, { tutorName, assignments: tutorAssignments }]) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(assignmentsByTutor).map(
+              ([tutorId, { tutorName, assignments: tutorAssignments }]) => (
                 <TutorAssignmentCard
                   key={tutorId}
                   tutorId={tutorId}
@@ -391,23 +426,23 @@ export default function AssignmentsView() {
                   assignments={tutorAssignments}
                   onAssignResident={handleAssignResident}
                   onUnassignResident={(_, residentId, rotationId) => {
-                    const assignment = tutorAssignments.find(a => a.residentId === residentId);
+                    const assignment = tutorAssignments.find((a) => a.residentId === residentId);
                     if (assignment) {
                       handleUnassign(residentId, tutorId, rotationId, assignment.isGlobal);
                     }
                   }}
                   loading={loading}
                 />
-              ))}
-            </div>
-          )
+              ),
+            )}
+          </div>
         )}
       </div>
 
       {/* Dialogs */}
       <AssignTutorDialog
         isOpen={assignTutorDialog.isOpen}
-        onClose={() => setAssignTutorDialog(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setAssignTutorDialog((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={handleConfirmAssignTutor}
         residentId={assignTutorDialog.residentId}
         residentName={assignTutorDialog.residentName}
@@ -416,7 +451,7 @@ export default function AssignmentsView() {
 
       <AssignResidentDialog
         isOpen={assignResidentDialog.isOpen}
-        onClose={() => setAssignResidentDialog(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setAssignResidentDialog((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={handleConfirmAssignResident}
         tutorId={assignResidentDialog.tutorId}
         tutorName={assignResidentDialog.tutorName}
@@ -425,7 +460,7 @@ export default function AssignmentsView() {
 
       <UnassignConfirmDialog
         isOpen={unassignDialog.isOpen}
-        onClose={() => setUnassignDialog(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setUnassignDialog((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={handleConfirmUnassign}
         residentName={unassignDialog.residentName}
         tutorName={unassignDialog.tutorName}

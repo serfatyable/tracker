@@ -4,10 +4,10 @@
   "description": "Tracker follows Tracker_Developer_Guide_v1.0.md",
   "main": "next.config.js",
   "scripts": {
-    "dev": "cross-env NEXT_DISABLE_WEBPACK_PERSISTENT_CACHE=1 next dev",
-    "dev:clean": "pkill -f 'next dev' || true && rm -rf .next && cross-env NEXT_DISABLE_WEBPACK_PERSISTENT_CACHE=1 next dev",
-    "build": "cross-env NEXT_DISABLE_WEBPACK_PERSISTENT_CACHE=1 next build",
-    "build:clean": "rm -rf .next && cross-env NEXT_DISABLE_WEBPACK_PERSISTENT_CACHE=1 next build",
+    "dev": "next dev",
+    "dev:clean": "pkill -f 'next dev' || true && rm -rf .next && next dev",
+    "build": "next build",
+    "build:clean": "rm -rf .next && next build",
     "start": "next start",
     "emulators": "firebase emulators:start",
     "dev:emulators": "cross-env NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true next dev",
@@ -25,7 +25,11 @@
     "test:ci": "vitest run --pool=threads --poolOptions.threads.maxThreads=1",
     "check": "pnpm typecheck && pnpm lint",
     "clean": "rm -rf .next .turbo node_modules && pnpm i",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "build:analyze": "pnpm build && pnpm analyze",
+    "perf": "pnpm build && pnpm start",
+    "audit:deps": "pnpm audit --audit-level moderate",
+    "audit:security": "pnpm audit --audit-level high"
   },
   "repository": {
     "type": "git",

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { collection, query, where, orderBy, onSnapshot, getFirestore } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
-import { getFirebaseApp } from '../firebase/client';
 import type { RotationPetition } from '../../types/rotationPetitions';
+import { getFirebaseApp } from '../firebase/client';
 
 export function useRotationPetitions(residentId: string | null) {
   const [petitions, setPetitions] = useState<RotationPetition[]>([]);

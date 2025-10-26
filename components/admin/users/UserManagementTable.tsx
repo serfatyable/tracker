@@ -3,10 +3,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { listUsers, updateUsersStatus, updateUsersRole, listAssignmentsWithDetails } from '../../../lib/firebase/admin';
-import type { UserProfile, Role } from '../../../types/auth';
+import {
+  listUsers,
+  updateUsersStatus,
+  updateUsersRole,
+  listAssignmentsWithDetails,
+} from '../../../lib/firebase/admin';
 import type { AssignmentWithDetails } from '../../../types/assignments';
-import AssignmentBadges from './AssignmentBadges';
+import type { UserProfile, Role } from '../../../types/auth';
 import { TableSkeleton } from '../../dashboard/Skeleton';
 import Button from '../../ui/Button';
 import EmptyState, { ChecklistIcon } from '../../ui/EmptyState';
@@ -14,6 +18,8 @@ import Input from '../../ui/Input';
 import Select from '../../ui/Select';
 import { Table, THead, TBody, TR, TH, TD, TableWrapper } from '../../ui/Table';
 import Toast from '../../ui/Toast';
+
+import AssignmentBadges from './AssignmentBadges';
 
 // Mobile Card Component
 function UserCard({
@@ -89,11 +95,7 @@ function UserCard({
           <div className="text-xs font-medium text-muted mb-1">
             {t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })}
           </div>
-          <AssignmentBadges 
-            assignments={assignments} 
-            maxVisible={3}
-            className="text-xs"
-          />
+          <AssignmentBadges assignments={assignments} maxVisible={3} className="text-xs" />
         </div>
       )}
 
@@ -174,7 +176,7 @@ export default function UserManagementTable() {
   }
 
   function getAssignmentsForResident(residentId: string): AssignmentWithDetails[] {
-    return assignments.filter(a => a.residentId === residentId);
+    return assignments.filter((a) => a.residentId === residentId);
   }
 
   const handleApproveUser = async (userId: string) => {
@@ -429,7 +431,9 @@ export default function UserManagementTable() {
                         <TH className="hidden sm:table-cell">{t('ui.email')}</TH>
                         <TH className="hidden md:table-cell">{t('ui.role')}</TH>
                         <TH className="hidden md:table-cell">{t('ui.status')}</TH>
-                        <TH className="hidden lg:table-cell">{t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })}</TH>
+                        <TH className="hidden lg:table-cell">
+                          {t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })}
+                        </TH>
                         <TH className="text-right">{t('ui.open')}</TH>
                       </TR>
                     </THead>
@@ -486,8 +490,8 @@ export default function UserManagementTable() {
                             </TD>
                             <TD className="hidden lg:table-cell">
                               {user.role === 'resident' ? (
-                                <AssignmentBadges 
-                                  assignments={getAssignmentsForResident(userId)} 
+                                <AssignmentBadges
+                                  assignments={getAssignmentsForResident(userId)}
                                   maxVisible={2}
                                 />
                               ) : (

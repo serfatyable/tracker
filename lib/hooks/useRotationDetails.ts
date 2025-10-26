@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
-import { getFirebaseApp } from '../firebase/client';
 import type { Rotation } from '../../types/rotations';
+import { getFirebaseApp } from '../firebase/client';
 
 export function useRotationDetails(rotationId: string | null) {
   const [rotation, setRotation] = useState<Rotation | null>(null);

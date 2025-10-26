@@ -35,7 +35,7 @@ export default function UnassignConfirmDialog({
     try {
       await onConfirm();
       onClose();
-    } catch (err) {
+    } catch {
       // Error handling is done by parent component
     }
   };
@@ -44,13 +44,7 @@ export default function UnassignConfirmDialog({
 
   return (
     <>
-      {error && (
-        <Toast
-          message={error}
-          variant="error"
-          onClear={() => {}}
-        />
-      )}
+      {error && <Toast message={error} variant="error" onClear={() => {}} />}
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
         <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4">
@@ -77,12 +71,13 @@ export default function UnassignConfirmDialog({
               <div className="flex-1">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   {t('ui.unassignConfirmMessage', {
-                    defaultValue: 'Are you sure you want to unassign {{tutorName}} from {{residentName}}?',
+                    defaultValue:
+                      'Are you sure you want to unassign {{tutorName}} from {{residentName}}?',
                     tutorName: tutorName || 'Unknown Tutor',
-                    residentName: residentName || 'Unknown Resident'
+                    residentName: residentName || 'Unknown Resident',
                   })}
                 </p>
-                
+
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3 text-sm">
                   <div className="font-medium text-gray-900 dark:text-white mb-1">
                     {t('ui.assignmentDetails', { defaultValue: 'Assignment Details' })}
@@ -114,11 +109,7 @@ export default function UnassignConfirmDialog({
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-            >
+            <Button variant="outline" onClick={onClose} disabled={loading}>
               {t('ui.cancel')}
             </Button>
             <Button

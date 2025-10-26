@@ -29,7 +29,7 @@ export default function TutorDashboard() {
     null,
   );
 
-  const handleToast = (message: string, variant: 'success' | 'error') => {
+  const _handleToast = (message: string, variant: 'success' | 'error') => {
     setToast({ message, variant });
   };
 
@@ -72,7 +72,7 @@ export default function TutorDashboard() {
             <OnCallScheduleView showUploadButton={false} />
 
             {/* 3) Rotations progress */}
-            <Suspense fallback={<SpinnerSkeleton />}> 
+            <Suspense fallback={<SpinnerSkeleton />}>
               <TutorRotationsTab />
             </Suspense>
 
@@ -84,7 +84,9 @@ export default function TutorDashboard() {
 
             {/* 6) Settings link only */}
             <div className="flex justify-end">
-              <Link href="/settings" className="pill text-xs">{t('ui.settings')}</Link>
+              <Link href="/settings" className="pill text-xs">
+                {t('ui.settings')}
+              </Link>
             </div>
           </div>
         </div>

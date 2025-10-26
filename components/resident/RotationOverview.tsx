@@ -1,12 +1,13 @@
 'use client';
 
+import { getAuth } from 'firebase/auth';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getAuth } from 'firebase/auth';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { useRotationDetails } from '../../lib/hooks/useRotationDetails';
 import Button from '../ui/Button';
+
 import RotationPetitionDialog from './RotationPetitionDialog';
 
 type Props = {
@@ -70,20 +71,18 @@ export default function RotationOverview({ rotationId }: Props) {
                 {t('petitions.rotationStatus', { defaultValue: 'Rotation Status' })}
               </div>
               <div className="text-sm font-medium text-gray-900 dark:text-gray-50">
-                {rotation.status === 'inactive' && t('petitions.inactive', { defaultValue: 'Inactive' })}
+                {rotation.status === 'inactive' &&
+                  t('petitions.inactive', { defaultValue: 'Inactive' })}
                 {rotation.status === 'active' && t('petitions.active', { defaultValue: 'Active' })}
-                {rotation.status === 'finished' && t('petitions.finished', { defaultValue: 'Finished' })}
+                {rotation.status === 'finished' &&
+                  t('petitions.finished', { defaultValue: 'Finished' })}
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             {showActivationButton && (
-              <Button
-                onClick={handleActivateClick}
-                variant="default"
-                className="flex-1"
-              >
+              <Button onClick={handleActivateClick} variant="default" className="flex-1">
                 {t('petitions.requestActivation', { defaultValue: 'Request Activation' })}
               </Button>
             )}

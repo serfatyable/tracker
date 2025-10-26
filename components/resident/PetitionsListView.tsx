@@ -3,7 +3,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { useRotationPetitions } from '../../lib/hooks/useRotationPetitions';
-import Badge from '../ui/Badge';
+// import Badge from '../ui/Badge';
 import { EmptyIcon } from '../ui/EmptyState';
 
 type PetitionsListViewProps = {
@@ -55,29 +55,37 @@ export default function PetitionsListView({ residentId }: PetitionsListViewProps
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                  petition.type === 'activate' 
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
-                    : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-                }`}>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    petition.type === 'activate'
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
+                      : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+                  }`}
+                >
                   {petition.type === 'activate'
                     ? t('petitions.activation', { defaultValue: 'Activation' })
                     : t('petitions.completion', { defaultValue: 'Completion' })}
                 </span>
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                  petition.status === 'pending'
-                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-                    : petition.status === 'approved'
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
-                      : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
-                }`}>
-                  {petition.status === 'pending' && t('petitions.pending', { defaultValue: 'Pending' })}
-                  {petition.status === 'approved' && t('petitions.approved', { defaultValue: 'Approved' })}
-                  {petition.status === 'denied' && t('petitions.denied', { defaultValue: 'Denied' })}
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    petition.status === 'pending'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+                      : petition.status === 'approved'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
+                  }`}
+                >
+                  {petition.status === 'pending' &&
+                    t('petitions.pending', { defaultValue: 'Pending' })}
+                  {petition.status === 'approved' &&
+                    t('petitions.approved', { defaultValue: 'Approved' })}
+                  {petition.status === 'denied' &&
+                    t('petitions.denied', { defaultValue: 'Denied' })}
                 </span>
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                {t('petitions.rotation', { defaultValue: 'Rotation' })}: <span className="font-medium">{petition.rotationId}</span>
+                {t('petitions.rotation', { defaultValue: 'Rotation' })}:{' '}
+                <span className="font-medium">{petition.rotationId}</span>
               </div>
               {petition.reason && (
                 <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">{petition.reason}</p>

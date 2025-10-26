@@ -4,9 +4,8 @@ import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { listUsers } from '../../../lib/firebase/admin';
-import { listRotations } from '../../../lib/firebase/admin';
-import type { UserProfile, Role } from '../../../types/auth';
+import { listUsers, listRotations } from '../../../lib/firebase/admin';
+import type { UserProfile } from '../../../types/auth';
 import type { Rotation } from '../../../types/rotations';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -26,7 +25,7 @@ export default function AssignResidentDialog({
   isOpen,
   onClose,
   onConfirm,
-  tutorId,
+  tutorId: _tutorId,
   tutorName,
   existingResidentIds = [],
 }: AssignResidentDialogProps) {
@@ -39,12 +38,14 @@ export default function AssignResidentDialog({
   const [selectedResidentId, setSelectedResidentId] = useState('');
   const [selectedRotationId, setSelectedRotationId] = useState('');
   const [isGlobal, setIsGlobal] = useState(false);
-  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(
+    null,
+  );
 
   // Load residents and rotations
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const loadData = async () => {
       setLoading(true);
       try {
@@ -52,12 +53,12 @@ export default function AssignResidentDialog({
           listUsers({ role: 'resident', status: 'active', limit: 100 }),
           listRotations({ status: 'active', limit: 100 }),
         ]);
-        
+
         // Filter out already assigned residents (simplified - in real app would check actual assignments)
-        const availableResidents = residentsRes.items.filter(resident => 
-          !existingResidentIds.includes(resident.uid)
+        const availableResidents = residentsRes.items.filter(
+          (resident) => !existingResidentIds.includes(resident.uid),
         );
-        
+
         setResidents(availableResidents);
         setRotations(rotationsRes.items);
       } catch (error) {
@@ -84,9 +85,10 @@ export default function AssignResidentDialog({
     }
   }, [isOpen]);
 
-  const filteredResidents = residents.filter(resident =>
-    resident.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    resident.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredResidents = residents.filter(
+    (resident) =>
+      resident.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resident.email?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleSubmit = async () => {
@@ -149,9 +151,9 @@ export default function AssignResidentDialog({
           {/* Content */}
           <div className="p-6 space-y-4">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              {t('ui.assigningResidentFor', { 
+              {t('ui.assigningResidentFor', {
                 defaultValue: 'Assigning resident for {{tutorName}}',
-                tutorName: tutorName || 'Unknown Tutor'
+                tutorName: tutorName || 'Unknown Tutor',
               })}
             </div>
 
@@ -180,7 +182,9 @@ export default function AssignResidentDialog({
                         key={resident.uid}
                         onClick={() => setSelectedResidentId(resident.uid)}
                         className={`w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${
-                          selectedResidentId === resident.uid ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+                          selectedResidentId === resident.uid
+                            ? 'bg-blue-50 dark:bg-blue-900/30'
+                            : ''
                         }`}
                       >
                         <div className="font-medium text-sm">{resident.fullName}</div>
@@ -205,7 +209,9 @@ export default function AssignResidentDialog({
                     onChange={() => setIsGlobal(true)}
                     className="mr-2"
                   />
-                  <span className="text-sm">{t('ui.globalAssignment', { defaultValue: 'Global Assignment' })}</span>
+                  <span className="text-sm">
+                    {t('ui.globalAssignment', { defaultValue: 'Global Assignment' })}
+                  </span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -214,7 +220,9 @@ export default function AssignResidentDialog({
                     onChange={() => setIsGlobal(false)}
                     className="mr-2"
                   />
-                  <span className="text-sm">{t('ui.rotationSpecific', { defaultValue: 'Rotation Specific' })}</span>
+                  <span className="text-sm">
+                    {t('ui.rotationSpecific', { defaultValue: 'Rotation Specific' })}
+                  </span>
                 </label>
               </div>
             </div>
@@ -245,11 +253,7 @@ export default function AssignResidentDialog({
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={submitting}
-            >
+            <Button variant="outline" onClick={onClose} disabled={submitting}>
               {t('ui.cancel')}
             </Button>
             <Button
