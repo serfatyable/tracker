@@ -257,10 +257,6 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
         if (isWeekend) {
           weekendShifts[residentName] = (weekendShifts[residentName] || 0) + 1;
         }
-
-        if (userName && residentName.includes(userName)) {
-          myShifts++;
-        }
       });
     });
 
