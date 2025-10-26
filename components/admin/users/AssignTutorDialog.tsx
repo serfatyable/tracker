@@ -4,9 +4,8 @@ import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { listUsers } from '../../../lib/firebase/admin';
-import { listRotations } from '../../../lib/firebase/admin';
-import type { UserProfile, Role } from '../../../types/auth';
+import { listUsers, listRotations } from '../../../lib/firebase/admin';
+import type { UserProfile } from '../../../types/auth';
 import type { Rotation } from '../../../types/rotations';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -26,7 +25,7 @@ export default function AssignTutorDialog({
   isOpen,
   onClose,
   onConfirm,
-  residentId,
+  residentId: _residentId,
   residentName,
   existingTutorIds = [],
 }: AssignTutorDialogProps) {
@@ -39,12 +38,14 @@ export default function AssignTutorDialog({
   const [selectedTutorId, setSelectedTutorId] = useState('');
   const [selectedRotationId, setSelectedRotationId] = useState('');
   const [isGlobal, setIsGlobal] = useState(false);
-  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(
+    null,
+  );
 
   // Load tutors and rotations
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const loadData = async () => {
       setLoading(true);
       try {
@@ -52,12 +53,12 @@ export default function AssignTutorDialog({
           listUsers({ role: 'tutor', status: 'active', limit: 100 }),
           listRotations({ status: 'active', limit: 100 }),
         ]);
-        
+
         // Filter out already assigned tutors
-        const availableTutors = tutorsRes.items.filter(tutor => 
-          !existingTutorIds.includes(tutor.uid)
+        const availableTutors = tutorsRes.items.filter(
+          (tutor) => !existingTutorIds.includes(tutor.uid),
         );
-        
+
         setTutors(availableTutors);
         setRotations(rotationsRes.items);
       } catch (error) {
@@ -84,9 +85,10 @@ export default function AssignTutorDialog({
     }
   }, [isOpen]);
 
-  const filteredTutors = tutors.filter(tutor =>
-    tutor.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tutor.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTutors = tutors.filter(
+    (tutor) =>
+      tutor.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tutor.email?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleSubmit = async () => {
@@ -149,9 +151,9 @@ export default function AssignTutorDialog({
           {/* Content */}
           <div className="p-6 space-y-4">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              {t('ui.assigningTutorFor', { 
+              {t('ui.assigningTutorFor', {
                 defaultValue: 'Assigning tutor for {{residentName}}',
-                residentName: residentName || 'Unknown Resident'
+                residentName: residentName || 'Unknown Resident',
               })}
             </div>
 
@@ -205,7 +207,9 @@ export default function AssignTutorDialog({
                     onChange={() => setIsGlobal(true)}
                     className="mr-2"
                   />
-                  <span className="text-sm">{t('ui.globalAssignment', { defaultValue: 'Global Assignment' })}</span>
+                  <span className="text-sm">
+                    {t('ui.globalAssignment', { defaultValue: 'Global Assignment' })}
+                  </span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -214,7 +218,9 @@ export default function AssignTutorDialog({
                     onChange={() => setIsGlobal(false)}
                     className="mr-2"
                   />
-                  <span className="text-sm">{t('ui.rotationSpecific', { defaultValue: 'Rotation Specific' })}</span>
+                  <span className="text-sm">
+                    {t('ui.rotationSpecific', { defaultValue: 'Rotation Specific' })}
+                  </span>
                 </label>
               </div>
             </div>
@@ -245,11 +251,7 @@ export default function AssignTutorDialog({
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={submitting}
-            >
+            <Button variant="outline" onClick={onClose} disabled={submitting}>
               {t('ui.cancel')}
             </Button>
             <Button

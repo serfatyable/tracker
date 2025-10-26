@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { UserGroupIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import UserManagementTable from '../../../components/admin/users/UserManagementTable';
 import AppShell from '../../../components/layout/AppShell';
@@ -12,7 +12,7 @@ import Button from '../../../components/ui/Button';
 // Dynamically import AssignmentsView to avoid SSR issues
 const AssignmentsView = dynamic(() => import('../../../components/admin/users/AssignmentsView'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center p-8">Loading assignments...</div>
+  loading: () => <div className="flex items-center justify-center p-8">Loading assignments...</div>,
 });
 
 type Tab = 'users' | 'assignments';
@@ -50,11 +50,7 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'users' ? (
-          <UserManagementTable />
-        ) : (
-          <AssignmentsView />
-        )}
+        {activeTab === 'users' ? <UserManagementTable /> : <AssignmentsView />}
       </div>
     </AppShell>
   );

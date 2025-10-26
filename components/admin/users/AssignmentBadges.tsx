@@ -1,8 +1,8 @@
 'use client';
 
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
 import type { AssignmentWithDetails } from '../../../types/assignments';
 
@@ -12,14 +12,14 @@ interface AssignmentBadgesProps {
   className?: string;
 }
 
-export default function AssignmentBadges({ 
-  assignments, 
-  maxVisible = 2, 
-  className = '' 
+export default function AssignmentBadges({
+  assignments,
+  maxVisible = 2,
+  className = '',
 }: AssignmentBadgesProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   if (!assignments || assignments.length === 0) {
     return (
       <span className={`text-sm text-muted italic ${className}`}>
@@ -29,13 +29,11 @@ export default function AssignmentBadges({
   }
 
   // Flatten all tutor names from all assignments
-  const allTutorNames = assignments.flatMap(assignment => 
-    assignment.tutorNames || []
-  );
-  
+  const allTutorNames = assignments.flatMap((assignment) => assignment.tutorNames || []);
+
   // Remove duplicates while preserving order
   const uniqueTutorNames = Array.from(new Set(allTutorNames));
-  
+
   const visibleTutors = isExpanded ? uniqueTutorNames : uniqueTutorNames.slice(0, maxVisible);
   const remainingCount = uniqueTutorNames.length - maxVisible;
 
@@ -49,7 +47,7 @@ export default function AssignmentBadges({
           {tutorName}
         </span>
       ))}
-      
+
       {remainingCount > 0 && !isExpanded && (
         <button
           onClick={() => setIsExpanded(true)}
@@ -59,7 +57,7 @@ export default function AssignmentBadges({
           <ChevronDownIcon className="w-3 h-3 ml-1" />
         </button>
       )}
-      
+
       {isExpanded && remainingCount > 0 && (
         <button
           onClick={() => setIsExpanded(false)}

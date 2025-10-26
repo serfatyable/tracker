@@ -6,8 +6,12 @@ const nextConfig = {
   // Ensure Next uses this project directory as the root for tracing/build artifacts
   outputFileTracingRoot: __dirname,
   eslint: {
-    // Avoid build failures/noisy errors during full rebuilds; run `pnpm lint` separately
-    ignoreDuringBuilds: true,
+    // Run ESLint during builds for better CI/CD integration
+    ignoreDuringBuilds: false,
+  },
+  // Performance optimizations
+  experimental: {
+    optimizePackageImports: ['@heroicons/react', 'firebase'],
   },
   // Webpack configuration for xlsx library
   webpack: (config, { isServer }) => {

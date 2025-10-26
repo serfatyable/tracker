@@ -3,8 +3,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Card from '@/components/ui/Card';
 import DeleteExamDialog from '@/components/exams/DeleteExamDialog';
+import Card from '@/components/ui/Card';
 import { getLocalized } from '@/lib/i18n/getLocalized';
 import { haptic } from '@/lib/utils/haptics';
 import type { Exam } from '@/types/exam';

@@ -113,9 +113,9 @@ export default function ExamsPage() {
     setSearchQuery('');
   };
 
-  const handleSelectExam = (examId: string, selected: boolean) => {
+  const _handleSelectExam = (examId: string, selected: boolean) => {
     haptic('light');
-    setSelectedExams(prev => {
+    setSelectedExams((prev) => {
       const newSet = new Set(prev);
       if (selected) {
         newSet.add(examId);
@@ -131,7 +131,7 @@ export default function ExamsPage() {
     if (selectedExams.size === filteredExams.length) {
       setSelectedExams(new Set());
     } else {
-      setSelectedExams(new Set(filteredExams.map(exam => exam.id)));
+      setSelectedExams(new Set(filteredExams.map((exam) => exam.id)));
     }
   };
 
@@ -144,7 +144,7 @@ export default function ExamsPage() {
     setSelectedExams(new Set());
   };
 
-  const selectedExamsList = filteredExams.filter(exam => selectedExams.has(exam.id));
+  const selectedExamsList = filteredExams.filter((exam) => selectedExams.has(exam.id));
 
   if (loading) {
     return (
@@ -284,7 +284,9 @@ export default function ExamsPage() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={selectedExams.size === filteredExams.length && filteredExams.length > 0}
+                      checked={
+                        selectedExams.size === filteredExams.length && filteredExams.length > 0
+                      }
                       onChange={handleSelectAll}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
@@ -316,14 +318,14 @@ export default function ExamsPage() {
             {filteredExams.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredExams.map((exam) => (
-                  <ExamCard 
-                    key={exam.id} 
-                    exam={exam} 
+                  <ExamCard
+                    key={exam.id}
+                    exam={exam}
                     isAdmin={isAdmin}
                     userId={me?.uid}
                     onDelete={() => {
                       // Refresh the list after individual delete
-                      setSelectedExams(prev => {
+                      setSelectedExams((prev) => {
                         const newSet = new Set(prev);
                         newSet.delete(exam.id);
                         return newSet;

@@ -53,7 +53,7 @@ export async function sendPetitionDeniedEmail(
 /**
  * Generate HTML email template for approved petition
  */
-function generatePetitionApprovedEmail(petition: RotationPetition, rotationName: string): string {
+function _generatePetitionApprovedEmail(petition: RotationPetition, rotationName: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #059669;">Rotation Petition Approved</h2>
@@ -67,7 +67,7 @@ function generatePetitionApprovedEmail(petition: RotationPetition, rotationName:
 /**
  * Generate HTML email template for denied petition
  */
-function generatePetitionDeniedEmail(petition: RotationPetition, rotationName: string): string {
+function _generatePetitionDeniedEmail(petition: RotationPetition, rotationName: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #dc2626;">Rotation Petition Denied</h2>

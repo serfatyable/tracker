@@ -1,11 +1,14 @@
 'use client';
-import dynamic from 'next/dynamic';
+// import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo as _useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Full modules omitted on dashboard; snapshots only
+import KPICards from '../../components/admin/overview/KPICards';
+import PetitionsTable from '../../components/admin/overview/PetitionsTable';
+import UnassignedQueues from '../../components/admin/overview/UnassignedQueues';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
 import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
@@ -19,7 +22,7 @@ import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
 import type { UserProfile } from '../../types/auth';
 
 // Fallback component for failed dynamic imports
-const ComponentError = ({ componentName }: { componentName: string }) => (
+const _ComponentError = ({ componentName }: { componentName: string }) => (
   <div className="card-levitate p-4 text-center">
     <p className="text-red-600 dark:text-red-400">
       Failed to load {componentName}. Please refresh the page.
@@ -28,9 +31,6 @@ const ComponentError = ({ componentName }: { componentName: string }) => (
 );
 
 // Temporarily use regular imports to avoid chunk loading issues
-import KPICards from '../../components/admin/overview/KPICards';
-import PetitionsTable from '../../components/admin/overview/PetitionsTable';
-import UnassignedQueues from '../../components/admin/overview/UnassignedQueues';
 // Reflections/Rotations/Settings are standalone pages (not on dashboard)
 
 export default function AdminDashboard(): React.ReactElement {

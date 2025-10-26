@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { createRotationPetition } from '../../lib/firebase/db';
 import Button from '../ui/Button';
-import TextField from '../ui/TextField';
+// import TextField from '../ui/TextField';
 
 type RotationPetitionDialogProps = {
   open: boolean;
@@ -97,7 +97,9 @@ export default function RotationPetitionDialog({
             <div className="text-xs text-gray-600 dark:text-gray-300 mb-1">
               {t('petitions.rotation', { defaultValue: 'Rotation' })}
             </div>
-            <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{rotationName}</div>
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-50">
+              {rotationName}
+            </div>
           </div>
 
           <div>
@@ -126,12 +128,7 @@ export default function RotationPetitionDialog({
           )}
 
           <div className="flex gap-2 pt-2">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-              className="flex-1"
-            >
+            <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
               {t('ui.cancel')}
             </Button>
             <Button onClick={handleSubmit} loading={loading} className="flex-1">
