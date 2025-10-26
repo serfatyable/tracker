@@ -1,0 +1,27 @@
+[
+  {
+    "examId": "ok-1",
+    "title": "Valid row",
+    "date": "2026-01-15",
+    "subjects": [{ "name": "OB", "examLink": "https://example.com/ob-1" }]
+  },
+  {
+    "examId": "missing-link",
+    "title": "Missing link in first subject",
+    "date": "2026-02-10",
+    "subjects": [{ "name": "OB" }]
+  },
+  {
+    "examId": "bad-date",
+    "title": "Malformed date example",
+    "date": "15-02-2026",
+    "subjects": [{ "name": "OB", "examLink": "https://example.com/x" }]
+  },
+  {
+    "examId": "extra-field",
+    "title": "Has unexpected field",
+    "date": "2026-03-05",
+    "unexpected": "surprise",
+    "subjects": [{ "name": "OB", "examLink": "https://example.com/y" }]
+  }
+]

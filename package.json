@@ -22,7 +22,10 @@
     "test": "vitest run --coverage",
     "test:light": "vitest run --pool=threads --poolOptions.threads.maxThreads=1",
     "test:mem": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run --pool=threads --poolOptions.threads.maxThreads=1",
-    "test:ci": "vitest run --pool=threads --poolOptions.threads.maxThreads=1"
+    "test:ci": "vitest run --pool=threads --poolOptions.threads.maxThreads=1",
+    "check": "pnpm typecheck && pnpm lint",
+    "clean": "rm -rf .next .turbo node_modules && pnpm i",
+    "analyze": "ANALYZE=true next build"
   },
   "repository": {
     "type": "git",
@@ -37,7 +40,7 @@
   "homepage": "https://github.com/serfatyable/tracker#readme",
   "packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
   "engines": {
-    "node": "20.x"
+    "node": ">=20 <23"
   },
   "dependencies": {
     "@headlessui/react": "2.2.0",
