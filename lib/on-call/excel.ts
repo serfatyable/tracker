@@ -124,14 +124,13 @@ export async function parseOnCallExcel(buffer: ArrayBuffer): Promise<{
 }
 
 function parseExcelDate(serial: number): Date {
-  const EXCEL_EPOCH = new Date(1899, 11, 30);
+  // Use UTC epoch to avoid local timezone skew
+  const EXCEL_EPOCH_UTC_MS = Date.UTC(1899, 11, 30);
   const MS_PER_DAY = 86400000;
-  const date = new Date(EXCEL_EPOCH.getTime() + serial * MS_PER_DAY);
-  
+  const date = new Date(EXCEL_EPOCH_UTC_MS + Math.round(serial) * MS_PER_DAY);
   if (isNaN(date.getTime())) {
     throw new Error(`Invalid Excel serial number: ${serial}`);
   }
-  
   return date;
 }
 
@@ -154,9 +153,9 @@ function parseDateString(dateStr: string): Date {
 }
 
 export function formatDateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 

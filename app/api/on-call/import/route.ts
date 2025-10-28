@@ -48,9 +48,10 @@ async function parseOnCallExcelServer(buffer: ArrayBuffer) {
   const errors: any[] = [];
 
   function parseExcelDate(serial: number): Date {
-    const EXCEL_EPOCH = new Date(1899, 11, 30);
+    // Interpret Excel serial as days since 1899-12-30 in UTC (handles Excel's 1900 system)
+    const EXCEL_EPOCH_UTC_MS = Date.UTC(1899, 11, 30);
     const MS_PER_DAY = 86400000;
-    return new Date(EXCEL_EPOCH.getTime() + serial * MS_PER_DAY);
+    return new Date(EXCEL_EPOCH_UTC_MS + Math.round(serial) * MS_PER_DAY);
   }
 
   function parseDateString(dateStr: string): Date {
@@ -184,7 +185,7 @@ export async function POST(request: Request) {
 
     // Get all unique months from the upload
     const monthsToReplace = new Set(
-      rows.map((r) => `${r.date.getFullYear()}-${r.date.getMonth()}`),
+      rows.map((r) => `${r.date.getUTCFullYear()}-${r.date.getUTCMonth()}`),
     );
 
     // Delete existing shifts for those months
@@ -302,7 +303,10 @@ export async function POST(request: Request) {
 
     for (const dayData of rows) {
       const date = dayData.date;
-      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const y = date.getUTCFullYear();
+      const m = date.getUTCMonth();
+      const d = date.getUTCDate();
+      const dateKey = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
       // Convert shifts to stations format
       const stations: Record<string, { userId: string; userDisplayName: string }> = {};
@@ -338,7 +342,8 @@ export async function POST(request: Request) {
 
       await docRef.set({
         dateKey: dateKey,
-        date: date,
+        // Normalize stored date to UTC midnight for the given calendar day
+        date: new Date(Date.UTC(y, m, d)),
         stations: stations,
         createdAt: new Date(),
       });

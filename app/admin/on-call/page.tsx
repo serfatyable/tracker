@@ -149,7 +149,7 @@ export default function AdminOnCallImportPage() {
       <div className="app-container p-4 space-y-4">
         <Toast message={toast} onClear={() => setToast(null)} />
 
-        {/* Header with back button */}
+        {/* Header with back button and utilities */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
@@ -162,6 +162,16 @@ export default function AdminOnCallImportPage() {
             <h1 className="text-xl font-semibold">
               {t('onCall.import.title', { defaultValue: 'Import On-Call Schedule' })}
             </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/admin/on-call/backfill')}
+              title="Open backfill tools"
+            >
+              Backfill
+            </Button>
           </div>
         </div>
 

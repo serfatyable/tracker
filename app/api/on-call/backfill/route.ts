@@ -45,6 +45,88 @@ export async function POST(request: Request) {
 
     const url = new URL(request.url);
     const dryRun = url.searchParams.get('dryRun') === 'true';
+    const mode = url.searchParams.get('mode') || 'resolveNames';
+    
+    // Optional: date shift backfill for month (fix off-by-one)
+    if (mode === 'dateShift') {
+      const month = url.searchParams.get('month'); // YYYY-MM
+      const deltaDays = parseInt(url.searchParams.get('deltaDays') || '1', 10) || 1;
+      if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+        return NextResponse.json(
+          { errorCode: 'INVALID_MONTH', error: 'month must be YYYY-MM' },
+          { status: 400 },
+        );
+      }
+
+      const [yyyyStr, mmStr] = month.split('-');
+      const yyyy = parseInt(yyyyStr!, 10);
+      const mm = parseInt(mmStr!, 10) - 1; // 0-based
+
+      // Range to shift: previous month last day .. current month last day - 1
+      const firstOfMonthUtc = new Date(Date.UTC(yyyy, mm, 1));
+      const lastDayPrevMonthUtc = new Date(firstOfMonthUtc.getTime() - 86400000);
+      const firstOfNextMonthUtc = new Date(Date.UTC(yyyy, mm + 1, 1));
+      const lastDayCurrentMonthUtc = new Date(firstOfNextMonthUtc.getTime() - 86400000);
+      const endRangeUtc = new Date(lastDayCurrentMonthUtc.getTime() - 86400000); // last - 1
+
+      const fmtKey = (d: Date) =>
+        `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+      const startKey = fmtKey(lastDayPrevMonthUtc);
+      const endKey = fmtKey(endRangeUtc);
+
+      const db2 = getFirestore();
+      const snap = await db2
+        .collection('onCallDays')
+        .where('dateKey', '>=', startKey)
+        .where('dateKey', '<=', endKey)
+        .get();
+
+      let shifted = 0;
+      let collisions = 0;
+      const details: Array<{ from: string; to: string }> = [];
+
+      for (const doc of snap.docs) {
+        const data = doc.data() as any;
+        const parts = String(data.dateKey).split('-').map((p: string) => parseInt(p, 10));
+        if (parts.length !== 3 || parts.some((n: number) => !Number.isFinite(n))) continue;
+        const srcUtc = new Date(Date.UTC(parts[0]!, parts[1]! - 1, parts[2]!));
+        const dstUtc = new Date(srcUtc.getTime() + deltaDays * 86400000);
+        const newKey = fmtKey(dstUtc);
+
+        // If not dry-run, copy to new doc and delete old
+        if (!dryRun) {
+          const targetRef = db2.collection('onCallDays').doc(newKey);
+          const targetSnap = await targetRef.get();
+          if (targetSnap.exists) collisions++;
+          await targetRef.set({
+            dateKey: newKey,
+            date: new Date(Date.UTC(dstUtc.getUTCFullYear(), dstUtc.getUTCMonth(), dstUtc.getUTCDate())),
+            stations: data.stations || {},
+            createdAt: data.createdAt || new Date(),
+          });
+          await doc.ref.delete();
+        }
+
+        details.push({ from: data.dateKey, to: newKey });
+        shifted++;
+      }
+
+      return NextResponse.json({
+        success: true,
+        mode: 'dateShift',
+        month,
+        dryRun,
+        startKey,
+        endKey,
+        deltaDays,
+        examined: snap.size,
+        shifted,
+        collisions,
+        details,
+      });
+    }
+
+    // Default mode: resolveNames backfill
 
     // Build users map
     const userByName = new Map<
