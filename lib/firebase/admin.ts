@@ -25,7 +25,7 @@ import {
 import type { Assignment, AssignmentWithDetails } from '../../types/assignments';
 import type { UserProfile, Role } from '../../types/auth';
 import type { ReflectionTemplate, ReflectionSection } from '../../types/reflections';
-import type { RotationPetition } from '../../types/rotationPetitions';
+import type { RotationPetition, RotationPetitionWithDetails } from '../../types/rotationPetitions';
 import type { Rotation, RotationNode } from '../../types/rotations';
 import { normalizeParsedRows, parseRotationCsvText } from '../rotations/import';
 
@@ -66,7 +66,7 @@ export async function listUsers(params?: {
         let qRef: any = query(collection(db, 'users'), ...(parts as any));
         if (params?.startAfter) qRef = query(qRef, qStartAfter(params.startAfter as any));
         snap = await getDocs(qRef);
-        const raw = snap.docs.map((d) => ({ ...(d.data() as UserProfile) }));
+        const raw = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) } as UserProfile));
         const items = raw.filter(
           (u) =>
             (!params?.role || u.role === params.role) &&
@@ -87,7 +87,7 @@ export async function listUsers(params?: {
         let qRef: any = query(collection(db, 'users'), ...(parts as any));
         if (params?.startAfter) qRef = query(qRef, qStartAfter(params.startAfter as any));
         snap = await getDocs(qRef);
-        const items = snap.docs.map((d) => ({ ...(d.data() as UserProfile) }));
+        const items = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) } as UserProfile));
         return {
           items,
           lastCursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined,
@@ -1170,6 +1170,63 @@ export async function listRotationPetitions(params?: {
     id: d.id,
     ...(d.data() as any),
   })) as unknown as RotationPetition[];
+  return { items, lastCursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined };
+}
+
+export async function listRotationPetitionsWithDetails(params?: {
+  status?: 'pending' | 'approved' | 'denied';
+  type?: 'activate' | 'finish';
+  rotationId?: string;
+  residentQuery?: string;
+  limit?: number;
+  startAfter?: unknown;
+}): Promise<ListPage<RotationPetitionWithDetails>> {
+  const db = getFirestore(getFirebaseApp());
+  const pageSize = params?.limit ?? 20;
+  const parts: any[] = [];
+  if (params?.status) parts.push(where('status', '==', params.status));
+  if (params?.type) parts.push(where('type', '==', params.type));
+  if (params?.rotationId) parts.push(where('rotationId', '==', params.rotationId));
+  parts.push(orderBy('requestedAt', 'desc'));
+  parts.push(qLimit(pageSize));
+  if (params?.startAfter) parts.push(qStartAfter(params.startAfter as any));
+  const snap = await getDocs(query(collection(db, 'rotationPetitions'), ...(parts as any)));
+  const petitions = snap.docs.map((d) => ({
+    id: d.id,
+    ...(d.data() as any),
+  })) as unknown as RotationPetition[];
+
+  // Get all unique user and rotation IDs
+  const userIds = new Set<string>();
+  const rotationIds = new Set<string>();
+  petitions.forEach((p) => {
+    userIds.add(p.residentId);
+    if (p.rotationId) rotationIds.add(p.rotationId);
+  });
+
+  // Fetch user details
+  const userPromises = Array.from(userIds).map(async (uid) => {
+    const userSnap = await getDoc(doc(db, 'users', uid));
+    return userSnap.exists() ? { uid, ...(userSnap.data() as Record<string, any>) } as UserProfile : null;
+  });
+  const users = (await Promise.all(userPromises)).filter(Boolean) as UserProfile[];
+  const userMap = new Map(users.map((u) => [u.uid, u]));
+
+  // Fetch rotation details
+  const rotationPromises = Array.from(rotationIds).map(async (rid) => {
+    const rotationSnap = await getDoc(doc(db, 'rotations', rid));
+    return rotationSnap.exists() ? { id: rid, ...(rotationSnap.data() as any) } : null;
+  });
+  const rotations = (await Promise.all(rotationPromises)).filter(Boolean) as (Rotation & { id: string })[];
+  const rotationMap = new Map(rotations.map((r) => [r.id, r]));
+
+  // Combine data
+  const items = petitions.map((petition) => ({
+    ...petition,
+    residentName: userMap.get(petition.residentId)?.fullName || petition.residentId,
+    rotationName: rotationMap.get(petition.rotationId)?.name || petition.rotationId,
+  }));
+
   return { items, lastCursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined };
 }
 
