@@ -225,7 +225,7 @@ export default function AuthPage() {
       <div dir="ltr" className="mb-6 flex w-full items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1
-            className="text-4xl sm:text-5xl font-extrabold tracking-tight text-primary-token"
+            className="text-4xl sm:text-5xl font-extrabold tracking-tight text-fg"
             aria-label="TRACKER"
           >
             TRACKER
