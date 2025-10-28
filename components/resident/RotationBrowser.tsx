@@ -517,28 +517,29 @@ export default function RotationBrowser({
                         </div>
                       ) : null}
                     </div>
-                    {req > 0 ? (
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs font-bold ${isComplete ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200' : approved > 0 ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200' : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200'}`}
-                        title={`${approved}/${req}`}
-                        aria-label={`${approved} of ${req} approved`}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {req > 0 ? (
+                        <Badge
+                          variant="secondary"
+                          className={`text-xs font-bold ${isComplete ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200' : approved > 0 ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200' : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200'}`}
+                          title={`${approved}/${req}`}
+                          aria-label={`${approved} of ${req} approved`}
+                        >
+                          {approved}/{req}
+                        </Badge>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        disabled={!canLog(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onLog(item, 1);
+                        }}
+                        title={!canLog(item) ? (t('ui.loggingOnlyInActiveRotation') as string) : 'Submit for approval'}
                       >
-                        {approved}/{req}
-                      </Badge>
-                    ) : null}
-                    <Button
-                      size="sm"
-                      className="ml-auto"
-                      disabled={!canLog(item)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onLog(item, 1);
-                      }}
-                      title={!canLog(item) ? (t('ui.loggingOnlyInActiveRotation') as string) : '+1'}
-                    >
-                      +1
-                    </Button>
+                        +1
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );
