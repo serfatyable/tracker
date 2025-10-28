@@ -490,7 +490,7 @@ export default function RotationBrowser({
                         onSelectLeaf(item);
                       }
                     }}
-                    className={`card-levitate w-full text-left flex items-center gap-3 min-h-[56px] hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]`}
+                    className={`card-levitate w-full text-left flex items-start gap-3 min-h-[56px] py-3 hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]`}
                     aria-label={item.name}
                   >
                     <div
@@ -508,11 +508,11 @@ export default function RotationBrowser({
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50 break-words">
                         {debouncedTerm.trim() ? highlight(item.name, debouncedTerm) : item.name}
                       </div>
                       {subtitle ? (
-                        <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                        <div className="text-xs text-gray-600 dark:text-gray-300 break-words">
                           {subtitle}
                         </div>
                       ) : null}

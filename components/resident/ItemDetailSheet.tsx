@@ -58,7 +58,7 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
         <div className="px-4 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 break-words">
                 {item.name}
               </h2>
               <div className="mt-1 flex items-center gap-2">
