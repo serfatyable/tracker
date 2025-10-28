@@ -319,6 +319,50 @@ export default function RotationBrowser({
     // Note: domainFilter is controlled by parent, so we don't reset it here
   }, []);
 
+  // Base set for status counts (apply rotation/term/category/domain, but not status)
+  const baseForStatusCounts = useMemo(() => {
+    const term = debouncedTerm.trim().toLowerCase();
+    function matchesRotation(n: FlatLeaf) {
+      if (!activeRotationId) return true;
+      return n.rotationId === activeRotationId;
+    }
+    function matchesTerm(n: FlatLeaf) {
+      if (!term) return true;
+      const hay = [n.name, n.mcqUrl || '', ...(n.links || []).map((l) => l.href || '')]
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(term);
+    }
+    function matchesCategory(n: FlatLeaf) {
+      if (categoryFilter === 'all') return true;
+      const cat = (n.categoryName || '').toLowerCase();
+      if (categoryFilter === 'knowledge') return cat.includes('knowledge') || cat.includes('ידע');
+      if (categoryFilter === 'skills') return cat.includes('skill') || cat.includes('מיומנויות');
+      if (categoryFilter === 'guidance') return cat.includes('guidance') || cat.includes('הנחיות');
+      return true;
+    }
+    function matchesDomain(n: FlatLeaf) {
+      if (domainFilter === 'all') return true;
+      return n.domain === domainFilter;
+    }
+    return flatLeaves.filter((n) =>
+      matchesRotation(n) && matchesTerm(n) && matchesCategory(n) && matchesDomain(n),
+    );
+  }, [flatLeaves, activeRotationId, debouncedTerm, categoryFilter, domainFilter]);
+
+  const statusCounts = useMemo(() => {
+    let approved = 0;
+    let pending = 0;
+    for (const n of baseForStatusCounts) {
+      const req = n.requiredCount || 0;
+      const appr = effectiveCounts[n.id]?.approved || 0;
+      const pend = effectiveCounts[n.id]?.pending || 0;
+      if (req > 0 && appr >= req) approved += 1;
+      if (pend > 0) pending += 1;
+    }
+    return { all: baseForStatusCounts.length, approved, pending };
+  }, [baseForStatusCounts, effectiveCounts]);
+
   return (
     <div className="space-y-3">
       {/* Header bar: rotation title + tiny progress ring (overall, not filtered) + remaining count */}
@@ -343,33 +387,56 @@ export default function RotationBrowser({
           ) : null}
         </div>
       ) : null}
-      {/* Filter chips: categories */}
-      <div
-        className="flex gap-2 overflow-x-auto scrollbar-hide"
-        aria-label={t('ui.filters', { defaultValue: 'Filters' }) as string}
-      >
-        {(
-          [
-            { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
-            { key: 'knowledge', label: t('ui.knowledge', { defaultValue: 'Knowledge' }) },
-            { key: 'skills', label: t('ui.skills', { defaultValue: 'Skills' }) },
-            { key: 'guidance', label: t('ui.guidance', { defaultValue: 'Guidance' }) },
-          ] as Array<{ key: CategoryFilter; label: string }>
-        ).map((c) => (
-          <button
-            key={c.key}
-            type="button"
-            className={`pill text-xs whitespace-nowrap ${categoryFilter === c.key ? 'ring-1 ring-primary-token' : ''}`}
-            onClick={() => setCategoryFilter(c.key)}
-            aria-pressed={categoryFilter === c.key}
-            aria-label={`Filter: ${c.label} ${categoryFilter === c.key ? 'selected' : 'unselected'}`}
-          >
-            {c.label}
-          </button>
-        ))}
+      {/* Consolidated filter toolbar: categories (left) + status (right with counts) */}
+      <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/30 px-2 py-2 shadow-sm">
+        <div className="flex items-center justify-between gap-2">
+          {/* Categories segmented */}
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            {([
+              { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
+              { key: 'knowledge', label: t('ui.knowledge', { defaultValue: 'Knowledge' }) },
+              { key: 'skills', label: t('ui.skills', { defaultValue: 'Skills' }) },
+              { key: 'guidance', label: t('ui.guidance', { defaultValue: 'Guidance' }) },
+            ] as Array<{ key: CategoryFilter; label: string }>).map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 ${
+                  categoryFilter === c.key ? 'ring-1 ring-primary-token bg-primary/10 text-primary' : ''
+                }`}
+                onClick={() => setCategoryFilter(c.key)}
+                aria-pressed={categoryFilter === c.key}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Status with color accents and counts */}
+          <div className="flex gap-1">
+            {([
+              { key: 'all', label: t('ui.all', { defaultValue: 'All' }), cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', count: statusCounts.all },
+              { key: 'pending', label: t('ui.pending', { defaultValue: 'Pending' }), cls: '!bg-amber-100 !text-amber-900 dark:!bg-amber-900/50 dark:!text-amber-100', count: statusCounts.pending },
+              { key: 'approved', label: t('ui.approved', { defaultValue: 'Approved' }), cls: '!bg-green-100 !text-green-900 dark:!bg-green-900/50 dark:!text-green-100', count: statusCounts.approved },
+            ] as Array<{ key: StatusFilter; label: string; cls: string; count: number }>).map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 ${
+                  statusFilter === s.key ? `ring-1 ring-primary-token ${s.cls}` : ''
+                }`}
+                onClick={() => setStatusFilter(s.key)}
+                aria-pressed={statusFilter === s.key}
+              >
+                {s.label}
+                <span className="ml-1 text-[10px] opacity-75">({s.count})</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Top domains + More domains button */}
+      {/* Domains row: prominent pills with counts */}
       <div
         className="flex gap-2 overflow-x-auto scrollbar-hide"
         aria-label={t('ui.domains', { defaultValue: 'Domains' }) as string}
@@ -378,20 +445,22 @@ export default function RotationBrowser({
           <button
             key={domain}
             type="button"
-            className={`pill text-xs whitespace-nowrap ${domainFilter === domain ? 'ring-1 ring-primary-token' : ''}`}
+            className={`px-4 py-2 rounded-full text-xs font-medium bg-white dark:bg-[rgb(var(--surface-elevated))] border hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface))] whitespace-nowrap ${
+              domainFilter === domain ? 'ring-1 ring-primary-token' : ''
+            }`}
             onClick={() => (onSelectDomain ? onSelectDomain(domain) : onOpenDomainPicker())}
             aria-pressed={domainFilter === domain}
             aria-label={`Domain: ${domain} ${domainFilter === domain ? 'selected' : 'unselected'}`}
           >
             {domain}
             {availableDomains.counts[domain] && (
-              <span className="ml-1 text-xs opacity-75">({availableDomains.counts[domain]})</span>
+              <span className="ml-1 text-[10px] opacity-75">({availableDomains.counts[domain]})</span>
             )}
           </button>
         ))}
         <button
           type="button"
-          className="pill text-xs whitespace-nowrap bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          className="px-4 py-2 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 whitespace-nowrap"
           onClick={onOpenDomainPicker}
           aria-label={t('ui.moreDomains', { defaultValue: 'More domains' })}
         >
@@ -399,30 +468,39 @@ export default function RotationBrowser({
         </button>
       </div>
 
-      {/* Status chips */}
-      <div
-        className="flex gap-2 overflow-x-auto scrollbar-hide"
-        aria-label={t('ui.status', { defaultValue: 'Status' }) as string}
-      >
-        {(
-          [
-            { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
-            { key: 'pending', label: t('ui.pending', { defaultValue: 'Pending' }) },
-            { key: 'approved', label: t('ui.approved', { defaultValue: 'Approved' }) },
-          ] as Array<{ key: StatusFilter; label: string }>
-        ).map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            className={`pill text-xs whitespace-nowrap ${statusFilter === s.key ? 'ring-1 ring-primary-token' : ''}`}
-            onClick={() => setStatusFilter(s.key)}
-            aria-pressed={statusFilter === s.key}
-            aria-label={`Filter: ${s.label} ${statusFilter === s.key ? 'selected' : 'unselected'}`}
-          >
-            {s.label}
+      {/* Active filter chips (only when any filter is active) */}
+      {(categoryFilter !== 'all' || statusFilter !== 'all' || domainFilter !== 'all') && (
+        <div className="flex items-center gap-2 flex-wrap text-xs mt-1">
+          <span className="text-muted-foreground">{t('ui.filters', { defaultValue: 'Filters' })}:</span>
+          {categoryFilter !== 'all' && (
+            <button
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
+              onClick={() => setCategoryFilter('all')}
+            >
+              {(t('ui.category', { defaultValue: 'Category' }) as any) || 'Category'}: {categoryFilter} ×
+            </button>
+          )}
+          {domainFilter !== 'all' && (
+            <button
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
+              onClick={() => onSelectDomain && onSelectDomain('all')}
+            >
+              {(t('ui.domain', { defaultValue: 'Domain' }) as any) || 'Domain'}: {domainFilter} ×
+            </button>
+          )}
+          {statusFilter !== 'all' && (
+            <button
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
+              onClick={() => setStatusFilter('all')}
+            >
+              {t('ui.status', { defaultValue: 'Status' })}: {statusFilter} ×
+            </button>
+          )}
+          <button className="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:underline" onClick={clearFilters}>
+            {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
           </button>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Cards list */}
       <div role="list" className="space-y-2">
