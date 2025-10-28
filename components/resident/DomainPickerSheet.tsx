@@ -67,6 +67,25 @@ export default function DomainPickerSheet({
     return { recent, others };
   }, [filteredDomains, recentDomains, domains]);
 
+  // Lock body scroll when sheet is open
+  useEffect(() => {
+    if (!open) return;
+
+    // Save previous overflow values
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    // Lock scroll on both body and html
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      // Restore previous values
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -76,7 +95,7 @@ export default function DomainPickerSheet({
 
       {/* Sheet */}
       <div
-        className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h grid grid-rows-[auto,auto,1fr] overflow-hidden pointer-events-auto"
+        className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h grid grid-rows-[auto,auto,1fr] pointer-events-auto"
         role="dialog"
         aria-modal="true"
       >
@@ -104,6 +123,7 @@ export default function DomainPickerSheet({
           className="min-h-0 scroll-y-touch overflow-y-auto scrollbar-stable pb-safe px-2"
           role="region"
           aria-label={t('ui.allDomains', { defaultValue: 'All domains' })}
+          style={{ touchAction: 'pan-y' }}
         >
           {/* "All domains" option */}
           <button
