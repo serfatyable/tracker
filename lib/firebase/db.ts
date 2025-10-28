@@ -209,6 +209,22 @@ export async function createRotationPetition(params: {
 }): Promise<{ id: string }> {
   const db = getFirestore(getFirebaseApp());
 
+  // Validation: Check for existing pending petition for this rotation
+  const existingPetitionSnap = await getDocs(
+    query(
+      collection(db, 'rotationPetitions'),
+      where('residentId', '==', params.residentId),
+      where('rotationId', '==', params.rotationId),
+      where('status', '==', 'pending'),
+    ),
+  );
+
+  if (!existingPetitionSnap.empty) {
+    throw new Error(
+      'You already have a pending petition for this rotation. Please wait for admin approval.',
+    );
+  }
+
   // Validation: Prevent activating a rotation if resident already has an active rotation
   if (params.type === 'activate') {
     const activeAssignmentsSnap = await getDocs(

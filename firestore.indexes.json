@@ -182,6 +182,14 @@
       ]
     },
     {
+      "collectionId": "rotationPetitions",
+      "fields": [
+        { "fieldPath": "residentId", "order": "ASCENDING" },
+        { "fieldPath": "rotationId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionId": "onCallAssignments",
       "fields": [
         { "fieldPath": "userId", "order": "ASCENDING" },
