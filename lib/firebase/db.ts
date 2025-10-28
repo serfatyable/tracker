@@ -208,6 +208,24 @@ export async function createRotationPetition(params: {
   reason?: string;
 }): Promise<{ id: string }> {
   const db = getFirestore(getFirebaseApp());
+
+  // Validation: Prevent activating a rotation if resident already has an active rotation
+  if (params.type === 'activate') {
+    const activeAssignmentsSnap = await getDocs(
+      query(
+        collection(db, 'assignments'),
+        where('residentId', '==', params.residentId),
+        where('status', '==', 'active'),
+      ),
+    );
+
+    if (!activeAssignmentsSnap.empty) {
+      throw new Error(
+        'You cannot have two rotations active at the same time. Please finish your current rotation first.',
+      );
+    }
+  }
+
   const ref = await addDoc(collection(db, 'rotationPetitions'), {
     residentId: params.residentId,
     rotationId: params.rotationId,

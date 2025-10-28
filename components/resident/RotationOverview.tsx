@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
+import { useResidentRotationStatus } from '../../lib/hooks/useResidentRotationStatus';
 import { useRotationDetails } from '../../lib/hooks/useRotationDetails';
 import Button from '../ui/Button';
 
@@ -17,14 +18,17 @@ type Props = {
 export default function RotationOverview({ rotationId }: Props) {
   const { t } = useTranslation();
   const { rotation } = useRotationDetails(rotationId);
+  const { status: assignmentStatus, loading: statusLoading } =
+    useResidentRotationStatus(rotationId);
   const [petitionDialogOpen, setPetitionDialogOpen] = useState(false);
   const [petitionType, setPetitionType] = useState<'activate' | 'finish'>('activate');
 
   const currentUser = getAuth(getFirebaseApp()).currentUser;
   const residentId = currentUser?.uid || '';
 
-  const showActivationButton = rotation?.status === 'inactive';
-  const showCompletionButton = rotation?.status === 'active';
+  // Use per-resident assignment status instead of global rotation status
+  const showActivationButton = assignmentStatus === 'inactive' || assignmentStatus === null;
+  const showCompletionButton = assignmentStatus === 'active';
 
   const handleActivateClick = () => {
     setPetitionType('activate');
@@ -52,7 +56,7 @@ export default function RotationOverview({ rotationId }: Props) {
     );
   }
 
-  if (!rotation) {
+  if (!rotation || statusLoading) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
         {t('ui.loading', { defaultValue: 'Loading...' })}
@@ -71,10 +75,10 @@ export default function RotationOverview({ rotationId }: Props) {
                 {t('petitions.rotationStatus', { defaultValue: 'Rotation Status' })}
               </div>
               <div className="text-sm font-medium text-gray-900 dark:text-gray-50">
-                {rotation.status === 'inactive' &&
-                  t('petitions.inactive', { defaultValue: 'Inactive' })}
-                {rotation.status === 'active' && t('petitions.active', { defaultValue: 'Active' })}
-                {rotation.status === 'finished' &&
+                {(assignmentStatus === 'inactive' || assignmentStatus === null) &&
+                  t('petitions.inactive', { defaultValue: 'Not Started' })}
+                {assignmentStatus === 'active' && t('petitions.active', { defaultValue: 'Active' })}
+                {assignmentStatus === 'finished' &&
                   t('petitions.finished', { defaultValue: 'Finished' })}
               </div>
             </div>

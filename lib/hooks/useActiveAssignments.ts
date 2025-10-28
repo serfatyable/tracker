@@ -12,7 +12,7 @@ export function useActiveAssignments() {
 
   useEffect(() => {
     const db = getFirestore(getFirebaseApp());
-    const qRef = query(collection(db, 'assignments'), where('endedAt', '==', null));
+    const qRef = query(collection(db, 'assignments'), where('status', '==', 'active'));
     const unsub = onSnapshot(
       qRef,
       (snap) => {

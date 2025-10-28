@@ -102,6 +102,20 @@
       ]
     },
     {
+      "collectionId": "assignments",
+      "fields": [
+        { "fieldPath": "residentId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionId": "assignments",
+      "fields": [
+        { "fieldPath": "residentId", "order": "ASCENDING" },
+        { "fieldPath": "rotationId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionId": "reflections",
       "fields": [
         { "fieldPath": "residentId", "order": "ASCENDING" },
