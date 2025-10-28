@@ -1,6 +1,5 @@
 'use client';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs, getFirestore } from 'firebase/firestore';
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,7 +9,7 @@ import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRota
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
 import { getLocalized } from '../../lib/i18n/getLocalized';
-import type { RotationNode, RotationStatus } from '../../types/rotations';
+import type { RotationNode } from '../../types/rotations';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { EmptyIcon } from '../ui/EmptyState';
@@ -46,26 +45,6 @@ export default function RotationBrowser({
   const { tasks } = useUserTasks();
   const { nodes, loading } = useRotationNodes(activeRotationId || null);
   const [debouncedTerm, setDebouncedTerm] = useState('');
-  const [rotationStatuses, setRotationStatuses] = useState<Record<string, RotationStatus>>({});
-
-  // Fetch rotation statuses on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const db = getFirestore(getFirebaseApp());
-        const snapshot = await getDocs(collection(db, 'rotations'));
-        const statuses: Record<string, RotationStatus> = {};
-        snapshot.docs.forEach((doc) => {
-          statuses[doc.id] = doc.data().status as RotationStatus;
-          console.log('[DEBUG] Rotation:', doc.id, 'Status:', doc.data().status);
-        });
-        console.log('[DEBUG] All rotation statuses:', statuses);
-        setRotationStatuses(statuses);
-      } catch (error) {
-        console.error('Failed to load rotation statuses:', error);
-      }
-    })();
-  }, []);
 
   // Debounce search term for smoother global search UX
   useEffect(() => {
@@ -197,18 +176,8 @@ export default function RotationBrowser({
   }, [availableDomains]);
 
   function canLog(leaf: RotationNode): boolean {
-    // Check if the rotation this item belongs to is active
-    const rotationStatus = rotationStatuses[leaf.rotationId];
-    const result = rotationStatus === 'active';
-    console.log('[DEBUG canLog]', {
-      itemId: leaf.id,
-      itemName: leaf.name,
-      rotationId: leaf.rotationId,
-      rotationStatus,
-      result,
-      allStatuses: rotationStatuses,
-    });
-    return result;
+    // Check if the resident has an active assignment to this rotation
+    return leaf.rotationId === residentActiveRotationId;
   }
 
   async function onLog(leaf: RotationNode, count: number, note?: string) {
@@ -377,8 +346,8 @@ export default function RotationBrowser({
       if (domainFilter === 'all') return true;
       return n.domain === domainFilter;
     }
-    return flatLeaves.filter((n) =>
-      matchesRotation(n) && matchesTerm(n) && matchesCategory(n) && matchesDomain(n),
+    return flatLeaves.filter(
+      (n) => matchesRotation(n) && matchesTerm(n) && matchesCategory(n) && matchesDomain(n),
     );
   }, [flatLeaves, activeRotationId, debouncedTerm, categoryFilter, domainFilter]);
 
@@ -424,17 +393,21 @@ export default function RotationBrowser({
         <div className="flex items-center justify-between gap-2">
           {/* Categories segmented */}
           <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-            {([
-              { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
-              { key: 'knowledge', label: t('ui.knowledge', { defaultValue: 'Knowledge' }) },
-              { key: 'skills', label: t('ui.skills', { defaultValue: 'Skills' }) },
-              { key: 'guidance', label: t('ui.guidance', { defaultValue: 'Guidance' }) },
-            ] as Array<{ key: CategoryFilter; label: string }>).map((c) => (
+            {(
+              [
+                { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
+                { key: 'knowledge', label: t('ui.knowledge', { defaultValue: 'Knowledge' }) },
+                { key: 'skills', label: t('ui.skills', { defaultValue: 'Skills' }) },
+                { key: 'guidance', label: t('ui.guidance', { defaultValue: 'Guidance' }) },
+              ] as Array<{ key: CategoryFilter; label: string }>
+            ).map((c) => (
               <button
                 key={c.key}
                 type="button"
                 className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 ${
-                  categoryFilter === c.key ? 'ring-1 ring-primary-token bg-primary/10 text-primary' : ''
+                  categoryFilter === c.key
+                    ? 'ring-1 ring-primary-token bg-primary/10 text-primary'
+                    : ''
                 }`}
                 onClick={() => setCategoryFilter(c.key)}
                 aria-pressed={categoryFilter === c.key}
@@ -446,11 +419,28 @@ export default function RotationBrowser({
 
           {/* Status with color accents and counts */}
           <div className="flex gap-1">
-            {([
-              { key: 'all', label: t('ui.all', { defaultValue: 'All' }), cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', count: statusCounts.all },
-              { key: 'pending', label: t('ui.pending', { defaultValue: 'Pending' }), cls: '!bg-amber-100 !text-amber-900 dark:!bg-amber-900/50 dark:!text-amber-100', count: statusCounts.pending },
-              { key: 'approved', label: t('ui.approved', { defaultValue: 'Approved' }), cls: '!bg-green-100 !text-green-900 dark:!bg-green-900/50 dark:!text-green-100', count: statusCounts.approved },
-            ] as Array<{ key: StatusFilter; label: string; cls: string; count: number }>).map((s) => (
+            {(
+              [
+                {
+                  key: 'all',
+                  label: t('ui.all', { defaultValue: 'All' }),
+                  cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+                  count: statusCounts.all,
+                },
+                {
+                  key: 'pending',
+                  label: t('ui.pending', { defaultValue: 'Pending' }),
+                  cls: '!bg-amber-100 !text-amber-900 dark:!bg-amber-900/50 dark:!text-amber-100',
+                  count: statusCounts.pending,
+                },
+                {
+                  key: 'approved',
+                  label: t('ui.approved', { defaultValue: 'Approved' }),
+                  cls: '!bg-green-100 !text-green-900 dark:!bg-green-900/50 dark:!text-green-100',
+                  count: statusCounts.approved,
+                },
+              ] as Array<{ key: StatusFilter; label: string; cls: string; count: number }>
+            ).map((s) => (
               <button
                 key={s.key}
                 type="button"
@@ -486,7 +476,9 @@ export default function RotationBrowser({
           >
             {domain}
             {availableDomains.counts[domain] && (
-              <span className="ml-1 text-[10px] opacity-75">({availableDomains.counts[domain]})</span>
+              <span className="ml-1 text-[10px] opacity-75">
+                ({availableDomains.counts[domain]})
+              </span>
             )}
           </button>
         ))}
@@ -503,13 +495,16 @@ export default function RotationBrowser({
       {/* Active filter chips (only when any filter is active) */}
       {(categoryFilter !== 'all' || statusFilter !== 'all' || domainFilter !== 'all') && (
         <div className="flex items-center gap-2 flex-wrap text-xs mt-1">
-          <span className="text-muted-foreground">{t('ui.filters', { defaultValue: 'Filters' })}:</span>
+          <span className="text-muted-foreground">
+            {t('ui.filters', { defaultValue: 'Filters' })}:
+          </span>
           {categoryFilter !== 'all' && (
             <button
               className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
               onClick={() => setCategoryFilter('all')}
             >
-              {(t('ui.category', { defaultValue: 'Category' }) as any) || 'Category'}: {categoryFilter} ×
+              {(t('ui.category', { defaultValue: 'Category' }) as any) || 'Category'}:{' '}
+              {categoryFilter} ×
             </button>
           )}
           {domainFilter !== 'all' && (
@@ -528,7 +523,10 @@ export default function RotationBrowser({
               {t('ui.status', { defaultValue: 'Status' })}: {statusFilter} ×
             </button>
           )}
-          <button className="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:underline" onClick={clearFilters}>
+          <button
+            className="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            onClick={clearFilters}
+          >
             {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
           </button>
         </div>
@@ -646,7 +644,11 @@ export default function RotationBrowser({
                           e.stopPropagation();
                           onLog(item, 1);
                         }}
-                        title={!canLog(item) ? 'Only available for active rotations' : 'Submit for approval'}
+                        title={
+                          !canLog(item)
+                            ? 'Only available for your currently active rotation'
+                            : 'Submit for approval'
+                        }
                       >
                         +1
                       </Button>

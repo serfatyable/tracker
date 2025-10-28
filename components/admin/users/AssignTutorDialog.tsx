@@ -51,7 +51,7 @@ export default function AssignTutorDialog({
       try {
         const [tutorsRes, rotationsRes] = await Promise.all([
           listUsers({ role: 'tutor', status: 'active', limit: 100 }),
-          listRotations({ status: 'active', limit: 100 }),
+          listRotations({ limit: 100 }),
         ]);
 
         // Filter out already assigned tutors

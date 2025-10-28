@@ -1,7 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type RotationStatus = 'active' | 'inactive' | 'finished';
-
 export type Rotation = {
   id: string;
   name: string;
@@ -9,7 +7,6 @@ export type Rotation = {
   name_he?: string;
   startDate: Timestamp;
   endDate: Timestamp;
-  status: RotationStatus;
   isCore?: boolean;
   ownerTutorIds?: string[]; // admins manage
   color?: string; // hex color assigned to rotation (e.g., #3B82F6)

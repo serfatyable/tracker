@@ -79,7 +79,7 @@ export default function AssignmentsView() {
       const [assignmentsRes, tutorsRes, rotationsRes] = await Promise.all([
         listAssignmentsWithDetails(),
         listUsers({ role: 'tutor', status: 'active', limit: 100 }),
-        listRotations({ status: 'active', limit: 100 }),
+        listRotations({ limit: 100 }),
       ]);
 
       setAssignments(assignmentsRes);

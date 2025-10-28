@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import type { Rotation } from '../../types/rotations';
 import { listRotations } from '../firebase/admin';
 
+/**
+ * Hook to fetch all rotations (no status filter - rotations either exist or don't)
+ * @deprecated Consider renaming to useRotations for clarity
+ */
 export function useActiveRotations() {
   const [rotations, setRotations] = useState<Rotation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +18,7 @@ export function useActiveRotations() {
     (async () => {
       try {
         setLoading(true);
-        const page = await listRotations({ status: 'active', limit: 200 });
+        const page = await listRotations({ limit: 200 });
         if (!cancelled) {
           setRotations(page.items || []);
         }
