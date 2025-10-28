@@ -1,5 +1,6 @@
 'use client';
 import { getAuth } from 'firebase/auth';
+import { collection, getDocs, getFirestore } from 'firebase/firestore';
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,7 +10,7 @@ import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRota
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
 import { getLocalized } from '../../lib/i18n/getLocalized';
-import type { RotationNode } from '../../types/rotations';
+import type { RotationNode, RotationStatus } from '../../types/rotations';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { EmptyIcon } from '../ui/EmptyState';
@@ -45,6 +46,24 @@ export default function RotationBrowser({
   const { tasks } = useUserTasks();
   const { nodes, loading } = useRotationNodes(activeRotationId || null);
   const [debouncedTerm, setDebouncedTerm] = useState('');
+  const [rotationStatuses, setRotationStatuses] = useState<Record<string, RotationStatus>>({});
+
+  // Fetch rotation statuses on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const db = getFirestore(getFirebaseApp());
+        const snapshot = await getDocs(collection(db, 'rotations'));
+        const statuses: Record<string, RotationStatus> = {};
+        snapshot.docs.forEach((doc) => {
+          statuses[doc.id] = doc.data().status as RotationStatus;
+        });
+        setRotationStatuses(statuses);
+      } catch (error) {
+        console.error('Failed to load rotation statuses:', error);
+      }
+    })();
+  }, []);
 
   // Debounce search term for smoother global search UX
   useEffect(() => {
@@ -176,7 +195,8 @@ export default function RotationBrowser({
   }, [availableDomains]);
 
   function canLog(leaf: RotationNode): boolean {
-    return Boolean(residentActiveRotationId && leaf.rotationId === residentActiveRotationId);
+    // Check if the rotation this item belongs to is active
+    return rotationStatuses[leaf.rotationId] === 'active';
   }
 
   async function onLog(leaf: RotationNode, count: number, note?: string) {
@@ -535,7 +555,7 @@ export default function RotationBrowser({
                           e.stopPropagation();
                           onLog(item, 1);
                         }}
-                        title={!canLog(item) ? (t('ui.loggingOnlyInActiveRotation') as string) : 'Submit for approval'}
+                        title={!canLog(item) ? 'Only available for active rotations' : 'Submit for approval'}
                       >
                         +1
                       </Button>
