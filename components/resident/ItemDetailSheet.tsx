@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getLocalized } from '../../lib/i18n/getLocalized';
@@ -17,6 +18,25 @@ type Props = {
 export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith('he') ? 'he' : 'en';
+
+  // Lock body scroll when sheet is open
+  useEffect(() => {
+    if (!open) return;
+
+    // Save previous overflow values
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    // Lock scroll on both body and html
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      // Restore previous values
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [open]);
 
   if (!open || !item) return null;
 
@@ -50,7 +70,7 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
 
       {/* Sheet */}
       <div
-        className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h grid grid-rows-[auto,1fr] overflow-hidden pointer-events-auto"
+        className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h grid grid-rows-[auto,1fr] pointer-events-auto"
         role="dialog"
         aria-modal="true"
       >
@@ -58,7 +78,7 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
         <div className="px-4 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 break-words">
                 {item.name}
               </h2>
               <div className="mt-1 flex items-center gap-2">
@@ -100,7 +120,10 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
         </div>
 
         {/* Row 2: Content */}
-        <div className="scroll-y-touch scrollbar-stable pb-safe px-4 py-4">
+        <div
+          className="min-h-0 scroll-y-touch scrollbar-stable pb-safe px-4 py-4"
+          style={{ touchAction: 'pan-y' }}
+        >
           {/* Resources section */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
