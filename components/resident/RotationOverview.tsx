@@ -167,6 +167,7 @@ export default function RotationOverview({ rotationId }: Props) {
             </div>
           </div>
 
+          {/* Visible CTA(s) */}
           <div className="flex gap-2">
             {showStartButton && (
               <Button onClick={handleActivateClick} variant="default" className="flex-1">
