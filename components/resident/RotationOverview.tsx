@@ -170,7 +170,11 @@ export default function RotationOverview({ rotationId }: Props) {
           {/* Visible CTA(s) */}
           <div className="flex gap-2">
             {showStartButton && (
-              <Button onClick={handleActivateClick} variant="default" className="flex-1">
+              <Button
+                onClick={handleActivateClick}
+                variant="default"
+                className="flex-1 bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+              >
                 {t('petitions.startRotation', { defaultValue: 'Start Rotation' })}
               </Button>
             )}
@@ -178,10 +182,17 @@ export default function RotationOverview({ rotationId }: Props) {
               <Button
                 onClick={handleFinishClick}
                 variant="outline"
-                className="flex-1 border-amber-500 text-amber-700 hover:bg-amber-50 dark:border-amber-500 dark:text-amber-300 dark:hover:bg-amber-900/30"
+                className="flex-1 border-amber-500 bg-white text-amber-700 hover:bg-amber-50 dark:bg-gray-800 dark:border-amber-500 dark:text-amber-300 dark:hover:bg-amber-900/30"
               >
                 {t('petitions.finishRotation', { defaultValue: 'Finish Rotation' })}
               </Button>
+            )}
+            {!showStartButton && !showFinishButton && displayStatus === 'finished' && (
+              <div className="text-sm text-gray-600 dark:text-gray-400 py-2">
+                {t('petitions.rotationCompleted', {
+                  defaultValue: 'This rotation has been completed.',
+                })}
+              </div>
             )}
           </div>
         </div>
