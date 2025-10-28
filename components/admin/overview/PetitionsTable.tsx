@@ -29,7 +29,7 @@ export default function PetitionsTable() {
     null,
   );
   const [type, setType] = useState<'activate' | 'finish' | ''>('');
-  const [status, setStatus] = useState<'pending' | 'approved' | 'denied' | ''>('');
+  const [status, setStatus] = useState<'pending' | 'approved' | 'denied' | ''>('pending');
   const [rotationId, setRotationId] = useState('');
   const [residentQuery, setResidentQuery] = useState('');
   const [rotOptions, setRotOptions] = useState<Array<{ id: string; label: string }>>([]);
@@ -86,9 +86,7 @@ export default function PetitionsTable() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <Select value={rotationId} onChange={(e) => setRotationId(e.target.value)}>
-              <option value="" disabled>
-                Rotations
-              </option>
+              <option value="">{t('ui.allRotations') || 'All Rotations'}</option>
               {rotOptions.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.label}
@@ -96,16 +94,12 @@ export default function PetitionsTable() {
               ))}
             </Select>
             <Select value={type} onChange={(e) => setType((e.target.value || '') as any)}>
-              <option value="" disabled>
-                Progress
-              </option>
+              <option value="">{t('ui.all') || 'All'}</option>
               <option value="activate">{t('overview.type.activate') || 'Activate'}</option>
               <option value="finish">{t('overview.type.finish') || 'Finish'}</option>
             </Select>
             <Select value={status} onChange={(e) => setStatus((e.target.value || '') as any)}>
-              <option value="" disabled>
-                Status
-              </option>
+              <option value="">{t('ui.all') || 'All'}</option>
               <option value="pending">{t('overview.status.pending') || 'Pending'}</option>
               <option value="approved">{t('overview.status.approved') || 'Approved'}</option>
               <option value="denied">{t('overview.status.denied') || 'Denied'}</option>
@@ -205,66 +199,70 @@ export default function PetitionsTable() {
                         </span>
                       </TD>
                       <TD className="text-right">
-                        <Button
-                          size="sm"
-                          className="btn-levitate border-green-500 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/30"
-                          variant="outline"
-                          loading={actionLoading[`approve-${p.id}`]}
-                          onClick={async () => {
-                            setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: true }));
-                            try {
-                              await approveRotationPetition(p.id, 'admin');
-                              setToast({
-                                message: t('overview.petitionApproved', {
-                                  defaultValue: 'Petition approved successfully',
-                                }),
-                                variant: 'success',
-                              });
-                            } catch {
-                              setToast({
-                                message: t('overview.petitionApproveFailed', {
-                                  defaultValue: 'Failed to approve petition. Please try again.',
-                                }),
-                                variant: 'error',
-                              });
-                            } finally {
-                              setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: false }));
-                              refresh();
-                            }
-                          }}
-                        >
-                          {t('overview.actions.approve') || 'Approve'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="btn-levitate border-red-500 text-red-700 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
-                          variant="outline"
-                          loading={actionLoading[`deny-${p.id}`]}
-                          onClick={async () => {
-                            setActionLoading((prev) => ({ ...prev, [`deny-${p.id}`]: true }));
-                            try {
-                              await denyRotationPetition(p.id, 'admin');
-                              setToast({
-                                message: t('overview.petitionDenied', {
-                                  defaultValue: 'Petition denied',
-                                }),
-                                variant: 'success',
-                              });
-                            } catch {
-                              setToast({
-                                message: t('overview.petitionDenyFailed', {
-                                  defaultValue: 'Failed to deny petition. Please try again.',
-                                }),
-                                variant: 'error',
-                              });
-                            } finally {
-                              setActionLoading((prev) => ({ ...prev, [`deny-${p.id}`]: false }));
-                              refresh();
-                            }
-                          }}
-                        >
-                          {t('overview.actions.deny') || 'Deny'}
-                        </Button>
+                        {p.status === 'pending' && (
+                          <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 justify-end">
+                            <Button
+                              size="sm"
+                              className="btn-levitate border-green-500 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/30"
+                              variant="outline"
+                              loading={actionLoading[`approve-${p.id}`]}
+                              onClick={async () => {
+                                setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: true }));
+                                try {
+                                  await approveRotationPetition(p.id, 'admin');
+                                  setToast({
+                                    message: t('overview.petitionApproved', {
+                                      defaultValue: 'Petition approved successfully',
+                                    }),
+                                    variant: 'success',
+                                  });
+                                } catch {
+                                  setToast({
+                                    message: t('overview.petitionApproveFailed', {
+                                      defaultValue: 'Failed to approve petition. Please try again.',
+                                    }),
+                                    variant: 'error',
+                                  });
+                                } finally {
+                                  setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: false }));
+                                  refresh();
+                                }
+                              }}
+                            >
+                              {t('overview.actions.approve') || 'Approve'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="btn-levitate border-red-500 text-red-700 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
+                              variant="outline"
+                              loading={actionLoading[`deny-${p.id}`]}
+                              onClick={async () => {
+                                setActionLoading((prev) => ({ ...prev, [`deny-${p.id}`]: true }));
+                                try {
+                                  await denyRotationPetition(p.id, 'admin');
+                                  setToast({
+                                    message: t('overview.petitionDenied', {
+                                      defaultValue: 'Petition denied',
+                                    }),
+                                    variant: 'success',
+                                  });
+                                } catch {
+                                  setToast({
+                                    message: t('overview.petitionDenyFailed', {
+                                      defaultValue: 'Failed to deny petition. Please try again.',
+                                    }),
+                                    variant: 'error',
+                                  });
+                                } finally {
+                                  setActionLoading((prev) => ({ ...prev, [`deny-${p.id}`]: false }));
+                                  refresh();
+                                }
+                              }}
+                            >
+                              {t('overview.actions.deny') || 'Deny'}
+                            </Button>
+                          </div>
+                        )}
                       </TD>
                     </TR>
                   ))}
