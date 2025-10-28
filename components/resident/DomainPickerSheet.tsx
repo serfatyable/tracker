@@ -70,10 +70,28 @@ export default function DomainPickerSheet({
   // Lock body scroll when sheet is open
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
+
+    // Save previous values
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevBodyPosition = document.body.style.position;
+    const prevBodyTop = document.body.style.top;
+    const prevBodyWidth = document.body.style.width;
+    const scrollY = window.scrollY;
+
+    // Lock scroll using position fixed (more aggressive approach for mobile)
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
+
     return () => {
-      document.body.style.overflow = prev;
+      // Restore previous values
+      document.body.style.position = prevBodyPosition;
+      document.body.style.top = prevBodyTop;
+      document.body.style.width = prevBodyWidth;
+      document.body.style.overflow = prevBodyOverflow;
+      // Restore scroll position
+      window.scrollTo(0, scrollY);
     };
   }, [open]);
 
@@ -82,7 +100,14 @@ export default function DomainPickerSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
+      <div
+        className="fixed inset-0 bg-black/30"
+        onClick={onClose}
+        onTouchMove={(e) => e.preventDefault()}
+        onWheel={(e) => e.preventDefault()}
+        aria-hidden="true"
+        style={{ touchAction: 'none' }}
+      />
 
       {/* Sheet */}
       <div
