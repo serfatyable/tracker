@@ -222,7 +222,7 @@ export default function AuthPage() {
   return (
     <div className="mx-auto flex min-h-dvh pad-safe-t pad-safe-b w-full max-w-2xl flex-col items-center justify-center px-4 py-6 sm:px-6">
       {/* Force brand header to LTR regardless of app language */}
-      <div dir="ltr" className="mb-6 flex w-full items-center justify-between gap-4 text-fg">
+      <div dir="ltr" className="mb-6 flex w-full items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1
             className="text-4xl sm:text-5xl font-extrabold tracking-tight text-primary"
