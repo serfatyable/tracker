@@ -33,18 +33,15 @@ export default function RotationPickerSheet({ open, onClose, activeId, onSelect,
   useEffect(() => {
     if (!open) return;
 
-    // Save previous overflow values
-    const prevBodyOverflow = document.body.style.overflow;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-
-    // Lock scroll on both body and html
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
+    // Temporarily disabled to test if sheet can scroll at all
+    // const prevBodyOverflow = document.body.style.overflow;
+    // const prevHtmlOverflow = document.documentElement.style.overflow;
+    // document.body.style.overflow = 'hidden';
+    // document.documentElement.style.overflow = 'hidden';
 
     return () => {
-      // Restore previous values
-      document.body.style.overflow = prevBodyOverflow;
-      document.documentElement.style.overflow = prevHtmlOverflow;
+      // document.body.style.overflow = prevBodyOverflow;
+      // document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, [open]);
 
