@@ -70,7 +70,7 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
 
       {/* Sheet */}
       <div
-        className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h grid grid-rows-[auto,1fr] overflow-hidden pointer-events-auto"
+        className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h grid grid-rows-[auto,1fr] pointer-events-auto"
         role="dialog"
         aria-modal="true"
       >
