@@ -71,27 +71,18 @@ export default function DomainPickerSheet({
   useEffect(() => {
     if (!open) return;
 
-    // Save previous values
+    // Save previous overflow values
     const prevBodyOverflow = document.body.style.overflow;
-    const prevBodyPosition = document.body.style.position;
-    const prevBodyTop = document.body.style.top;
-    const prevBodyWidth = document.body.style.width;
-    const scrollY = window.scrollY;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
 
-    // Lock scroll using position fixed (more aggressive approach for mobile)
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
+    // Lock scroll on both body and html
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     return () => {
       // Restore previous values
-      document.body.style.position = prevBodyPosition;
-      document.body.style.top = prevBodyTop;
-      document.body.style.width = prevBodyWidth;
       document.body.style.overflow = prevBodyOverflow;
-      // Restore scroll position
-      window.scrollTo(0, scrollY);
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, [open]);
 
@@ -100,14 +91,7 @@ export default function DomainPickerSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/30"
-        onClick={onClose}
-        onTouchMove={(e) => e.preventDefault()}
-        onWheel={(e) => e.preventDefault()}
-        aria-hidden="true"
-        style={{ touchAction: 'none' }}
-      />
+      <div className="fixed inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
 
       {/* Sheet */}
       <div
@@ -139,6 +123,7 @@ export default function DomainPickerSheet({
           className="min-h-0 scroll-y-touch overflow-y-auto scrollbar-stable pb-safe px-2"
           role="region"
           aria-label={t('ui.allDomains', { defaultValue: 'All domains' })}
+          style={{ touchAction: 'pan-y' }}
         >
           {/* "All domains" option */}
           <button
