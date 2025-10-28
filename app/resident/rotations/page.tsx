@@ -17,7 +17,6 @@ import RotationBrowser from '../../../components/resident/RotationBrowser';
 import RotationOverview from '../../../components/resident/RotationOverview';
 import RotationPickerSheet from '../../../components/resident/RotationPickerSheet';
 import RotationResources from '../../../components/resident/RotationResources';
-import RotationSwitcher from '../../../components/resident/RotationSwitcher';
 import SegmentedView from '../../../components/resident/SegmentedView';
 import { getFirebaseApp } from '../../../lib/firebase/client';
 import { createTask } from '../../../lib/firebase/db';
@@ -192,13 +191,6 @@ export default function ResidentRotationsPage() {
         </div>
 
         <div className="app-container p-4 pt-2 space-y-3 pb-24 pad-safe-b">
-          {/* Rotation switcher */}
-          <RotationSwitcher
-            activeId={activeRotationId}
-            onChange={handleRotationSelect}
-            index={rotationIndex}
-            onOpenSheet={() => setPickerOpen(true)}
-          />
 
           {/* Segmented view control */}
           <SegmentedView activeTab={view} onTabChange={handleViewChange} />
