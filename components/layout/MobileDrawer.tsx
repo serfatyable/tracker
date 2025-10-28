@@ -129,7 +129,7 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
   };
 
   const drawer = (
-    <div className="fixed inset-0 z-[120] md:hidden" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[120]" role="dialog" aria-modal="true">
       <div className="fixed inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
