@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  listRotationPetitions,
+  listRotationPetitionsWithDetails,
   approveRotationPetition,
   denyRotationPetition,
   listRotations,
 } from '../../../lib/firebase/admin';
-import type { RotationPetition } from '../../../types/rotationPetitions';
+import type { RotationPetitionWithDetails } from '../../../types/rotationPetitions';
 import { TableSkeleton } from '../../dashboard/Skeleton';
 import Button from '../../ui/Button';
 import EmptyState, { ChecklistIcon } from '../../ui/EmptyState';
@@ -20,7 +20,7 @@ import Toast from '../../ui/Toast';
 
 export default function PetitionsTable() {
   const { t, i18n } = useTranslation();
-  const [items, setItems] = useState<RotationPetition[]>([]);
+  const [items, setItems] = useState<RotationPetitionWithDetails[]>([]);
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
@@ -51,7 +51,7 @@ export default function PetitionsTable() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await listRotationPetitions({
+      const res = await listRotationPetitionsWithDetails({
         status: status || undefined,
         type: type || undefined,
         rotationId: rotationId || undefined,
@@ -175,9 +175,9 @@ export default function PetitionsTable() {
                         />
                       </TD>
                       <TD className="break-anywhere sticky left-[2.25rem] rtl:left-auto rtl:right-[2.25rem] z-10 bg-bg/95">
-                        {p.residentId}
+                        {p.residentName}
                       </TD>
-                      <TD className="break-anywhere hidden sm:table-cell">{p.rotationId}</TD>
+                      <TD className="break-anywhere hidden sm:table-cell">{p.rotationName}</TD>
                       <TD className="hidden md:table-cell">
                         <span
                           className={
