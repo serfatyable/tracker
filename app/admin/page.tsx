@@ -18,6 +18,7 @@ import { getCurrentUserWithProfile } from '../../lib/firebase/auth';
 import { getFirebaseStatus } from '../../lib/firebase/client';
 import { useActiveAssignments } from '../../lib/hooks/useActiveAssignments';
 import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
+import { useAllAssignments } from '../../lib/hooks/useAllAssignments';
 import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
 import type { UserProfile } from '../../types/auth';
 
@@ -151,7 +152,8 @@ export default function AdminDashboard(): React.ReactElement {
 }
 
 function OverviewTab() {
-  const { assignments } = useActiveAssignments();
+  const { assignments: activeAssignments } = useActiveAssignments();
+  const { assignments: allAssignments } = useAllAssignments();
   const { residents, tutors } = useUsersByRole();
   const { rotations } = useActiveRotations();
 
@@ -165,11 +167,20 @@ function OverviewTab() {
       }
     >
       <div className="space-y-4">
-        <KPICards assignments={assignments} residents={residents} tutors={tutors} />
+        <KPICards
+          activeAssignments={activeAssignments}
+          allAssignments={allAssignments}
+          residents={residents}
+          tutors={tutors}
+        />
         {/* Users snapshot: unassigned residents */}
-        <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
+        <UnassignedQueues
+          assignments={allAssignments}
+          residents={residents}
+          rotations={rotations}
+        />
         {/* Tutors with zero load */}
-        <ZeroLoadTutors assignments={assignments} tutors={tutors} />
+        <ZeroLoadTutors assignments={activeAssignments} tutors={tutors} />
         {/* Tasks snapshot */}
         <TasksSnapshot />
         {/* Tasks snapshot placeholder (pending approvals/upcoming) can be added here when data is ready */}

@@ -13,7 +13,8 @@ import type { Assignment } from '../../../types/assignments';
 import type { UserProfile } from '../../../types/auth';
 
 type Props = {
-  assignments: Assignment[];
+  activeAssignments: Assignment[];
+  allAssignments: Assignment[];
   residents: UserProfile[];
   tutors: UserProfile[];
 };
@@ -26,20 +27,25 @@ type KPI = {
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
-export default function KPICards({ assignments, residents, tutors }: Props): React.ReactElement {
+export default function KPICards({
+  activeAssignments,
+  allAssignments,
+  residents,
+  tutors,
+}: Props): React.ReactElement {
   const { t } = useTranslation();
 
   const { unassignedResidentsCount, tutorLoadBalance, upcomingMeetings, pendingApprovals } =
     useMemo(() => {
-      // Placeholder computations; real data may come from other hooks
-      const assignedResidentIds = new Set(assignments.map((a) => a.residentId));
+      // Check against ALL assignments (not just active) to find truly unassigned residents
+      const assignedResidentIds = new Set(allAssignments.map((a) => a.residentId));
       const unassigned = residents.filter(
         (r) => r.role === 'resident' && assignedResidentIds.has(r.uid) === false,
       );
-      // Tutor load balance: std dev proxy (rough)
+      // Tutor load balance: std dev proxy (rough) - use only active assignments
       const load = new Map<string, number>();
       for (const t of tutors) load.set(t.uid, 0);
-      for (const a of assignments)
+      for (const a of activeAssignments)
         for (const tid of a.tutorIds || []) load.set(tid, (load.get(tid) || 0) + 1);
       const counts = Array.from(load.values());
       const mean = counts.reduce((s, n) => s + n, 0) / (counts.length || 1);
@@ -54,7 +60,7 @@ export default function KPICards({ assignments, residents, tutors }: Props): Rea
         upcomingMeetings: Number(upcoming ?? 0),
         pendingApprovals: Number(pending ?? 0),
       };
-    }, [assignments, residents, tutors]);
+    }, [activeAssignments, allAssignments, residents, tutors]);
 
   // Trend placeholders: null hides arrows; compute 7-day delta if data available
   const kpis: KPI[] = [
