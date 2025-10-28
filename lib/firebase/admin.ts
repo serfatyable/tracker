@@ -66,7 +66,7 @@ export async function listUsers(params?: {
         let qRef: any = query(collection(db, 'users'), ...(parts as any));
         if (params?.startAfter) qRef = query(qRef, qStartAfter(params.startAfter as any));
         snap = await getDocs(qRef);
-        const raw = snap.docs.map((d) => ({ uid: d.id, ...d.data() } as UserProfile));
+        const raw = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) } as UserProfile));
         const items = raw.filter(
           (u) =>
             (!params?.role || u.role === params.role) &&
@@ -87,7 +87,7 @@ export async function listUsers(params?: {
         let qRef: any = query(collection(db, 'users'), ...(parts as any));
         if (params?.startAfter) qRef = query(qRef, qStartAfter(params.startAfter as any));
         snap = await getDocs(qRef);
-        const items = snap.docs.map((d) => ({ uid: d.id, ...d.data() } as UserProfile));
+        const items = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) } as UserProfile));
         return {
           items,
           lastCursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined,
