@@ -1,5 +1,6 @@
 'use client';
 import { getAuth } from 'firebase/auth';
+import { collection, getDocs, getFirestore } from 'firebase/firestore';
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,7 +10,7 @@ import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRota
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
 import { getLocalized } from '../../lib/i18n/getLocalized';
-import type { RotationNode } from '../../types/rotations';
+import type { RotationNode, RotationStatus } from '../../types/rotations';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { EmptyIcon } from '../ui/EmptyState';
@@ -45,6 +46,26 @@ export default function RotationBrowser({
   const { tasks } = useUserTasks();
   const { nodes, loading } = useRotationNodes(activeRotationId || null);
   const [debouncedTerm, setDebouncedTerm] = useState('');
+  const [rotationStatuses, setRotationStatuses] = useState<Record<string, RotationStatus>>({});
+
+  // Fetch rotation statuses on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const db = getFirestore(getFirebaseApp());
+        const snapshot = await getDocs(collection(db, 'rotations'));
+        const statuses: Record<string, RotationStatus> = {};
+        snapshot.docs.forEach((doc) => {
+          statuses[doc.id] = doc.data().status as RotationStatus;
+          console.log('[DEBUG] Rotation:', doc.id, 'Status:', doc.data().status);
+        });
+        console.log('[DEBUG] All rotation statuses:', statuses);
+        setRotationStatuses(statuses);
+      } catch (error) {
+        console.error('Failed to load rotation statuses:', error);
+      }
+    })();
+  }, []);
 
   // Debounce search term for smoother global search UX
   useEffect(() => {
@@ -176,7 +197,18 @@ export default function RotationBrowser({
   }, [availableDomains]);
 
   function canLog(leaf: RotationNode): boolean {
-    return Boolean(residentActiveRotationId && leaf.rotationId === residentActiveRotationId);
+    // Check if the rotation this item belongs to is active
+    const rotationStatus = rotationStatuses[leaf.rotationId];
+    const result = rotationStatus === 'active';
+    console.log('[DEBUG canLog]', {
+      itemId: leaf.id,
+      itemName: leaf.name,
+      rotationId: leaf.rotationId,
+      rotationStatus,
+      result,
+      allStatuses: rotationStatuses,
+    });
+    return result;
   }
 
   async function onLog(leaf: RotationNode, count: number, note?: string) {
@@ -490,7 +522,7 @@ export default function RotationBrowser({
                         onSelectLeaf(item);
                       }
                     }}
-                    className={`card-levitate w-full text-left flex items-center gap-3 min-h-[56px] hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]`}
+                    className={`card-levitate w-full text-left flex items-start gap-3 min-h-[56px] py-3 hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]`}
                     aria-label={item.name}
                   >
                     <div
@@ -508,37 +540,39 @@ export default function RotationBrowser({
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50 break-words">
                         {debouncedTerm.trim() ? highlight(item.name, debouncedTerm) : item.name}
                       </div>
                       {subtitle ? (
-                        <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                        <div className="text-xs text-gray-600 dark:text-gray-300 break-words">
                           {subtitle}
                         </div>
                       ) : null}
                     </div>
-                    {req > 0 ? (
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs font-bold ${isComplete ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200' : approved > 0 ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200' : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200'}`}
-                        title={`${approved}/${req}`}
-                        aria-label={`${approved} of ${req} approved`}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {req > 0 ? (
+                        <Badge
+                          variant="secondary"
+                          className={`text-xs font-bold ${isComplete ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200' : approved > 0 ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200' : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200'}`}
+                          title={`${approved}/${req}`}
+                          aria-label={`${approved} of ${req} approved`}
+                        >
+                          {approved}/{req}
+                        </Badge>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        disabled={!canLog(item)}
+                        onClick={(e) => {
+                          console.log('[DEBUG] +1 button clicked for:', item.name);
+                          e.stopPropagation();
+                          onLog(item, 1);
+                        }}
+                        title={!canLog(item) ? 'Only available for active rotations' : 'Submit for approval'}
                       >
-                        {approved}/{req}
-                      </Badge>
-                    ) : null}
-                    <Button
-                      size="sm"
-                      className="ml-auto"
-                      disabled={!canLog(item)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onLog(item, 1);
-                      }}
-                      title={!canLog(item) ? (t('ui.loggingOnlyInActiveRotation') as string) : '+1'}
-                    >
-                      +1
-                    </Button>
+                        +1
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );

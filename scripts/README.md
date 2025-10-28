@@ -1,6 +1,105 @@
-# Hebrew Translation Migration Scripts
+# Tracker Database Migration Scripts
 
-This directory contains scripts to add Hebrew translations to your Firestore database.
+This directory contains scripts for database migrations and maintenance tasks.
+
+## Available Scripts
+
+### 1. Hebrew Translation Migration (`add-hebrew-translations.js`)
+
+Adds Hebrew translations to rotations and rotation nodes.
+
+### 2. Assignment Status Migration (`migrate-assignment-status.js`)
+
+**⚠️ REQUIRED after upgrading to per-resident rotation status architecture**
+
+Migrates existing assignments to include the new `status` field.
+
+---
+
+## Assignment Status Migration
+
+### When to Run This Script
+
+Run this script **once** after deploying the per-resident rotation status update if you have existing assignments in your database.
+
+### What It Does
+
+This script adds the `status` field to all existing assignments:
+
+- If `endedAt` is `null` → sets `status` to `'active'` (resident is currently working on it)
+- If `endedAt` is set → sets `status` to `'finished'` (resident completed it)
+
+### Usage
+
+#### 1. Dry Run (Recommended First)
+
+Preview what changes will be made without modifying the database:
+
+```bash
+node scripts/migrate-assignment-status.js --dry-run
+```
+
+This will show you:
+
+- How many assignments will be updated
+- What status each assignment will receive
+- Which assignments already have a status (will be skipped)
+
+#### 2. Run the Migration
+
+After reviewing the dry run output, apply the changes:
+
+```bash
+node scripts/migrate-assignment-status.js
+```
+
+### Example Output
+
+```
+🔄 Assignment Status Migration Script
+
+🔍 Fetching all assignments...
+📊 Found 15 assignment(s)
+
+⏭️  [abc123] Already has status: active
+✏️  [def456] resident=user1, rotation=icu
+    → Setting status: active (endedAt: null)
+✏️  [ghi789] resident=user2, rotation=or
+    → Setting status: finished (endedAt: set)
+✅ Committed final batch of 2 update(s)
+
+============================================================
+📊 Migration Summary:
+============================================================
+Total assignments:        15
+Migrated:                 12
+Skipped (already had status): 3
+Errors:                   0
+============================================================
+
+✅ Migration complete!
+```
+
+### Troubleshooting
+
+**"Service account key not found"**
+
+- Ensure `firebase-service-account.json` exists in project root
+- Or set environment variable: `FIREBASE_SERVICE_ACCOUNT`
+
+**"Permission denied"**
+
+- Ensure your service account has Firestore write permissions
+
+### After Migration
+
+1. Verify assignments in Firestore console have the `status` field
+2. Test the resident rotation activation flow
+3. Ensure residents can see their active rotations
+
+---
+
+## Hebrew Translation Migration
 
 ## Prerequisites
 
@@ -90,24 +189,29 @@ node scripts/add-hebrew-translations.js --backup
 ## Backups
 
 Backups are stored in `backups/` directory with timestamps:
+
 - `backups/rotations_2025-10-18T10-30-00.json`
 - `backups/rotationNodes_2025-10-18T10-30-00.json`
 
 ## Troubleshooting
 
 ### "Cannot find module 'firebase-admin'"
+
 ```bash
 cd scripts
 npm install firebase-admin
 ```
 
 ### "Service account key not found"
+
 Make sure `firebase-service-account.json` exists in project root, or set:
+
 ```bash
 export FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}'
 ```
 
 ### "Permission denied"
+
 Ensure your service account has Firestore write permissions
 
 ## After Migration
@@ -127,4 +231,3 @@ node scripts/restore-from-backup.js backups/rotations_TIMESTAMP.json
 ```
 
 (Restore script to be created if needed)
-
