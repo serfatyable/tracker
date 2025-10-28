@@ -14,3 +14,8 @@ export type RotationPetition = {
   resolvedBy?: string;
   reason?: string;
 };
+
+export type RotationPetitionWithDetails = RotationPetition & {
+  residentName: string;
+  rotationName: string;
+};

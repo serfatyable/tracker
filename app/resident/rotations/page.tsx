@@ -17,7 +17,6 @@ import RotationBrowser from '../../../components/resident/RotationBrowser';
 import RotationOverview from '../../../components/resident/RotationOverview';
 import RotationPickerSheet from '../../../components/resident/RotationPickerSheet';
 import RotationResources from '../../../components/resident/RotationResources';
-import RotationSwitcher from '../../../components/resident/RotationSwitcher';
 import SegmentedView from '../../../components/resident/SegmentedView';
 import { getFirebaseApp } from '../../../lib/firebase/client';
 import { createTask } from '../../../lib/firebase/db';
@@ -154,29 +153,37 @@ export default function ResidentRotationsPage() {
           subtitle={active?.name ?? t('ui.allRotations')}
         />
 
-        {/* Sticky rotation indicator */}
-        <div className="sticky top-[env(safe-area-inset-top)] z-10 bg-background/90 backdrop-blur px-4 py-2 border-b">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('ui.currentRotation')}</span>
-              <span
-                data-testid="active-rotation-pill"
-                className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary"
-              >
-                {active?.name ?? t('ui.allRotations')}
-              </span>
-            </div>
-            {active && (
+        {/* Sticky rotation scope chip header */}
+        <div className="sticky top-[env(safe-area-inset-top)] z-10 px-4 pt-2">
+          <div className="rounded-xl border bg-blue-50 dark:bg-blue-900/20 backdrop-blur px-3 py-2 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{t('ui.currentRotation')}</span>
+                <span
+                  data-testid="active-rotation-pill"
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800/40 dark:text-blue-100"
+                >
+                  {active?.name ?? t('ui.allRotations')}
+                  {active && (
+                    <button
+                      type="button"
+                      className="ml-0.5 -mr-0.5 text-blue-700 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100"
+                      aria-label={t('ui.clear')}
+                      onClick={() => setActiveRotationId(null)}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              </div>
               <button
                 type="button"
-                className="text-xs text-muted-foreground hover:underline"
-                onClick={() => {
-                  setActiveRotationId(null);
-                }}
+                className="text-xs text-blue-700 dark:text-blue-300 hover:underline"
+                onClick={() => setPickerOpen(true)}
               >
-                {t('ui.clear')}
+                {t('ui.browseAll', { defaultValue: 'Browse all' })}
               </button>
-            )}
+            </div>
           </div>
           <span className="sr-only" aria-live="polite">
             {active ? `Current rotation ${active.name}` : t('ui.allRotations')}
@@ -184,13 +191,6 @@ export default function ResidentRotationsPage() {
         </div>
 
         <div className="app-container p-4 pt-2 space-y-3 pb-24 pad-safe-b">
-          {/* Rotation switcher */}
-          <RotationSwitcher
-            activeId={activeRotationId}
-            onChange={handleRotationSelect}
-            index={rotationIndex}
-            onOpenSheet={() => setPickerOpen(true)}
-          />
 
           {/* Segmented view control */}
           <SegmentedView activeTab={view} onTabChange={handleViewChange} />

@@ -25,7 +25,7 @@ import {
 import type { Assignment, AssignmentWithDetails } from '../../types/assignments';
 import type { UserProfile, Role } from '../../types/auth';
 import type { ReflectionTemplate, ReflectionSection } from '../../types/reflections';
-import type { RotationPetition } from '../../types/rotationPetitions';
+import type { RotationPetition, RotationPetitionWithDetails } from '../../types/rotationPetitions';
 import type { Rotation, RotationNode } from '../../types/rotations';
 import { normalizeParsedRows, parseRotationCsvText } from '../rotations/import';
 
@@ -66,7 +66,7 @@ export async function listUsers(params?: {
         let qRef: any = query(collection(db, 'users'), ...(parts as any));
         if (params?.startAfter) qRef = query(qRef, qStartAfter(params.startAfter as any));
         snap = await getDocs(qRef);
-        const raw = snap.docs.map((d) => ({ ...(d.data() as UserProfile) }));
+        const raw = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) } as UserProfile));
         const items = raw.filter(
           (u) =>
             (!params?.role || u.role === params.role) &&
@@ -87,7 +87,7 @@ export async function listUsers(params?: {
         let qRef: any = query(collection(db, 'users'), ...(parts as any));
         if (params?.startAfter) qRef = query(qRef, qStartAfter(params.startAfter as any));
         snap = await getDocs(qRef);
-        const items = snap.docs.map((d) => ({ ...(d.data() as UserProfile) }));
+        const items = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) } as UserProfile));
         return {
           items,
           lastCursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined,
@@ -104,7 +104,7 @@ export async function listUsers(params?: {
 // Assignments
 export async function listActiveAssignments(): Promise<Assignment[]> {
   const db = getFirestore(getFirebaseApp());
-  const snap = await getDocs(query(collection(db, 'assignments'), where('endedAt', '==', null)));
+  const snap = await getDocs(query(collection(db, 'assignments'), where('status', '==', 'active')));
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as unknown as Assignment[];
 }
 
@@ -116,14 +116,18 @@ export async function assignResidentToRotation(
   const col = collection(db, 'assignments');
   let createdId = '';
   await runTransaction(db, async (tx) => {
-    // Close existing active assignment for resident
+    // Check if assignment already exists for this resident + rotation
     const existingSnap = await getDocs(
-      query(col, where('residentId', '==', residentId), where('endedAt', '==', null)),
+      query(col, where('residentId', '==', residentId), where('rotationId', '==', rotationId)),
     );
-    for (const docSnap of existingSnap.docs) {
-      tx.update(docSnap.ref, { endedAt: serverTimestamp() });
+
+    if (!existingSnap.empty) {
+      // Assignment already exists, return existing ID
+      createdId = existingSnap.docs[0]!.id;
+      return;
     }
-    // Create new assignment
+
+    // Create new assignment with 'inactive' status (resident must petition to activate)
     const newRef = doc(col);
     tx.set(newRef, {
       residentId,
@@ -131,6 +135,7 @@ export async function assignResidentToRotation(
       tutorIds: [],
       startedAt: serverTimestamp(),
       endedAt: null,
+      status: 'inactive',
     } as any);
     createdId = newRef.id;
   });
@@ -141,8 +146,9 @@ export async function assignTutorToResident(residentId: string, tutorId: string)
   const db = getFirestore(getFirebaseApp());
   const col = collection(db, 'assignments');
   await runTransaction(db, async (tx) => {
+    // Assign tutor to the resident's currently active rotation
     const existingSnap = await getDocs(
-      query(col, where('residentId', '==', residentId), where('endedAt', '==', null)),
+      query(col, where('residentId', '==', residentId), where('status', '==', 'active')),
     );
     const docSnap = existingSnap.docs[0];
     if (!docSnap) throw new Error('No active assignment for resident');
@@ -157,8 +163,9 @@ export async function unassignTutorFromResident(
   const db = getFirestore(getFirebaseApp());
   const col = collection(db, 'assignments');
   await runTransaction(db, async (tx) => {
+    // Remove tutor from the resident's currently active rotation
     const existingSnap = await getDocs(
-      query(col, where('residentId', '==', residentId), where('endedAt', '==', null)),
+      query(col, where('residentId', '==', residentId), where('status', '==', 'active')),
     );
     const docSnap = existingSnap.docs[0];
     if (!docSnap) return; // nothing to do
@@ -169,56 +176,67 @@ export async function unassignTutorFromResident(
 // New assignment functions for UI management
 export async function listAssignmentsWithDetails(): Promise<AssignmentWithDetails[]> {
   const db = getFirestore(getFirebaseApp());
-  const assignmentsSnap = await getDocs(query(collection(db, 'assignments'), where('endedAt', '==', null)));
-  const assignments = assignmentsSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Assignment[];
-  
+  // Fetch all assignments (let consumers filter by status if needed)
+  const assignmentsSnap = await getDocs(collection(db, 'assignments'));
+  const assignments = assignmentsSnap.docs.map((d) => ({
+    id: d.id,
+    ...(d.data() as any),
+  })) as Assignment[];
+
   // Get all unique user IDs
   const userIds = new Set<string>();
-  assignments.forEach(a => {
+  assignments.forEach((a) => {
     userIds.add(a.residentId);
-    a.tutorIds.forEach(tid => userIds.add(tid));
+    a.tutorIds.forEach((tid) => userIds.add(tid));
   });
-  
+
   // Get all unique rotation IDs
   const rotationIds = new Set<string>();
-  assignments.forEach(a => {
+  assignments.forEach((a) => {
     if (a.rotationId) rotationIds.add(a.rotationId);
   });
-  
+
   // Fetch user details
   const userPromises = Array.from(userIds).map(async (uid) => {
     const userSnap = await getDoc(doc(db, 'users', uid));
     return userSnap.exists() ? { ...(userSnap.data() as UserProfile), uid } : null;
   });
   const users = (await Promise.all(userPromises)).filter(Boolean) as UserProfile[];
-  const userMap = new Map(users.map(u => [u.uid, u]));
-  
+  const userMap = new Map(users.map((u) => [u.uid, u]));
+
   // Fetch rotation details
   const rotationPromises = Array.from(rotationIds).map(async (rid) => {
     const rotationSnap = await getDoc(doc(db, 'rotations', rid));
     return rotationSnap.exists() ? { id: rid, ...(rotationSnap.data() as any) } : null;
   });
-  const rotations = (await Promise.all(rotationPromises)).filter(Boolean) as (Rotation & { id: string })[];
-  const rotationMap = new Map(rotations.map(r => [r.id, r]));
-  
+  const rotations = (await Promise.all(rotationPromises)).filter(Boolean) as (Rotation & {
+    id: string;
+  })[];
+  const rotationMap = new Map(rotations.map((r) => [r.id, r]));
+
   // Combine data
-  return assignments.map(assignment => ({
+  return assignments.map((assignment) => ({
     ...assignment,
     residentName: userMap.get(assignment.residentId)?.fullName || 'Unknown',
-    tutorNames: assignment.tutorIds.map(tid => userMap.get(tid)?.fullName || 'Unknown'),
-    rotationName: assignment.isGlobal ? 'Global' : (rotationMap.get(assignment.rotationId)?.name || 'Unknown'),
+    tutorNames: assignment.tutorIds.map((tid) => userMap.get(tid)?.fullName || 'Unknown'),
+    rotationName: assignment.isGlobal
+      ? 'Global'
+      : rotationMap.get(assignment.rotationId)?.name || 'Unknown',
   }));
 }
 
-export async function assignTutorToResidentGlobal(residentId: string, tutorId: string): Promise<void> {
+export async function assignTutorToResidentGlobal(
+  residentId: string,
+  tutorId: string,
+): Promise<void> {
   const db = getFirestore(getFirebaseApp());
   const col = collection(db, 'assignments');
   await runTransaction(db, async (tx) => {
     // Check if global assignment already exists
     const existingSnap = await getDocs(
-      query(col, where('residentId', '==', residentId), where('isGlobal', '==', true), where('endedAt', '==', null)),
+      query(col, where('residentId', '==', residentId), where('isGlobal', '==', true)),
     );
-    
+
     if (existingSnap.docs.length > 0) {
       // Add tutor to existing global assignment
       const docSnap = existingSnap.docs[0];
@@ -226,7 +244,7 @@ export async function assignTutorToResidentGlobal(residentId: string, tutorId: s
         tx.update(docSnap.ref, { tutorIds: arrayUnion(tutorId) });
       }
     } else {
-      // Create new global assignment
+      // Create new global assignment (always active since it's global supervision)
       const newRef = doc(col);
       tx.set(newRef, {
         residentId,
@@ -234,6 +252,7 @@ export async function assignTutorToResidentGlobal(residentId: string, tutorId: s
         tutorIds: [tutorId],
         startedAt: serverTimestamp(),
         endedAt: null,
+        status: 'active', // Global assignments are always active
         isGlobal: true,
       } as any);
     }
@@ -241,18 +260,18 @@ export async function assignTutorToResidentGlobal(residentId: string, tutorId: s
 }
 
 export async function assignTutorToResidentForRotation(
-  residentId: string, 
-  tutorId: string, 
-  rotationId: string
+  residentId: string,
+  tutorId: string,
+  rotationId: string,
 ): Promise<void> {
   const db = getFirestore(getFirebaseApp());
   const col = collection(db, 'assignments');
   await runTransaction(db, async (tx) => {
     // Check if rotation-specific assignment already exists
     const existingSnap = await getDocs(
-      query(col, where('residentId', '==', residentId), where('rotationId', '==', rotationId), where('endedAt', '==', null)),
+      query(col, where('residentId', '==', residentId), where('rotationId', '==', rotationId)),
     );
-    
+
     if (existingSnap.docs.length > 0) {
       // Add tutor to existing rotation assignment
       const docSnap = existingSnap.docs[0];
@@ -260,7 +279,7 @@ export async function assignTutorToResidentForRotation(
         tx.update(docSnap.ref, { tutorIds: arrayUnion(tutorId) });
       }
     } else {
-      // Create new rotation-specific assignment
+      // Create new rotation-specific assignment with 'inactive' status
       const newRef = doc(col);
       tx.set(newRef, {
         residentId,
@@ -268,6 +287,7 @@ export async function assignTutorToResidentForRotation(
         tutorIds: [tutorId],
         startedAt: serverTimestamp(),
         endedAt: null,
+        status: 'inactive',
         isGlobal: false,
       } as any);
     }
@@ -276,12 +296,14 @@ export async function assignTutorToResidentForRotation(
 
 export async function listAssignmentsByTutor(tutorId: string): Promise<AssignmentWithDetails[]> {
   const allAssignments = await listAssignmentsWithDetails();
-  return allAssignments.filter(a => a.tutorIds.includes(tutorId));
+  return allAssignments.filter((a) => a.tutorIds.includes(tutorId));
 }
 
-export async function listAssignmentsByResident(residentId: string): Promise<AssignmentWithDetails[]> {
+export async function listAssignmentsByResident(
+  residentId: string,
+): Promise<AssignmentWithDetails[]> {
   const allAssignments = await listAssignmentsWithDetails();
-  return allAssignments.filter(a => a.residentId === residentId);
+  return allAssignments.filter((a) => a.residentId === residentId);
 }
 
 export async function updateUsersStatus(params: {
@@ -1151,6 +1173,63 @@ export async function listRotationPetitions(params?: {
   return { items, lastCursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined };
 }
 
+export async function listRotationPetitionsWithDetails(params?: {
+  status?: 'pending' | 'approved' | 'denied';
+  type?: 'activate' | 'finish';
+  rotationId?: string;
+  residentQuery?: string;
+  limit?: number;
+  startAfter?: unknown;
+}): Promise<ListPage<RotationPetitionWithDetails>> {
+  const db = getFirestore(getFirebaseApp());
+  const pageSize = params?.limit ?? 20;
+  const parts: any[] = [];
+  if (params?.status) parts.push(where('status', '==', params.status));
+  if (params?.type) parts.push(where('type', '==', params.type));
+  if (params?.rotationId) parts.push(where('rotationId', '==', params.rotationId));
+  parts.push(orderBy('requestedAt', 'desc'));
+  parts.push(qLimit(pageSize));
+  if (params?.startAfter) parts.push(qStartAfter(params.startAfter as any));
+  const snap = await getDocs(query(collection(db, 'rotationPetitions'), ...(parts as any)));
+  const petitions = snap.docs.map((d) => ({
+    id: d.id,
+    ...(d.data() as any),
+  })) as unknown as RotationPetition[];
+
+  // Get all unique user and rotation IDs
+  const userIds = new Set<string>();
+  const rotationIds = new Set<string>();
+  petitions.forEach((p) => {
+    userIds.add(p.residentId);
+    if (p.rotationId) rotationIds.add(p.rotationId);
+  });
+
+  // Fetch user details
+  const userPromises = Array.from(userIds).map(async (uid) => {
+    const userSnap = await getDoc(doc(db, 'users', uid));
+    return userSnap.exists() ? { uid, ...(userSnap.data() as Record<string, any>) } as UserProfile : null;
+  });
+  const users = (await Promise.all(userPromises)).filter(Boolean) as UserProfile[];
+  const userMap = new Map(users.map((u) => [u.uid, u]));
+
+  // Fetch rotation details
+  const rotationPromises = Array.from(rotationIds).map(async (rid) => {
+    const rotationSnap = await getDoc(doc(db, 'rotations', rid));
+    return rotationSnap.exists() ? { id: rid, ...(rotationSnap.data() as any) } : null;
+  });
+  const rotations = (await Promise.all(rotationPromises)).filter(Boolean) as (Rotation & { id: string })[];
+  const rotationMap = new Map(rotations.map((r) => [r.id, r]));
+
+  // Combine data
+  const items = petitions.map((petition) => ({
+    ...petition,
+    residentName: userMap.get(petition.residentId)?.fullName || petition.residentId,
+    rotationName: rotationMap.get(petition.rotationId)?.name || petition.rotationId,
+  }));
+
+  return { items, lastCursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined };
+}
+
 export async function approveRotationPetition(petitionId: string, adminUid: string): Promise<void> {
   const db = getFirestore(getFirebaseApp());
   const pRef = doc(db, 'rotationPetitions', petitionId);
@@ -1158,57 +1237,72 @@ export async function approveRotationPetition(petitionId: string, adminUid: stri
   if (!pSnap.exists()) throw new Error('Petition not found');
   const p = pSnap.data() as RotationPetition;
   if (p.status !== 'pending') return;
-  
-  if (p.type === 'activate') {
-    // Update rotation status from 'inactive' to 'active'
-    const rotRef = doc(db, 'rotations', p.rotationId);
-    const rotSnap = await getDoc(rotRef);
-    if (rotSnap.exists()) {
-      await updateDoc(rotRef, { status: 'active' } as any);
-    }
-  } else if (p.type === 'finish') {
-    // Update rotation status to 'finished' and assignment endedAt
-    const rotRef = doc(db, 'rotations', p.rotationId);
-    const rotSnap = await getDoc(rotRef);
-    if (rotSnap.exists()) {
-      await updateDoc(rotRef, { status: 'finished' } as any);
-    }
-    
-    const active = await getDocs(
+
+  await runTransaction(db, async (tx) => {
+    // Find the resident's assignment for this rotation
+    const assignmentsSnap = await getDocs(
       query(
         collection(db, 'assignments'),
         where('residentId', '==', p.residentId),
-        where('endedAt', '==', null),
+        where('rotationId', '==', p.rotationId),
       ),
     );
-    const assignmentDoc = active.docs[0];
-    if (assignmentDoc) {
-      await updateDoc(assignmentDoc.ref, { endedAt: serverTimestamp() } as any);
+
+    if (p.type === 'activate') {
+      // Create or update assignment to 'active' status
+      if (assignmentsSnap.empty) {
+        // Create new assignment with 'active' status
+        const newRef = doc(collection(db, 'assignments'));
+        tx.set(newRef, {
+          residentId: p.residentId,
+          rotationId: p.rotationId,
+          tutorIds: [],
+          startedAt: serverTimestamp(),
+          endedAt: null,
+          status: 'active',
+        } as any);
+      } else {
+        // Update existing assignment to 'active'
+        const assignmentRef = assignmentsSnap.docs[0]!.ref;
+        tx.update(assignmentRef, { status: 'active' } as any);
+      }
+    } else if (p.type === 'finish') {
+      // Update assignment status to 'finished' and set endedAt
+      if (!assignmentsSnap.empty) {
+        const assignmentRef = assignmentsSnap.docs[0]!.ref;
+        tx.update(assignmentRef, {
+          status: 'finished',
+          endedAt: serverTimestamp(),
+        } as any);
+      }
     }
-  }
-  
-  await updateDoc(pRef, {
-    status: 'approved',
-    resolvedAt: serverTimestamp(),
-    resolvedBy: adminUid,
-  } as any);
+
+    // Update petition status
+    tx.update(pRef, {
+      status: 'approved',
+      resolvedAt: serverTimestamp(),
+      resolvedBy: adminUid,
+    } as any);
+  });
 
   // Send email notification (async, don't await)
-  import('../notifications/petitionNotifications').then(async ({ sendPetitionApprovedEmail }) => {
-    try {
-      // Fetch resident email from user document
-      const userSnap = await getDoc(doc(db, 'users', p.residentId));
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        const residentEmail = userData.email;
-        const rotationSnap = await getDoc(doc(db, 'rotations', p.rotationId));
-        const rotationName = rotationSnap.exists() ? rotationSnap.data().name : p.rotationId;
-        await sendPetitionApprovedEmail(p, residentEmail, rotationName);
+  import('../notifications/petitionNotifications')
+    .then(async ({ sendPetitionApprovedEmail }) => {
+      try {
+        // Fetch resident email from user document
+        const userSnap = await getDoc(doc(db, 'users', p.residentId));
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const residentEmail = userData.email;
+          const rotationSnap = await getDoc(doc(db, 'rotations', p.rotationId));
+          const rotationName = rotationSnap.exists() ? rotationSnap.data().name : p.rotationId;
+          await sendPetitionApprovedEmail(p, residentEmail, rotationName);
+        }
+      } catch (error) {
+        console.error('Error sending petition approved email:', error);
       }
-    } catch (error) {
-      console.error('Error sending petition approved email:', error);
-    }
-  }).catch(console.error);
+    })
+    .catch(console.error);
 }
 
 export async function denyRotationPetition(petitionId: string, adminUid: string): Promise<void> {
@@ -1217,7 +1311,7 @@ export async function denyRotationPetition(petitionId: string, adminUid: string)
   const pSnap = await getDoc(pRef);
   if (!pSnap.exists()) throw new Error('Petition not found');
   const p = pSnap.data() as RotationPetition;
-  
+
   await updateDoc(pRef, {
     status: 'denied',
     resolvedAt: serverTimestamp(),
@@ -1225,19 +1319,21 @@ export async function denyRotationPetition(petitionId: string, adminUid: string)
   } as any);
 
   // Send email notification (async, don't await)
-  import('../notifications/petitionNotifications').then(async ({ sendPetitionDeniedEmail }) => {
-    try {
-      // Fetch resident email from user document
-      const userSnap = await getDoc(doc(db, 'users', p.residentId));
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        const residentEmail = userData.email;
-        const rotationSnap = await getDoc(doc(db, 'rotations', p.rotationId));
-        const rotationName = rotationSnap.exists() ? rotationSnap.data().name : p.rotationId;
-        await sendPetitionDeniedEmail(p, residentEmail, rotationName);
+  import('../notifications/petitionNotifications')
+    .then(async ({ sendPetitionDeniedEmail }) => {
+      try {
+        // Fetch resident email from user document
+        const userSnap = await getDoc(doc(db, 'users', p.residentId));
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const residentEmail = userData.email;
+          const rotationSnap = await getDoc(doc(db, 'rotations', p.rotationId));
+          const rotationName = rotationSnap.exists() ? rotationSnap.data().name : p.rotationId;
+          await sendPetitionDeniedEmail(p, residentEmail, rotationName);
+        }
+      } catch (error) {
+        console.error('Error sending petition denied email:', error);
       }
-    } catch (error) {
-      console.error('Error sending petition denied email:', error);
-    }
-  }).catch(console.error);
+    })
+    .catch(console.error);
 }

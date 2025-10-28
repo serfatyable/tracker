@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Custom dialog implementation for mobile sheet
@@ -28,6 +28,22 @@ export default function RotationPickerSheet({ open, onClose, activeId, onSelect,
     const all = index.all.filter((r) => r.name.toLowerCase().includes(term));
     return { mine, allFiltered: all };
   }, [index.mine, index.all, searchTerm]);
+
+  // Lock body scroll when sheet is open
+  useEffect(() => {
+    if (!open) return;
+
+    // Temporarily disabled to test if sheet can scroll at all
+    // const prevBodyOverflow = document.body.style.overflow;
+    // const prevHtmlOverflow = document.documentElement.style.overflow;
+    // document.body.style.overflow = 'hidden';
+    // document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      // document.body.style.overflow = prevBodyOverflow;
+      // document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [open]);
 
   const getStatusLabel = (id: string) => {
     const status = index.statusById[id];
@@ -77,7 +93,7 @@ export default function RotationPickerSheet({ open, onClose, activeId, onSelect,
 
         {/* Row 3: Scrollable list area */}
         <div
-          className="scroll-y-touch scrollbar-stable pb-safe px-2"
+          className="min-h-0 h-full overflow-y-auto -webkit-overflow-scrolling-touch overscroll-contain pb-safe px-2"
           role="region"
           aria-label={t('ui.selectRotation', { defaultValue: 'Select rotation' })}
         >

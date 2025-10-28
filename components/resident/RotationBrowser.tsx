@@ -1,5 +1,6 @@
 'use client';
 import { getAuth } from 'firebase/auth';
+import { collection, getDocs, getFirestore } from 'firebase/firestore';
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,7 +10,7 @@ import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRota
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
 import { getLocalized } from '../../lib/i18n/getLocalized';
-import type { RotationNode } from '../../types/rotations';
+import type { RotationNode, RotationStatus } from '../../types/rotations';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { EmptyIcon } from '../ui/EmptyState';
@@ -45,6 +46,26 @@ export default function RotationBrowser({
   const { tasks } = useUserTasks();
   const { nodes, loading } = useRotationNodes(activeRotationId || null);
   const [debouncedTerm, setDebouncedTerm] = useState('');
+  const [rotationStatuses, setRotationStatuses] = useState<Record<string, RotationStatus>>({});
+
+  // Fetch rotation statuses on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const db = getFirestore(getFirebaseApp());
+        const snapshot = await getDocs(collection(db, 'rotations'));
+        const statuses: Record<string, RotationStatus> = {};
+        snapshot.docs.forEach((doc) => {
+          statuses[doc.id] = doc.data().status as RotationStatus;
+          console.log('[DEBUG] Rotation:', doc.id, 'Status:', doc.data().status);
+        });
+        console.log('[DEBUG] All rotation statuses:', statuses);
+        setRotationStatuses(statuses);
+      } catch (error) {
+        console.error('Failed to load rotation statuses:', error);
+      }
+    })();
+  }, []);
 
   // Debounce search term for smoother global search UX
   useEffect(() => {
@@ -176,7 +197,18 @@ export default function RotationBrowser({
   }, [availableDomains]);
 
   function canLog(leaf: RotationNode): boolean {
-    return Boolean(residentActiveRotationId && leaf.rotationId === residentActiveRotationId);
+    // Check if the rotation this item belongs to is active
+    const rotationStatus = rotationStatuses[leaf.rotationId];
+    const result = rotationStatus === 'active';
+    console.log('[DEBUG canLog]', {
+      itemId: leaf.id,
+      itemName: leaf.name,
+      rotationId: leaf.rotationId,
+      rotationStatus,
+      result,
+      allStatuses: rotationStatuses,
+    });
+    return result;
   }
 
   async function onLog(leaf: RotationNode, count: number, note?: string) {
@@ -319,6 +351,50 @@ export default function RotationBrowser({
     // Note: domainFilter is controlled by parent, so we don't reset it here
   }, []);
 
+  // Base set for status counts (apply rotation/term/category/domain, but not status)
+  const baseForStatusCounts = useMemo(() => {
+    const term = debouncedTerm.trim().toLowerCase();
+    function matchesRotation(n: FlatLeaf) {
+      if (!activeRotationId) return true;
+      return n.rotationId === activeRotationId;
+    }
+    function matchesTerm(n: FlatLeaf) {
+      if (!term) return true;
+      const hay = [n.name, n.mcqUrl || '', ...(n.links || []).map((l) => l.href || '')]
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(term);
+    }
+    function matchesCategory(n: FlatLeaf) {
+      if (categoryFilter === 'all') return true;
+      const cat = (n.categoryName || '').toLowerCase();
+      if (categoryFilter === 'knowledge') return cat.includes('knowledge') || cat.includes('ידע');
+      if (categoryFilter === 'skills') return cat.includes('skill') || cat.includes('מיומנויות');
+      if (categoryFilter === 'guidance') return cat.includes('guidance') || cat.includes('הנחיות');
+      return true;
+    }
+    function matchesDomain(n: FlatLeaf) {
+      if (domainFilter === 'all') return true;
+      return n.domain === domainFilter;
+    }
+    return flatLeaves.filter((n) =>
+      matchesRotation(n) && matchesTerm(n) && matchesCategory(n) && matchesDomain(n),
+    );
+  }, [flatLeaves, activeRotationId, debouncedTerm, categoryFilter, domainFilter]);
+
+  const statusCounts = useMemo(() => {
+    let approved = 0;
+    let pending = 0;
+    for (const n of baseForStatusCounts) {
+      const req = n.requiredCount || 0;
+      const appr = effectiveCounts[n.id]?.approved || 0;
+      const pend = effectiveCounts[n.id]?.pending || 0;
+      if (req > 0 && appr >= req) approved += 1;
+      if (pend > 0) pending += 1;
+    }
+    return { all: baseForStatusCounts.length, approved, pending };
+  }, [baseForStatusCounts, effectiveCounts]);
+
   return (
     <div className="space-y-3">
       {/* Header bar: rotation title + tiny progress ring (overall, not filtered) + remaining count */}
@@ -343,33 +419,56 @@ export default function RotationBrowser({
           ) : null}
         </div>
       ) : null}
-      {/* Filter chips: categories */}
-      <div
-        className="flex gap-2 overflow-x-auto scrollbar-hide"
-        aria-label={t('ui.filters', { defaultValue: 'Filters' }) as string}
-      >
-        {(
-          [
-            { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
-            { key: 'knowledge', label: t('ui.knowledge', { defaultValue: 'Knowledge' }) },
-            { key: 'skills', label: t('ui.skills', { defaultValue: 'Skills' }) },
-            { key: 'guidance', label: t('ui.guidance', { defaultValue: 'Guidance' }) },
-          ] as Array<{ key: CategoryFilter; label: string }>
-        ).map((c) => (
-          <button
-            key={c.key}
-            type="button"
-            className={`pill text-xs whitespace-nowrap ${categoryFilter === c.key ? 'ring-1 ring-primary-token' : ''}`}
-            onClick={() => setCategoryFilter(c.key)}
-            aria-pressed={categoryFilter === c.key}
-            aria-label={`Filter: ${c.label} ${categoryFilter === c.key ? 'selected' : 'unselected'}`}
-          >
-            {c.label}
-          </button>
-        ))}
+      {/* Consolidated filter toolbar: categories (left) + status (right with counts) */}
+      <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/30 px-2 py-2 shadow-sm">
+        <div className="flex items-center justify-between gap-2">
+          {/* Categories segmented */}
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            {([
+              { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
+              { key: 'knowledge', label: t('ui.knowledge', { defaultValue: 'Knowledge' }) },
+              { key: 'skills', label: t('ui.skills', { defaultValue: 'Skills' }) },
+              { key: 'guidance', label: t('ui.guidance', { defaultValue: 'Guidance' }) },
+            ] as Array<{ key: CategoryFilter; label: string }>).map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 ${
+                  categoryFilter === c.key ? 'ring-1 ring-primary-token bg-primary/10 text-primary' : ''
+                }`}
+                onClick={() => setCategoryFilter(c.key)}
+                aria-pressed={categoryFilter === c.key}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Status with color accents and counts */}
+          <div className="flex gap-1">
+            {([
+              { key: 'all', label: t('ui.all', { defaultValue: 'All' }), cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', count: statusCounts.all },
+              { key: 'pending', label: t('ui.pending', { defaultValue: 'Pending' }), cls: '!bg-amber-100 !text-amber-900 dark:!bg-amber-900/50 dark:!text-amber-100', count: statusCounts.pending },
+              { key: 'approved', label: t('ui.approved', { defaultValue: 'Approved' }), cls: '!bg-green-100 !text-green-900 dark:!bg-green-900/50 dark:!text-green-100', count: statusCounts.approved },
+            ] as Array<{ key: StatusFilter; label: string; cls: string; count: number }>).map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 ${
+                  statusFilter === s.key ? `ring-1 ring-primary-token ${s.cls}` : ''
+                }`}
+                onClick={() => setStatusFilter(s.key)}
+                aria-pressed={statusFilter === s.key}
+              >
+                {s.label}
+                <span className="ml-1 text-[10px] opacity-75">({s.count})</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Top domains + More domains button */}
+      {/* Domains row: prominent pills with counts */}
       <div
         className="flex gap-2 overflow-x-auto scrollbar-hide"
         aria-label={t('ui.domains', { defaultValue: 'Domains' }) as string}
@@ -378,20 +477,22 @@ export default function RotationBrowser({
           <button
             key={domain}
             type="button"
-            className={`pill text-xs whitespace-nowrap ${domainFilter === domain ? 'ring-1 ring-primary-token' : ''}`}
+            className={`px-4 py-2 rounded-full text-xs font-medium bg-white dark:bg-[rgb(var(--surface-elevated))] border hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface))] whitespace-nowrap ${
+              domainFilter === domain ? 'ring-1 ring-primary-token' : ''
+            }`}
             onClick={() => (onSelectDomain ? onSelectDomain(domain) : onOpenDomainPicker())}
             aria-pressed={domainFilter === domain}
             aria-label={`Domain: ${domain} ${domainFilter === domain ? 'selected' : 'unselected'}`}
           >
             {domain}
             {availableDomains.counts[domain] && (
-              <span className="ml-1 text-xs opacity-75">({availableDomains.counts[domain]})</span>
+              <span className="ml-1 text-[10px] opacity-75">({availableDomains.counts[domain]})</span>
             )}
           </button>
         ))}
         <button
           type="button"
-          className="pill text-xs whitespace-nowrap bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          className="px-4 py-2 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 whitespace-nowrap"
           onClick={onOpenDomainPicker}
           aria-label={t('ui.moreDomains', { defaultValue: 'More domains' })}
         >
@@ -399,30 +500,39 @@ export default function RotationBrowser({
         </button>
       </div>
 
-      {/* Status chips */}
-      <div
-        className="flex gap-2 overflow-x-auto scrollbar-hide"
-        aria-label={t('ui.status', { defaultValue: 'Status' }) as string}
-      >
-        {(
-          [
-            { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
-            { key: 'pending', label: t('ui.pending', { defaultValue: 'Pending' }) },
-            { key: 'approved', label: t('ui.approved', { defaultValue: 'Approved' }) },
-          ] as Array<{ key: StatusFilter; label: string }>
-        ).map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            className={`pill text-xs whitespace-nowrap ${statusFilter === s.key ? 'ring-1 ring-primary-token' : ''}`}
-            onClick={() => setStatusFilter(s.key)}
-            aria-pressed={statusFilter === s.key}
-            aria-label={`Filter: ${s.label} ${statusFilter === s.key ? 'selected' : 'unselected'}`}
-          >
-            {s.label}
+      {/* Active filter chips (only when any filter is active) */}
+      {(categoryFilter !== 'all' || statusFilter !== 'all' || domainFilter !== 'all') && (
+        <div className="flex items-center gap-2 flex-wrap text-xs mt-1">
+          <span className="text-muted-foreground">{t('ui.filters', { defaultValue: 'Filters' })}:</span>
+          {categoryFilter !== 'all' && (
+            <button
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
+              onClick={() => setCategoryFilter('all')}
+            >
+              {(t('ui.category', { defaultValue: 'Category' }) as any) || 'Category'}: {categoryFilter} ×
+            </button>
+          )}
+          {domainFilter !== 'all' && (
+            <button
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
+              onClick={() => onSelectDomain && onSelectDomain('all')}
+            >
+              {(t('ui.domain', { defaultValue: 'Domain' }) as any) || 'Domain'}: {domainFilter} ×
+            </button>
+          )}
+          {statusFilter !== 'all' && (
+            <button
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
+              onClick={() => setStatusFilter('all')}
+            >
+              {t('ui.status', { defaultValue: 'Status' })}: {statusFilter} ×
+            </button>
+          )}
+          <button className="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:underline" onClick={clearFilters}>
+            {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
           </button>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Cards list */}
       <div role="list" className="space-y-2">
@@ -490,7 +600,7 @@ export default function RotationBrowser({
                         onSelectLeaf(item);
                       }
                     }}
-                    className={`card-levitate w-full text-left flex items-center gap-3 min-h-[56px] hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]`}
+                    className={`card-levitate w-full text-left flex items-start gap-3 min-h-[56px] py-3 hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]`}
                     aria-label={item.name}
                   >
                     <div
@@ -508,37 +618,39 @@ export default function RotationBrowser({
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50 break-words">
                         {debouncedTerm.trim() ? highlight(item.name, debouncedTerm) : item.name}
                       </div>
                       {subtitle ? (
-                        <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                        <div className="text-xs text-gray-600 dark:text-gray-300 break-words">
                           {subtitle}
                         </div>
                       ) : null}
                     </div>
-                    {req > 0 ? (
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs font-bold ${isComplete ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200' : approved > 0 ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200' : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200'}`}
-                        title={`${approved}/${req}`}
-                        aria-label={`${approved} of ${req} approved`}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {req > 0 ? (
+                        <Badge
+                          variant="secondary"
+                          className={`text-xs font-bold ${isComplete ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200' : approved > 0 ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200' : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200'}`}
+                          title={`${approved}/${req}`}
+                          aria-label={`${approved} of ${req} approved`}
+                        >
+                          {approved}/{req}
+                        </Badge>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        disabled={!canLog(item)}
+                        onClick={(e) => {
+                          console.log('[DEBUG] +1 button clicked for:', item.name);
+                          e.stopPropagation();
+                          onLog(item, 1);
+                        }}
+                        title={!canLog(item) ? 'Only available for active rotations' : 'Submit for approval'}
                       >
-                        {approved}/{req}
-                      </Badge>
-                    ) : null}
-                    <Button
-                      size="sm"
-                      className="ml-auto"
-                      disabled={!canLog(item)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onLog(item, 1);
-                      }}
-                      title={!canLog(item) ? (t('ui.loggingOnlyInActiveRotation') as string) : '+1'}
-                    >
-                      +1
-                    </Button>
+                        +1
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );

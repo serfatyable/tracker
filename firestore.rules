@@ -121,19 +121,20 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Assignments: approved admin can access all; residents can read their own active assignment
+    // Assignments: approved admin can access all; residents can read their own assignment; tutors can read assignments for rotations they own
     match /assignments/{assignmentId} {
       allow read: if isAdminApproved() || (isSignedIn() && resource.data.residentId == request.auth.uid) || isTutorApproved();
       // Approved admin retains full control; approved tutors can only add/remove themselves from tutorIds for owned rotation and active assignment
       allow update: if isAdminApproved() || (
         isTutorApproved() &&
-        resource.data.endedAt == null &&
+        resource.data.status == 'active' &&
         isOwnerOfRotation(resource.data.rotationId) &&
-        // Only tutorIds may change; all other fields unchanged
+        // Only tutorIds may change; all other fields unchanged (including status)
         request.resource.data.residentId == resource.data.residentId &&
         request.resource.data.rotationId == resource.data.rotationId &&
         request.resource.data.startedAt == resource.data.startedAt &&
         request.resource.data.endedAt == resource.data.endedAt &&
+        request.resource.data.status == resource.data.status &&
         (
           // Add self (size +1, previously not present)
           (!(request.auth.uid in resource.data.tutorIds) && (request.auth.uid in request.resource.data.tutorIds) && (request.resource.data.tutorIds.size() == resource.data.tutorIds.size() + 1)) ||
