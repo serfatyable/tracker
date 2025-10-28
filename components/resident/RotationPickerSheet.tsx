@@ -96,7 +96,7 @@ export default function RotationPickerSheet({ open, onClose, activeId, onSelect,
 
         {/* Row 3: Scrollable list area */}
         <div
-          className="scroll-y-touch scrollbar-stable pb-safe px-2"
+          className="min-h-0 scroll-y-touch scrollbar-stable pb-safe px-2"
           role="region"
           aria-label={t('ui.selectRotation', { defaultValue: 'Select rotation' })}
           style={{ touchAction: 'pan-y' }}

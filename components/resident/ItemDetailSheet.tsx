@@ -121,7 +121,7 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
 
         {/* Row 2: Content */}
         <div
-          className="scroll-y-touch scrollbar-stable pb-safe px-4 py-4"
+          className="min-h-0 scroll-y-touch scrollbar-stable pb-safe px-4 py-4"
           style={{ touchAction: 'pan-y' }}
         >
           {/* Resources section */}
