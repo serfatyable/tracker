@@ -2,11 +2,11 @@
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
-import type { Rotation, RotationStatus } from '../../types/rotations';
+import type { Rotation } from '../../types/rotations';
 import { listRotations } from '../firebase/admin';
 import { getFirebaseApp } from '../firebase/client';
 
-export function useRotations(params?: { status?: RotationStatus }) {
+export function useRotations() {
   const [rotations, setRotations] = useState<Rotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export function useRotations(params?: { status?: RotationStatus }) {
     (async () => {
       try {
         setLoading(true);
-        const page = await listRotations({ status: params?.status, limit: 500 });
+        const page = await listRotations({ limit: 500 });
         setRotations(page.items || []);
       } catch (e: any) {
         try {
@@ -30,7 +30,7 @@ export function useRotations(params?: { status?: RotationStatus }) {
         setLoading(false);
       }
     })();
-  }, [params]);
+  }, []);
 
   return { rotations, loading, error } as const;
 }

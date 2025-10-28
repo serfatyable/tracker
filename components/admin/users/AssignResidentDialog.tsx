@@ -51,7 +51,7 @@ export default function AssignResidentDialog({
       try {
         const [residentsRes, rotationsRes] = await Promise.all([
           listUsers({ role: 'resident', status: 'active', limit: 100 }),
-          listRotations({ status: 'active', limit: 100 }),
+          listRotations({ limit: 100 }),
         ]);
 
         // Filter out already assigned residents (simplified - in real app would check actual assignments)

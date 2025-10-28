@@ -5,12 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 import { createRotation, listRotations, listUsers } from '../../../lib/firebase/admin';
 import { useActiveAssignments } from '../../../lib/hooks/useActiveAssignments';
-import type { Rotation, RotationStatus } from '../../../types/rotations';
+import type { Rotation } from '../../../types/rotations';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import { Dialog, DialogHeader, DialogFooter } from '../../ui/Dialog';
 import Input from '../../ui/Input';
-import Select from '../../ui/Select';
 
 import MaintenanceDialog from './MaintenanceDialog';
 import RotationOwnersEditor from './RotationOwnersEditor';
@@ -23,7 +22,6 @@ type Props = {
 export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
   const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<RotationStatus | ''>('');
   const [items, setItems] = useState<Rotation[]>([] as any);
   const [_cursor, setCursor] = useState<any | undefined>(undefined);
   const [_hasMore, setHasMore] = useState(false);
@@ -33,8 +31,7 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
     name: string;
     startDate: string;
     endDate: string;
-    status: RotationStatus;
-  }>({ name: '', startDate: '', endDate: '', status: 'active' });
+  }>({ name: '', startDate: '', endDate: '' });
   const [openImport, setOpenImport] = useState(false);
   const [importDialogRotationId, setImportDialogRotationId] = useState<string | null>(null);
   const [ownersDialog, setOwnersDialog] = useState<string | null>(null);
@@ -50,7 +47,6 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
       try {
         const res = await listRotations({
           search: search || undefined,
-          status: status || undefined,
           limit: 25,
         });
         setItems(res.items as any);
@@ -66,7 +62,7 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
         setLoading(false);
       }
     })();
-  }, [search, status]);
+  }, [search]);
 
   const tutorName = (uid: string) => tutors.find((t) => t.uid === uid)?.fullName || uid;
   const residentsCountByRotation = useMemo(() => {
@@ -84,14 +80,6 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <Select value={status} onChange={(e) => setStatus(e.target.value as RotationStatus | '')}>
-            <option value="" disabled>
-              {t('ui.status')}
-            </option>
-            <option value="active">{t('ui.active')}</option>
-            <option value="inactive">{t('ui.inactive')}</option>
-            <option value="finished">{t('ui.finished')}</option>
-          </Select>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -228,13 +216,13 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
                   name: form.name,
                   startDate: start,
                   endDate: end,
-                  status: 'inactive',
                 });
                 setOpen(false);
                 setSearch(''); // trigger refresh
               } catch (error) {
                 alert(
-                  t('admin.rotations.createFailed') + ': ' +
+                  t('admin.rotations.createFailed') +
+                    ': ' +
                     (error instanceof Error ? error.message : String(error)),
                 );
               }

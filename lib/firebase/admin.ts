@@ -66,7 +66,9 @@ export async function listUsers(params?: {
         let qRef: any = query(collection(db, 'users'), ...(parts as any));
         if (params?.startAfter) qRef = query(qRef, qStartAfter(params.startAfter as any));
         snap = await getDocs(qRef);
-        const raw = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) } as UserProfile));
+        const raw = snap.docs.map(
+          (d) => ({ uid: d.id, ...(d.data() as Record<string, any>) }) as UserProfile,
+        );
         const items = raw.filter(
           (u) =>
             (!params?.role || u.role === params.role) &&
@@ -87,7 +89,9 @@ export async function listUsers(params?: {
         let qRef: any = query(collection(db, 'users'), ...(parts as any));
         if (params?.startAfter) qRef = query(qRef, qStartAfter(params.startAfter as any));
         snap = await getDocs(qRef);
-        const items = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) } as UserProfile));
+        const items = snap.docs.map(
+          (d) => ({ uid: d.id, ...(d.data() as Record<string, any>) }) as UserProfile,
+        );
         return {
           items,
           lastCursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined,
@@ -451,7 +455,6 @@ export async function createRotation(data: {
   name: string;
   startDate: any;
   endDate: any;
-  status: 'active' | 'inactive' | 'finished';
 }): Promise<{ id: string }> {
   const db = getFirestore(getFirebaseApp());
   const ref = await addDoc(collection(db, 'rotations'), {
@@ -459,7 +462,6 @@ export async function createRotation(data: {
     name_en: data.name,
     startDate: data.startDate,
     endDate: data.endDate,
-    status: data.status,
     createdAt: serverTimestamp(),
   });
   await ensureRootCategories(ref.id);
@@ -468,14 +470,12 @@ export async function createRotation(data: {
 
 export async function listRotations(params?: {
   search?: string;
-  status?: 'active' | 'inactive' | 'finished';
   limit?: number;
   startAfter?: unknown;
 }): Promise<ListPage<Rotation>> {
   const db = getFirestore(getFirebaseApp());
   const pageSize = params?.limit ?? 20;
   const parts: any[] = [];
-  if (params?.status) parts.push(where('status', '==', params.status));
   parts.push(orderBy('name_en'));
   if (params?.search) {
     parts.push(qStartAt(params.search));
@@ -490,7 +490,7 @@ export async function listRotations(params?: {
 
 export async function updateRotation(
   id: string,
-  data: Partial<Pick<Rotation, 'name' | 'startDate' | 'endDate' | 'status'>>,
+  data: Partial<Pick<Rotation, 'name' | 'startDate' | 'endDate'>>,
 ): Promise<void> {
   const db = getFirestore(getFirebaseApp());
   await updateDoc(doc(db, 'rotations', id), data as any);
@@ -718,7 +718,6 @@ export async function ensureCoreRotationsSeeded(): Promise<void> {
         name: core.name_en,
         name_en: core.name_en,
         name_he: core.name_he,
-        status: 'inactive',
         isCore: true,
         color: core.color,
         createdAt: serverTimestamp(),
@@ -1207,7 +1206,9 @@ export async function listRotationPetitionsWithDetails(params?: {
   // Fetch user details
   const userPromises = Array.from(userIds).map(async (uid) => {
     const userSnap = await getDoc(doc(db, 'users', uid));
-    return userSnap.exists() ? { uid, ...(userSnap.data() as Record<string, any>) } as UserProfile : null;
+    return userSnap.exists()
+      ? ({ uid, ...(userSnap.data() as Record<string, any>) } as UserProfile)
+      : null;
   });
   const users = (await Promise.all(userPromises)).filter(Boolean) as UserProfile[];
   const userMap = new Map(users.map((u) => [u.uid, u]));
@@ -1217,7 +1218,9 @@ export async function listRotationPetitionsWithDetails(params?: {
     const rotationSnap = await getDoc(doc(db, 'rotations', rid));
     return rotationSnap.exists() ? { id: rid, ...(rotationSnap.data() as any) } : null;
   });
-  const rotations = (await Promise.all(rotationPromises)).filter(Boolean) as (Rotation & { id: string })[];
+  const rotations = (await Promise.all(rotationPromises)).filter(Boolean) as (Rotation & {
+    id: string;
+  })[];
   const rotationMap = new Map(rotations.map((r) => [r.id, r]));
 
   // Combine data
