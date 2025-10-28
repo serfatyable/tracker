@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getLocalized } from '../../lib/i18n/getLocalized';
@@ -17,6 +18,16 @@ type Props = {
 export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith('he') ? 'he' : 'en';
+
+  // Lock body scroll when sheet is open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   if (!open || !item) return null;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Custom dialog implementation for mobile sheet
@@ -28,6 +28,16 @@ export default function RotationPickerSheet({ open, onClose, activeId, onSelect,
     const all = index.all.filter((r) => r.name.toLowerCase().includes(term));
     return { mine, allFiltered: all };
   }, [index.mine, index.all, searchTerm]);
+
+  // Lock body scroll when sheet is open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   const getStatusLabel = (id: string) => {
     const status = index.statusById[id];
