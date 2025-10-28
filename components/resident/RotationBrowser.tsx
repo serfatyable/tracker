@@ -57,7 +57,9 @@ export default function RotationBrowser({
         const statuses: Record<string, RotationStatus> = {};
         snapshot.docs.forEach((doc) => {
           statuses[doc.id] = doc.data().status as RotationStatus;
+          console.log('[DEBUG] Rotation:', doc.id, 'Status:', doc.data().status);
         });
+        console.log('[DEBUG] All rotation statuses:', statuses);
         setRotationStatuses(statuses);
       } catch (error) {
         console.error('Failed to load rotation statuses:', error);
@@ -196,7 +198,17 @@ export default function RotationBrowser({
 
   function canLog(leaf: RotationNode): boolean {
     // Check if the rotation this item belongs to is active
-    return rotationStatuses[leaf.rotationId] === 'active';
+    const rotationStatus = rotationStatuses[leaf.rotationId];
+    const result = rotationStatus === 'active';
+    console.log('[DEBUG canLog]', {
+      itemId: leaf.id,
+      itemName: leaf.name,
+      rotationId: leaf.rotationId,
+      rotationStatus,
+      result,
+      allStatuses: rotationStatuses,
+    });
+    return result;
   }
 
   async function onLog(leaf: RotationNode, count: number, note?: string) {
@@ -552,6 +564,7 @@ export default function RotationBrowser({
                         size="sm"
                         disabled={!canLog(item)}
                         onClick={(e) => {
+                          console.log('[DEBUG] +1 button clicked for:', item.name);
                           e.stopPropagation();
                           onLog(item, 1);
                         }}
