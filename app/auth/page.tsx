@@ -225,10 +225,6 @@ export default function AuthPage() {
       <div dir="ltr" className="mb-6 flex w-full items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1
-<<<<<<< HEAD
-            className="text-4xl sm:text-5xl font-extrabold tracking-tight text-primary"
-=======
->>>>>>> 1b6b256 (Auth: use dark header style and remove duplicate className)
             className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100"
             aria-label="TRACKER"
           >
