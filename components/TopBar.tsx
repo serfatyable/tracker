@@ -82,7 +82,7 @@ export default function TopBar() {
       <div className="flex items-center gap-2 text-base flex-shrink-0">
         <button
           type="button"
-          className="h-11 w-11 grid place-items-center rounded-full hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 text-foreground dark:text-white lg:hidden"
+          className="h-11 w-11 grid place-items-center rounded-full hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 text-foreground dark:text-white"
           aria-label={t('ui.openMenu', { defaultValue: 'Open menu' })}
           onClick={() => setDrawerOpen(true)}
         >
