@@ -22,9 +22,15 @@ export function useOnCallToday(dateKey?: string) {
           async () => {
             const db = getFirestore(getFirebaseApp());
             const now = new Date();
-            const key =
-              dateKey ||
-              `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+            // Compute today based on Asia/Jerusalem calendar day
+            const tz = 'Asia/Jerusalem';
+            const fmt = new Intl.DateTimeFormat('en-CA', {
+              timeZone: tz,
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            });
+            const key = dateKey || fmt.format(now);
             const snap = await getDoc(doc(db, 'onCallDays', key));
             return snap.exists() ? ({ id: key, ...(snap.data() as any) } as OnCallDay) : null;
           },
