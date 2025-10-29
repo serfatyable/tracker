@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server';
 import { requireAdminAuth, createAuthErrorResponse } from '../../../../lib/api/auth';
 import { getAdminApp } from '../../../../lib/firebase/admin-sdk';
 import {
+  rateLimiters,
+  checkRateLimit,
+  getClientIdentifier,
+} from '../../../../lib/middleware/rateLimit';
+import {
   parseMorningMeetingsExcel,
   parseExcelDate,
   isBasicUrl,
@@ -14,6 +19,7 @@ import {
  * Import morning meetings from Excel file
  *
  * SECURITY: Requires admin authentication via Firebase ID token
+ * SECURITY: Rate limiting prevents import abuse (10 imports per hour per admin)
  *
  * @route POST /api/morning-meetings/import
  * @auth Required - Admin only
@@ -22,7 +28,14 @@ export async function POST(req: NextRequest) {
   // ✅ SECURE: Verify Firebase ID token and admin role
   try {
     const auth = await requireAdminAuth(req);
-    const _uid = auth.uid;
+    const uid = auth.uid;
+
+    // ✅ RATE LIMITING: Prevent import resource exhaustion
+    const identifier = getClientIdentifier(req, uid);
+    const rateLimitResponse = await checkRateLimit(identifier, rateLimiters?.adminImport ?? null);
+    if (rateLimitResponse) {
+      return rateLimitResponse; // 429 Too Many Requests
+    }
 
     // Use Admin SDK for server-side operations (bypasses security rules)
     const { getFirestore, FieldValue, Timestamp } = await import('firebase-admin/firestore');

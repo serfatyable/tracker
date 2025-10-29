@@ -5,12 +5,18 @@ import { NextResponse } from 'next/server';
 import { verifyAuthToken, createAuthErrorResponse } from '../../../../lib/api/auth';
 import { getFirebaseApp } from '../../../../lib/firebase/client';
 import { buildIcsCalendar, simpleHash } from '../../../../lib/ics/buildMorningMeetingsIcs';
+import {
+  rateLimiters,
+  checkRateLimit,
+  getClientIdentifier,
+} from '../../../../lib/middleware/rateLimit';
 import { listMorningMeetingsByDateRange } from '../../../../lib/morning-meetings/store';
 
 /**
  * Export all morning meetings as ICS calendar file
  *
  * SECURITY: Requires authentication via Firebase ID token
+ * SECURITY: Rate limiting prevents calendar export abuse (100 requests per hour)
  * Returns all morning meetings (public schedule within organization)
  *
  * @route GET /api/ics/morning-meetings
@@ -19,7 +25,14 @@ import { listMorningMeetingsByDateRange } from '../../../../lib/morning-meetings
 export async function GET(req: NextRequest) {
   // ✅ SECURE: Verify Firebase ID token
   try {
-    await verifyAuthToken(req);
+    const authResult = await verifyAuthToken(req);
+
+    // ✅ RATE LIMITING: Prevent calendar export abuse
+    const identifier = getClientIdentifier(req, authResult?.uid);
+    const rateLimitResponse = await checkRateLimit(identifier, rateLimiters?.standard ?? null);
+    if (rateLimitResponse) {
+      return rateLimitResponse; // 429 Too Many Requests
+    }
 
     const app = getFirebaseApp();
     getFirestore(app); // ensure initialized

@@ -3,6 +3,11 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { NextResponse } from 'next/server';
 
 import { initializeFirebaseAdmin } from '@/lib/firebase/admin-init';
+import {
+  rateLimiters,
+  checkRateLimit,
+  getClientIdentifier,
+} from '@/lib/middleware/rateLimit';
 
 // Server-side Excel parsing
 async function parseOnCallExcelServer(buffer: ArrayBuffer) {
@@ -142,6 +147,13 @@ export async function POST(request: Request) {
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await getAuth().verifyIdToken(token!);
     const uid = decodedToken.uid;
+
+    // ✅ RATE LIMITING: Prevent import resource exhaustion
+    const identifier = getClientIdentifier(request, uid);
+    const rateLimitResponse = await checkRateLimit(identifier, rateLimiters?.adminImport ?? null);
+    if (rateLimitResponse) {
+      return rateLimitResponse; // 429 Too Many Requests
+    }
 
     // Check if user is admin
     const adminDb = getFirestore();

@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server';
 
 import { getFirebaseApp } from '../../../../../lib/firebase/client';
 import { buildIcsCalendar, simpleHash } from '../../../../../lib/ics/buildMorningMeetingsIcs';
+import {
+  rateLimiters,
+  checkRateLimit,
+  getClientIdentifier,
+} from '../../../../../lib/middleware/rateLimit';
 import { listMorningMeetingsByDateRange } from '../../../../../lib/morning-meetings/store';
 
 /**
@@ -12,14 +17,22 @@ import { listMorningMeetingsByDateRange } from '../../../../../lib/morning-meeti
  * This uses a persistent token stored in user settings for calendar apps
  * that cannot use Bearer tokens (Google Calendar, Apple Calendar, etc.)
  *
+ * SECURITY: Rate limiting prevents token enumeration attacks
+ * Limit: 100 requests per hour per IP address
+ *
  * NOTE: Tokens should be long, random, and stored hashed in production
- * TODO: Add rate limiting to prevent token enumeration attacks
  *
  * @route GET /api/ics/morning-meetings/[token]
  * @auth Token-based (for calendar subscriptions)
  */
 export async function GET(req: Request) {
   try {
+    // ✅ RATE LIMITING: Prevent token enumeration attacks
+    const identifier = getClientIdentifier(req);
+    const rateLimitResponse = await checkRateLimit(identifier, rateLimiters?.tokenAuth ?? null);
+    if (rateLimitResponse) {
+      return rateLimitResponse; // 429 Too Many Requests
+    }
     const app = getFirebaseApp();
     const db = getFirestore(app);
     const url = new URL(req.url);

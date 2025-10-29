@@ -6,12 +6,19 @@ import { NextResponse } from 'next/server';
 
 import { parseExamsExcel } from '@/lib/exams/excel';
 import { initializeFirebaseAdmin } from '@/lib/firebase/admin-init';
+import {
+  rateLimiters,
+  checkRateLimit,
+  getClientIdentifier,
+} from '@/lib/middleware/rateLimit';
 
 // Firebase Admin initialization moved to shared utility
 
 /**
  * POST /api/exams/import
  * Bulk import exams from Excel file
+ *
+ * SECURITY: Rate limiting prevents import abuse (10 imports per hour per admin/tutor)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +40,13 @@ export async function POST(request: NextRequest) {
     const auth = getAuth();
     const decodedToken = await auth.verifyIdToken(token);
     const uid = decodedToken.uid;
+
+    // ✅ RATE LIMITING: Prevent import resource exhaustion
+    const identifier = getClientIdentifier(request, uid);
+    const rateLimitResponse = await checkRateLimit(identifier, rateLimiters?.adminImport ?? null);
+    if (rateLimitResponse) {
+      return rateLimitResponse; // 429 Too Many Requests
+    }
 
     const db = getFirestore();
     const userDoc = await db.collection('users').doc(uid).get();
