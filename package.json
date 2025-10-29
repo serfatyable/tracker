@@ -49,6 +49,7 @@
   "dependencies": {
     "@headlessui/react": "2.2.0",
     "@heroicons/react": "2.2.0",
+    "@sentry/nextjs": "^10.22.0",
     "@tailwindcss/postcss": "4.1.14",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.6",

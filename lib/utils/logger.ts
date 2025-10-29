@@ -113,11 +113,79 @@ class Logger {
   }
 
   /**
-   * Send error to tracking service (placeholder for future implementation)
+   * Send error to Sentry error tracking service
+   * Only sends in production when Sentry is configured
    */
-  private sendToErrorTracking(_entry: LogEntry): void {
-    // Future: Send to service like Sentry, LogRocket, etc.
-    // For now, just ensure it's in console for production debugging
+  private sendToErrorTracking(entry: LogEntry): void {
+    // Dynamically import Sentry to avoid bundling in non-browser environments
+    // that don't need error tracking
+    if (typeof window !== 'undefined') {
+      // Client-side error tracking
+      import('@sentry/nextjs')
+        .then((Sentry) => {
+          if (entry.error) {
+            // Capture exception with context
+            Sentry.captureException(entry.error, {
+              level: entry.level === LogLevel.ERROR ? 'error' : 'warning',
+              tags: {
+                context: entry.context || 'unknown',
+              },
+              extra: {
+                message: entry.message,
+                metadata: entry.metadata,
+                timestamp: entry.timestamp,
+              },
+            });
+          } else {
+            // Capture message without exception
+            Sentry.captureMessage(entry.message, {
+              level: entry.level === LogLevel.ERROR ? 'error' : 'warning',
+              tags: {
+                context: entry.context || 'unknown',
+              },
+              extra: {
+                metadata: entry.metadata,
+                timestamp: entry.timestamp,
+              },
+            });
+          }
+        })
+        .catch((err) => {
+          console.error('[LOGGER] Failed to send to Sentry:', err);
+        });
+    } else {
+      // Server-side error tracking
+      import('@sentry/nextjs')
+        .then((Sentry) => {
+          if (entry.error) {
+            Sentry.captureException(entry.error, {
+              level: entry.level === LogLevel.ERROR ? 'error' : 'warning',
+              tags: {
+                context: entry.context || 'unknown',
+              },
+              extra: {
+                message: entry.message,
+                metadata: entry.metadata,
+                timestamp: entry.timestamp,
+              },
+            });
+          } else {
+            Sentry.captureMessage(entry.message, {
+              level: entry.level === LogLevel.ERROR ? 'error' : 'warning',
+              tags: {
+                context: entry.context || 'unknown',
+              },
+              extra: {
+                metadata: entry.metadata,
+                timestamp: entry.timestamp,
+              },
+            });
+          }
+        })
+        .catch((err) => {
+          console.error('[LOGGER] Failed to send to Sentry:', err);
+        });
+    }
   }
 }
 
