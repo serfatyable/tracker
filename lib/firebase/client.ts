@@ -3,6 +3,7 @@ import { getApps, getApp, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 
+import { validateEnv } from '../config/validateEnv';
 import { logger } from '../utils/logger';
 
 type FirebasePublicConfig = {
@@ -78,6 +79,10 @@ function getValidatedConfig(): FirebasePublicConfig {
 }
 
 export function getFirebaseApp(): FirebaseApp {
+  // Validate all environment variables at startup
+  // This ensures we fail fast with clear error messages if misconfigured
+  validateEnv();
+
   if (!getApps().length) {
     const app = initializeApp(getValidatedConfig());
     if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true') {

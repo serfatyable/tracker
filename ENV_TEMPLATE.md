@@ -22,8 +22,11 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
 # Local development only
 NEXT_PUBLIC_USE_FIREBASE_EMULATORS=false
 
-# Application URL
+# Application URL (used for calendar subscriptions, redirects, etc.)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Application environment (development, staging, production)
+NEXT_PUBLIC_APP_ENV=development
 ```
 
 ## Server-Side Variables (NEVER commit!)
@@ -50,6 +53,41 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour-Private-Key-Here\n-----E
    - `project_id` → `FIREBASE_PROJECT_ID`
    - `client_email` → `FIREBASE_CLIENT_EMAIL`
    - `private_key` → `FIREBASE_PRIVATE_KEY` (keep the quotes and \n characters)
+
+## Rate Limiting Configuration (Optional in development, REQUIRED for production)
+
+Rate limiting protects your API endpoints from abuse, brute force attacks, and DDoS:
+
+```bash
+# Upstash Redis Configuration
+# Sign up at: https://upstash.com
+# Create a Redis database in europe-west1 region (matches Firestore)
+UPSTASH_REDIS_REST_URL=https://your-db.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-upstash-rest-token
+```
+
+**Note:** Rate limiting is automatically disabled in development if these variables are not set. However, **you MUST configure rate limiting for production** to prevent abuse.
+
+See `RATE_LIMITING_GUIDE.md` for detailed setup instructions.
+
+## Error Tracking Configuration (Optional but highly recommended)
+
+Error tracking with Sentry provides real-time notifications, stack traces, and monitoring:
+
+```bash
+# Sentry Configuration
+# Sign up at: https://sentry.io
+NEXT_PUBLIC_SENTRY_DSN=https://your-key@o123456.ingest.sentry.io/7654321
+
+# Optional: Auth token for uploading source maps (improves error debugging)
+# Get from: Sentry → Settings → Auth Tokens → Create New Token
+# Scopes needed: project:releases, project:write
+SENTRY_AUTH_TOKEN=your-sentry-auth-token
+```
+
+**Note:** Error tracking is automatically disabled if `NEXT_PUBLIC_SENTRY_DSN` is not set. For production deployments, error tracking is **highly recommended** to detect and fix issues quickly.
+
+See `SENTRY_SETUP_GUIDE.md` for detailed setup instructions.
 
 ## Production Deployment
 
