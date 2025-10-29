@@ -1,7 +1,25 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 
-export async function GET() {
+import {
+  rateLimiters,
+  checkRateLimit,
+  getClientIdentifier,
+} from '@/lib/middleware/rateLimit';
+
+/**
+ * GET /api/templates/rotation.xlsx
+ * Download rotation template
+ *
+ * SECURITY: Rate limiting prevents bandwidth abuse (60 downloads per hour per IP)
+ */
+export async function GET(req: Request) {
+  // ✅ RATE LIMITING: Prevent template download abuse
+  const identifier = getClientIdentifier(req);
+  const rateLimitResponse = await checkRateLimit(identifier, rateLimiters?.templateDownload ?? null);
+  if (rateLimitResponse) {
+    return rateLimitResponse; // 429 Too Many Requests
+  }
   // Create workbook with sample data
   const data = [
     [
