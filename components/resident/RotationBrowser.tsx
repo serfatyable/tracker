@@ -390,7 +390,7 @@ export default function RotationBrowser({
       ) : null}
       {/* Consolidated filter toolbar: categories (left) + status (right with counts) */}
       <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/30 px-2 py-2 shadow-sm">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           {/* Categories segmented */}
           <div className="flex gap-1 overflow-x-auto scrollbar-hide">
             {(
