@@ -1,13 +1,24 @@
 'use client';
 
+import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
   const { t } = useTranslation();
   useEffect(() => {
-    // Log the error to console (in production, you might want to send to an error tracking service)
+    // Log the error to console for development
     console.error('Global error caught by error boundary:', error);
+
+    // Send error to Sentry in production
+    if (process.env.NODE_ENV === 'production') {
+      Sentry.captureException(error, {
+        level: 'fatal', // Global errors are critical
+        tags: {
+          errorBoundary: 'global',
+        },
+      });
+    }
   }, [error]);
 
   return (

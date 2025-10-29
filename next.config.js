@@ -9,9 +9,11 @@ const nextConfig = {
     // Run ESLint during builds for better CI/CD integration
     ignoreDuringBuilds: false,
   },
-  // Performance optimizations
+  // Performance optimizations and instrumentation
   experimental: {
     optimizePackageImports: ['@heroicons/react', 'firebase'],
+    // Enable instrumentation for Sentry initialization
+    instrumentationHook: true,
   },
   // Webpack configuration for xlsx library
   webpack: (config, { isServer }) => {
