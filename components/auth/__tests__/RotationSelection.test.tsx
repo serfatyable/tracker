@@ -26,7 +26,6 @@ describe('RotationSelection', () => {
         currentRotationId=""
         onCompletedChange={mockOnCompletedChange}
         onCurrentChange={mockOnCurrentChange}
-        loading={false}
         language="en"
         completedLabel="Completed Rotations"
         currentLabel="Current Rotation"

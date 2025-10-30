@@ -440,7 +440,6 @@ export default function AuthPage() {
                       onCompletedChange={setCompletedRotationIds}
                       onCurrentChange={setCurrentRotationId}
                       disabled={loading || rotationsLoading}
-                      loading={rotationsLoading}
                       error={errors.rotationSelection || null}
                       language={language}
                       completedLabel={t('auth.selectCompletedRotations')}

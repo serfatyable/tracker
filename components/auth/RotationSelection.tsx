@@ -10,7 +10,6 @@ type Props = {
   onCompletedChange: (ids: string[]) => void;
   onCurrentChange: (id: string) => void;
   disabled?: boolean;
-  loading?: boolean;
   error?: string | null;
   language: 'en' | 'he';
   completedLabel: string;
@@ -24,7 +23,6 @@ export default function RotationSelection({
   onCompletedChange,
   onCurrentChange,
   disabled,
-  loading,
   error,
   language,
   completedLabel,
@@ -42,9 +40,9 @@ export default function RotationSelection({
 
   const handleCurrentChange = (rotationId: string) => {
     onCurrentChange(rotationId);
-    // Remove from completed list if it was selected there
-    if (completedRotationIds.includes(rotationId)) {
-      onCompletedChange(completedRotationIds.filter((id) => id !== rotationId));
+    // Automatically add to completed if not already there
+    if (!completedRotationIds.includes(rotationId)) {
+      onCompletedChange([...completedRotationIds, rotationId]);
     }
   };
 
@@ -82,10 +80,8 @@ export default function RotationSelection({
           <span suppressHydrationWarning>{completedLabel}</span>
         </label>
         <div className="max-h-48 overflow-y-auto rounded border border-gray-300 dark:border-gray-600 p-3 space-y-2">
-          {loading ? (
+          {rotations.length === 0 ? (
             <p className="text-sm text-gray-500">Loading rotations...</p>
-          ) : rotations.length === 0 ? (
-            <p className="text-sm text-gray-500">No rotations available</p>
           ) : (
             rotations.map((rotation) => (
               <label
@@ -96,7 +92,7 @@ export default function RotationSelection({
                   type="checkbox"
                   checked={completedRotationIds.includes(rotation.id)}
                   onChange={() => handleCompletedToggle(rotation.id)}
-                  disabled={disabled || rotation.id === currentRotationId} // Prevent selecting same rotation as both current and completed
+                  disabled={disabled || rotation.id === currentRotationId}
                   className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm">
