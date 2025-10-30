@@ -19,11 +19,13 @@ node list-rotations.js --nodes --output my-rotations-template.json
 ```
 
 **What this does:**
+
 - Lists all your rotations
 - Shows which ones are missing Hebrew
 - Creates a template file you can fill in
 
 **OR** manually provide your rotation names to me in this format:
+
 ```
 Rotation ID → Display Name
 icu → ICU
@@ -51,6 +53,7 @@ or → Operating Room
 Edit `scripts/translations.json` with your actual rotation names.
 
 **Current template has examples like:**
+
 ```json
 {
   "rotations": {
@@ -63,6 +66,7 @@ Edit `scripts/translations.json` with your actual rotation names.
 ```
 
 **Replace with YOUR rotations:**
+
 1. Copy rotation IDs from Step 1
 2. Add English names (name_en)
 3. Add Hebrew translations (name_he)
@@ -80,6 +84,7 @@ node scripts/add-hebrew-translations.js --dry-run
 ```
 
 **What to check:**
+
 - ✅ All your rotations are listed
 - ✅ Translations look correct
 - ✅ No errors appear
@@ -97,6 +102,7 @@ node scripts/add-hebrew-translations.js --backup
 ```
 
 **This will:**
+
 - Create `backups/` folder
 - Save current data as JSON files
 - Apply Hebrew translations to Firestore
@@ -132,22 +138,27 @@ If some items are still in English:
 ## 🆘 Troubleshooting
 
 ### Error: "Cannot find module 'firebase-admin'"
+
 ```bash
 cd scripts
 npm install firebase-admin
 ```
 
 ### Error: "Service account key not found"
+
 Make sure `firebase-service-account.json` is in project root (not in scripts folder)
 
 ### Rotations still in English after migration
+
 1. Check browser console for errors
 2. Clear browser cache completely
 3. Verify Firestore docs have `name_he` field (check Firebase Console)
 4. Ensure you're logged in and language is set to Hebrew
 
 ### Want to undo changes?
+
 Restore from backup:
+
 ```bash
 # I can create a restore script if needed
 ```
@@ -157,6 +168,7 @@ Restore from backup:
 ## 📞 Need Help?
 
 **Where you are now:**
+
 - ✅ Scripts created
 - ⏳ Waiting for your rotation names
 
@@ -169,4 +181,3 @@ Restore from backup:
 ---
 
 **Let's get those rotation names and translations set up!** 🎯
-

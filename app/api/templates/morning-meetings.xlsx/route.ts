@@ -4,16 +4,7 @@ import * as XLSX from 'xlsx';
 export async function GET() {
   // Create workbook with sample data for morning meetings
   const data = [
-    [
-      'יום',
-      'תאריך',
-      'נושא',
-      'מציג',
-      'מנחה',
-      'רכז',
-      'link',
-      'notes',
-    ],
+    ['יום', 'תאריך', 'נושא', 'מציג', 'מנחה', 'רכז', 'link', 'notes'],
     [
       'א',
       '19/10/2025',
@@ -54,16 +45,7 @@ export async function GET() {
       'https://zoom.us/j/example',
       '',
     ],
-    [
-      'ד',
-      '22/10/2025',
-      'הדרכה בטוחות - עפר דאגן',
-      'עפר דאגן',
-      'ד״ר שני אדלר',
-      'קבוצות',
-      '',
-      '',
-    ],
+    ['ד', '22/10/2025', 'הדרכה בטוחות - עפר דאגן', 'עפר דאגן', 'ד״ר שני אדלר', 'קבוצות', '', ''],
     [
       'ה',
       '23/10/2025',
@@ -81,7 +63,7 @@ export async function GET() {
 
   // Set column widths for better readability
   worksheet['!cols'] = [
-    { wch: 8 },  // יום (day)
+    { wch: 8 }, // יום (day)
     { wch: 12 }, // תאריך (date)
     { wch: 60 }, // נושא (title)
     { wch: 25 }, // מציג (lecturer)
@@ -105,4 +87,3 @@ export async function GET() {
     },
   });
 }
-

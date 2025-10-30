@@ -3,7 +3,7 @@
 **Date:** October 18, 2025  
 **Previous Task:** Dark Mode (✅ COMPLETE)  
 **Next Task:** Complete i18n Coverage  
-**Priority:** 🔴 CRITICAL - BLOCKS LAUNCH  
+**Priority:** 🔴 CRITICAL - BLOCKS LAUNCH
 
 ---
 
@@ -26,7 +26,7 @@ I'm continuing work on my Next.js production readiness plan. I just completed da
 - ✅ 20+ translation keys added
 - ✅ Several critical components already translated:
   - Auth pages
-  - Error pages  
+  - Error pages
   - Navigation (Sidebar, TopBar)
   - Admin KPI cards
   - Some rotation components
@@ -57,7 +57,7 @@ I'm continuing work on my Next.js production readiness plan. I just completed da
 - `production-readiness-plan.plan.md` - Original detailed plan (Section 1: i18n)
 - `i18n/en.json` and `i18n/he.json` - Translation files
 
-**My Goal:** 
+**My Goal:**
 Complete all i18n work to make the app fully bilingual (English/Hebrew) with proper RTL support. This is blocking launch.
 
 Please help me:
@@ -71,6 +71,7 @@ Please help me:
 ## 2. **Key Documents to Have Open:**
 
 In your IDE, have these files ready:
+
 - `PRODUCTION_READINESS_PROGRESS.md` - Main progress tracker
 - `production-readiness-plan.plan.md` - Detailed requirements
 - `i18n/en.json` - English translations
@@ -82,6 +83,7 @@ In your IDE, have these files ready:
 ## 3. **Expected AI Response:**
 
 The AI should:
+
 1. Read the progress and plan documents
 2. Identify remaining i18n work
 3. Create a prioritized task list
@@ -95,7 +97,6 @@ The AI should:
   - API error message system
   - Form validation translations
   - RTL layout fixes
-  
 - **Medium Priority:** 4 hours
   - Date/time localization
   - Toast notifications
@@ -108,6 +109,7 @@ The AI should:
 ## 5. **Success Criteria:**
 
 Before marking i18n as complete:
+
 - [ ] Zero hardcoded English strings in components
 - [ ] All API errors return codes, translated client-side
 - [ ] All form validations translated
@@ -122,6 +124,7 @@ Before marking i18n as complete:
 ## 6. **After i18n Completion:**
 
 Next critical tasks (in order):
+
 1. **Security improvements** (5h) - Rate limiting, input sanitization
 2. **Critical bug fixes** (8h) - Auth flows, error boundaries
 3. **Testing** (16h) - Browser testing, device testing
@@ -144,6 +147,7 @@ Next critical tasks (in order):
 If the new chat needs more background:
 
 **Quick Facts:**
+
 - App is a medical resident rotation tracker
 - Used by admins, tutors, and residents
 - Needs Hebrew/English support for Israeli medical program
@@ -151,6 +155,7 @@ If the new chat needs more background:
 - 88 hours total work estimated, 50% done
 
 **Architecture:**
+
 - Next.js 15 App Router
 - Firebase (Auth, Firestore)
 - react-i18next for translations
@@ -162,4 +167,3 @@ If the new chat needs more background:
 **Ready to Continue!** 🚀
 
 Just copy the prompt above into a new chat and start working.
-

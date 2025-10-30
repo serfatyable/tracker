@@ -17,7 +17,9 @@ export default function EmptyState({ icon, title, description, action, className
     >
       {icon && <div className="mb-4 text-gray-400 dark:text-gray-500">{icon}</div>}
       <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50 mb-1">{title}</h2>
-      {description && <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 max-w-md">{description}</p>}
+      {description && (
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 max-w-md">{description}</p>
+      )}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );

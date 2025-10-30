@@ -31,16 +31,16 @@ Sentry is an error tracking and performance monitoring platform that helps you:
 
 ### Integration Points
 
-| Location | Purpose | Status |
-|----------|---------|--------|
-| `instrumentation.ts` | Auto-initialize Sentry on server/edge | ✅ Configured |
-| `sentry.client.config.ts` | Client-side configuration | ✅ Configured |
-| `sentry.server.config.ts` | Server-side configuration | ✅ Configured |
-| `sentry.edge.config.ts` | Edge runtime configuration | ✅ Configured |
-| `lib/utils/logger.ts` | Send logged errors to Sentry | ✅ Integrated |
-| `app/error.tsx` | Report React error boundary errors | ✅ Integrated |
-| `app/global-error.tsx` | Report critical global errors | ✅ Integrated |
-| `lib/sentry/context.ts` | User context and breadcrumbs | ✅ Utility functions |
+| Location                  | Purpose                               | Status               |
+| ------------------------- | ------------------------------------- | -------------------- |
+| `instrumentation.ts`      | Auto-initialize Sentry on server/edge | ✅ Configured        |
+| `sentry.client.config.ts` | Client-side configuration             | ✅ Configured        |
+| `sentry.server.config.ts` | Server-side configuration             | ✅ Configured        |
+| `sentry.edge.config.ts`   | Edge runtime configuration            | ✅ Configured        |
+| `lib/utils/logger.ts`     | Send logged errors to Sentry          | ✅ Integrated        |
+| `app/error.tsx`           | Report React error boundary errors    | ✅ Integrated        |
+| `app/global-error.tsx`    | Report critical global errors         | ✅ Integrated        |
+| `lib/sentry/context.ts`   | User context and breadcrumbs          | ✅ Utility functions |
 
 ---
 
@@ -69,6 +69,7 @@ After creating the project:
 ### Step 3: Configure Environment Variables
 
 **Local Development (`.env.local`):**
+
 ```bash
 # Sentry DSN (safe to expose, can be public)
 NEXT_PUBLIC_SENTRY_DSN=https://your-key@o123456.ingest.sentry.io/7654321
@@ -78,6 +79,7 @@ NEXT_PUBLIC_APP_ENV=development
 ```
 
 **Production (Vercel):**
+
 1. Go to Vercel Dashboard → Project Settings → Environment Variables
 2. Add variable:
    - **Key:** `NEXT_PUBLIC_SENTRY_DSN`
@@ -103,12 +105,13 @@ pnpm list @sentry/nextjs
 
 To manage volume and costs, we use different sampling rates:
 
-| Environment | Traces (Performance) | Error Replays | Session Replays |
-|-------------|----------------------|---------------|-----------------|
-| **Development** | 100% (all) | Disabled | Disabled |
-| **Production** | 10% (1 in 10) | 100% (all errors) | 10% (1 in 10 sessions) |
+| Environment     | Traces (Performance) | Error Replays     | Session Replays        |
+| --------------- | -------------------- | ----------------- | ---------------------- |
+| **Development** | 100% (all)           | Disabled          | Disabled               |
+| **Production**  | 10% (1 in 10)        | 100% (all errors) | 10% (1 in 10 sessions) |
 
 **What this means:**
+
 - **Development:** Errors logged to console, not sent to Sentry
 - **Production:**
   - All errors are captured
@@ -154,6 +157,7 @@ Sentry captures rich context with each error:
 You can add custom context using utility functions:
 
 **Setting User Context:**
+
 ```typescript
 import { setSentryUser, clearSentryUser } from '@/lib/sentry/context';
 
@@ -163,7 +167,7 @@ setSentryUser({
   email: user.email,
   fullName: user.fullName,
   role: user.role,
-  status: user.status
+  status: user.status,
 });
 
 // When user signs out
@@ -171,22 +175,19 @@ clearSentryUser();
 ```
 
 **Adding Breadcrumbs:**
+
 ```typescript
 import { addSentryBreadcrumb } from '@/lib/sentry/context';
 
 // Track user actions leading up to an error
-addSentryBreadcrumb(
-  'User clicked import button',
-  'user-action',
-  'info',
-  {
-    fileName: 'schedule.xlsx',
-    fileSize: 1024000
-  }
-);
+addSentryBreadcrumb('User clicked import button', 'user-action', 'info', {
+  fileName: 'schedule.xlsx',
+  fileSize: 1024000,
+});
 ```
 
 **Manual Error Capture:**
+
 ```typescript
 import { captureError } from '@/lib/sentry/context';
 
@@ -195,7 +196,7 @@ try {
 } catch (error) {
   captureError(error as Error, {
     operation: 'data-import',
-    recoverable: true
+    recoverable: true,
   });
   // Handle error gracefully
 }
@@ -212,18 +213,15 @@ import { addSentryBreadcrumb, setSentryContext } from '@/lib/sentry/context';
 
 export async function importMorningMeetings(file: File) {
   // Add breadcrumb
-  addSentryBreadcrumb(
-    'Starting morning meetings import',
-    'import',
-    'info',
-    { fileSize: file.size }
-  );
+  addSentryBreadcrumb('Starting morning meetings import', 'import', 'info', {
+    fileSize: file.size,
+  });
 
   // Set custom context
   setSentryContext('import', {
     fileType: file.type,
     fileName: file.name,
-    operation: 'morning-meetings'
+    operation: 'morning-meetings',
   });
 
   try {
@@ -248,13 +246,10 @@ export async function POST(req: NextRequest) {
     // Automatically sent to Sentry via logger
     logger.error('API request failed', 'API', error as Error, {
       url: req.url,
-      method: req.method
+      method: req.method,
     });
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 ```
@@ -285,6 +280,7 @@ function MyComponent() {
 Access your Sentry dashboard at: https://sentry.io/organizations/your-org/issues/
 
 **Key Sections:**
+
 1. **Issues** - All errors grouped by type
 2. **Performance** - Page load times, API latency
 3. **Replays** - Video recordings of user sessions
@@ -305,11 +301,11 @@ Access your Sentry dashboard at: https://sentry.io/organizations/your-org/issues
 
 ### Recommended Alerts
 
-| Alert | Trigger | Notify |
-|-------|---------|--------|
-| **New Error** | First occurrence | Slack + Email |
-| **Error Spike** | >50 errors in 1 hour | Slack (urgent) |
-| **Performance** | p95 latency >3s | Email (daily) |
+| Alert               | Trigger               | Notify         |
+| ------------------- | --------------------- | -------------- |
+| **New Error**       | First occurrence      | Slack + Email  |
+| **Error Spike**     | >50 errors in 1 hour  | Slack (urgent) |
+| **Performance**     | p95 latency >3s       | Email (daily)  |
 | **High Error Rate** | >10% of requests fail | Slack (urgent) |
 
 ---
@@ -325,11 +321,11 @@ Access your Sentry dashboard at: https://sentry.io/organizations/your-org/issues
 
 **Estimated usage for Tracker (50 active users):**
 
-| Metric | Monthly Volume | Within Free Tier? |
-|--------|----------------|-------------------|
-| **Errors** | ~500-1,000 | ✅ Yes |
-| **Performance traces** | ~5,000 | ✅ Yes |
-| **Session replays** | ~20 hours | ✅ Yes |
+| Metric                 | Monthly Volume | Within Free Tier? |
+| ---------------------- | -------------- | ----------------- |
+| **Errors**             | ~500-1,000     | ✅ Yes            |
+| **Performance traces** | ~5,000         | ✅ Yes            |
+| **Session replays**    | ~20 hours      | ✅ Yes            |
 
 ### Sentry Paid Plans
 
@@ -342,6 +338,7 @@ If exceeding free tier:
   - 90-day retention
 
 **When to upgrade:**
+
 - More than 50 active users
 - Need longer retention (>30 days)
 - Want more replays for debugging
@@ -366,12 +363,13 @@ Configured with maximum privacy:
 ```typescript
 // In sentry.client.config.ts
 Sentry.replayIntegration({
-  maskAllText: true,      // Mask all text content
-  blockAllMedia: true,    // Block images/videos
-})
+  maskAllText: true, // Mask all text content
+  blockAllMedia: true, // Block images/videos
+});
 ```
 
 **What this means:**
+
 - All text is replaced with `***`
 - Images and videos are blocked
 - Only UI structure and interactions are visible
@@ -390,10 +388,12 @@ Sentry.replayIntegration({
 ### Issue: Errors not appearing in Sentry
 
 **Symptoms:**
+
 - Code throws errors but nothing in Sentry dashboard
 - No events in Sentry Issues page
 
 **Solutions:**
+
 1. Check DSN is configured:
    ```bash
    echo $NEXT_PUBLIC_SENTRY_DSN
@@ -409,10 +409,12 @@ Sentry.replayIntegration({
 ### Issue: Too many errors in Sentry
 
 **Symptoms:**
+
 - Hundreds of same error
 - Hitting rate limits
 
 **Solutions:**
+
 1. Add error to filter list in `sentry.client.config.ts`:
    ```typescript
    beforeSend(event, hint) {
@@ -428,10 +430,12 @@ Sentry.replayIntegration({
 ### Issue: Can't see stack traces
 
 **Symptoms:**
+
 - Errors show but stack traces are minified
 - Can't identify which line caused error
 
 **Solutions:**
+
 1. Upload source maps (optional, requires SENTRY_AUTH_TOKEN)
 2. Add Sentry webpack plugin to `next.config.js`
 3. For now, use line numbers and file names to debug
@@ -484,6 +488,7 @@ To see original source code in stack traces:
    - Scopes: `project:releases`, `project:write`
 
 2. Add to `.env.local`:
+
    ```bash
    SENTRY_AUTH_TOKEN=your-token-here
    ```
@@ -493,6 +498,7 @@ To see original source code in stack traces:
 ### Custom Integrations
 
 Sentry supports integrations with:
+
 - **Slack** - Real-time error notifications
 - **Jira** - Automatically create tickets for errors
 - **GitHub** - Link commits to releases

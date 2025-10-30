@@ -115,15 +115,15 @@ describe('ResidentPage Home smoke', () => {
 
   it('shows home dashboard with key sections', async () => {
     render(<ResidentPage />);
-    
+
     // Wait for home/dashboard title to appear
     await screen.findByRole('heading', { name: /home/i, level: 1 });
-    
+
     // Verify key dashboard sections are present
     expect(screen.getByText(/Required/i)).toBeInTheDocument();
     expect(screen.getByText(/Approved/i)).toBeInTheDocument();
     expect(screen.getByText(/Pending/i)).toBeInTheDocument();
-    
+
     // Verify quick action buttons exist
     expect(screen.getByText(/Log activity/i)).toBeInTheDocument();
     expect(screen.getByText(/Search rotations/i)).toBeInTheDocument();

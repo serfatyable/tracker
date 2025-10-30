@@ -45,34 +45,43 @@ export async function POST(req: NextRequest) {
     // Read Excel file as ArrayBuffer
     const buffer = await req.arrayBuffer();
     if (!buffer || buffer.byteLength === 0) {
-      return NextResponse.json({ imported: 0, errorCode: 'EMPTY_FILE', errors: ['EMPTY_FILE'] }, { status: 400 });
+      return NextResponse.json(
+        { imported: 0, errorCode: 'EMPTY_FILE', errors: ['EMPTY_FILE'] },
+        { status: 400 },
+      );
     }
-    
+
     // File size limit: 10MB
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
     if (buffer.byteLength > MAX_FILE_SIZE) {
-      return NextResponse.json({ 
-        imported: 0, 
-        errorCode: 'FILE_TOO_LARGE',
-        errors: ['FILE_TOO_LARGE'] 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          imported: 0,
+          errorCode: 'FILE_TOO_LARGE',
+          errors: ['FILE_TOO_LARGE'],
+        },
+        { status: 400 },
+      );
     }
 
     // Parse Excel file
     const { rows, errors: parseErrors } = parseMorningMeetingsExcel(buffer);
-    
+
     if (parseErrors.length > 0 && rows.length === 0) {
       return NextResponse.json(
-        { 
-          imported: 0, 
-          errors: parseErrors.map(e => `Row ${e.row}: ${e.message}`)
-        }, 
-        { status: 400 }
+        {
+          imported: 0,
+          errors: parseErrors.map((e) => `Row ${e.row}: ${e.message}`),
+        },
+        { status: 400 },
       );
     }
 
     if (!rows.length) {
-      return NextResponse.json({ imported: 0, errorCode: 'NO_DATA', errors: ['NO_DATA'] }, { status: 400 });
+      return NextResponse.json(
+        { imported: 0, errorCode: 'NO_DATA', errors: ['NO_DATA'] },
+        { status: 400 },
+      );
     }
 
     // Validate and process rows
@@ -87,11 +96,11 @@ export async function POST(req: NextRequest) {
       notes?: string;
     }> = [];
     const monthKeys = new Set<string>();
-    const errors: string[] = [...parseErrors.map(e => `Row ${e.row}: ${e.message}`)];
+    const errors: string[] = [...parseErrors.map((e) => `Row ${e.row}: ${e.message}`)];
 
     rows.forEach((r, idx) => {
       const line = idx + 2; // +1 for header, +1 for 1-based indexing
-      
+
       // Validate day of week
       if (!isValidHebrewDay(r.dayOfWeek)) {
         errors.push(`INVALID_DAY:${line}:${r.dayOfWeek}`);
@@ -106,7 +115,7 @@ export async function POST(req: NextRequest) {
       // Validate required fields (only title)
       if (!r.title) errors.push(`TITLE_REQUIRED:${line}`);
       // Note: lecturer (מציג), moderator (מנחה), and organizer (רכז) are all optional
-      
+
       // Validate link if provided
       if (r.link && !isBasicUrl(r.link)) {
         errors.push(`INVALID_URL:${line}:${r.link}`);
@@ -165,27 +174,28 @@ export async function POST(req: NextRequest) {
 
     // Delete all existing meetings for affected months
     let totalDeleted = 0;
-    
+
     for (const monthKey of monthKeys) {
       const [year, month] = monthKey.split('-').map(Number);
       const startKey = `${year}-${String(month! + 1).padStart(2, '0')}-01`;
       const endKey = `${year}-${String(month! + 1).padStart(2, '0')}-31`;
-      
-      const snapshot = await db.collection('morningMeetings')
+
+      const snapshot = await db
+        .collection('morningMeetings')
         .where('dateKey', '>=', startKey)
         .where('dateKey', '<=', endKey)
         .get();
-      
+
       const batch = db.batch();
-      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      snapshot.docs.forEach((doc) => batch.delete(doc.ref));
       await batch.commit();
-      
+
       totalDeleted += snapshot.size;
     }
 
     // Create new meetings
     const batch = db.batch();
-    
+
     for (const p of parsed) {
       // 07:10–07:50 Asia/Jerusalem: store as UTC timestamps from date base
       const start = new Date(
@@ -196,7 +206,7 @@ export async function POST(req: NextRequest) {
       );
       const dateKey = `${p.date.getUTCFullYear()}-${String(p.date.getUTCMonth() + 1).padStart(2, '0')}-${String(p.date.getUTCDate()).padStart(2, '0')}`;
       const match = resolveLecturer(p);
-      
+
       // Generate slug from title for document ID
       const slug = p.title
         .toLowerCase()
@@ -205,10 +215,10 @@ export async function POST(req: NextRequest) {
         .replace(/\s+/g, '_')
         .replace(/\.+/g, '.')
         .replace(/_+/g, '_');
-      
+
       const docId = `${dateKey}-${slug}`;
       const docRef = db.collection('morningMeetings').doc(docId);
-      
+
       batch.set(docRef, {
         date: Timestamp.fromDate(start),
         endDate: Timestamp.fromDate(end),
@@ -226,14 +236,14 @@ export async function POST(req: NextRequest) {
         updatedAt: FieldValue.serverTimestamp(),
       });
     }
-    
+
     await batch.commit();
-    
-    return NextResponse.json({ 
-      imported: parsed.length, 
+
+    return NextResponse.json({
+      imported: parsed.length,
       deleted: totalDeleted,
       months: monthKeys.size,
-      errors: [] 
+      errors: [],
     });
   } catch (error) {
     // Handle authentication errors

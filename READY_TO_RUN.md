@@ -6,17 +6,17 @@ Your translations file is complete and ready to use.
 
 ## 🎯 Your Rotations (Translated)
 
-| English | Hebrew |
-|---------|--------|
-| ICU | טיפול נמרץ |
-| PACU | PACU |
-| Block Room | חדר בלוקים |
-| Pain | טיפול בכאב |
-| Pediatrics | ילדים |
-| Obstetrics | מיילדות |
-| Neurosurgery | נוירוכירורגיה |
+| English         | Hebrew         |
+| --------------- | -------------- |
+| ICU             | טיפול נמרץ     |
+| PACU            | PACU           |
+| Block Room      | חדר בלוקים     |
+| Pain            | טיפול בכאב     |
+| Pediatrics      | ילדים          |
+| Obstetrics      | מיילדות        |
+| Neurosurgery    | נוירוכירורגיה  |
 | Cardiac Surgery | כירורגיה לבבית |
-| Operating Room | חדר ניתוח |
+| Operating Room  | חדר ניתוח      |
 
 **Plus 45+ common anesthesia terms!**
 
@@ -33,6 +33,7 @@ Your translations file is complete and ready to use.
    - Save as `firebase-service-account.json` in project root
 
 2. **Install Dependencies:**
+
    ```bash
    cd scripts
    npm install firebase-admin
@@ -40,20 +41,22 @@ Your translations file is complete and ready to use.
    ```
 
 3. **Dry Run (See What Would Change):**
+
    ```bash
    node scripts/add-hebrew-translations.js --dry-run
    ```
-   
+
    This will show you:
    - ✅ What rotations will be updated
    - ✅ What Hebrew names will be added
    - ✅ No actual changes yet!
 
 4. **If Looks Good, Run For Real:**
+
    ```bash
    node scripts/add-hebrew-translations.js --backup
    ```
-   
+
    This will:
    - 📦 Create backup files first
    - ✏️ Add Hebrew fields to Firestore
@@ -97,7 +100,9 @@ The migration script will:
 ## ⚠️ Important Notes
 
 ### **Database IDs**
+
 The script uses your Firebase rotation IDs. Common variations are covered:
+
 - `icu` or `ICU`
 - `pacu` or `PACU`
 - `block_room` or `blockroom`
@@ -110,6 +115,7 @@ The script uses your Firebase rotation IDs. Common variations are covered:
 If your Firebase IDs are different, we can adjust!
 
 ### **Testing is Safe**
+
 - Dry run shows changes WITHOUT applying them
 - Backup flag creates JSON copies before updating
 - You can always restore from backup if needed
@@ -119,13 +125,16 @@ If your Firebase IDs are different, we can adjust!
 ## 🆘 Troubleshooting
 
 ### "Cannot find module 'firebase-admin'"
+
 ```bash
 cd scripts
 npm install firebase-admin
 ```
 
 ### "Service account key not found"
+
 Make sure `firebase-service-account.json` is in:
+
 ```
 tracker/
 ├── firebase-service-account.json  ← HERE
@@ -135,6 +144,7 @@ tracker/
 ```
 
 ### Rotations Still in English
+
 1. Check Firebase Console to verify `name_he` field exists
 2. Clear browser cache (Cmd+Shift+R)
 3. Log out and log back in
@@ -145,6 +155,7 @@ tracker/
 ## 📞 Ready?
 
 **Tell me:**
+
 1. **"I'm ready to run the dry-run"** - I'll guide you step by step
 2. **"I need help getting the service account"** - I'll walk you through it
 3. **"I ran it and got [result]"** - I'll help interpret the output
@@ -153,4 +164,3 @@ tracker/
 ---
 
 **Your translations are ready! Let's make your app bilingual! 🎯**
-

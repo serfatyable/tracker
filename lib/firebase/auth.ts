@@ -38,9 +38,23 @@ export async function signUp(params: {
   role: Role;
   language: 'en' | 'he';
   residencyStartDate?: string; // YYYY-MM-DD when role is resident
+  studyprogramtype?: '4-year' | '6-year'; // Medical school program type
+  completedRotationIds?: string[]; // IDs of completed rotations
+  currentRotationId?: string; // ID of current rotation
 }) {
   const { auth, db } = getAuthDb();
-  const { email, password, fullName, fullNameHe, role, language, residencyStartDate } = params;
+  const {
+    email,
+    password,
+    fullName,
+    fullNameHe,
+    role,
+    language,
+    residencyStartDate,
+    studyprogramtype,
+    completedRotationIds,
+    currentRotationId,
+  } = params;
   const cred = await createUserWithEmailAndPassword(auth, email, password);
 
   let userDoc: UserProfile;
@@ -55,6 +69,9 @@ export async function signUp(params: {
       settings: { language },
       createdAt: serverTimestamp() as unknown as Date,
       residencyStartDate: residencyStartDate || '',
+      studyprogramtype: studyprogramtype || '6-year',
+      completedRotationIds: completedRotationIds || [],
+      currentRotationId: currentRotationId || undefined,
     };
     userDoc = residentDoc;
   } else if (role === 'tutor') {

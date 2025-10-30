@@ -6,11 +6,7 @@ import { NextResponse } from 'next/server';
 
 import { parseExamsExcel } from '@/lib/exams/excel';
 import { initializeFirebaseAdmin } from '@/lib/firebase/admin-init';
-import {
-  rateLimiters,
-  checkRateLimit,
-  getClientIdentifier,
-} from '@/lib/middleware/rateLimit';
+import { rateLimiters, checkRateLimit, getClientIdentifier } from '@/lib/middleware/rateLimit';
 
 // Firebase Admin initialization moved to shared utility
 

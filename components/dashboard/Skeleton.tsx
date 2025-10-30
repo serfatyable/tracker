@@ -1,5 +1,9 @@
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-gray-200 dark:bg-[rgb(var(--surface-elevated))] ${className}`} />;
+  return (
+    <div
+      className={`animate-pulse rounded-md bg-gray-200 dark:bg-[rgb(var(--surface-elevated))] ${className}`}
+    />
+  );
 }
 
 export function CardSkeleton({ className = '' }: { className?: string }) {

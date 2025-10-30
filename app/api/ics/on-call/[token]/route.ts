@@ -1,22 +1,11 @@
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-} from 'firebase/firestore';
+import { getFirestore, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { getFirebaseApp } from '@/lib/firebase/client';
 import { buildOnCallIcs } from '@/lib/ics/buildOnCallIcs';
 import { isValidTokenFormat } from '@/lib/ics/tokens';
-import {
-  rateLimiters,
-  checkRateLimit,
-  getClientIdentifier,
-} from '@/lib/middleware/rateLimit';
+import { rateLimiters, checkRateLimit, getClientIdentifier } from '@/lib/middleware/rateLimit';
 
 /**
  * Export user's on-call schedule as ICS via token

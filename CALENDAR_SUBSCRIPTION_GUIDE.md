@@ -17,6 +17,7 @@ A calendar subscription is a URL that calendar applications can use to automatic
 - **Calendar subscription (webcal:// URL):** Automatically checks for updates (daily/weekly)
 
 **Example:**
+
 ```
 webcal://tracker.app/api/ics/exams/abc123def456...?lang=en
 ```
@@ -32,12 +33,14 @@ Calendar apps periodically fetch this URL to get the latest exam schedule.
 Calendar applications cannot send Authorization headers (like mobile apps do), so we use **secure tokens in the URL** instead.
 
 **How it works:**
+
 1. Each user gets a unique, random 64-character token
 2. Token is stored in user's Firestore profile (`settings.icsToken`)
 3. Token is included in calendar subscription URLs
 4. Server validates token before returning calendar data
 
 **Example URL:**
+
 ```
 https://tracker.app/api/ics/exams/a1b2c3d4e5f6...64chars...?lang=en
                                    ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -46,16 +49,17 @@ https://tracker.app/api/ics/exams/a1b2c3d4e5f6...64chars...?lang=en
 
 ### Token Security Properties
 
-| Property | Details |
-|----------|---------|
-| **Length** | 64 characters (256 bits of entropy) |
-| **Character Set** | Hexadecimal (0-9, a-f) |
-| **Generation** | `crypto.randomBytes(32)` - OS-level CSPRNG |
-| **Uniqueness** | Each user has different token |
-| **Randomness** | 2^256 possible values (impossible to guess) |
-| **Brute Force** | At 1 billion attempts/second, would take longer than age of universe |
+| Property          | Details                                                              |
+| ----------------- | -------------------------------------------------------------------- |
+| **Length**        | 64 characters (256 bits of entropy)                                  |
+| **Character Set** | Hexadecimal (0-9, a-f)                                               |
+| **Generation**    | `crypto.randomBytes(32)` - OS-level CSPRNG                           |
+| **Uniqueness**    | Each user has different token                                        |
+| **Randomness**    | 2^256 possible values (impossible to guess)                          |
+| **Brute Force**   | At 1 billion attempts/second, would take longer than age of universe |
 
 **Attack Prevention:**
+
 - **Rate Limiting:** 100 requests/hour per IP (prevents enumeration)
 - **Generic Errors:** "Unauthorized" (doesn't reveal if token exists)
 - **User-Specific:** Token only grants access to that user's data
@@ -67,23 +71,23 @@ https://tracker.app/api/ics/exams/a1b2c3d4e5f6...64chars...?lang=en
 
 ### Calendar Endpoints
 
-| Endpoint | Auth Method | Data Returned | Use Case |
-|----------|-------------|---------------|----------|
-| `/api/ics/exams` | Firebase Auth (Bearer token) | All active exams | Direct download in app |
-| `/api/ics/exams/[token]` | Token-based | All active exams | Calendar subscription (Google Calendar, etc.) |
-| `/api/ics/on-call` | Firebase Auth (Bearer token) | User's on-call shifts | Direct download in app |
-| `/api/ics/on-call/[token]` | Token-based | User's on-call shifts | Calendar subscription |
-| `/api/ics/morning-meetings` | Firebase Auth (Bearer token) | All morning meetings | Direct download in app |
-| `/api/ics/morning-meetings/[token]` | Token-based | User's morning meetings (as lecturer) | Calendar subscription |
+| Endpoint                            | Auth Method                  | Data Returned                         | Use Case                                      |
+| ----------------------------------- | ---------------------------- | ------------------------------------- | --------------------------------------------- |
+| `/api/ics/exams`                    | Firebase Auth (Bearer token) | All active exams                      | Direct download in app                        |
+| `/api/ics/exams/[token]`            | Token-based                  | All active exams                      | Calendar subscription (Google Calendar, etc.) |
+| `/api/ics/on-call`                  | Firebase Auth (Bearer token) | User's on-call shifts                 | Direct download in app                        |
+| `/api/ics/on-call/[token]`          | Token-based                  | User's on-call shifts                 | Calendar subscription                         |
+| `/api/ics/morning-meetings`         | Firebase Auth (Bearer token) | All morning meetings                  | Direct download in app                        |
+| `/api/ics/morning-meetings/[token]` | Token-based                  | User's morning meetings (as lecturer) | Calendar subscription                         |
 
 ### Rate Limiting
 
 All calendar endpoints are protected by rate limiting (implemented in Task #1):
 
-| Endpoint Type | Rate Limit | Purpose |
-|---------------|------------|---------|
-| **Token-based** | 100 requests/hour per IP | Prevent token enumeration |
-| **Auth-based** | 100 requests/hour per user | Prevent abuse |
+| Endpoint Type   | Rate Limit                 | Purpose                   |
+| --------------- | -------------------------- | ------------------------- |
+| **Token-based** | 100 requests/hour per IP   | Prevent token enumeration |
+| **Auth-based**  | 100 requests/hour per user | Prevent abuse             |
 
 ---
 
@@ -92,6 +96,7 @@ All calendar endpoints are protected by rate limiting (implemented in Task #1):
 ### Generating Tokens
 
 **Server-Side (Firestore Function):**
+
 ```typescript
 import { generateUserIcsToken } from '@/lib/ics/tokenManagement';
 
@@ -102,6 +107,7 @@ const token = await generateUserIcsToken(userId);
 ```
 
 **Client-Side (React Component):**
+
 ```typescript
 import { getUserIcsToken, generateUserIcsToken } from '@/lib/ics/tokenManagement';
 
@@ -133,11 +139,13 @@ function CalendarSettings() {
 ### Revoking Tokens
 
 **When to revoke:**
+
 - User suspects token was compromised/leaked
 - User wants to disable calendar subscriptions
 - Security incident requiring all tokens to be rotated
 
 **How to revoke:**
+
 ```typescript
 import { revokeUserIcsToken, generateUserIcsToken } from '@/lib/ics/tokenManagement';
 
@@ -231,11 +239,13 @@ const meetingsUrl = buildMorningMeetingsCalendarUrl(token);
 ### What Users Should Know
 
 **✅ SAFE:**
+
 - Sharing calendar URL with calendar apps (Google Calendar, etc.)
 - Multiple calendar apps using same URL
 - Regenerating token periodically
 
 **❌ UNSAFE:**
+
 - Sharing calendar URL publicly (anyone with URL can see your data)
 - Posting calendar URL in public channels (Slack, email, etc.)
 - Using same token on shared devices (regenerate token after using shared device)
@@ -243,12 +253,14 @@ const meetingsUrl = buildMorningMeetingsCalendarUrl(token);
 ### Privacy Settings
 
 **Query Parameters:**
+
 - `?personal=true` - Only include your shifts (recommended for on-call)
 - `?personal=false` - Include all shifts (admin view)
 - `?lang=en` or `?lang=he` - Language preference
 - `?upcoming=true` - Only future events (reduces calendar clutter)
 
 **Example (most private):**
+
 ```
 /api/ics/on-call/your-token?personal=true
 ```
@@ -260,10 +272,12 @@ const meetingsUrl = buildMorningMeetingsCalendarUrl(token);
 ### Calendar not updating
 
 **Symptoms:**
+
 - Calendar shows old data
 - New events don't appear
 
 **Solutions:**
+
 1. Check calendar app refresh frequency (should be Daily or Weekly)
 2. Manually refresh calendar:
    - Google Calendar: Click refresh button
@@ -275,10 +289,12 @@ const meetingsUrl = buildMorningMeetingsCalendarUrl(token);
 ### "Unauthorized" error
 
 **Symptoms:**
+
 - Calendar subscription fails with "Unauthorized"
 - URL doesn't work in calendar app
 
 **Solutions:**
+
 1. Verify token is correct (64 characters, no spaces)
 2. Check if token was revoked (user may have regenerated)
 3. Ensure URL includes token: `/api/ics/exams/[token]`
@@ -287,10 +303,12 @@ const meetingsUrl = buildMorningMeetingsCalendarUrl(token);
 ### Token compromised
 
 **Symptoms:**
+
 - Suspicious calendar subscription activity
 - Unknown devices accessing calendar
 
 **Solutions:**
+
 1. Revoke current token immediately
 2. Generate new token
 3. Update calendar subscriptions with new URL
@@ -325,6 +343,7 @@ app/api/ics/
 ### Firestore Schema
 
 **User Document:**
+
 ```typescript
 {
   uid: string;
@@ -340,23 +359,24 @@ app/api/ics/
 ### Token Lookup Performance
 
 **Query:**
+
 ```typescript
-where('settings.icsToken', '==', token)
+where('settings.icsToken', '==', token);
 ```
 
 **Performance:**
+
 - Requires Firestore index on `settings.icsToken`
 - O(1) lookup time (indexed)
 - Returns single user document
 
 **Index Required:**
+
 ```json
 {
   "collectionGroup": "users",
   "queryScope": "COLLECTION",
-  "fields": [
-    {"fieldPath": "settings.icsToken", "order": "ASCENDING"}
-  ]
+  "fields": [{ "fieldPath": "settings.icsToken", "order": "ASCENDING" }]
 }
 ```
 
@@ -367,12 +387,14 @@ where('settings.icsToken', '==', token)
 ### Manual Testing
 
 **1. Generate Token:**
+
 ```typescript
 const token = await generateUserIcsToken('test-user-id');
 console.log(token); // Should be 64 hex characters
 ```
 
 **2. Test Token-Based Endpoint:**
+
 ```bash
 # Should work
 curl https://tracker.app/api/ics/exams/$TOKEN?lang=en
@@ -385,6 +407,7 @@ curl https://tracker.app/api/ics/exams/00000000000000000000000000000000000000000
 ```
 
 **3. Test Rate Limiting:**
+
 ```bash
 # Make 101 requests quickly
 for i in {1..101}; do
@@ -394,6 +417,7 @@ done
 ```
 
 **4. Test Calendar Subscription:**
+
 1. Generate token for test user
 2. Build calendar URL
 3. Add to Google Calendar
@@ -450,6 +474,7 @@ describe('ICS Token Security', () => {
 ### Alerts
 
 **Recommended alerts:**
+
 1. High rate of "Unauthorized" errors (possible attack)
 2. Single token used from >10 different IPs (possible leak)
 3. Sudden spike in calendar endpoint requests
@@ -459,18 +484,21 @@ describe('ICS Token Security', () => {
 ## Future Enhancements
 
 ### Phase 1 (Current)
+
 - ✅ Token-based authentication
 - ✅ Rate limiting
 - ✅ Token generation/revocation
 - ✅ Calendar URL builders
 
 ### Phase 2 (Future)
+
 - [ ] Automatic token rotation (90-day expiry)
 - [ ] Token usage analytics dashboard
 - [ ] Email notifications for suspicious activity
 - [ ] Token access logs (which IPs accessed)
 
 ### Phase 3 (Future)
+
 - [ ] Multiple tokens per user (different devices)
 - [ ] Token scopes (read-only vs read-write)
 - [ ] Webhook callbacks for calendar updates
@@ -481,12 +509,14 @@ describe('ICS Token Security', () => {
 ## Best Practices
 
 ### For Users
+
 1. Keep your calendar URL private (like a password)
 2. Regenerate token if you suspect it was leaked
 3. Use `?personal=true` for on-call to only see your shifts
 4. Check calendar subscriptions periodically (remove unused)
 
 ### For Developers
+
 1. Always use generic error messages ("Unauthorized" not "Token not found")
 2. Apply rate limiting to all calendar endpoints
 3. Log token usage for monitoring
@@ -494,6 +524,7 @@ describe('ICS Token Security', () => {
 5. Test calendar subscriptions with real calendar apps
 
 ### For Admins
+
 1. Monitor rate limiting hits
 2. Review token usage patterns monthly
 3. Implement automatic rotation policy (90 days)

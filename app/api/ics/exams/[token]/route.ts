@@ -4,11 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { getFirebaseApp } from '@/lib/firebase/client';
 import { isValidTokenFormat } from '@/lib/ics/tokens';
-import {
-  rateLimiters,
-  checkRateLimit,
-  getClientIdentifier,
-} from '@/lib/middleware/rateLimit';
+import { rateLimiters, checkRateLimit, getClientIdentifier } from '@/lib/middleware/rateLimit';
 import { generateExamICS } from '@/lib/utils/examIcs';
 import type { Exam } from '@/types/exam';
 

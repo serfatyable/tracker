@@ -13,8 +13,7 @@
  * This allows rules to check: task.tutorIds.includes(request.auth.uid)
  */
 
-import type {
-  Unsubscribe} from 'firebase/firestore';
+import type { Unsubscribe } from 'firebase/firestore';
 import {
   getFirestore,
   collection,
@@ -22,7 +21,7 @@ import {
   where,
   getDocs,
   writeBatch,
-  onSnapshot
+  onSnapshot,
 } from 'firebase/firestore';
 
 import { getFirebaseApp } from './client';

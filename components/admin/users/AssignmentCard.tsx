@@ -55,9 +55,10 @@ export default function AssignmentCard({
       {/* Tutors List */}
       <div className="space-y-2">
         <div className="text-sm font-medium text-muted">
-          {t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })} ({assignment.tutorNames?.length || 0})
+          {t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })} (
+          {assignment.tutorNames?.length || 0})
         </div>
-        
+
         {assignment.tutorNames && assignment.tutorNames.length > 0 ? (
           <div className="space-y-1">
             {assignment.tutorNames.map((tutorName, index) => {

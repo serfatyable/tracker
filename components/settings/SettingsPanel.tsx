@@ -94,7 +94,9 @@ export default function SettingsPanel() {
     <form onSubmit={handleSave} className="space-y-4 card-levitate p-4">
       <Toast message={toast} onClear={() => setToast(null)} />
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('auth.language')}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">
+          {t('auth.language')}
+        </label>
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value as 'en' | 'he')}
@@ -105,7 +107,9 @@ export default function SettingsPanel() {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('settings.tableDensity', { defaultValue: 'Table density' })}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">
+          {t('settings.tableDensity', { defaultValue: 'Table density' })}
+        </label>
         <select
           value={defaultDensity}
           onChange={(e) => {
@@ -124,7 +128,9 @@ export default function SettingsPanel() {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('settings.theme')}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">
+          {t('settings.theme')}
+        </label>
         <select
           value={theme}
           onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
@@ -146,7 +152,9 @@ export default function SettingsPanel() {
         </label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('settings.notifications')}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">
+          {t('settings.notifications')}
+        </label>
         <div className="mt-2 flex items-center gap-6">
           <label className="inline-flex items-center gap-2 text-sm text-gray-900 dark:text-gray-50">
             <input

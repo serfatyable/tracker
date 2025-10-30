@@ -43,7 +43,7 @@ export async function parseOnCallExcel(buffer: ArrayBuffer): Promise<{
 }> {
   // Dynamic import - only loads in browser
   const XLSX = await import('xlsx');
-  
+
   const workbook = XLSX.read(buffer, { type: 'array' });
   const firstSheetName = workbook.SheetNames[0];
   if (!firstSheetName) {
@@ -62,18 +62,18 @@ export async function parseOnCallExcel(buffer: ArrayBuffer): Promise<{
   for (let i = 2; i < data.length; i++) {
     const row = data[i];
     if (!row || row.length === 0) continue;
-    
+
     const rowNum = i + 1;
-    
+
     // Column A (index 0): Day of week (optional, might be formula)
     // Column B (index 1): Date
     const dateRaw = row[1];
-    
+
     if (!dateRaw) {
       // Empty row, skip
       continue;
     }
-    
+
     // Parse date
     let parsedDate: Date;
     try {
@@ -87,32 +87,32 @@ export async function parseOnCallExcel(buffer: ArrayBuffer): Promise<{
         errors.push({ row: rowNum, message: `Invalid date format: ${dateRaw}` });
         continue;
       }
-      
+
       if (isNaN(parsedDate.getTime())) {
         errors.push({ row: rowNum, message: 'Invalid date value' });
         continue;
       }
     } catch (error) {
-      errors.push({ 
-        row: rowNum, 
-        message: `Date parse error: ${error instanceof Error ? error.message : String(error)}` 
+      errors.push({
+        row: rowNum,
+        message: `Date parse error: ${error instanceof Error ? error.message : String(error)}`,
       });
       continue;
     }
-    
+
     // Extract shifts from columns C onwards
     const shifts: Record<string, string> = {};
-    
+
     for (const [colIdx, shiftType] of Object.entries(SHIFT_COLUMNS)) {
       const value = row[parseInt(colIdx)];
       if (value && typeof value === 'string' && value.trim() !== '') {
         shifts[shiftType] = value.trim();
       }
     }
-    
+
     // Day of week (optional)
     const dayOfWeek = row[0] && typeof row[0] === 'string' ? row[0] : undefined;
-    
+
     rows.push({
       date: parsedDate,
       dayOfWeek,
@@ -143,7 +143,7 @@ function parseDateString(dateStr: string): Date {
     const year = parseInt(parts[2]!, 10);
     return new Date(year, month, day);
   }
-  
+
   // Fallback to standard Date parsing
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) {
@@ -158,4 +158,3 @@ export function formatDateKey(date: Date): string {
   const day = String(date.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-

@@ -31,7 +31,9 @@ export default function TutorLoadTable({ assignments, tutors }: Props) {
           <table className="w-full table-auto text-sm md:text-base">
             <thead className="sticky top-0 bg-white dark:bg-neutral-950 z-10">
               <tr className="text-left opacity-70 text-sm md:text-base">
-                <th className="py-1 pr-4 sticky left-0 z-10 bg-white dark:bg-neutral-950">{t('overview.tutor')}</th>
+                <th className="py-1 pr-4 sticky left-0 z-10 bg-white dark:bg-neutral-950">
+                  {t('overview.tutor')}
+                </th>
                 <th className="py-1 pr-4">{t('tutor.tabs.residents')}</th>
                 <th className="py-1 hidden md:table-cell" />
               </tr>

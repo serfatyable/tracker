@@ -1,11 +1,13 @@
 # On-Call Schedule Excel Import System
 
 ## Overview
+
 Complete Excel import system for on-call schedules, similar to the morning meetings import. Supports importing monthly schedules with 22 different shift types.
 
 ## Files Created
 
 ### 1. Core Logic
+
 - **`/lib/on-call/excel.ts`** - Excel parser
   - Parses Excel files with XLSX library
   - Extracts dates and 22 shift types
@@ -13,6 +15,7 @@ Complete Excel import system for on-call schedules, similar to the morning meeti
   - Supports Excel date formats and DD/MM/YYYY strings
 
 ### 2. API Endpoint
+
 - **`/app/api/on-call/import/route.ts`** - Import API
   - Authenticates admin users
   - Processes Excel uploads
@@ -20,6 +23,7 @@ Complete Excel import system for on-call schedules, similar to the morning meeti
   - Stores shifts in Firestore `onCallShifts` collection
 
 ### 3. UI Components
+
 - **`/components/admin/on-call/ImportPreviewDialog.tsx`** - Preview dialog
   - Shows day-by-day preview with color coding by month
   - Displays validation errors
@@ -33,11 +37,13 @@ Complete Excel import system for on-call schedules, similar to the morning meeti
   - Error handling
 
 ### 4. Admin Dashboard Integration
+
 - **`/app/admin/page.tsx`** - Updated
   - Added "Upload Schedule" button to On-Call tab
   - Navigates to `/admin/on-call` upload page
 
 ### 5. Translations
+
 - **`/i18n/en.json`** - English translations
 - **`/i18n/he.json`** - Hebrew translations
   - Complete translation keys for all UI elements
@@ -45,6 +51,7 @@ Complete Excel import system for on-call schedules, similar to the morning meeti
 ## Excel File Structure
 
 ### Expected Format:
+
 ```
 Row 1: Empty or title
 Row 2: Column headers (shift types in Hebrew)
@@ -56,6 +63,7 @@ Columns C-X: 22 shift types with resident names
 ```
 
 ### 22 Shift Types (Column Mapping):
+
 ```
 Column C (2):  ת.חדר ניתוח
 Column D (3):  ת. חדר לידה
@@ -86,6 +94,7 @@ Column X (23): יום מנוחה שבועי
 ### Collection: `onCallShifts`
 
 Each document represents one day:
+
 ```javascript
 {
   date: Timestamp,
@@ -104,13 +113,12 @@ Each document represents one day:
 ## Required Firestore Index
 
 Add to `firestore.indexes.json`:
+
 ```json
 {
   "collectionGroup": "onCallShifts",
   "queryScope": "COLLECTION",
-  "fields": [
-    { "fieldPath": "dateKey", "order": "ASCENDING" }
-  ]
+  "fields": [{ "fieldPath": "dateKey", "order": "ASCENDING" }]
 }
 ```
 
@@ -119,9 +127,11 @@ Add to `firestore.indexes.json`:
 ✅ **COMPLETED** - Dynamic template generation is implemented!
 
 ### Template Generator API Route
+
 **`/app/api/templates/on-call-schedule.xlsx/route.ts`**
 
 The template is dynamically generated using the XLSX library with:
+
 - **Row 1**: Title "לוח תורנויות - תבנית"
 - **Row 2**: All 22 shift type headers in Hebrew
 - **Rows 3-9**: 7 example days with sample doctor names
@@ -130,6 +140,7 @@ The template is dynamically generated using the XLSX library with:
 - **Column widths**: Optimized for readability
 
 ### Features:
+
 - ✅ Generates fresh template on each download
 - ✅ Includes current month dates by default
 - ✅ Hebrew interface (RTL support)
@@ -191,4 +202,3 @@ The template is dynamically generated using the XLSX library with:
 - Uses the same visual design language
 - Fully integrated with existing authentication and admin checks
 - Ready for production use once template file is added
-

@@ -14,6 +14,7 @@ This application uses **automated testing in CI/CD** to ensure code quality and 
 **CI (Continuous Integration) Testing** runs automated tests on every code change to catch bugs early. Instead of waiting until deployment to discover issues, tests run immediately when code is pushed.
 
 **Benefits:**
+
 - **Early Bug Detection:** Catch issues before they reach production
 - **Quality Gates:** Block merging of broken code
 - **Confidence:** Know that changes don't break existing functionality
@@ -28,20 +29,21 @@ This application uses **automated testing in CI/CD** to ensure code quality and 
 
 The CI workflow (`.github/workflows/ci.yml`) runs these steps on every PR and feature branch push:
 
-| Step | Purpose | Duration | Failure Blocks Merge? |
-|------|---------|----------|----------------------|
-| **1. Checkout** | Get code from repository | ~5s | N/A |
-| **2. Setup Node** | Install Node.js v20 from .nvmrc | ~10s | N/A |
-| **3. Install Dependencies** | `pnpm install` with cache | ~30s | Yes (if fails) |
-| **4. Typecheck** | `pnpm typecheck` - Verify TypeScript | ~15s | Yes (if errors) |
-| **5. Lint** | `pnpm lint` - Check code style | ~10s | Yes (if warnings) |
-| **6. Test with Coverage** | `pnpm test:ci` - Run tests | ~30s | Yes (if tests fail) |
-| **7. Upload Coverage** | Save coverage reports as artifacts | ~5s | No |
-| **8. Build** | `pnpm build` - Smoke test | ~60s | Yes (if fails) |
+| Step                        | Purpose                              | Duration | Failure Blocks Merge? |
+| --------------------------- | ------------------------------------ | -------- | --------------------- |
+| **1. Checkout**             | Get code from repository             | ~5s      | N/A                   |
+| **2. Setup Node**           | Install Node.js v20 from .nvmrc      | ~10s     | N/A                   |
+| **3. Install Dependencies** | `pnpm install` with cache            | ~30s     | Yes (if fails)        |
+| **4. Typecheck**            | `pnpm typecheck` - Verify TypeScript | ~15s     | Yes (if errors)       |
+| **5. Lint**                 | `pnpm lint` - Check code style       | ~10s     | Yes (if warnings)     |
+| **6. Test with Coverage**   | `pnpm test:ci` - Run tests           | ~30s     | Yes (if tests fail)   |
+| **7. Upload Coverage**      | Save coverage reports as artifacts   | ~5s      | No                    |
+| **8. Build**                | `pnpm build` - Smoke test            | ~60s     | Yes (if fails)        |
 
 **Total Duration:** ~2-3 minutes per run
 
 **Triggers:**
+
 - Pull requests to `main` branch
 - Pushes to feature branches: `ci/**`, `chore/**`, `fix/**`, `feat/**`
 
@@ -85,12 +87,14 @@ The CI workflow (`.github/workflows/ci.yml`) runs these steps on every PR and fe
 **Target Goal:** 80% coverage (as specified in CLAUDE.md)
 
 **Why 50% baseline?**
+
 - Current test suite achieves ~60-70% coverage
 - Setting threshold at 50% prevents regression
 - Leaves room for improvement without blocking PRs
 - Gradually increase thresholds as more tests are added
 
 **Coverage Metrics:**
+
 - **Lines:** Percentage of code lines executed during tests
 - **Functions:** Percentage of functions called during tests
 - **Branches:** Percentage of if/else branches taken during tests
@@ -119,6 +123,7 @@ pnpm test:mem
 ### Test Script Configuration
 
 **From `package.json`:**
+
 ```json
 {
   "test": "vitest run --coverage",
@@ -129,6 +134,7 @@ pnpm test:mem
 ```
 
 **CI uses `test:ci`:**
+
 - Single-threaded execution (more stable in CI)
 - No coverage reporting in terminal (saved to file)
 - Faster startup, more consistent results
@@ -140,6 +146,7 @@ pnpm test:mem
 ### Test Files (22 total)
 
 **Smoke Tests (Page-level):**
+
 - `app/__tests__/AuthPage.smoke.test.tsx` - Authentication flow
 - `app/__tests__/ResidentPage.smoke.test.tsx` - Resident dashboard
 - `app/admin/__tests__/AdminPage.smoke.test.tsx` - Admin panel
@@ -150,6 +157,7 @@ pnpm test:mem
 - `app/__tests__/ExamsPage.smoke.test.tsx` - Exams page
 
 **Component Tests:**
+
 - `components/auth/__tests__/TextInput.test.tsx` - Input component
 - `components/auth/__tests__/Button.test.tsx` - Button component
 - `components/ui/__tests__/Dialog.test.tsx` - Dialog component
@@ -157,6 +165,7 @@ pnpm test:mem
 - And more...
 
 **Utility Tests:**
+
 - `lib/utils/__tests__/csv.test.tsx` - CSV parsing
 - `lib/hooks/__tests__/useRotationsIndex.test.ts` - Rotation hooks
 - And more...
@@ -170,11 +179,13 @@ Coverage: ~60-70% (varies by metric)
 ```
 
 **Note:** Some tests are currently failing due to:
+
 - Firebase emulator connection issues (tests expect emulator running)
 - Flaky assertions (e.g., text appearing multiple times)
 - Timing issues with React state updates
 
 **Action Items:**
+
 - Fix failing tests (separate task, not blocking CI implementation)
 - Add more unit tests for critical functions
 - Improve test stability (mock Firebase properly)
@@ -199,6 +210,7 @@ start coverage/index.html
 ```
 
 **Report Shows:**
+
 - Overall coverage percentages
 - Per-file coverage breakdown
 - Uncovered lines highlighted in red
@@ -222,10 +234,12 @@ Coverage reports are uploaded as **GitHub Actions artifacts**:
 ### Issue: Tests failing locally but not in CI
 
 **Symptoms:**
+
 - Tests pass on your machine
 - Tests fail in GitHub Actions
 
 **Solutions:**
+
 1. Check Node version matches (v20.x)
 2. Clear node_modules and reinstall: `rm -rf node_modules && pnpm install`
 3. Check for environment-specific code (window, document, etc.)
@@ -234,10 +248,12 @@ Coverage reports are uploaded as **GitHub Actions artifacts**:
 ### Issue: Tests failing in CI but not locally
 
 **Symptoms:**
+
 - Tests pass locally
 - Tests fail in GitHub Actions
 
 **Solutions:**
+
 1. Check Firebase emulator is not required (should be mocked)
 2. Check for timing issues (use `waitFor` from Testing Library)
 3. Check for flaky tests (run multiple times locally)
@@ -246,9 +262,11 @@ Coverage reports are uploaded as **GitHub Actions artifacts**:
 ### Issue: Coverage threshold not met
 
 **Symptoms:**
+
 - Tests pass but CI fails with "Coverage threshold not met"
 
 **Solutions:**
+
 1. Check which files are below threshold:
    ```bash
    pnpm test
@@ -260,9 +278,11 @@ Coverage reports are uploaded as **GitHub Actions artifacts**:
 ### Issue: Out of memory errors
 
 **Symptoms:**
+
 - Tests crash with "JavaScript heap out of memory"
 
 **Solutions:**
+
 1. Use `pnpm test:mem` instead (4GB heap)
 2. Or increase Node memory: `NODE_OPTIONS=--max-old-space-size=8192 pnpm test`
 3. Run tests in smaller batches
@@ -274,6 +294,7 @@ Coverage reports are uploaded as **GitHub Actions artifacts**:
 ### Writing Tests
 
 **DO ✅**
+
 - Test user behavior, not implementation details
 - Use Testing Library queries (getByRole, getByText)
 - Mock external dependencies (Firebase, APIs)
@@ -282,6 +303,7 @@ Coverage reports are uploaded as **GitHub Actions artifacts**:
 - Keep tests focused (one concept per test)
 
 **DON'T ❌**
+
 - Test implementation details (state, props directly)
 - Rely on Firebase emulator being running
 - Write tests that depend on each other
@@ -292,6 +314,7 @@ Coverage reports are uploaded as **GitHub Actions artifacts**:
 ### Example Test
 
 **Good Test:**
+
 ```typescript
 describe('TaskSubmission', () => {
   it('submits task and shows success message when user clicks submit', async () => {
@@ -309,6 +332,7 @@ describe('TaskSubmission', () => {
 ```
 
 **Bad Test:**
+
 ```typescript
 it('test 1', () => {
   const component = new TaskSubmission();
@@ -324,6 +348,7 @@ it('test 1', () => {
 ### Current Coverage Gaps
 
 Areas needing more tests:
+
 1. **API Routes** - Only basic smoke tests exist
 2. **Firebase Hooks** - Minimal testing of custom hooks
 3. **Utilities** - CSV parsing has some tests, but others don't
@@ -333,21 +358,25 @@ Areas needing more tests:
 ### Coverage Improvement Plan
 
 **Phase 1 (Current):** Baseline coverage at 50%
+
 - ✅ Add tests to CI pipeline
 - ✅ Set baseline thresholds
 - ✅ Upload coverage reports
 
 **Phase 2 (Next Month):** Increase to 60%
+
 - [ ] Add unit tests for all utility functions
 - [ ] Test API routes with mock Firebase Admin
 - [ ] Test custom hooks with renderHook
 
 **Phase 3 (Within 3 Months):** Increase to 70%
+
 - [ ] Add integration tests for critical flows
 - [ ] Test error boundaries and error states
 - [ ] Test context providers
 
 **Phase 4 (Target):** Reach 80% goal
+
 - [ ] Test edge cases and error paths
 - [ ] Add performance tests
 - [ ] Test accessibility features
@@ -361,6 +390,7 @@ Areas needing more tests:
 **File:** `.github/workflows/ci.yml`
 
 **Key Features:**
+
 - Runs on `ubuntu-latest` (Linux)
 - Uses Node.js version from `.nvmrc` (v20.19.0)
 - Caches pnpm dependencies for faster runs
@@ -369,21 +399,24 @@ Areas needing more tests:
 - Cancels in-progress runs when new commit pushed
 
 **Permissions:**
+
 ```yaml
 permissions:
-  contents: read  # Only read access (no write)
+  contents: read # Only read access (no write)
 ```
 
 **Concurrency:**
+
 ```yaml
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true  # Cancel old runs on new push
+  cancel-in-progress: true # Cancel old runs on new push
 ```
 
 ### Environment Variables
 
 **Stubbed for CI:**
+
 ```yaml
 NEXT_PUBLIC_FIREBASE_API_KEY: test
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: test
@@ -392,6 +425,7 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID: test
 ```
 
 **Why stubbed?**
+
 - Next.js requires these variables to build
 - Tests shouldn't connect to real Firebase
 - Stubbed values make builds deterministic
@@ -401,17 +435,20 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID: test
 ## Future Enhancements
 
 ### Phase 1 (Current)
+
 - ✅ Add tests to CI pipeline
 - ✅ Set coverage baselines
 - ✅ Upload coverage artifacts
 
 ### Phase 2 (Next)
+
 - [ ] Add coverage badges to README
 - [ ] Comment coverage diff on PRs
 - [ ] Run tests in parallel (faster CI)
 - [ ] Add visual regression testing (Percy, Chromatic)
 
 ### Phase 3 (Future)
+
 - [ ] Add E2E tests (Playwright)
 - [ ] Add performance testing (Lighthouse CI)
 - [ ] Add security scanning (Snyk, npm audit)
@@ -433,23 +470,25 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID: test
 
 ### Current State (2025-10-29)
 
-| Metric | Current | Target | Status |
-|--------|---------|--------|--------|
-| Tests in CI | ✅ Yes | Yes | ✅ Complete |
-| Coverage Threshold | 50% | 80% | 🟡 Baseline Set |
-| Test Pass Rate | 52% (15/29) | 100% | 🔴 Needs Work |
-| CI Duration | ~3 min | <5 min | ✅ Good |
-| Flaky Tests | ~10 | 0 | 🔴 Needs Fix |
+| Metric             | Current     | Target | Status          |
+| ------------------ | ----------- | ------ | --------------- |
+| Tests in CI        | ✅ Yes      | Yes    | ✅ Complete     |
+| Coverage Threshold | 50%         | 80%    | 🟡 Baseline Set |
+| Test Pass Rate     | 52% (15/29) | 100%   | 🔴 Needs Work   |
+| CI Duration        | ~3 min      | <5 min | ✅ Good         |
+| Flaky Tests        | ~10         | 0      | 🔴 Needs Fix    |
 
 ### Success Criteria
 
 **Minimum (for CI implementation):**
+
 - ✅ Tests run automatically on every PR
 - ✅ Coverage thresholds enforced (50% baseline)
 - ✅ Coverage reports uploaded as artifacts
 - ✅ CI blocks merge if tests fail
 
 **Target (for production readiness):**
+
 - [ ] 80% code coverage
 - [ ] 100% test pass rate
 - [ ] 0 flaky tests

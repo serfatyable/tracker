@@ -191,7 +191,6 @@ export default function ResidentRotationsPage() {
         </div>
 
         <div className="app-container p-4 pt-2 space-y-3 pb-24 pad-safe-b">
-
           {/* Segmented view control */}
           <SegmentedView activeTab={view} onTabChange={handleViewChange} />
 

@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const url = new URL(request.url);
     const dryRun = url.searchParams.get('dryRun') === 'true';
     const mode = url.searchParams.get('mode') || 'resolveNames';
-    
+
     // Optional: date shift backfill for month (fix off-by-one)
     if (mode === 'dateShift') {
       const month = url.searchParams.get('month'); // YYYY-MM
@@ -87,7 +87,9 @@ export async function POST(request: Request) {
 
       for (const doc of snap.docs) {
         const data = doc.data() as any;
-        const parts = String(data.dateKey).split('-').map((p: string) => parseInt(p, 10));
+        const parts = String(data.dateKey)
+          .split('-')
+          .map((p: string) => parseInt(p, 10));
         if (parts.length !== 3 || parts.some((n: number) => !Number.isFinite(n))) continue;
         const srcUtc = new Date(Date.UTC(parts[0]!, parts[1]! - 1, parts[2]!));
         const dstUtc = new Date(srcUtc.getTime() + deltaDays * 86400000);
@@ -100,7 +102,9 @@ export async function POST(request: Request) {
           if (targetSnap.exists) collisions++;
           await targetRef.set({
             dateKey: newKey,
-            date: new Date(Date.UTC(dstUtc.getUTCFullYear(), dstUtc.getUTCMonth(), dstUtc.getUTCDate())),
+            date: new Date(
+              Date.UTC(dstUtc.getUTCFullYear(), dstUtc.getUTCMonth(), dstUtc.getUTCDate()),
+            ),
             stations: data.stations || {},
             createdAt: data.createdAt || new Date(),
           });

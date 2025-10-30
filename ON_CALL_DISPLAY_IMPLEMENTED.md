@@ -7,12 +7,14 @@ The admin on-call tab now displays imported schedule data in a beautiful, organi
 ## 📁 Files Created/Modified:
 
 ### 1. **`/lib/hooks/useOnCallSchedule.ts`** (NEW)
+
 - Custom React hook to fetch on-call schedule data
 - Queries Firestore `onCallShifts` collection
 - Filters by date range
 - Returns schedule, loading state, and errors
 
 ### 2. **`/app/admin/page.tsx`** (UPDATED)
+
 - Completely redesigned `AdminOnCallInline` component
 - Fetches schedule from Firestore
 - Groups data by month
@@ -20,27 +22,32 @@ The admin on-call tab now displays imported schedule data in a beautiful, organi
 - Color-coded by month for visual clarity
 
 ### 3. **`/firestore.indexes.json`** (UPDATED)
+
 - Added index for `onCallShifts` collection
 - Index on `dateKey` field for efficient queries
 
 ### 4. **`/i18n/en.json` & `/i18n/he.json`** (UPDATED)
+
 - Added `noSchedule` translation
 - Added `noScheduleThisMonth` translation
 
 ## 🎨 Features Implemented:
 
 ### **Month Tabs**
+
 - ✅ Tabbed interface showing all months with data
 - ✅ Current month indicator (📍)
 - ✅ Day count badge for each month
 - ✅ Active tab highlighting
 
 ### **Search Functionality**
+
 - ✅ Search by resident name
 - ✅ Real-time filtering
 - ✅ Clear button to reset search
 
 ### **Schedule Display**
+
 - ✅ Day-by-day cards with:
   - Date badge (day of week + date)
   - All shift assignments
@@ -52,18 +59,21 @@ The admin on-call tab now displays imported schedule data in a beautiful, organi
 - ✅ Hover effects
 
 ### **Empty States**
+
 - ✅ No schedule uploaded message
 - ✅ No results for search
 - ✅ No schedule for selected month
 - ✅ Call-to-action buttons
 
 ### **Loading States**
+
 - ✅ Loading indicator while fetching
 - ✅ Smooth transitions
 
 ## 📊 Data Structure:
 
 Each day document in `onCallShifts` collection:
+
 ```javascript
 {
   id: string,
@@ -83,6 +93,7 @@ Each day document in `onCallShifts` collection:
 ## 🔍 How It Works:
 
 ### Data Flow:
+
 1. Component mounts
 2. Fetches schedule from 3 months ago to 6 months ahead
 3. Groups data by month
@@ -91,13 +102,14 @@ Each day document in `onCallShifts` collection:
 6. Renders day cards with all shift assignments
 
 ### Query:
+
 ```typescript
 query(
   collection(db, 'onCallShifts'),
   where('dateKey', '>=', startKey),
   where('dateKey', '<=', endKey),
-  orderBy('dateKey', 'asc')
-)
+  orderBy('dateKey', 'asc'),
+);
 ```
 
 ## 🎯 UI Layout:
@@ -124,6 +136,7 @@ query(
 ## 🚀 Next Steps:
 
 ### Required:
+
 1. **Deploy Firestore Index**
    - The index for `onCallShifts.dateKey` needs to be deployed
    - Firebase console will show a link when you first load the page
@@ -131,6 +144,7 @@ query(
    - Or manually deploy: `firebase deploy --only firestore:indexes`
 
 ### Optional Enhancements:
+
 - [ ] Add export to PDF functionality
 - [ ] Add edit/delete individual shifts
 - [ ] Add conflict detection (same person, multiple shifts)
@@ -142,6 +156,7 @@ query(
 ## 🧪 Testing:
 
 ### Test Cases:
+
 1. ✅ Upload schedule via Excel import
 2. ⏳ Verify data appears in on-call tab
 3. ⏳ Test month navigation
@@ -152,6 +167,7 @@ query(
 8. ⏳ Test Hebrew interface
 
 ### Browser Console:
+
 If you see an error about missing index, click the link in the error message to create it automatically in Firebase Console.
 
 ## 🎨 Visual Design:
@@ -167,7 +183,7 @@ If you see an error about missing index, click the link in the error message to 
 ## 📝 Color Coding:
 
 | Month     | Color  |
-|-----------|--------|
+| --------- | ------ |
 | January   | Blue   |
 | February  | Green  |
 | March     | Purple |
@@ -201,4 +217,3 @@ If you see an error about missing index, click the link in the error message to 
 **Status**: ✅ Implementation complete - ready for testing!
 
 The on-call schedule is now fully integrated and displays beautifully! 🎉
-

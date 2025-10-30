@@ -14,7 +14,6 @@ import { deletePastExam } from '@/lib/firebase/exams';
 import { haptic } from '@/lib/utils/haptics';
 import type { Exam } from '@/types/exam';
 
-
 interface PastExamsTabProps {
   exam: Exam;
   isAdmin: boolean;
