@@ -9,7 +9,9 @@ import { useTranslation } from 'react-i18next';
 // The parent layout provides the default metadata
 
 import PasswordInput from '../../components/auth/PasswordInput';
+import ProgramTypeSelect from '../../components/auth/ProgramTypeSelect';
 import RolePills from '../../components/auth/RolePills';
+import RotationSelection from '../../components/auth/RotationSelection';
 import TextInput from '../../components/auth/TextInput';
 import Card from '../../components/ui/Card';
 import {
@@ -20,6 +22,7 @@ import {
 } from '../../lib/firebase/auth';
 import { getFirebaseStatus } from '../../lib/firebase/client';
 import { mapFirebaseAuthErrorToI18nKey } from '../../lib/firebase/errors';
+import { useRotations } from '../../lib/hooks/useRotations';
 import { applyLanguageToDocument } from '../../lib/i18n/applyLanguage';
 import type { Role } from '../../types/auth';
 
@@ -31,6 +34,7 @@ export default function AuthPage() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const firebaseOk = getFirebaseStatus().ok;
+  const { rotations, loading: rotationsLoading } = useRotations();
   const [tabIndex, setTabIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
@@ -92,9 +96,17 @@ export default function AuthPage() {
   const [suPassword, setSuPassword] = useState('');
   const [role, setRole] = useState<Role>('resident');
   const [residencyStartDate, setResidencyStartDate] = useState('');
+  const [studyProgramType, setStudyProgramType] = useState<'4-year' | '6-year' | ''>('');
+  const [completedRotationIds, setCompletedRotationIds] = useState<string[]>([]);
+  const [currentRotationId, setCurrentRotationId] = useState('');
 
   useEffect(() => {
-    if (role !== 'resident') setResidencyStartDate('');
+    if (role !== 'resident') {
+      setResidencyStartDate('');
+      setStudyProgramType('');
+      setCompletedRotationIds([]);
+      setCurrentRotationId('');
+    }
   }, [role]);
 
   function validateEmail(value: string) {
@@ -173,6 +185,8 @@ export default function AuthPage() {
       if (!residencyStartDate) newErrors.residencyStartDate = t('errors.required');
       else if (!isPastDateYYYYMMDD(residencyStartDate))
         newErrors.residencyStartDate = t('errors.dateInFuture');
+      if (!studyProgramType) newErrors.studyProgramType = t('errors.required');
+      if (!currentRotationId) newErrors.rotationSelection = t('auth.atLeastOneRotationRequired');
     }
     setErrors(newErrors);
     if (Object.values(newErrors).some(Boolean)) return;
@@ -186,6 +200,9 @@ export default function AuthPage() {
         role,
         language,
         residencyStartDate: role === 'resident' ? residencyStartDate : undefined,
+        studyprogramtype: role === 'resident' && studyProgramType ? studyProgramType : undefined,
+        completedRotationIds: role === 'resident' ? completedRotationIds : undefined,
+        currentRotationId: role === 'resident' ? currentRotationId : undefined,
       });
       // Apply language immediately and persist cookie before navigating
       try {
@@ -393,17 +410,42 @@ export default function AuthPage() {
                 />
                 <RolePills value={role} onChange={setRole} disabled={loading} />
                 {role === 'resident' ? (
-                  <TextInput
-                    id="su-residencyStartDate"
-                    type="date"
-                    value={residencyStartDate}
-                    onChange={setResidencyStartDate}
-                    label={t('auth.residencyStartDate')}
-                    error={errors.residencyStartDate || null}
-                    required
-                    disabled={loading}
-                    autoComplete="off"
-                  />
+                  <>
+                    <TextInput
+                      id="su-residencyStartDate"
+                      type="date"
+                      value={residencyStartDate}
+                      onChange={setResidencyStartDate}
+                      label={t('auth.residencyStartDate')}
+                      error={errors.residencyStartDate || null}
+                      required
+                      disabled={loading}
+                      autoComplete="off"
+                    />
+                    <ProgramTypeSelect
+                      id="su-studyProgramType"
+                      value={studyProgramType}
+                      onChange={setStudyProgramType}
+                      label={t('auth.studyProgramType')}
+                      option4Year={t('auth.studyProgram4Year')}
+                      option6Year={t('auth.studyProgram6Year')}
+                      error={errors.studyProgramType || null}
+                      required
+                      disabled={loading}
+                    />
+                    <RotationSelection
+                      rotations={rotations}
+                      completedRotationIds={completedRotationIds}
+                      currentRotationId={currentRotationId}
+                      onCompletedChange={setCompletedRotationIds}
+                      onCurrentChange={setCurrentRotationId}
+                      disabled={loading || rotationsLoading}
+                      error={errors.rotationSelection || null}
+                      language={language}
+                      completedLabel={t('auth.selectCompletedRotations')}
+                      currentLabel={t('auth.selectCurrentRotation')}
+                    />
+                  </>
                 ) : null}
                 <button
                   type="submit"

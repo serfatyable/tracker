@@ -27,6 +27,9 @@ export type BaseUserProfile = {
 export type ResidentProfile = BaseUserProfile & {
   role: 'resident';
   residencyStartDate: string; // YYYY-MM-DD
+  studyprogramtype: '4-year' | '6-year'; // Medical school program type
+  completedRotationIds?: string[]; // IDs of rotations already completed
+  currentRotationId?: string; // ID of current rotation
 };
 
 export type TutorProfile = BaseUserProfile & { role: 'tutor' };

@@ -132,13 +132,17 @@ function TemplatesTab({ onGoSubmissions }: { onGoSubmissions: () => void }) {
               })}
           </div>
         ) : audience ? (
-          <div className="text-sm opacity-70 text-gray-700 dark:text-gray-50">No templates yet.</div>
+          <div className="text-sm opacity-70 text-gray-700 dark:text-gray-50">
+            No templates yet.
+          </div>
         ) : null}
       </div>
       {selected ? (
         <TemplateEditor template={selected} onClose={() => setSelected(null)} />
       ) : (
-        <div className="text-sm opacity-70 text-gray-700 dark:text-gray-50">Select audience to view/publish templates.</div>
+        <div className="text-sm opacity-70 text-gray-700 dark:text-gray-50">
+          Select audience to view/publish templates.
+        </div>
       )}
     </div>
   );
@@ -230,7 +234,10 @@ function TemplateEditor({
       </div>
       <div className="space-y-3">
         {working.sections?.map((s) => (
-          <div key={s.id} className="border rounded p-2 border-gray-200 dark:border-[rgb(var(--border))]">
+          <div
+            key={s.id}
+            className="border rounded p-2 border-gray-200 dark:border-[rgb(var(--border))]"
+          >
             <div className="flex items-center justify-between">
               <div className="font-medium">{s.name.en}</div>
               <Button size="sm" variant="outline" onClick={() => onAddPrompt(s.id)}>
@@ -329,12 +336,17 @@ function SubmissionsTab({ onGoTemplates }: { onGoTemplates: () => void }) {
       </div>
       <div className="space-y-2">
         {rows.map((r) => (
-          <div key={r.id} className="border rounded p-2 text-sm flex items-center justify-between border-gray-200 dark:border-[rgb(var(--border))] text-gray-900 dark:text-gray-50">
+          <div
+            key={r.id}
+            className="border rounded p-2 text-sm flex items-center justify-between border-gray-200 dark:border-[rgb(var(--border))] text-gray-900 dark:text-gray-50"
+          >
             <div>
               <div className="font-medium">
                 {r.taskType} — {r.authorRole}
               </div>
-              <div className="text-xs opacity-70 text-gray-600 dark:text-gray-50">{r.taskOccurrenceId}</div>
+              <div className="text-xs opacity-70 text-gray-600 dark:text-gray-50">
+                {r.taskOccurrenceId}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <div className="text-xs opacity-70 text-gray-600 dark:text-gray-50">
@@ -346,7 +358,11 @@ function SubmissionsTab({ onGoTemplates }: { onGoTemplates: () => void }) {
             </div>
           </div>
         ))}
-        {!rows.length ? <div className="text-sm opacity-70 text-gray-700 dark:text-gray-50">No submissions yet.</div> : null}
+        {!rows.length ? (
+          <div className="text-sm opacity-70 text-gray-700 dark:text-gray-50">
+            No submissions yet.
+          </div>
+        ) : null}
       </div>
       {selected ? (
         <div className="border rounded p-3 space-y-2 border-gray-200 dark:border-[rgb(var(--border))]">

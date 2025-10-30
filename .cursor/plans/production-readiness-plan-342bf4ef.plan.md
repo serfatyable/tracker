@@ -1,4 +1,5 @@
 <!-- 342bf4ef-35b0-4d91-8811-f7b6e6eeefb3 43dcde50-dcec-4cf0-aa54-cd83d7491e9f -->
+
 # Production Readiness Plan
 
 ## Executive Summary
@@ -196,7 +197,7 @@ Add to `i18n/en.json` and `i18n/he.json`:
 ```typescript
 const formatter = new Intl.DateTimeFormat(i18n.language, {
   dateStyle: 'medium',
-  timeStyle: 'short'
+  timeStyle: 'short',
 });
 ```
 
@@ -211,7 +212,7 @@ const formatter = new Intl.DateTimeFormat(i18n.language, {
 **Files Using Wrong Colors:** (138 matches found)
 
 - `components/resident/*` (16 instances)
-- `components/admin/*` (11 instances)  
+- `components/admin/*` (11 instances)
 - `components/ui/*` (8 instances)
 - `app/error.tsx`, `app/auth/page.tsx`, etc.
 
@@ -223,20 +224,20 @@ Replace in `app/globals.css`:
 @media (prefers-color-scheme: dark) {
   :root {
     /* Backgrounds - True dark, not grey */
-    --bg: 8 10 15;              /* Almost black #080A0F */
-    --fg: 245 247 250;          /* Bright white for text */
-    --surface: 15 18 25;        /* Elevated surfaces #0F1219 */
-    --primary: 99 179 237;      /* Brighter blue for dark mode */
-    --primary-ink: 8 10 15;     /* Dark text on primary */
-    --muted: 148 163 184;       /* Muted text */
-    
+    --bg: 8 10 15; /* Almost black #080A0F */
+    --fg: 245 247 250; /* Bright white for text */
+    --surface: 15 18 25; /* Elevated surfaces #0F1219 */
+    --primary: 99 179 237; /* Brighter blue for dark mode */
+    --primary-ink: 8 10 15; /* Dark text on primary */
+    --muted: 148 163 184; /* Muted text */
+
     /* Additional tokens */
-    --surface-elevated: 20 24 32;   /* For cards/modals */
-    --surface-depressed: 5 7 12;    /* For input fields */
-    --border: 30 35 45;             /* Subtle borders */
-    --border-strong: 50 55 65;      /* Visible borders */
+    --surface-elevated: 20 24 32; /* For cards/modals */
+    --surface-depressed: 5 7 12; /* For input fields */
+    --border: 30 35 45; /* Subtle borders */
+    --border-strong: 50 55 65; /* Visible borders */
   }
-  
+
   /* Body background should be deep */
   body {
     background:
@@ -412,16 +413,13 @@ Dark mode shadows need to be lighter:
 **Issues:**
 
 1. **No rate limiting** on password reset endpoint
-
    - **Fix:** Add rate limiting middleware or use Firebase Rate Limiting
 
 2. **Session handling** not explicitly configured
-
    - **Current:** Using Firebase default (1 hour)
    - **Fix:** Configure explicit session duration
 
 3. **No email verification** enforcement
-
    - **Problem:** Users can sign up without verifying email
    - **Fix:** Add email verification check in AuthGate
 
@@ -436,16 +434,13 @@ Dark mode shadows need to be lighter:
 **Issues:**
 
 1. **No request size limits** explicitly set
-
    - **Fix:** Add body size limits to API routes
 
 2. **CORS configured** but should validate origins more strictly
-
    - **File:** `middleware.ts` lines 30-33
    - **Fix:** Use environment variable for allowed origins
 
 3. **No request logging** for security audit trail
-
    - **Fix:** Add request logging middleware
 
 ### 5.5 Input Sanitization
@@ -453,12 +448,10 @@ Dark mode shadows need to be lighter:
 **Issues:**
 
 1. User input not sanitized before Firestore write
-
    - Rich text fields could contain XSS
    - **Fix:** Sanitize HTML/markdown content
 
 2. URL validation too permissive
-
    - **File:** `lib/morning-meetings/excel.ts`
    - **Fix:** Whitelist URL schemes (http, https only)
 

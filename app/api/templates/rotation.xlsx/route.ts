@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 
-import {
-  rateLimiters,
-  checkRateLimit,
-  getClientIdentifier,
-} from '@/lib/middleware/rateLimit';
+import { rateLimiters, checkRateLimit, getClientIdentifier } from '@/lib/middleware/rateLimit';
 
 /**
  * GET /api/templates/rotation.xlsx
@@ -16,7 +12,10 @@ import {
 export async function GET(req: Request) {
   // ✅ RATE LIMITING: Prevent template download abuse
   const identifier = getClientIdentifier(req);
-  const rateLimitResponse = await checkRateLimit(identifier, rateLimiters?.templateDownload ?? null);
+  const rateLimitResponse = await checkRateLimit(
+    identifier,
+    rateLimiters?.templateDownload ?? null,
+  );
   if (rateLimitResponse) {
     return rateLimitResponse; // 429 Too Many Requests
   }

@@ -83,20 +83,18 @@ export async function replaceMonthMeetings(
 /**
  * Replace meetings for multiple months in a single operation
  */
-export async function replaceMultipleMonthsMeetings(
-  records: MorningMeeting[],
-): Promise<void> {
+export async function replaceMultipleMonthsMeetings(records: MorningMeeting[]): Promise<void> {
   return withTimeoutAndRetry(
     async () => {
       const db = getFirestore(getFirebaseApp());
-      
+
       // Group records by month to determine which months to delete
       const monthKeys = new Set<string>();
       records.forEach((r) => {
         const date = r.date instanceof Timestamp ? r.date.toDate() : new Date(r.date as any);
         monthKeys.add(`${date.getUTCFullYear()}-${date.getUTCMonth()}`);
       });
-      
+
       // Delete all existing meetings for affected months
       const deletePromises = Array.from(monthKeys).map(async (monthKey) => {
         const [year, month] = monthKey.split('-').map(Number);
@@ -105,17 +103,17 @@ export async function replaceMultipleMonthsMeetings(
         const existing = await listMorningMeetingsByDateRange(from, to);
         return existing;
       });
-      
+
       const allExisting = (await Promise.all(deletePromises)).flat();
-      
+
       // Create a batch for all operations
       const batch = writeBatch(db);
-      
+
       // Delete existing meetings
       for (const ex of allExisting) {
         if (ex.id) batch.delete(doc(db, 'morningMeetings', ex.id));
       }
-      
+
       // Add new meetings
       for (const r of records) {
         const id = `${r.dateKey}-${slug(r.title)}`;
@@ -125,9 +123,11 @@ export async function replaceMultipleMonthsMeetings(
           updatedAt: Timestamp.fromDate(new Date()),
         } as any);
       }
-      
+
       await batch.commit();
-      console.log(`Replaced ${allExisting.length} existing meetings with ${records.length} new meetings across ${monthKeys.size} month(s)`);
+      console.log(
+        `Replaced ${allExisting.length} existing meetings with ${records.length} new meetings across ${monthKeys.size} month(s)`,
+      );
     },
     {
       timeout: 45000, // 45 seconds for multi-month batch operations

@@ -1,17 +1,22 @@
 # Morning Meetings Excel Import Feature
 
 ## Overview
+
 This feature enables administrators to upload Excel files containing morning meetings data. The system validates the data, shows a preview, and imports the meetings into the database.
 
 ## What Was Implemented
 
 ### 1. Database Schema Update
+
 **File:** `types/morningMeetings.ts`
+
 - Added `dayOfWeek` field: Stores Hebrew day (א, ב, ג, ד, ה, ו)
 - Added `moderator` field: Stores the meeting moderator (מנחה)
 
 ### 2. Excel Parsing Library
+
 **File:** `lib/morning-meetings/excel.ts`
+
 - Parses Excel files (.xlsx, .xls) using the `xlsx` package
 - Supports both Hebrew and English column headers
 - **Carry-Forward Logic:** When day/date are empty, inherits from previous row (for multiple sessions per day)
@@ -33,7 +38,9 @@ This feature enables administrators to upload Excel files containing morning mee
 - Handles Excel serial date numbers natively (45949 → 19/10/2025)
 
 ### 3. API Route Update
+
 **File:** `app/api/morning-meetings/import/route.ts`
+
 - Updated to handle Excel files instead of CSV
 - **NEW:** Supports multi-month imports (can upload multiple months at once)
 - Resolves lecturers to user accounts (by email or name)
@@ -41,7 +48,9 @@ This feature enables administrators to upload Excel files containing morning mee
 - Returns detailed validation errors with row numbers
 
 ### 4. Import Preview Dialog
+
 **File:** `components/admin/morning-meetings/ImportPreviewDialog.tsx`
+
 - Shows parsed data in a table format
 - **NEW:** Color-codes rows by month (blue, green, purple, etc.)
 - **NEW:** Shows month badges when multiple months are detected
@@ -52,7 +61,9 @@ This feature enables administrators to upload Excel files containing morning mee
 - Right-to-left layout support for Hebrew text
 
 ### 5. Admin Upload Page
+
 **File:** `app/admin/morning-meetings/page.tsx`
+
 - Replaced CSV textarea with Excel file upload
 - Drag-and-drop file upload UI
 - File type restriction (.xlsx, .xls)
@@ -61,13 +72,17 @@ This feature enables administrators to upload Excel files containing morning mee
 - Link to download CSV template (for format reference)
 
 ### 6. Display Updates
+
 **File:** `app/morning-meetings/page.tsx`
+
 - Shows Hebrew day of week next to dates
 - Displays moderator alongside lecturer
 - Calendar view shows day of week with date
 
 ### 7. Translations
+
 **Files:** `i18n/en.json`, `i18n/he.json`
+
 - Added complete translations for all new UI elements
 - English and Hebrew support
 - Keys under `morningMeetings.import.*`
@@ -77,6 +92,7 @@ This feature enables administrators to upload Excel files containing morning mee
 ### For Administrators:
 
 **Option 1: From Admin Dashboard**
+
 1. Go to **Admin Dashboard** → **Morning Meetings** tab
 2. Click the blue **"Upload Excel Schedule"** button at the top
 3. Select or drag-and-drop an Excel file
@@ -84,6 +100,7 @@ This feature enables administrators to upload Excel files containing morning mee
 5. If no errors, click **"Confirm Import"**
 
 **Option 2: Direct URL**
+
 1. Navigate to `/admin/morning-meetings`
 2. Download the Excel template (recommended) or CSV template for reference
 3. Fill in your meeting data following the format
@@ -96,16 +113,18 @@ This feature enables administrators to upload Excel files containing morning mee
 ### Excel File Format:
 
 **Download Template:**
+
 - **Excel Template:** `/api/templates/morning-meetings.xlsx`
 
-| יום | תאריך | נושא | מציג | מנחה | רכז | link | notes |
-|-----|-------|------|------|------|-----|------|-------|
-| א | 19/10/2025 | AW assessment & management | ד״ר דן קוטלר | ד״ר מונה ליכטנשטיין | ד״ר נעימה קציר | https://... | Optional notes |
-| | | Advanced Hemodynamic Monitoring | | | ד״ר נעימה קציר | | Second session same day |
-| ב | 20/10/2025 | הניחן ריפואי | ד״ר עזרא ארנפלד | ד״ר אלית רחמן | ד״ר גיא פיינברג | | |
-| ג | 21/10/2025 | הניחן ריפואי | ד״ר שמעון כהן | ד״ר מוניה לקלמן | ד״ר רון בן טור | | |
+| יום | תאריך      | נושא                            | מציג            | מנחה                | רכז             | link        | notes                   |
+| --- | ---------- | ------------------------------- | --------------- | ------------------- | --------------- | ----------- | ----------------------- |
+| א   | 19/10/2025 | AW assessment & management      | ד״ר דן קוטלר    | ד״ר מונה ליכטנשטיין | ד״ר נעימה קציר  | https://... | Optional notes          |
+|     |            | Advanced Hemodynamic Monitoring |                 |                     | ד״ר נעימה קציר  |             | Second session same day |
+| ב   | 20/10/2025 | הניחן ריפואי                    | ד״ר עזרא ארנפלד | ד״ר אלית רחמן       | ד״ר גיא פיינברג |             |                         |
+| ג   | 21/10/2025 | הניחן ריפואי                    | ד״ר שמעון כהן   | ד״ר מוניה לקלמן     | ד״ר רון בן טור  |             |                         |
 
 **Important Rules:**
+
 - **NEW:** Can upload multiple months in a single file (color-coded preview)
 - Date format: DD/MM/YYYY (or Excel serial numbers are auto-converted)
 - Hebrew days: א (Sun), ב (Mon), ג (Tue), ד (Wed), ה (Thu), ו (Fri), ש (Sat)
@@ -118,6 +137,7 @@ This feature enables administrators to upload Excel files containing morning mee
 ## Validation
 
 The system validates:
+
 1. ✅ File structure (Excel format)
 2. ✅ Required columns present (יום, תאריך, נושא)
 3. ✅ Required fields filled (day, date, title)
@@ -163,12 +183,14 @@ The system validates:
 ## Files Modified/Created
 
 ### Created:
+
 - `lib/morning-meetings/excel.ts`
 - `components/admin/morning-meetings/ImportPreviewDialog.tsx`
 - `app/api/templates/morning-meetings.xlsx/route.ts` (Excel template download)
 - `MORNING_MEETINGS_EXCEL_IMPORT.md` (this file)
 
 ### Modified:
+
 - `types/morningMeetings.ts`
 - `app/api/morning-meetings/import/route.ts`
 - `app/api/templates/morning-meetings.csv/route.ts` (updated CSV template with new columns)
@@ -185,10 +207,10 @@ The system validates:
 ## Future Enhancements
 
 Potential improvements for future versions:
+
 - Support for multi-month imports
 - Excel template download (instead of CSV)
 - Duplicate detection before import
 - Import history/audit log
 - Undo last import feature
 - Support for updating individual meetings without replacing entire month
-

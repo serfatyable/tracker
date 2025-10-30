@@ -22,7 +22,10 @@ export default function ResidentReflectionsIndexPage() {
           ) : (
             <div className="space-y-2">
               {(list || []).map((r) => (
-                <div key={r.id} className="border rounded p-2 text-sm flex items-center justify-between border-gray-200 dark:border-[rgb(var(--border))]">
+                <div
+                  key={r.id}
+                  className="border rounded p-2 text-sm flex items-center justify-between border-gray-200 dark:border-[rgb(var(--border))]"
+                >
                   <div>
                     <div className="font-medium">{(r as any).taskType}</div>
                     <div className="text-xs opacity-70">{(r as any).taskOccurrenceId}</div>

@@ -135,7 +135,8 @@ export function parseExamsExcel(
       const examDateRaw = row[examDateCol];
       const examLink = row[examLinkCol] ? String(row[examLinkCol]).trim() : '';
       const topics = topicsCol !== -1 && row[topicsCol] ? String(row[topicsCol]).trim() : '';
-      const bookChapters = chaptersCol !== -1 && row[chaptersCol] ? String(row[chaptersCol]).trim() : '';
+      const bookChapters =
+        chaptersCol !== -1 && row[chaptersCol] ? String(row[chaptersCol]).trim() : '';
       const descriptionEn =
         descEnCol !== -1 && row[descEnCol] ? String(row[descEnCol]).trim() : undefined;
       const descriptionHe =

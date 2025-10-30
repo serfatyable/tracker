@@ -2,7 +2,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useResidentProgress } from '../../lib/hooks/useResidentProgress';
 import type { NodeProgress } from '../../lib/hooks/useResidentProgress';

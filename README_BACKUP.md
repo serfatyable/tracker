@@ -60,22 +60,24 @@ This document describes the backup and disaster recovery procedures for the Trac
 
 ### Backup Schedule
 
-| Frequency | Retention | Purpose | Method |
-|-----------|-----------|---------|--------|
-| **Daily** | 30 days | Point-in-time recovery | Automated (Cloud Scheduler) |
-| **Weekly** | 90 days | Long-term recovery | Automated (Cloud Scheduler) |
-| **Pre-deployment** | 7 days | Rollback capability | Manual |
-| **Pre-maintenance** | 7 days | Safety net for risky operations | Manual |
+| Frequency           | Retention | Purpose                         | Method                      |
+| ------------------- | --------- | ------------------------------- | --------------------------- |
+| **Daily**           | 30 days   | Point-in-time recovery          | Automated (Cloud Scheduler) |
+| **Weekly**          | 90 days   | Long-term recovery              | Automated (Cloud Scheduler) |
+| **Pre-deployment**  | 7 days    | Rollback capability             | Manual                      |
+| **Pre-maintenance** | 7 days    | Safety net for risky operations | Manual                      |
 
 ### What Gets Backed Up
 
 **Included:**
+
 - All Firestore collections (users, rotations, tasks, etc.)
 - Document metadata (created/updated timestamps)
 - Firestore indexes
 - Security rules (separate backup)
 
 **NOT Included:**
+
 - Firebase Storage files (requires separate backup)
 - Authentication users (managed by Firebase, has built-in backup)
 - Cloud Functions code (stored in git repository)
@@ -83,12 +85,14 @@ This document describes the backup and disaster recovery procedures for the Trac
 ### Storage Location
 
 **Primary Backup Bucket:**
+
 - Location: `gs://{project-id}-firestore-backups/`
 - Region: `europe-west1` (EU) - matches Firestore region
 - Storage Class: `STANDARD`
 - Lifecycle: Auto-delete after 30 days
 
 **Backup Structure:**
+
 ```
 gs://{project-id}-firestore-backups/
 ├── backups/
@@ -114,6 +118,7 @@ gs://{project-id}-firestore-backups/
 **Purpose:** Export Firestore data to Google Cloud Storage
 
 **Usage:**
+
 ```bash
 ./scripts/backup-firestore.sh [options]
 
@@ -125,6 +130,7 @@ OPTIONS:
 ```
 
 **Features:**
+
 - ✅ Automatic bucket creation with lifecycle rules
 - ✅ 30-day retention policy
 - ✅ Backup metadata with timestamp and user info
@@ -149,6 +155,7 @@ OPTIONS:
 ```
 
 **Output:**
+
 ```
 [INFO] Using active gcloud project: tracker-production
 [INFO] Using default bucket: gs://tracker-production-firestore-backups
@@ -169,6 +176,7 @@ OPTIONS:
 **Purpose:** Restore Firestore data from a backup
 
 **Usage:**
+
 ```bash
 ./scripts/restore-firestore.sh [options]
 
@@ -182,6 +190,7 @@ OPTIONS:
 ```
 
 **Features:**
+
 - ✅ Safety confirmation prompt
 - ✅ Dry-run mode for testing
 - ✅ Backup metadata display
@@ -211,6 +220,7 @@ OPTIONS:
 ```
 
 **Safety Features:**
+
 - Requires typing "yes" to confirm (prevents accidental restores)
 - Dry-run mode shows exactly what would be restored
 - Displays backup metadata before restoring
@@ -227,17 +237,20 @@ OPTIONS:
 **Steps:**
 
 1. **Identify the backup to restore:**
+
    ```bash
    ./scripts/restore-firestore.sh --list
    ```
 
 2. **Verify backup integrity:**
+
    ```bash
    # Check backup metadata
    gsutil cat gs://bucket/backups/20250129/020000_metadata.json
    ```
 
 3. **Test restore in staging first:**
+
    ```bash
    # Switch to staging project
    gcloud config set project tracker-staging
@@ -259,6 +272,7 @@ OPTIONS:
    - Check data integrity (counts, relationships)
 
 5. **Restore to production:**
+
    ```bash
    # Switch to production project
    gcloud config set project tracker-production
@@ -272,6 +286,7 @@ OPTIONS:
    ```
 
 6. **Monitor restore operation:**
+
    ```bash
    # Check operation status
    gcloud firestore operations list --project=tracker-production
@@ -320,6 +335,7 @@ OPTIONS:
 ### Cloud Scheduler (Recommended)
 
 **Advantages:**
+
 - Fully managed (no server maintenance)
 - Built-in retry logic
 - Email notifications on failure
@@ -457,6 +473,7 @@ If you prefer to run backups from your own infrastructure:
 ### Monitoring Commands
 
 **Check backup status:**
+
 ```bash
 # List recent backups
 gsutil ls -l gs://tracker-production-firestore-backups/backups/ | tail -n 10
@@ -470,6 +487,7 @@ gsutil cat "${LATEST}*_metadata.json" | jq '.'
 ```
 
 **Check operation status:**
+
 ```bash
 # List all Firestore operations
 gcloud firestore operations list --project=tracker-production
@@ -484,23 +502,22 @@ Create a Cloud Function to check backup age:
 
 ```javascript
 // cloud-function: check-backup-age
-exports.checkBackupAge = functions.pubsub
-  .schedule('0 8 * * *')
-  .onRun(async () => {
-    const storage = new Storage();
-    const [files] = await storage.bucket('tracker-production-firestore-backups').getFiles();
+exports.checkBackupAge = functions.pubsub.schedule('0 8 * * *').onRun(async () => {
+  const storage = new Storage();
+  const [files] = await storage.bucket('tracker-production-firestore-backups').getFiles();
 
-    const latestBackup = files
-      .filter(f => f.name.includes('metadata.json'))
-      .sort((a, b) => b.metadata.timeCreated - a.metadata.timeCreated)[0];
+  const latestBackup = files
+    .filter((f) => f.name.includes('metadata.json'))
+    .sort((a, b) => b.metadata.timeCreated - a.metadata.timeCreated)[0];
 
-    const ageHours = (Date.now() - new Date(latestBackup.metadata.timeCreated)) / 1000 / 60 / 60;
+  const ageHours = (Date.now() - new Date(latestBackup.metadata.timeCreated)) / 1000 / 60 / 60;
 
-    if (ageHours > 28) { // Alert if no backup in 28 hours
-      console.error('WARNING: Latest backup is older than 28 hours!');
-      // Send notification (email, Slack, PagerDuty, etc.)
-    }
-  });
+  if (ageHours > 28) {
+    // Alert if no backup in 28 hours
+    console.error('WARNING: Latest backup is older than 28 hours!');
+    // Send notification (email, Slack, PagerDuty, etc.)
+  }
+});
 ```
 
 ---
@@ -515,6 +532,7 @@ exports.checkBackupAge = functions.pubsub
 **Recovery Point Objective (RPO):** Last backup (max 24 hours data loss)
 
 **Steps:**
+
 1. Stop all application writes (maintenance mode)
 2. List backups: `./scripts/restore-firestore.sh --list`
 3. Identify most recent backup
@@ -530,6 +548,7 @@ exports.checkBackupAge = functions.pubsub
 **RPO:** Pre-deployment backup
 
 **Steps:**
+
 1. Identify when corruption occurred
 2. Find backup from before corruption (check metadata)
 3. Create emergency backup of current state (for forensics)
@@ -546,6 +565,7 @@ exports.checkBackupAge = functions.pubsub
 **RPO:** Last backup (max 24 hours)
 
 **Steps:**
+
 1. Confirm database is truly lost (not just network issue)
 2. Create new Firestore database if needed
 3. Identify most recent complete backup
@@ -563,6 +583,7 @@ exports.checkBackupAge = functions.pubsub
 **RPO:** Last backup
 
 **Steps:**
+
 1. Isolate affected systems immediately
 2. Revoke all API keys and tokens
 3. Change all service account credentials
@@ -581,11 +602,13 @@ exports.checkBackupAge = functions.pubsub
 #### Issue: "Permission denied" error during backup
 
 **Symptoms:**
+
 ```
 ERROR: (gcloud.firestore.export) PERMISSION_DENIED: Missing or insufficient permissions.
 ```
 
 **Solution:**
+
 ```bash
 # Grant required IAM role
 gcloud projects add-iam-policy-binding tracker-production \
@@ -596,11 +619,13 @@ gcloud projects add-iam-policy-binding tracker-production \
 #### Issue: "Bucket does not exist" error
 
 **Symptoms:**
+
 ```
 ERROR: Bucket gs://... does not exist
 ```
 
 **Solution:**
+
 ```bash
 # Create bucket manually
 gsutil mb -l europe-west1 gs://tracker-production-firestore-backups
@@ -612,10 +637,12 @@ gsutil mb -l europe-west1 gs://tracker-production-firestore-backups
 #### Issue: Backup operation stuck "in progress"
 
 **Symptoms:**
+
 - Operation shows as running for hours
 - No progress in Firebase Console
 
 **Solution:**
+
 ```bash
 # Check operation status
 gcloud firestore operations list --project=tracker-production
@@ -632,21 +659,25 @@ gcloud firestore operations cancel OPERATION_NAME --project=tracker-production
 #### Issue: Restore overwrites more data than expected
 
 **Prevention:**
+
 - Always use `--dry-run` first
 - Test in staging environment
 - Review backup metadata before restoring
 
 **Recovery:**
+
 - Restore from emergency backup created before the restore
 
 #### Issue: Restore fails with "invalid backup format"
 
 **Symptoms:**
+
 ```
 ERROR: Invalid backup format or corrupted backup
 ```
 
 **Solution:**
+
 1. Verify backup URI is correct (should point to directory, not file)
 2. Check backup metadata: `gsutil cat gs://.../metadata.json`
 3. Try an older backup
@@ -655,10 +686,12 @@ ERROR: Invalid backup format or corrupted backup
 #### Issue: Partial restore missing some collections
 
 **Symptoms:**
+
 - Restore completes successfully
 - But some collections are empty
 
 **Solution:**
+
 1. Check if collections were included in backup: `gsutil ls gs://.../all_namespaces/`
 2. Verify `-c` flag if used during backup
 3. Run separate restore for missing collections
@@ -710,11 +743,13 @@ ERROR: Invalid backup format or corrupted backup
 ### Storage Costs
 
 **Assumptions:**
+
 - Database size: 10 GB
 - Daily backups: 30 days retention
 - Storage class: Standard (europe-west1)
 
 **Monthly Cost:**
+
 ```
 Storage: 10 GB × 30 days × $0.020/GB/month = $6.00
 Egress (restore): 10 GB × $0.12/GB (occasional) = $1.20

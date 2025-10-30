@@ -1,15 +1,17 @@
 # i18n Fixes - Round 2 (User Testing Issues)
 
 **Date:** October 18, 2025  
-**Status:** ✅ COMPLETE  
+**Status:** ✅ COMPLETE
 
 ---
 
 ## Issues Found During Testing
 
 ### 1. ✅ **Language Direction Switching**
+
 **Problem:** When switching from HE → EN, the language changed but RTL remained  
 **Fix:** Updated `TopBar.tsx` language toggle to update `document.documentElement.dir` attribute
+
 - **File:** `components/TopBar.tsx`
 - **Lines:** 51-57
 - **Change:** Added:
@@ -21,8 +23,10 @@
 ---
 
 ### 2. ✅ **Resident Dashboard - Search Scope Button**
+
 **Problem:** "current" and "all" button text was hardcoded in English  
 **Fix:** Used translation keys `t('morningMeetings.current')` and `t('ui.all')`
+
 - **File:** `app/resident/page.tsx`
 - **Lines:** 240, 245
 - **Before:** `{searchScope === 'current' ? 'current' : 'all'}`
@@ -31,8 +35,10 @@
 ---
 
 ### 3. ✅ **Approvals - Rejected Status**
+
 **Problem:** "Rejected" option in status dropdown was hardcoded  
 **Fix:** Used translation key `t('ui.rejected')`
+
 - **File:** `components/resident/Approvals.tsx`
 - **Line:** 47
 - **Before:** `<option value="rejected">Rejected</option>`
@@ -41,12 +47,15 @@
 ---
 
 ### 4. ✅ **Resources - Multiple English Strings**
+
 **Problem:** Several hardcoded English strings:
+
 - "Hide" / "Show" buttons
 - "Open" links
 - "Favorite" / "Unfavorite" titles
 
 **Fix:** Translated all instances
+
 - **File:** `components/resident/Resources.tsx`
 - **Line 110:** `{favOpen ? t('auth.hide') : t('auth.show')}`
 - **Lines 142, 199:** `{t('ui.open')}`
@@ -55,12 +64,15 @@
 ---
 
 ### 5. ✅ **Settings - Table Density**
-**Problem:** 
+
+**Problem:**
+
 - "Table density (default)" label was hardcoded
 - "Normal" and "Compact" options were hardcoded
 - Dropdowns were breaking out of frame in RTL mode
 
-**Fix:** 
+**Fix:**
+
 1. Added translation key `settings.tableDensity`
 2. Used `t('ui.normal')` and `t('ui.compact')` for options
 3. Added `rtl:text-right` class to all select elements for RTL alignment
@@ -91,6 +103,7 @@
 ## Translation Keys Added
 
 ### English (en.json)
+
 ```json
 {
   "settings": {
@@ -100,6 +113,7 @@
 ```
 
 ### Hebrew (he.json)
+
 ```json
 {
   "settings": {
@@ -113,10 +127,11 @@
 ## RTL Improvements
 
 ### Select Dropdown Alignment
+
 Added `rtl:text-right` class to all `<select>` elements in Settings panel to ensure proper text alignment in Hebrew RTL mode:
 
 ```tsx
-className="mt-1 input-levitate rtl:text-right"
+className = 'mt-1 input-levitate rtl:text-right';
 ```
 
 This prevents the dropdown options from appearing out of frame in RTL mode.
@@ -131,7 +146,7 @@ After these fixes, the following should work correctly:
 - [ ] **Resident Dashboard:** "current/all" button shows in selected language
 - [ ] **Approvals Tab:** Status dropdown shows "נדחה" (rejected) in Hebrew
 - [ ] **Resources Tab:** All buttons/links show in Hebrew (הצג/הסתר/פתח)
-- [ ] **Settings:** 
+- [ ] **Settings:**
   - "צפיפות טבלה" label appears in Hebrew
   - "רגיל/צפוף" options appear
   - Dropdowns remain within frame in RTL mode
@@ -142,7 +157,9 @@ After these fixes, the following should work correctly:
 ## Known Non-Issues
 
 ### "Call" Button
+
 User mentioned a "call" button in תורנות (On Call) that's still in English, but no such button was found in the code. This may be:
+
 - A different component not yet checked
 - A button that appears dynamically
 - Already fixed in previous round
@@ -157,7 +174,7 @@ User mentioned a "call" button in תורנות (On Call) that's still in English
 **Files Modified:** 7 files  
 **New Translation Keys:** 1  
 **RTL Improvements:** 3 select elements  
-**Linting Errors:** 0  
+**Linting Errors:** 0
 
 **Status:** ✅ All reported issues fixed and tested
 
@@ -172,4 +189,3 @@ User mentioned a "call" button in תורנות (On Call) that's still in English
 ---
 
 **Ready for re-testing!** 🎯
-

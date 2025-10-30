@@ -79,7 +79,8 @@ export default function PetitionsTab({ petitions, rotationIdToName, residentIdTo
                     }
                   >
                     {p.status === 'pending' && t('petitions.pending', { defaultValue: 'Pending' })}
-                    {p.status === 'approved' && t('petitions.approved', { defaultValue: 'Approved' })}
+                    {p.status === 'approved' &&
+                      t('petitions.approved', { defaultValue: 'Approved' })}
                     {p.status === 'denied' && t('petitions.denied', { defaultValue: 'Denied' })}
                   </span>
                 </div>
@@ -98,8 +99,7 @@ export default function PetitionsTab({ petitions, rotationIdToName, residentIdTo
                 )}
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   {t('petitions.requestedAt', { defaultValue: 'Requested' })}:{' '}
-                  {p.requestedAt &&
-                    new Date(p.requestedAt.toMillis?.() || 0).toLocaleDateString()}
+                  {p.requestedAt && new Date(p.requestedAt.toMillis?.() || 0).toLocaleDateString()}
                 </div>
               </div>
 

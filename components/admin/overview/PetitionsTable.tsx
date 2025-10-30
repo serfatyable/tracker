@@ -207,7 +207,10 @@ export default function PetitionsTable() {
                               variant="outline"
                               loading={actionLoading[`approve-${p.id}`]}
                               onClick={async () => {
-                                setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: true }));
+                                setActionLoading((prev) => ({
+                                  ...prev,
+                                  [`approve-${p.id}`]: true,
+                                }));
                                 try {
                                   await approveRotationPetition(p.id, 'admin');
                                   setToast({
@@ -224,7 +227,10 @@ export default function PetitionsTable() {
                                     variant: 'error',
                                   });
                                 } finally {
-                                  setActionLoading((prev) => ({ ...prev, [`approve-${p.id}`]: false }));
+                                  setActionLoading((prev) => ({
+                                    ...prev,
+                                    [`approve-${p.id}`]: false,
+                                  }));
                                   refresh();
                                 }
                               }}
@@ -254,7 +260,10 @@ export default function PetitionsTable() {
                                     variant: 'error',
                                   });
                                 } finally {
-                                  setActionLoading((prev) => ({ ...prev, [`deny-${p.id}`]: false }));
+                                  setActionLoading((prev) => ({
+                                    ...prev,
+                                    [`deny-${p.id}`]: false,
+                                  }));
                                   refresh();
                                 }
                               }}

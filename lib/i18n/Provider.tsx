@@ -21,7 +21,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       return 'en' as 'he' | 'en';
     }
   })();
-  
+
   const isInitialized = useRef(false);
 
   // Initialize i18n once during render (before first useEffect)

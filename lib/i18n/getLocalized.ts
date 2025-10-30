@@ -22,5 +22,3 @@ export function getLocalized<T>(opts: {
   }
   return fallback as T;
 }
-
-

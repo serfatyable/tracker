@@ -8,7 +8,10 @@ interface OnCallShift {
   dateKey: string;
 }
 
-export function buildOnCallIcs(assignments: OnCallAssignment[] | OnCallShift[], userName?: string): string {
+export function buildOnCallIcs(
+  assignments: OnCallAssignment[] | OnCallShift[],
+  userName?: string,
+): string {
   const events = assignments.map((a: any) => {
     // Handle new shift format
     if (a.date && a.shiftType) {
@@ -20,7 +23,7 @@ export function buildOnCallIcs(assignments: OnCallAssignment[] | OnCallShift[], 
       const uid = `oncall-${simpleHash(`${shift.dateKey}-${shift.shiftType}`)}@tracker`;
       return { uid, title, start, end };
     }
-    
+
     // Handle legacy assignment format
     const assignment = a as OnCallAssignment;
     const start = (assignment.startAt as any).seconds

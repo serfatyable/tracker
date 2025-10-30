@@ -85,7 +85,16 @@ export default function ResidentsTab({
           b.resident.fullName || b.resident.uid,
         ),
       );
-  }, [myAssignments, resById, rotById, petitionsByResident, search, onlyWithPetitions, onlyOwned, ownedRotationIds]);
+  }, [
+    myAssignments,
+    resById,
+    rotById,
+    petitionsByResident,
+    search,
+    onlyWithPetitions,
+    onlyOwned,
+    ownedRotationIds,
+  ]);
 
   return (
     <div className="space-y-3">

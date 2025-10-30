@@ -76,9 +76,7 @@ export default function DeleteExamDialog({
               {/* Show exam titles */}
               <div className="bg-gray-50 rounded-lg p-3 max-h-32 overflow-y-auto">
                 {exams.map((exam) => {
-                  const subjectTitles = exam.subjects
-                    .map((subject) => subject.titleEn)
-                    .join(' + ');
+                  const subjectTitles = exam.subjects.map((subject) => subject.titleEn).join(' + ');
                   return (
                     <div key={exam.id} className="text-sm text-gray-700 py-1">
                       • {subjectTitles}

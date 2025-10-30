@@ -29,5 +29,3 @@ export function haptic(style: HapticStyle = 'light') {
     /* noop */
   }
 }
-
-

@@ -146,6 +146,7 @@ allow read: if isAdminApproved() ||
    - ⚠️ If rules have a bug, client sees too much
 
 3. **`useReflectionsForResident`** (lib/hooks/useReflections.ts):
+
    ```typescript
    // Lines 67-70: Queries by residentId (passed from client)
    const qRef = query(
@@ -228,6 +229,7 @@ allow read: if isAdminApproved() ||
    - ⚠️ Any resident can see all morning meetings (probably OK - shared schedule)
 
 4. **On-Call Assignments** (line 138):
+
    ```javascript
    allow read: if isSignedIn();
    ```

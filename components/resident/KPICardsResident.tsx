@@ -36,7 +36,9 @@ export default function KPICardsResident() {
     return (
       <div className="card-levitate rounded border p-3 border-muted/12">
         <div className="text-sm font-medium text-foreground/80 dark:text-white/80">{title}</div>
-        <div className="text-3xl font-semibold tracking-tight text-foreground dark:text-white">{value}</div>
+        <div className="text-3xl font-semibold tracking-tight text-foreground dark:text-white">
+          {value}
+        </div>
         <div className="text-xs text-muted">{subtle}</div>
       </div>
     );

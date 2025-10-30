@@ -228,7 +228,7 @@ export function validateEnvSafe(): ValidationResult {
 
     if (!hasAdminCreds) {
       warnings.push(
-        'WARNING: Firebase Admin SDK credentials not found. Server-side operations may fail.'
+        'WARNING: Firebase Admin SDK credentials not found. Server-side operations may fail.',
       );
     }
 
@@ -239,7 +239,7 @@ export function validateEnvSafe(): ValidationResult {
     if (!hasRateLimiting) {
       warnings.push(
         'WARNING: Upstash Redis credentials not found. Rate limiting will be disabled. ' +
-        'This is a security risk in production!'
+          'This is a security risk in production!',
       );
     }
 
@@ -247,14 +247,14 @@ export function validateEnvSafe(): ValidationResult {
     if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
       warnings.push(
         'WARNING: Sentry DSN not found. Error tracking will be disabled. ' +
-        'You will not be notified of production errors!'
+          'You will not be notified of production errors!',
       );
     }
 
     // In production, APP_URL should be set
     if (!process.env.NEXT_PUBLIC_APP_URL) {
       warnings.push(
-        'WARNING: NEXT_PUBLIC_APP_URL not set. Calendar subscriptions and absolute URLs may not work correctly.'
+        'WARNING: NEXT_PUBLIC_APP_URL not set. Calendar subscriptions and absolute URLs may not work correctly.',
       );
     }
   }
@@ -267,8 +267,8 @@ export function validateEnvSafe(): ValidationResult {
     if (!usingEmulators && !hasFirebaseConfig) {
       warnings.push(
         'INFO: Neither Firebase credentials nor emulators are configured. ' +
-        'Set NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true to use emulators, ' +
-        'or add Firebase credentials to .env.local'
+          'Set NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true to use emulators, ' +
+          'or add Firebase credentials to .env.local',
       );
     }
   }
@@ -327,10 +327,12 @@ export function validateEnv(): void {
     });
 
     console.error('Fix these issues and restart the application.');
-    console.error('See .env.example for a template, or ENV_TEMPLATE.md for detailed instructions.\n');
+    console.error(
+      'See .env.example for a template, or ENV_TEMPLATE.md for detailed instructions.\n',
+    );
 
     throw new Error(
-      `Missing required environment variables: ${result.missingRequired.map((e) => e.varName).join(', ')}`
+      `Missing required environment variables: ${result.missingRequired.map((e) => e.varName).join(', ')}`,
     );
   }
 }

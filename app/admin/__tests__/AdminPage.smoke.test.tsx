@@ -120,18 +120,18 @@ describe('AdminPage smoke', () => {
     ensureCoreRotationsSeededMock.mockResolvedValue(undefined);
 
     render(<AdminPage />);
-    
+
     // Wait for dashboard title to appear (it's an h1, not a button)
     await screen.findByRole('heading', { name: /Dashboard/i, level: 1 });
-    
+
     // Verify dashboard sections are present (use getAllByText since there may be multiple instances)
     expect(screen.getAllByText(/Morning Meetings/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/On Call/i).length).toBeGreaterThan(0);
-    
+
     // Verify links to other pages exist
     const openButtons = screen.getAllByText(/open/i);
     expect(openButtons.length).toBeGreaterThan(0);
-    
+
     if ((globalThis as any).flushAllPromises) {
       await (globalThis as any).flushAllPromises();
     }

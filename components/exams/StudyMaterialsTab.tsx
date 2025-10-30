@@ -10,7 +10,6 @@ import { getLocalized } from '@/lib/i18n/getLocalized';
 import { haptic } from '@/lib/utils/haptics';
 import type { Exam } from '@/types/exam';
 
-
 interface StudyMaterialsTabProps {
   exam: Exam;
   isAdmin: boolean;

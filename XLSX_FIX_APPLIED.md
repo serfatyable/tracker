@@ -74,6 +74,7 @@ pnpm dev
 ## 🎯 Expected Behavior
 
 After restarting:
+
 - ✅ No console errors about missing vendor chunks
 - ✅ Excel file upload works smoothly
 - ✅ Preview dialog displays correctly
@@ -86,7 +87,7 @@ If you still see errors:
 
 1. **Check Console**: Look for new error messages
 2. **Clear Browser Cache**: Hard refresh (Cmd+Shift+R or Ctrl+Shift+R)
-3. **Check Node Version**: Ensure you're using Node 18+ 
+3. **Check Node Version**: Ensure you're using Node 18+
 4. **Reinstall Dependencies**: `rm -rf node_modules && pnpm install`
 
 ## 📊 Status
@@ -99,4 +100,3 @@ If you still see errors:
 ---
 
 **Ready to test!** Just restart your dev server and the xlsx import should work perfectly. 🎉
-

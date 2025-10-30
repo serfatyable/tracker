@@ -12,6 +12,7 @@
 The Tracker application has a **solid foundation** with strong architecture, comprehensive security headers, proper authentication, and good code quality. However, it requires **critical operational infrastructure** before handling real user data in production.
 
 **Current Status:**
+
 - ✅ Core application features complete
 - ✅ Authentication & authorization working
 - ✅ Security headers implemented
@@ -37,9 +38,11 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ## P0: BLOCKING ISSUES (Complete Before Launch)
 
 ### 1. Implement Rate Limiting on API Routes
+
 **Status:** ❌ Not Implemented
 **Risk:** HIGH - Endpoints vulnerable to abuse, brute force, and enumeration attacks
 **Files Affected:**
+
 - `/app/api/ics/morning-meetings/[token]/route.ts` (has TODO comment)
 - `/app/api/on-call/import/route.ts`
 - `/app/api/morning-meetings/import/route.ts`
@@ -47,6 +50,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 - All `/app/api/templates/*` routes
 
 **Action Items:**
+
 - [ ] Choose rate limiting solution (Upstash Redis recommended for Vercel)
 - [ ] Install rate limiting package: `pnpm add @upstash/ratelimit @upstash/redis`
 - [ ] Create rate limiting middleware at `lib/middleware/rateLimit.ts`
@@ -64,14 +68,17 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 2. Set Up Error Tracking Service
+
 **Status:** ❌ Not Implemented (placeholder code exists)
 **Risk:** HIGH - Cannot monitor production issues, no visibility into errors
 **Files Affected:**
+
 - `/lib/utils/logger.ts` (has `sendToErrorTracking()` placeholder)
 - `/app/error.tsx` (logs to console only)
 - `/app/global-error.tsx` (logs to console only)
 
 **Action Items:**
+
 - [ ] Choose error tracking service (Sentry recommended)
 - [ ] Sign up for Sentry account and create project
 - [ ] Install Sentry: `pnpm add @sentry/nextjs`
@@ -93,14 +100,17 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 3. Secure ICS Calendar Endpoints
+
 **Status:** ⚠️ PARTIAL - Endpoints work but lack authentication
 **Risk:** HIGH - Public data exposure, potential enumeration
 **Files Affected:**
+
 - `/app/api/ics/on-call/route.ts`
 - `/app/api/ics/morning-meetings/route.ts`
 - `/app/api/ics/morning-meetings/[token]/route.ts`
 
 **Action Items:**
+
 - [ ] **Option A (Recommended):** Add Firebase authentication requirement
   - Add `requireAuth()` check to all ICS endpoints
   - Return 401 for unauthenticated requests
@@ -121,13 +131,16 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 4. Add Tests to CI/CD Pipeline
+
 **Status:** ⚠️ PARTIAL - Tests exist but don't run in CI
 **Risk:** MEDIUM - No automated quality gate for PRs
 **Files Affected:**
+
 - `/.github/workflows/ci.yml` (missing test step)
 - `/vitest.config.ts` (no coverage thresholds)
 
 **Action Items:**
+
 - [ ] Add test step to `.github/workflows/ci.yml`:
   ```yaml
   - name: Run tests with coverage
@@ -158,11 +171,13 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 5. Create Automated Firestore Backup Script
+
 **Status:** ❌ Not Implemented (documented but not created)
 **Risk:** CRITICAL - Risk of data loss without backups
 **Current State:** CLAUDE.md mentions "Daily Firestore export, weekly storage backup" but no automation exists
 
 **Action Items:**
+
 - [ ] **Enable Cloud Firestore Backups (Recommended):**
   - Enable Firestore Backup & Disaster Recovery in Firebase Console
   - Configure daily automatic backups
@@ -191,10 +206,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ## P1: CRITICAL (Complete Within Launch Week)
 
 ### 6. Environment Variable Validation
+
 **Status:** ⚠️ PARTIAL - Variables used but no startup validation
 **Risk:** MEDIUM - App may fail in production with missing vars
 
 **Action Items:**
+
 - [ ] Create `lib/config/validateEnv.ts`:
   ```typescript
   // Validate all required env vars at startup
@@ -218,9 +235,11 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 7. Configure Production Firebase Project
+
 **Status:** ⚠️ UNKNOWN - Need to verify production Firebase project setup
 
 **Action Items:**
+
 - [ ] Create production Firebase project (if not exists)
 - [ ] Set up Firebase Billing account
 - [ ] Configure Firestore database in `eur3` region (EU)
@@ -244,9 +263,11 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 8. Configure Vercel Production Deployment
+
 **Status:** ⚠️ UNKNOWN - Need to verify Vercel project setup
 
 **Action Items:**
+
 - [ ] Create Vercel project (if not exists)
 - [ ] Connect GitHub repository
 - [ ] Configure production branch: `main`
@@ -274,10 +295,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 9. Add Comprehensive API Route Tests
+
 **Status:** ⚠️ MINIMAL - Only basic tests exist
 **Risk:** MEDIUM - Import logic not fully tested
 
 **Action Items:**
+
 - [ ] Create test file: `app/api/on-call/import/__tests__/route.test.ts`
   - Test successful import
   - Test invalid CSV format
@@ -303,10 +326,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 10. Load Testing & Performance Validation
+
 **Status:** ❌ Not Done
 **Risk:** MEDIUM - Unknown performance under load
 
 **Action Items:**
+
 - [ ] Install load testing tool: `pnpm add -D k6` or use Artillery
 - [ ] Create load test scenarios:
   - User authentication (sign in/sign up)
@@ -331,12 +356,15 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ## P2: HIGH PRIORITY (Complete Within First Month)
 
 ### 11. Implement Email Notification Service
+
 **Status:** ❌ Not Implemented (TODOs in code)
 **Risk:** LOW - Feature documented but not critical
 **Files Affected:**
+
 - `/lib/notifications/petitionNotifications.ts` (2 TODO comments)
 
 **Action Items:**
+
 - [ ] Choose email service (SendGrid, AWS SES, or Resend recommended)
 - [ ] Sign up for email service account
 - [ ] Install email service SDK
@@ -358,10 +386,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 12. Add Analytics & Monitoring
+
 **Status:** ❌ Not Implemented
 **Risk:** LOW - Cannot track usage patterns
 
 **Action Items:**
+
 - [ ] **Web Analytics:**
   - Install Vercel Web Analytics: `pnpm add @vercel/analytics`
   - Add Analytics component to root layout
@@ -393,9 +423,11 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 13. Security Hardening
+
 **Status:** ⚠️ PARTIAL - Headers good, some gaps remain
 
 **Action Items:**
+
 - [ ] **Input Validation Enhancement:**
   - Add max length validation to all text inputs
   - Add character allowlist for Hebrew inputs
@@ -427,10 +459,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 14. Expand Unit Test Coverage
+
 **Status:** ⚠️ PARTIAL - Smoke tests good, unit tests minimal
 **Goal:** Achieve 80%+ coverage on critical functions
 
 **Action Items:**
+
 - [ ] Add unit tests for Firebase hooks:
   - `lib/hooks/useCurrentUserProfile.ts`
   - `lib/hooks/useRotations.ts`
@@ -458,10 +492,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 15. Create Production Runbooks
+
 **Status:** ❌ Not Created
 **Risk:** MEDIUM - No operational documentation
 
 **Action Items:**
+
 - [ ] Create `docs/runbooks/` directory
 - [ ] **Incident Response Runbook** (`incident-response.md`):
   - How to investigate production errors
@@ -498,10 +534,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ## P3: MEDIUM PRIORITY (Complete Within 2-3 Months)
 
 ### 16. Lighthouse CI Integration
+
 **Status:** ❌ Not Configured
 **Goal:** Maintain Lighthouse score ≥90
 
 **Action Items:**
+
 - [ ] Install Lighthouse CI: `pnpm add -D @lhci/cli`
 - [ ] Create `lighthouserc.json` configuration
 - [ ] Add Lighthouse CI to GitHub Actions:
@@ -525,10 +563,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 17. Bundle Size Optimization
+
 **Status:** ⚠️ UNKNOWN - Need to measure
 **Goal:** Target ≤200KB JS bundle (per CLAUDE.md)
 
 **Action Items:**
+
 - [ ] Run bundle analyzer: `pnpm build:analyze`
 - [ ] Identify large dependencies
 - [ ] Evaluate alternatives for heavy packages:
@@ -549,10 +589,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 18. Implement Feature Flags
+
 **Status:** ❌ Not Implemented
 **Goal:** Enable gradual rollout of new features
 
 **Action Items:**
+
 - [ ] Choose feature flag service (LaunchDarkly, ConfigCat, or custom)
 - [ ] Install feature flag SDK
 - [ ] Create feature flag configuration
@@ -571,10 +613,12 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 19. Add Accessibility Testing
+
 **Status:** ⚠️ MANUAL ONLY - No automated tests
 **Goal:** WCAG AA compliance (documented in CLAUDE.md)
 
 **Action Items:**
+
 - [ ] Install accessibility testing tools:
   - `pnpm add -D @axe-core/react`
   - `pnpm add -D jest-axe`
@@ -600,9 +644,11 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 20. Internationalization Enhancements
+
 **Status:** ⚠️ GOOD but could be better
 
 **Action Items:**
+
 - [ ] Add missing Hebrew translations:
   - Run translation audit script (if exists)
   - Identify missing keys in `he.json`
@@ -629,9 +675,11 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ## P4: LOW PRIORITY (Nice to Have)
 
 ### 21. Implement Service Worker for Offline Support
+
 **Status:** ❌ Not Implemented
 
 **Action Items:**
+
 - [ ] Create service worker for offline caching
 - [ ] Implement offline-first strategy for static assets
 - [ ] Add offline fallback page
@@ -644,9 +692,11 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 22. Add Storybook for Component Documentation
+
 **Status:** ❌ Not Implemented
 
 **Action Items:**
+
 - [ ] Install Storybook: `pnpm dlx storybook@latest init`
 - [ ] Create stories for common components:
   - Button, TextInput, Dialog, etc.
@@ -659,9 +709,11 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 23. Implement Advanced Analytics Dashboard
+
 **Status:** ❌ Not Implemented (Phase 3 feature)
 
 **Action Items:**
+
 - [ ] Design analytics dashboard for admins
 - [ ] Implement tutor fairness metrics
 - [ ] Add resident progress tracking
@@ -675,9 +727,11 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ---
 
 ### 24. Multi-Site Support
+
 **Status:** ❌ Not Implemented (Phase 4 feature)
 
 **Action Items:**
+
 - [ ] Design multi-tenancy architecture
 - [ ] Add organization/site entity to Firestore
 - [ ] Implement site-level data isolation
@@ -693,6 +747,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ## Summary & Recommended Timeline
 
 ### Week 1 (Before Launch)
+
 - [ ] Task #1: Implement rate limiting
 - [ ] Task #2: Set up error tracking
 - [ ] Task #3: Secure ICS endpoints
@@ -702,6 +757,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 **Total Estimated Time:** 18-22 hours
 
 ### Week 2 (Launch Week)
+
 - [ ] Task #6: Environment validation
 - [ ] Task #7: Configure production Firebase
 - [ ] Task #8: Configure Vercel deployment
@@ -711,6 +767,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 **Total Estimated Time:** 17-24 hours
 
 ### Month 1 (Post-Launch)
+
 - [ ] Task #11: Email notifications
 - [ ] Task #12: Analytics & monitoring
 - [ ] Task #13: Security hardening
@@ -720,6 +777,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 **Total Estimated Time:** 35-46 hours
 
 ### Months 2-3 (Optimization)
+
 - [ ] Tasks #16-20: Lighthouse CI, bundle optimization, feature flags, accessibility, i18n
 
 **Total Estimated Time:** 23-31 hours
@@ -755,17 +813,20 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ## Risk Assessment
 
 ### Critical Risks (Must Address Before Launch)
+
 1. **No Rate Limiting** → DoS attacks, resource exhaustion
 2. **No Error Tracking** → Blind to production issues
 3. **No Backups** → Data loss risk
 4. **Unauthenticated ICS Endpoints** → Data exposure
 
 ### High Risks (Address During Launch Week)
+
 5. **No Tests in CI** → Quality regression risk
 6. **No Load Testing** → Performance issues under load
 7. **Missing Environment Validation** → Runtime failures
 
 ### Medium Risks (Address Within First Month)
+
 8. **No Email Notifications** → Reduced user engagement
 9. **No Monitoring** → Cannot track usage or issues
 10. **Incomplete Test Coverage** → Hidden bugs
@@ -802,6 +863,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ## Post-Launch Monitoring
 
 **First 24 Hours:**
+
 - Monitor Sentry for errors
 - Monitor Vercel analytics for traffic
 - Monitor Firebase usage/quotas
@@ -810,6 +872,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 - Test all critical user flows
 
 **First Week:**
+
 - Review error rates and patterns
 - Analyze user behavior and flows
 - Monitor performance metrics
@@ -818,6 +881,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 - Gather user feedback
 
 **First Month:**
+
 - Complete P2 high-priority tasks
 - Review analytics data
 - Optimize based on real usage
@@ -829,6 +893,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 ## Success Metrics
 
 **Technical Metrics:**
+
 - Uptime: ≥99.9%
 - Error rate: <0.1%
 - Response time: <2s p95
@@ -837,6 +902,7 @@ The Tracker application has a **solid foundation** with strong architecture, com
 - Bundle size: ≤200KB
 
 **Business Metrics:**
+
 - User sign-ups: Track growth
 - Task submissions: Daily/weekly count
 - Task approvals: Average time to approval

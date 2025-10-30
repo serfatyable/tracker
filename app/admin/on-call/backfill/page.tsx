@@ -87,9 +87,7 @@ export default function AdminOnCallBackfillPage() {
               </button>
             </div>
           </div>
-          {disabled ? (
-            <div className="text-sm text-red-600">Admin access required.</div>
-          ) : null}
+          {disabled ? <div className="text-sm text-red-600">Admin access required.</div> : null}
           {error ? <pre className="text-sm text-red-600 whitespace-pre-wrap">{error}</pre> : null}
           {result ? (
             <pre className="text-xs whitespace-pre-wrap break-words bg-gray-50 p-2 rounded border">
@@ -101,5 +99,3 @@ export default function AdminOnCallBackfillPage() {
     </AppShell>
   );
 }
-
-

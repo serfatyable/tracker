@@ -3,11 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { NextResponse } from 'next/server';
 
 import { initializeFirebaseAdmin } from '@/lib/firebase/admin-init';
-import {
-  rateLimiters,
-  checkRateLimit,
-  getClientIdentifier,
-} from '@/lib/middleware/rateLimit';
+import { rateLimiters, checkRateLimit, getClientIdentifier } from '@/lib/middleware/rateLimit';
 
 // Server-side Excel parsing
 async function parseOnCallExcelServer(buffer: ArrayBuffer) {

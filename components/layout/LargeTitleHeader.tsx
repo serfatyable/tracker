@@ -49,7 +49,11 @@ export default function LargeTitleHeader({
               {title}
             </h1>
             {subtitle ? (
-              <div className={`transition-opacity duration-200 ${compact ? 'opacity-70 text-sm' : 'opacity-80 text-base'} text-gray-500 dark:text-[rgb(var(--muted))]`}>{subtitle}</div>
+              <div
+                className={`transition-opacity duration-200 ${compact ? 'opacity-70 text-sm' : 'opacity-80 text-base'} text-gray-500 dark:text-[rgb(var(--muted))]`}
+              >
+                {subtitle}
+              </div>
             ) : null}
           </div>
           {rightSlot ? (

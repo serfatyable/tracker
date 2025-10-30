@@ -122,9 +122,17 @@ export default function Resources({
                       </div>
                       <button
                         className={`text-sm ${favorites.includes(it.href) ? 'text-amber-500' : 'text-gray-400'}`}
-                        title={favorites.includes(it.href) ? t('dashboard.favorites') : t('dashboard.favorites')}
+                        title={
+                          favorites.includes(it.href)
+                            ? t('dashboard.favorites')
+                            : t('dashboard.favorites')
+                        }
                         onClick={() => toggleFavorite(it.href)}
-                        aria-label={favorites.includes(it.href) ? t('dashboard.favorites') : t('dashboard.favorites')}
+                        aria-label={
+                          favorites.includes(it.href)
+                            ? t('dashboard.favorites')
+                            : t('dashboard.favorites')
+                        }
                       >
                         ★
                       </button>
@@ -184,9 +192,17 @@ export default function Resources({
                   </div>
                   <button
                     className={`text-sm ${favorites.includes(it.href) ? 'text-amber-500' : 'text-gray-400'}`}
-                    title={favorites.includes(it.href) ? t('dashboard.favorites') : t('dashboard.favorites')}
+                    title={
+                      favorites.includes(it.href)
+                        ? t('dashboard.favorites')
+                        : t('dashboard.favorites')
+                    }
                     onClick={() => toggleFavorite(it.href)}
-                    aria-label={favorites.includes(it.href) ? t('dashboard.favorites') : t('dashboard.favorites')}
+                    aria-label={
+                      favorites.includes(it.href)
+                        ? t('dashboard.favorites')
+                        : t('dashboard.favorites')
+                    }
                   >
                     ★
                   </button>

@@ -93,7 +93,9 @@ export default function RotationTree({ rotationId }: Props) {
           <h3 className="text-sm font-semibold text-gray-700 dark:text-[rgb(var(--fg))]">
             📂 Curriculum Structure
           </h3>
-          <p className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">Click any item to edit →</p>
+          <p className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">
+            Click any item to edit →
+          </p>
         </div>
 
         {/* Search Bar */}
@@ -149,7 +151,9 @@ export default function RotationTree({ rotationId }: Props) {
       {/* RIGHT PANEL: Node Editor */}
       <div className="lg:col-span-2 rounded-md border-2 border-blue-300 dark:border-blue-700 bg-white dark:bg-[rgb(var(--surface))] p-4">
         <div className="mb-4 pb-3 border-b border-gray-200 dark:border-[rgb(var(--border))]">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-[rgb(var(--fg))]">✏️ Edit Node</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-[rgb(var(--fg))]">
+            ✏️ Edit Node
+          </h3>
         </div>
         {!current ? (
           <div className="p-8 text-center">
@@ -410,7 +414,9 @@ function NodeEditor({
   const isLeaf = node.type === 'leaf';
   const [requiredCount, setRequiredCount] = useState<number>(node.requiredCount || 0);
   const [mcqUrl, setMcqUrl] = useState<string>(node.mcqUrl || '');
-  const [links, setLinks] = useState<Array<{ label?: string; label_en?: string; label_he?: string; href: string }>>(node.links || []);
+  const [links, setLinks] = useState<
+    Array<{ label?: string; label_en?: string; label_he?: string; href: string }>
+  >(node.links || []);
   const [resources, setResources] = useState<string>(node.resources || '');
   const [notesEn, setNotesEn] = useState<string>(node.notes_en || '');
   const [notesHe, setNotesHe] = useState<string>(node.notes_he || '');
@@ -444,7 +450,9 @@ function NodeEditor({
       </div>
       {parentType ? (
         <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">{t('rotationTree.parent')}</label>
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-50">
+            {t('rotationTree.parent')}
+          </label>
           <Select
             value={node.parentId || ''}
             onChange={(e) => onMoveParent(e.target.value || null)}
@@ -507,7 +515,9 @@ function NodeEditor({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">MCQ URL</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">
+              MCQ URL
+            </label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -530,7 +540,9 @@ function NodeEditor({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">Resources</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">
+              Resources
+            </label>
             <textarea
               value={resources}
               onChange={(e) => setResources(e.target.value)}
@@ -545,7 +557,9 @@ function NodeEditor({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">Notes (English)</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">
+              Notes (English)
+            </label>
             <textarea
               value={notesEn}
               onChange={(e) => setNotesEn(e.target.value)}
@@ -555,10 +569,14 @@ function NodeEditor({
               maxLength={500}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))] resize-y"
             />
-            <div className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">{notesEn.length}/500 characters</div>
+            <div className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">
+              {notesEn.length}/500 characters
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">Notes (Hebrew)</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">
+              Notes (Hebrew)
+            </label>
             <textarea
               value={notesHe}
               onChange={(e) => setNotesHe(e.target.value)}
@@ -569,7 +587,9 @@ function NodeEditor({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-[rgb(var(--surface-depressed))] dark:border-[rgb(var(--border))] dark:text-[rgb(var(--fg))] resize-y"
               dir="rtl"
             />
-            <div className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">{notesHe.length}/500 characters</div>
+            <div className="text-xs text-gray-500 dark:text-[rgb(var(--muted))] mt-1">
+              {notesHe.length}/500 characters
+            </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
