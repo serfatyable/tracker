@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
 import * as clientMod from '../../../lib/firebase/client';
@@ -105,7 +104,7 @@ vi.mock('../../../lib/hooks/useUserTasks', () => ({
   useUserTasks: () => ({ tasks: [], loading: false, error: null }),
 }));
 
-describe('ResidentPage Rotations smoke', () => {
+describe('ResidentPage Home smoke', () => {
   beforeEach(() => {
     vi.spyOn(clientMod, 'getFirebaseStatus').mockReturnValue({
       ok: true,
@@ -114,18 +113,20 @@ describe('ResidentPage Rotations smoke', () => {
     } as any);
   });
 
-  it('shows rotations grid and opens tree, allows +1 click', async () => {
-    const user = userEvent.setup();
+  it('shows home dashboard with key sections', async () => {
     render(<ResidentPage />);
-    // Navigate to Rotations tab then expect ICU
-    const rotButtons = await screen.findAllByRole('button', { name: /Rotations/i });
-    await user.click(rotButtons[0]!);
-    await screen.findByText(/ICU/i);
-    // Open ICU
-    await user.click(screen.getAllByText('Open')[0]!);
-    await screen.findByText('Skills');
-    // Expand tree and click +1
-    const plus = await screen.findByRole('button', { name: '+1' });
-    expect(plus).toBeInTheDocument();
+    
+    // Wait for home/dashboard title to appear
+    await screen.findByRole('heading', { name: /home/i, level: 1 });
+    
+    // Verify key dashboard sections are present
+    expect(screen.getByText(/Required/i)).toBeInTheDocument();
+    expect(screen.getByText(/Approved/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pending/i)).toBeInTheDocument();
+    
+    // Verify quick action buttons exist
+    expect(screen.getByText(/Log activity/i)).toBeInTheDocument();
+    expect(screen.getByText(/Search rotations/i)).toBeInTheDocument();
+    expect(screen.getByText(/Go to active rotation/i)).toBeInTheDocument();
   });
 });

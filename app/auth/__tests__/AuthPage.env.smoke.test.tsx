@@ -19,7 +19,9 @@ describe('AuthPage env handling', () => {
     delete process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     delete process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
     delete process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
-    const { getByText } = render((<AuthPage />) as any);
-    expect(getByText(/Firebase is not configured/i)).toBeTruthy();
+    const { getAllByText } = render((<AuthPage />) as any);
+    // i18n mock humanizes the key to lowercase with spaces (multiple instances exist)
+    const warnings = getAllByText(/firebase not configured/i);
+    expect(warnings.length).toBeGreaterThan(0);
   });
 });

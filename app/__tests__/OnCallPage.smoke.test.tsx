@@ -19,16 +19,16 @@ vi.mock('../../lib/hooks/useOnCallByDate', () => ({
 }));
 
 describe('OnCallPage smoke', () => {
-  it('renders headings', () => {
+  it('renders tab navigation', () => {
     vi.spyOn(clientMod, 'getFirebaseStatus').mockReturnValue({
       ok: true,
       missing: [],
       usingEmulators: false,
     });
     render(<OnCallPage />);
-    // Assert present headings in current UI
-    expect(screen.getByText(/title/i)).toBeInTheDocument();
-    expect(screen.getByText(/today/i)).toBeInTheDocument();
-    expect(screen.getByText(/timeline/i)).toBeInTheDocument();
+    // Assert tab buttons are present
+    expect(screen.getByRole('button', { name: /my/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /today/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /timeline/i })).toBeInTheDocument();
   });
 });

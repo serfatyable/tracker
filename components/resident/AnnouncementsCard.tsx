@@ -16,6 +16,7 @@ export default function AnnouncementsCard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       try {
         setError(null);
@@ -23,18 +24,27 @@ export default function AnnouncementsCard() {
         const snap = await getDocs(
           query(collection(db, 'announcements'), where('published', '==', true)),
         );
-        setItems(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as any);
+        if (mounted) {
+          setItems(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as any);
+        }
       } catch (err: any) {
         console.error('Failed to load announcements:', err);
-        setError(
-          t('ui.failedToLoadAnnouncements', { defaultValue: 'Failed to load announcements' }) ||
-            'Failed to load announcements',
-        );
-        setItems([]);
+        if (mounted) {
+          setError(
+            t('ui.failedToLoadAnnouncements', { defaultValue: 'Failed to load announcements' }) ||
+              'Failed to load announcements',
+          );
+          setItems([]);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     })();
+    return () => {
+      mounted = false;
+    };
   }, [t]);
   return (
     <div
