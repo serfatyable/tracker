@@ -100,9 +100,9 @@ service cloud.firestore {
       allow delete: if isAdminApproved();
     }
 
-    // Rotations: approved admin-only write; read allowed to signed-in users (resident needs browse)
+    // Rotations: approved admin-only write; read allowed to anyone (including unauthenticated users during signup)
     match /rotations/{rotationId} {
-      allow read: if isSignedIn();
+      allow read: if true; // Public read access needed for signup form
       allow create, update, delete: if isAdminApproved();
     }
 
