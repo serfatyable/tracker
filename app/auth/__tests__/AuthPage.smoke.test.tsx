@@ -40,13 +40,6 @@ vi.mock('../../../lib/firebase/auth', () => ({
   requestPasswordReset: requestPasswordResetMock,
 }));
 
-function formatYYYYMMDD(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
 describe('AuthPage smoke', () => {
   beforeEach(() => {
     pushMock.mockClear();
@@ -67,16 +60,16 @@ describe('AuthPage smoke', () => {
     // Verify all required sign-up form fields are present
     const fullNameInputs = screen.getAllByLabelText(/full name/i);
     expect(fullNameInputs.length).toBeGreaterThan(0);
-    
+
     const emailInputs = screen.getAllByLabelText(/email/i);
     expect(emailInputs.length).toBeGreaterThan(0);
-    
+
     const passwordInputs = screen.getAllByLabelText(/^password$/i);
     expect(passwordInputs.length).toBeGreaterThan(0);
 
     // Residency date field should be visible for resident role (default)
     expect(screen.getByLabelText(/residency start date/i)).toBeInTheDocument();
-    
+
     // Submit button should be present
     expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();
   });
@@ -91,7 +84,7 @@ describe('AuthPage smoke', () => {
     // Fill sign-in form fields (multiple labels exist due to tabs, get all and use first for sign-in)
     const emailInputs = screen.getAllByLabelText(/email/i);
     await user.type(emailInputs[0]!, 'user@example.com');
-    
+
     const passwordInputs = screen.getAllByLabelText(/^password$/i);
     await user.type(passwordInputs[0]!, 'password123');
 
