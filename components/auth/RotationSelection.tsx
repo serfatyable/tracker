@@ -42,9 +42,9 @@ export default function RotationSelection({
 
   const handleCurrentChange = (rotationId: string) => {
     onCurrentChange(rotationId);
-    // Automatically add to completed if not already there
-    if (!completedRotationIds.includes(rotationId)) {
-      onCompletedChange([...completedRotationIds, rotationId]);
+    // Remove from completed list if it was selected there
+    if (completedRotationIds.includes(rotationId)) {
+      onCompletedChange(completedRotationIds.filter((id) => id !== rotationId));
     }
   };
 
@@ -96,7 +96,7 @@ export default function RotationSelection({
                   type="checkbox"
                   checked={completedRotationIds.includes(rotation.id)}
                   onChange={() => handleCompletedToggle(rotation.id)}
-                  disabled={disabled || rotation.id === currentRotationId}
+                  disabled={disabled || rotation.id === currentRotationId} // Prevent selecting same rotation as both current and completed
                   className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm">
