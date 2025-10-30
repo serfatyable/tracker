@@ -10,6 +10,7 @@ type Props = {
   onCompletedChange: (ids: string[]) => void;
   onCurrentChange: (id: string) => void;
   disabled?: boolean;
+  loading?: boolean;
   error?: string | null;
   language: 'en' | 'he';
   completedLabel: string;
@@ -23,6 +24,7 @@ export default function RotationSelection({
   onCompletedChange,
   onCurrentChange,
   disabled,
+  loading,
   error,
   language,
   completedLabel,
@@ -80,8 +82,10 @@ export default function RotationSelection({
           <span suppressHydrationWarning>{completedLabel}</span>
         </label>
         <div className="max-h-48 overflow-y-auto rounded border border-gray-300 dark:border-gray-600 p-3 space-y-2">
-          {rotations.length === 0 ? (
+          {loading ? (
             <p className="text-sm text-gray-500">Loading rotations...</p>
+          ) : rotations.length === 0 ? (
+            <p className="text-sm text-gray-500">No rotations available</p>
           ) : (
             rotations.map((rotation) => (
               <label
