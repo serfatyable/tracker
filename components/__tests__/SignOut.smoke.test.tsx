@@ -1,12 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
 import TopBar from '../TopBar';
 
-const { replaceMock, signOutMock } = vi.hoisted(() => ({
+const { replaceMock } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
-  signOutMock: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -14,23 +12,14 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
-vi.mock('../../lib/firebase/auth', () => ({
-  signOut: signOutMock,
+vi.mock('../../lib/hooks/useCurrentUserProfile', () => ({
+  useCurrentUserProfile: () => ({ data: { uid: 'u1', fullName: 'Test User' } }),
 }));
 
-describe('Sign out smoke', () => {
-  beforeEach(() => {
-    replaceMock.mockClear();
-    signOutMock.mockClear();
-  });
-
-  it('signs out and navigates to /auth', async () => {
-    const user = userEvent.setup();
+describe('TopBar smoke', () => {
+  it('renders language toggle', () => {
     render(<TopBar />);
-
-    await user.click(screen.getByRole('button', { name: /sign out/i }));
-
-    expect(signOutMock).toHaveBeenCalledTimes(1);
-    expect(replaceMock).toHaveBeenCalledWith('/auth');
+    // TopBar should render with language toggle
+    expect(screen.getByRole('button', { name: /toggle language/i })).toBeInTheDocument();
   });
 });

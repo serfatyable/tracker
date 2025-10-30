@@ -6,7 +6,8 @@ import ErrorBoundary from '../../app/error';
 describe('Error boundary', () => {
   it('renders message and retry button', () => {
     const { getByText } = render(<ErrorBoundary error={new Error('boom')} reset={() => {}} />);
-    expect(getByText('Something went wrong')).toBeTruthy();
-    expect(getByText('Retry')).toBeTruthy();
+    // i18n mock humanizes keys to lowercase with spaces
+    expect(getByText(/something went wrong/i)).toBeTruthy();
+    expect(getByText(/try again/i)).toBeTruthy();
   });
 });
