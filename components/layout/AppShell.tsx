@@ -3,8 +3,6 @@ import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import TopBar from '../TopBar';
 import NetworkStatusIndicator from '../ui/NetworkStatusIndicator';
 
-import BottomBar from './BottomBar';
-
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { data: _me } = useCurrentUserProfile();
   return (
@@ -15,12 +13,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="mx-auto flex w-full max-w-6xl">
-        <main className="flex-1 p-3 sm:p-4 md:p-6 pb-24 md:pb-6 pad-safe-b min-w-0" role="main">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 pb-6 pad-safe-b min-w-0" role="main">
           {children}
         </main>
       </div>
-      {/* Show bottom tabs for all roles (role-based items inside the bar) */}
-      <BottomBar />
       <NetworkStatusIndicator show="offline-only" position="bottom" />
     </div>
   );
