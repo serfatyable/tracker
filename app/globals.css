@@ -263,6 +263,11 @@ textarea {
     border-color: rgb(var(--btn-color) / 0.4);
     box-shadow: 0 1px 2px 0 rgb(var(--btn-color) / 0.08);
   }
+  .input-levitate[type='date'] {
+    min-width: 0;
+    max-width: 100%;
+    -webkit-appearance: none;
+  }
   .input-levitate:hover {
     background-color: rgb(var(--btn-color) / 0.04);
     box-shadow: 0 8px 10px -4px rgb(var(--btn-color) / 0.18);
