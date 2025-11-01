@@ -3,8 +3,9 @@ import { getApps, getApp, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 
-import { validateEnv } from '../config/validateEnv';
 import { logger } from '../utils/logger';
+
+import { validateEnv } from '@/lib/config/validateEnv';
 
 type FirebasePublicConfig = {
   apiKey: string;
@@ -12,6 +13,14 @@ type FirebasePublicConfig = {
   projectId: string;
   storageBucket: string;
   appId: string;
+};
+
+const firebaseEnvVarNames: { [K in keyof FirebasePublicConfig]: string } = {
+  apiKey: 'NEXT_PUBLIC_FIREBASE_API_KEY',
+  authDomain: 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+  projectId: 'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  storageBucket: 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+  appId: 'NEXT_PUBLIC_FIREBASE_APP_ID',
 };
 
 export type FirebaseStatus = {
@@ -29,17 +38,9 @@ export function getFirebaseStatus(): FirebaseStatus {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   };
 
-  const keyToEnvVar: { [K in keyof FirebasePublicConfig]: string } = {
-    apiKey: 'NEXT_PUBLIC_FIREBASE_API_KEY',
-    authDomain: 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'demo-project',
-    storageBucket: 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-    appId: 'NEXT_PUBLIC_FIREBASE_APP_ID',
-  };
-
   const missing = (Object.entries(env) as [keyof FirebasePublicConfig, string | undefined][])
     .filter(([, value]) => !value)
-    .map(([key]) => keyToEnvVar[key]);
+    .map(([key]) => firebaseEnvVarNames[key]);
 
   return {
     ok: missing.length === 0,
@@ -61,17 +62,17 @@ function getValidatedConfig(): FirebasePublicConfig {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   } as Record<string, string | undefined>;
 
-  const missing = Object.entries(env)
+  const missingKeys = (Object.entries(env) as [keyof FirebasePublicConfig, string | undefined][])
     .filter(([, value]) => !value)
     .map(([key]) => key);
 
-  if (missing.length > 0) {
+  if (missingKeys.length > 0) {
+    const missingEnvVars = missingKeys.map((key) => firebaseEnvVarNames[key]);
+    const missingList = missingEnvVars.join(', ');
     // Keep throwing here to prevent initializing Firebase with a bad config.
     // Callers should gate on getFirebaseStatus() before calling getFirebaseApp().
     throw new Error(
-      `Missing Firebase env vars: ${missing.join(
-        ', ',
-      )}. Ensure .env.local matches .env.example or set Vercel Environment Variables.`,
+      `Missing Firebase env vars: ${missingList}. Ensure .env.local matches .env.example or set Vercel Environment Variables.`,
     );
   }
 
@@ -79,9 +80,16 @@ function getValidatedConfig(): FirebasePublicConfig {
 }
 
 export function getFirebaseApp(): FirebaseApp {
-  // Validate all environment variables at startup
-  // This ensures we fail fast with clear error messages if misconfigured
-  validateEnv();
+  const isServer = typeof window === 'undefined';
+
+  // Validate all environment variables at startup when running on the server.
+  // Dynamic access to process.env values is stripped from the browser bundle
+  // by Next.js, so client-side validation would incorrectly report missing
+  // variables even when they are defined. We still validate on the server to
+  // catch configuration issues early during SSR or API usage.
+  if (isServer) {
+    validateEnv();
+  }
 
   if (!getApps().length) {
     const app = initializeApp(getValidatedConfig());
