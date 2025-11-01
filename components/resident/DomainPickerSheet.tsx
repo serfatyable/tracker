@@ -95,7 +95,7 @@ export default function DomainPickerSheet({
 
       {/* Sheet */}
       <div
-        className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h grid grid-rows-[auto,auto,1fr] pointer-events-auto"
+        className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h flex flex-col overflow-hidden pointer-events-auto"
         role="dialog"
         aria-modal="true"
       >
@@ -120,7 +120,7 @@ export default function DomainPickerSheet({
 
         {/* Row 3: Scrollable list area */}
         <div
-          className="min-h-0 scroll-y-touch overflow-y-auto scrollbar-stable pb-safe px-2"
+          className="flex-1 min-h-0 scroll-y-touch overflow-y-auto scrollbar-stable pb-safe px-2"
           role="region"
           aria-label={t('ui.allDomains', { defaultValue: 'All domains' })}
           style={{ touchAction: 'pan-y' }}
