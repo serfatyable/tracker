@@ -79,7 +79,7 @@ export default function AddPastExamDialog({
 
             {/* Exam Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {t('exams.admin.pastExamDate')} *
               </label>
               <input
@@ -95,7 +95,7 @@ export default function AddPastExamDialog({
 
             {/* File Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {t('exams.admin.selectFile')} *
               </label>
               <input

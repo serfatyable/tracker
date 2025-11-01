@@ -49,7 +49,7 @@ export default function RotationSelection({
   return (
     <div className="space-y-3">
       <div className="space-y-1">
-        <label className="block text-sm font-medium">
+        <label className="block text-sm font-medium text-gray-900 dark:text-white">
           <span suppressHydrationWarning>{currentLabel}</span>
           <span className="text-red-600 ms-1">*</span>
         </label>
@@ -76,7 +76,7 @@ export default function RotationSelection({
       </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-medium">
+        <label className="block text-sm font-medium text-gray-900 dark:text-white">
           <span suppressHydrationWarning>{completedLabel}</span>
         </label>
         <div className="max-h-48 overflow-y-auto rounded border border-gray-300 dark:border-gray-600 p-3 space-y-2">

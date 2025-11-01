@@ -26,7 +26,7 @@ export default function TextInput({
   const errorId = `${id}-error`;
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="block text-sm font-medium">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-900 dark:text-white">
         <span suppressHydrationWarning>{label}</span>
       </label>
       <input
