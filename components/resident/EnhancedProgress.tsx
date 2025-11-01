@@ -271,7 +271,7 @@ export default function EnhancedProgress() {
                 {totalRemaining}
               </div>
               {analytics.daysRemaining !== null && (
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   ~{analytics.daysRemaining} {t('common.days', { defaultValue: 'days' })}
                 </div>
               )}
@@ -575,7 +575,7 @@ function FocusMode({ analytics, t, displayName, idToNode }: any) {
         </p>
 
         {analytics.needsAttention.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {t('resident.noPriorityItems', {
               defaultValue: 'Great! No items need immediate attention',
             })}
@@ -611,7 +611,7 @@ function FocusMode({ analytics, t, displayName, idToNode }: any) {
         </p>
 
         {analytics.nearlyComplete.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {t('resident.noNearlyComplete', { defaultValue: 'No items are nearly complete yet' })}
           </div>
         ) : (
@@ -645,7 +645,7 @@ function FocusMode({ analytics, t, displayName, idToNode }: any) {
         </p>
 
         {analytics.notStarted.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {t('resident.allStarted', { defaultValue: 'All items have been started!' })}
           </div>
         ) : (
@@ -724,7 +724,7 @@ function TimelineMode({ overallProgress, analytics, t }: any) {
                     <span>{t('resident.achieved', { defaultValue: 'Achieved' })}</span>
                   </div>
                 ) : (
-                  <div className="text-gray-500 text-sm">
+                  <div className="text-gray-500 dark:text-gray-400 text-sm">
                     {t('resident.pending', { defaultValue: 'Pending' })}
                   </div>
                 )}

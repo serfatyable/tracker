@@ -231,7 +231,7 @@ export default function AdminMorningMeetingsImportPage() {
             <h2 className="text-lg font-medium text-gray-900">
               {t('morningMeetings.import.uploadTitle')}
             </h2>
-            <div className="text-sm text-gray-600 space-y-1">
+            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
               <p>{t('morningMeetings.import.instructions')}</p>
               <ul className="list-disc list-inside mr-4 space-y-1">
                 <li>{t('morningMeetings.import.instructionColumns')}</li>
@@ -248,7 +248,7 @@ export default function AdminMorningMeetingsImportPage() {
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
             <div className="space-y-4">
               <svg
-                className="mx-auto h-12 w-12 text-gray-400"
+                className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
                 stroke="currentColor"
                 fill="none"
                 viewBox="0 0 48 48"
@@ -277,7 +277,7 @@ export default function AdminMorningMeetingsImportPage() {
                   />
                 </label>
               </div>
-              <p className="text-xs text-gray-500">{t('morningMeetings.import.fileTypes')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('morningMeetings.import.fileTypes')}</p>
               {selectedFile && (
                 <p className="text-sm text-gray-700 font-medium">
                   {t('morningMeetings.import.selectedFile')}: {selectedFile.name}

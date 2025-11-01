@@ -182,7 +182,7 @@ export default function ImportExamsDialog({ isOpen, onClose, onSuccess }: Import
             {/* Upload Step */}
             {step === 'upload' && (
               <div className="space-y-4">
-                <div className="text-sm text-gray-600 space-y-2">
+                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
                   <p>{t('exams.import.instructions')}</p>
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>{t('exams.import.requiredColumns')}</li>
@@ -312,7 +312,7 @@ export default function ImportExamsDialog({ isOpen, onClose, onSuccess }: Import
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   {t('exams.import.successTitle')}
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
                   {t('exams.import.successMessage', { count: importResult.totalExams })}
                 </p>
 

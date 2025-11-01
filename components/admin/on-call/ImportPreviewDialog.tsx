@@ -180,7 +180,7 @@ export default function ImportPreviewDialog({
                       </div>
                     ))}
                   {Object.keys(row.shifts).length > 3 && (
-                    <div className="text-gray-500">
+                    <div className="text-gray-500 dark:text-gray-400">
                       +{Object.keys(row.shifts).length - 3} more...
                     </div>
                   )}

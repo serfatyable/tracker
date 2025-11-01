@@ -153,7 +153,7 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
                       className="block p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                       <div className="font-medium">{label}</div>
-                      <div className="text-xs text-gray-500 truncate">{link.href}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{link.href}</div>
                     </a>
                   );
                 })}

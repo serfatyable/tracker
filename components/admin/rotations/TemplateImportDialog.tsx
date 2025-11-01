@@ -282,7 +282,7 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
                   {t('import.dragDropFile')}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{t('import.orClickToSelect')}</p>
-                <p className="text-xs text-gray-400 mt-2">CSV, XLSX, or XLS</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">CSV, XLSX, or XLS</p>
               </div>
             )}
           </div>

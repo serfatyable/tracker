@@ -173,7 +173,7 @@ export default function AssignTutorDialog({
               ) : (
                 <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
                   {filteredTutors.length === 0 ? (
-                    <div className="p-3 text-sm text-gray-500 text-center">
+                    <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">
                       {searchQuery ? 'No tutors found' : 'No available tutors'}
                     </div>
                   ) : (

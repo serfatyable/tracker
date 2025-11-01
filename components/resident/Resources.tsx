@@ -137,7 +137,7 @@ export default function Resources({
                         ★
                       </button>
                     </div>
-                    <div className="text-xs text-gray-500 truncate" title={it.href}>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={it.href}>
                       {it.href}
                     </div>
                     <div className="mt-2 flex items-center gap-2">
@@ -207,7 +207,7 @@ export default function Resources({
                     ★
                   </button>
                 </div>
-                <div className="text-xs text-gray-500 truncate" title={it.href}>
+                <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={it.href}>
                   {it.href}
                 </div>
                 <div className="mt-2 flex items-center gap-2">
