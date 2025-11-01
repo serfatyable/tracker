@@ -14,6 +14,14 @@ type FirebasePublicConfig = {
   appId: string;
 };
 
+const firebaseEnvVarNames: { [K in keyof FirebasePublicConfig]: string } = {
+  apiKey: 'NEXT_PUBLIC_FIREBASE_API_KEY',
+  authDomain: 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+  projectId: 'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  storageBucket: 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+  appId: 'NEXT_PUBLIC_FIREBASE_APP_ID',
+};
+
 export type FirebaseStatus = {
   ok: boolean;
   missing: string[];
@@ -29,17 +37,9 @@ export function getFirebaseStatus(): FirebaseStatus {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   };
 
-  const keyToEnvVar: { [K in keyof FirebasePublicConfig]: string } = {
-    apiKey: 'NEXT_PUBLIC_FIREBASE_API_KEY',
-    authDomain: 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-    projectId: 'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-    storageBucket: 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-    appId: 'NEXT_PUBLIC_FIREBASE_APP_ID',
-  };
-
   const missing = (Object.entries(env) as [keyof FirebasePublicConfig, string | undefined][])
     .filter(([, value]) => !value)
-    .map(([key]) => keyToEnvVar[key]);
+    .map(([key]) => firebaseEnvVarNames[key]);
 
   return {
     ok: missing.length === 0,
@@ -61,17 +61,17 @@ function getValidatedConfig(): FirebasePublicConfig {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   } as Record<string, string | undefined>;
 
-  const missing = Object.entries(env)
+  const missingKeys = (Object.entries(env) as [keyof FirebasePublicConfig, string | undefined][])
     .filter(([, value]) => !value)
     .map(([key]) => key);
 
-  if (missing.length > 0) {
+  if (missingKeys.length > 0) {
+    const missingEnvVars = missingKeys.map((key) => firebaseEnvVarNames[key]);
+    const missingList = missingEnvVars.join(', ');
     // Keep throwing here to prevent initializing Firebase with a bad config.
     // Callers should gate on getFirebaseStatus() before calling getFirebaseApp().
     throw new Error(
-      `Missing Firebase env vars: ${missing.join(
-        ', ',
-      )}. Ensure .env.local matches .env.example or set Vercel Environment Variables.`,
+      `Missing Firebase env vars: ${missingList}. Ensure .env.local matches .env.example or set Vercel Environment Variables.`,
     );
   }
 
