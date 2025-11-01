@@ -32,7 +32,7 @@ export function getFirebaseStatus(): FirebaseStatus {
   const keyToEnvVar: { [K in keyof FirebasePublicConfig]: string } = {
     apiKey: 'NEXT_PUBLIC_FIREBASE_API_KEY',
     authDomain: 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'demo-project',
+    projectId: 'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
     storageBucket: 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
     appId: 'NEXT_PUBLIC_FIREBASE_APP_ID',
   };
