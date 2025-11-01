@@ -105,7 +105,7 @@ export default function AddMaterialDialog({
 
             {/* Material Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                 {t('exams.admin.materialType')} *
               </label>
               <div className="flex gap-4">
@@ -138,7 +138,7 @@ export default function AddMaterialDialog({
 
             {/* Title (English) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {t('exams.admin.materialTitle')} *
               </label>
               <input
@@ -154,7 +154,7 @@ export default function AddMaterialDialog({
 
             {/* Title (Hebrew) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {t('exams.admin.materialTitleHe')} *
               </label>
               <input
@@ -171,7 +171,7 @@ export default function AddMaterialDialog({
             {/* File upload for PDF */}
             {formData.type === 'pdf' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                   {t('exams.admin.selectFile')} *
                 </label>
                 <input
@@ -188,7 +188,7 @@ export default function AddMaterialDialog({
             {/* URL for link */}
             {formData.type === 'link' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                   {t('exams.admin.linkUrl')} *
                 </label>
                 <input
@@ -205,7 +205,7 @@ export default function AddMaterialDialog({
 
             {/* Description (English) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {t('exams.admin.materialDescription')}
               </label>
               <textarea
@@ -219,7 +219,7 @@ export default function AddMaterialDialog({
 
             {/* Description (Hebrew) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {t('exams.admin.materialDescriptionHe')}
               </label>
               <textarea

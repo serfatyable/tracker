@@ -149,7 +149,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
 
               {/* Exam Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                   {t('exams.admin.examDateLabel')} *
                 </label>
                 <input
@@ -164,7 +164,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
 
               {/* Default Exam Link */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                   {t('exams.admin.examLink')} ({t('exams.admin.optional')})
                 </label>
                 <input
@@ -188,7 +188,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   disabled={loading}
                 />
-                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                <label htmlFor="isActive" className="text-sm font-medium text-gray-900 dark:text-white">
                   {t('exams.admin.isActive')}
                 </label>
               </div>
@@ -217,7 +217,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
                   className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50"
                 >
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium text-gray-700">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                       {t('exams.admin.subject')} {index + 1}
                     </h4>
                     {formData.subjects.length > 1 && (
@@ -234,7 +234,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
 
                   {/* Title (English) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                       {t('exams.admin.examTitle')} *
                     </label>
                     <input
@@ -249,7 +249,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
 
                   {/* Title (Hebrew) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                       {t('exams.admin.examTitleHe')} *
                     </label>
                     <input
@@ -265,7 +265,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
 
                   {/* Topics */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                       {t('exams.admin.topicsLabel')}
                     </label>
                     <input
@@ -280,7 +280,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
 
                   {/* Book Chapters */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                       {t('exams.admin.bookChaptersLabel')}
                     </label>
                     <input
@@ -295,7 +295,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
 
                   {/* Subject-specific link (optional) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                       {t('exams.admin.subjectLink')} ({t('exams.admin.optional')})
                     </label>
                     <input
@@ -311,7 +311,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
 
                   {/* Description (English) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                       {t('exams.admin.description')}
                     </label>
                     <textarea
@@ -325,7 +325,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
 
                   {/* Description (Hebrew) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                       {t('exams.admin.descriptionHe')}
                     </label>
                     <textarea

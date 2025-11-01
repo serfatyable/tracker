@@ -145,7 +145,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
 
             {/* Exam Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {t('exams.admin.examDateLabel')} *
               </label>
               <input
@@ -160,7 +160,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
 
             {/* Exam Link (Optional - applies to all subjects if no subject-specific link) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {t('exams.admin.examLink')}
               </label>
               <input
@@ -177,7 +177,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
             {/* Subjects Section */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
                   {t('exams.admin.subjects')} *
                 </label>
                 {(formData.subjects?.length || 0) < 2 && (
@@ -216,7 +216,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
 
                   {/* Subject Title (English) */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {t('exams.admin.subjectTitleEn')} *
                     </label>
                     <input
@@ -232,7 +232,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
 
                   {/* Subject Title (Hebrew) */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {t('exams.admin.subjectTitleHe')} *
                     </label>
                     <input
@@ -249,7 +249,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
 
                   {/* Subject Description (English) */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {t('exams.admin.subjectDescriptionEn')}
                     </label>
                     <textarea
@@ -263,7 +263,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
 
                   {/* Subject Description (Hebrew) */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {t('exams.admin.subjectDescriptionHe')}
                     </label>
                     <textarea
@@ -278,7 +278,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
 
                   {/* Subject Topics */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {t('exams.admin.topicsLabel')}
                     </label>
                     <input
@@ -293,7 +293,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
 
                   {/* Subject Book Chapters */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {t('exams.admin.bookChaptersLabel')}
                     </label>
                     <input
@@ -308,7 +308,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
 
                   {/* Subject-specific Exam Link */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {t('exams.admin.subjectLink')}
                     </label>
                     <input
@@ -334,7 +334,7 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 disabled={loading}
               />
-              <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+              <label htmlFor="isActive" className="text-sm font-medium text-gray-900 dark:text-white">
                 {t('exams.admin.isActive')}
               </label>
             </div>

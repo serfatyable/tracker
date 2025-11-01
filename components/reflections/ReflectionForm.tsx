@@ -123,7 +123,7 @@ export default function ReflectionForm({
                 .sort((a, b) => a.order - b.order)
                 .map((prompt) => (
                   <div key={prompt.id} className="space-y-1">
-                    <label className="block text-sm font-medium">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white">
                       {prompt.label.en}
                       {prompt.required ? <span className="text-red-500"> *</span> : null}
                     </label>

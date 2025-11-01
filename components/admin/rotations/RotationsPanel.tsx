@@ -187,7 +187,7 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
         <DialogHeader>{t('ui.createRotation')}</DialogHeader>
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium">{t('ui.name')}</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-white">{t('ui.name')}</label>
             <Input
               value={form.name}
               onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
