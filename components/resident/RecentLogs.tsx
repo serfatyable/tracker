@@ -76,7 +76,7 @@ export default function RecentLogs({ itemIdsToNames }: { itemIdsToNames: Record<
               className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-[rgb(var(--border))]"
             >
               <span>{itemIdsToNames[l.itemId] || l.itemId}</span>
-              <span className="text-gray-500">{l.count}</span>
+              <span className="text-gray-500 dark:text-gray-400">{l.count}</span>
             </li>
           ))}
         </ul>

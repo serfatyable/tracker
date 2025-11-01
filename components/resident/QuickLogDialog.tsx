@@ -77,7 +77,7 @@ export default function QuickLogDialog({
                   </button>
                 ))}
                 {recentLeaves.length === 0 && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
                     {t('ui.noItems', { defaultValue: 'No items' })}
                   </div>
                 )}

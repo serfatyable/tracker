@@ -136,8 +136,8 @@ export default function ExamDetailPage() {
         <Card className="space-y-4">
           {/* Exam Date */}
           <div className="flex items-center gap-2 text-sm">
-            <CalendarIcon className="h-4 w-4 text-gray-500" />
-            <span className="text-gray-700 font-medium">
+            <CalendarIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <span className="text-gray-700 dark:text-gray-300 font-medium">
               {examDate.toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -189,7 +189,7 @@ export default function ExamDetailPage() {
                   {/* Subject Title */}
                   <div className="flex items-start gap-2">
                     {exam.subjects.length > 1 && (
-                      <span className="text-sm text-gray-400 font-medium flex-shrink-0 mt-0.5">
+                      <span className="text-sm text-gray-400 dark:text-gray-500 font-medium flex-shrink-0 mt-0.5">
                         {idx + 1}.
                       </span>
                     )}
@@ -221,7 +221,7 @@ export default function ExamDetailPage() {
                         <h3 className="font-semibold text-base">{subjectTitle}</h3>
                       )}
                       {subjectDescription && (
-                        <p className="text-sm text-gray-600 mt-1">{subjectDescription}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{subjectDescription}</p>
                       )}
                     </div>
                   </div>
@@ -229,7 +229,7 @@ export default function ExamDetailPage() {
                   {/* Subject Topics */}
                   {subject.topics.length > 0 && (
                     <div className="ml-6">
-                      <div className="text-xs text-gray-500 mb-1.5">{t('exams.topics')}:</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('exams.topics')}:</div>
                       <div className="flex flex-wrap gap-1.5">
                         {subject.topics.map((topic, topicIdx) => (
                           <span
@@ -246,7 +246,7 @@ export default function ExamDetailPage() {
                   {/* Subject Chapters */}
                   {subject.bookChapters.length > 0 && (
                     <div className="ml-6">
-                      <div className="text-xs text-gray-500 mb-1.5">{t('exams.bookChapters')}:</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('exams.bookChapters')}:</div>
                       <div className="flex flex-wrap gap-1.5">
                         {subject.bookChapters.map((chapter, chapterIdx) => (
                           <span

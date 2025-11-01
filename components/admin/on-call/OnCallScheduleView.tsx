@@ -910,7 +910,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
       {filteredSchedule.length === 0 ? (
         <div className="card-levitate p-8 text-center">
           <div className="text-2xl mb-2">🔍</div>
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-gray-400">
             {searchTerm || myShiftsOnly || shiftTypeFilter.length > 0
               ? t('ui.noResults', { defaultValue: 'No results found' })
               : t('onCall.noScheduleThisMonth', { defaultValue: 'No schedule for this month' })}

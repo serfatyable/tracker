@@ -200,7 +200,7 @@ export default function EnhancedProgress() {
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
           {t('resident.noProgressData', { defaultValue: 'No Progress Data' })}
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {t('resident.startRotationToTrack', {
             defaultValue: 'Start a rotation to track your progress',
           })}
@@ -793,7 +793,7 @@ function ProgressNode({
         style={{ paddingLeft: `${level * 1.5 + 0.5}rem` }}
         onClick={() => hasChildren && toggleNode(node.id)}
       >
-        {hasChildren && <span className="text-gray-500">{isExpanded ? '▼' : '▶'}</span>}
+        {hasChildren && <span className="text-gray-500 dark:text-gray-400">{isExpanded ? '▼' : '▶'}</span>}
         {!hasChildren && <span className="w-4" />}
 
         <span className="flex-1 text-sm text-gray-900 dark:text-gray-100">{node.name}</span>

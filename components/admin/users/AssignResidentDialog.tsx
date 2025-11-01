@@ -169,7 +169,7 @@ export default function AssignResidentDialog({
                 className="w-full"
               />
               {loading ? (
-                <div className="text-sm text-gray-500">Loading residents...</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Loading residents...</div>
               ) : (
                 <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
                   {filteredResidents.length === 0 ? (
@@ -188,7 +188,7 @@ export default function AssignResidentDialog({
                         }`}
                       >
                         <div className="font-medium text-sm">{resident.fullName}</div>
-                        <div className="text-xs text-gray-500">{resident.email}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{resident.email}</div>
                       </button>
                     ))
                   )}

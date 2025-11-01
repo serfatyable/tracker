@@ -612,7 +612,7 @@ export default function RotationBrowser({
                           {Math.min(100, Math.round((approved / Math.max(1, req)) * 100))}%
                         </span>
                       ) : (
-                        <span className="text-gray-500">–</span>
+                        <span className="text-gray-500 dark:text-gray-400">–</span>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">

@@ -33,9 +33,9 @@ export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardPr
   };
 
   const getDateColor = () => {
-    if (daysUntil < 0) return 'text-gray-500';
-    if (daysUntil <= 7) return 'text-orange-600 font-semibold';
-    return 'text-blue-600';
+    if (daysUntil < 0) return 'text-gray-500 dark:text-gray-400';
+    if (daysUntil <= 7) return 'text-orange-600 dark:text-orange-500 font-semibold';
+    return 'text-blue-600 dark:text-blue-400';
   };
 
   const handleClick = () => {
@@ -85,7 +85,7 @@ export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardPr
               return (
                 <div key={subject.id} className="flex items-start gap-2">
                   {exam.subjects.length > 1 && (
-                    <span className="text-sm text-gray-400 font-medium flex-shrink-0">
+                    <span className="text-sm text-gray-400 dark:text-gray-500 font-medium flex-shrink-0">
                       {idx + 1}.
                     </span>
                   )}
@@ -105,11 +105,11 @@ export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardPr
           </div>
           {isAdmin && (
             <div className="flex items-center gap-2">
-              <PencilIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              <PencilIcon className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
               {userId && (
                 <button
                   onClick={handleDeleteClick}
-                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
                   title={t('exams.admin.delete')}
                 >
                   <TrashIcon className="h-4 w-4" />
@@ -121,9 +121,9 @@ export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardPr
 
         {/* Exam Date */}
         <div className="flex items-center gap-2 text-sm">
-          <CalendarIcon className="h-4 w-4 text-gray-500" />
+          <CalendarIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <div>
-            <div className="text-gray-700">
+            <div className="text-gray-700 dark:text-gray-300">
               {examDate.toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -137,7 +137,7 @@ export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardPr
         {/* Topics */}
         {allTopics.length > 0 && (
           <div className="text-sm">
-            <div className="text-xs text-gray-500 mb-1">{t('exams.topics')}:</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('exams.topics')}:</div>
             <div className="flex flex-wrap gap-1">
               {allTopics.slice(0, 3).map((topic, idx) => (
                 <span
@@ -148,7 +148,7 @@ export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardPr
                 </span>
               ))}
               {allTopics.length > 3 && (
-                <span className="inline-block text-gray-500 px-2 py-0.5 text-xs">
+                <span className="inline-block text-gray-500 dark:text-gray-400 px-2 py-0.5 text-xs">
                   +{allTopics.length - 3}
                 </span>
               )}
@@ -159,16 +159,16 @@ export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardPr
         {/* Book Chapters */}
         {allChapters.length > 0 && (
           <div className="text-sm">
-            <div className="text-xs text-gray-500 mb-1">{t('exams.bookChapters')}:</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('exams.bookChapters')}:</div>
             <div className="flex items-center gap-1">
-              <DocumentTextIcon className="h-3.5 w-3.5 text-gray-400" />
-              <span className="text-xs text-gray-700">{allChapters.join(', ')}</span>
+              <DocumentTextIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+              <span className="text-xs text-gray-700 dark:text-gray-300">{allChapters.join(', ')}</span>
             </div>
           </div>
         )}
 
         {/* Materials indicator */}
-        <div className="flex items-center gap-3 text-xs text-gray-600 pt-2 border-t border-gray-100">
+        <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
           {exam.currentExam && (
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>

@@ -35,13 +35,13 @@ export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendar
                 {t('exams.export.title')}
               </Dialog.Title>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400">
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
 
           <div className="p-6 space-y-4">
-            <p className="text-sm text-gray-600">{t('exams.export.description')}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{t('exams.export.description')}</p>
 
             <div className="space-y-3">
               {/* All Exams */}
@@ -50,10 +50,10 @@ export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendar
                 className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-colors group"
               >
                 <div className="flex items-center gap-3">
-                  <ArrowDownTrayIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
+                  <ArrowDownTrayIcon className="h-5 w-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-500" />
                   <div className="text-left">
                     <div className="font-medium text-gray-900">{t('exams.export.allExams')}</div>
-                    <div className="text-xs text-gray-500">{t('exams.filters.all')}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{t('exams.filters.all')}</div>
                   </div>
                 </div>
                 <div className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -67,12 +67,12 @@ export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendar
                 className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-colors group"
               >
                 <div className="flex items-center gap-3">
-                  <ArrowDownTrayIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
+                  <ArrowDownTrayIcon className="h-5 w-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-500" />
                   <div className="text-left">
                     <div className="font-medium text-gray-900">
                       {t('exams.export.upcomingOnly')}
                     </div>
-                    <div className="text-xs text-gray-500">{t('exams.filters.upcoming')}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{t('exams.filters.upcoming')}</div>
                   </div>
                 </div>
                 <div className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -82,7 +82,7 @@ export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendar
             </div>
 
             <div className="pt-3 border-t border-gray-200">
-              <p className="text-xs text-gray-500">💡 {t('exams.export.downloadICS')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">💡 {t('exams.export.downloadICS')}</p>
             </div>
           </div>
         </Dialog.Panel>

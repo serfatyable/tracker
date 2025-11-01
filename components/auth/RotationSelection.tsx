@@ -81,7 +81,7 @@ export default function RotationSelection({
         </label>
         <div className="max-h-48 overflow-y-auto rounded border border-gray-300 dark:border-gray-600 p-3 space-y-2">
           {rotations.length === 0 ? (
-            <p className="text-sm text-gray-500">Loading rotations...</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Loading rotations...</p>
           ) : (
             rotations.map((rotation) => (
               <label
@@ -95,7 +95,7 @@ export default function RotationSelection({
                   disabled={disabled || rotation.id === currentRotationId}
                   className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-sm">
+                <span className="text-sm text-gray-900 dark:text-gray-100">
                   {getLocalized({
                     en: rotation.name_en || rotation.name,
                     he: rotation.name_he || rotation.name,

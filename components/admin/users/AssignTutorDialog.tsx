@@ -169,7 +169,7 @@ export default function AssignTutorDialog({
                 className="w-full"
               />
               {loading ? (
-                <div className="text-sm text-gray-500">Loading tutors...</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Loading tutors...</div>
               ) : (
                 <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
                   {filteredTutors.length === 0 ? (
@@ -186,7 +186,7 @@ export default function AssignTutorDialog({
                         }`}
                       >
                         <div className="font-medium text-sm">{tutor.fullName}</div>
-                        <div className="text-xs text-gray-500">{tutor.email}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{tutor.email}</div>
                       </button>
                     ))
                   )}
