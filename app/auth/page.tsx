@@ -34,7 +34,6 @@ export default function AuthPage() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const firebaseOk = getFirebaseStatus().ok;
-  const { rotations, loading: rotationsLoading } = useRotations();
   const [tabIndex, setTabIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
@@ -99,6 +98,10 @@ export default function AuthPage() {
   const [studyProgramType, setStudyProgramType] = useState<'4-year' | '6-year' | ''>('');
   const [completedRotationIds, setCompletedRotationIds] = useState<string[]>([]);
   const [currentRotationId, setCurrentRotationId] = useState('');
+
+  // Only load rotations when on Sign Up tab (tabIndex=1) AND role is resident
+  const shouldLoadRotations = tabIndex === 1 && role === 'resident';
+  const { rotations, loading: rotationsLoading } = useRotations(shouldLoadRotations);
 
   useEffect(() => {
     if (role !== 'resident') {
