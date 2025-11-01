@@ -72,8 +72,8 @@ export default function CurrentExamTab({ exam, isAdmin, userId }: CurrentExamTab
             <div className="flex items-start gap-3 flex-1">
               <DocumentTextIcon className="h-6 w-6 text-blue-500 flex-shrink-0 mt-1" />
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 truncate">{exam.currentExam.fileName}</h3>
-                <p className="text-sm text-gray-500 mt-1">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{exam.currentExam.fileName}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {t('common.uploaded', { defaultValue: 'Uploaded' })}{' '}
                   {exam.currentExam.uploadedAt.toDate().toLocaleDateString()}
                 </p>
@@ -107,9 +107,9 @@ export default function CurrentExamTab({ exam, isAdmin, userId }: CurrentExamTab
         </Card>
       ) : (
         <Card className="text-center py-12">
-          <DocumentTextIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium mb-1">{t('exams.notUploaded')}</p>
-          <p className="text-sm text-gray-500 mb-4">{t('exams.notUploadedDescription')}</p>
+          <DocumentTextIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">{t('exams.notUploaded')}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('exams.notUploadedDescription')}</p>
 
           {isAdmin && (
             <div>

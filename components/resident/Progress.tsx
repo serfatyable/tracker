@@ -109,7 +109,7 @@ function NodeRow({
         style={{ paddingInlineStart: `${8 + level * 16}px` }}
       >
         {!isLeaf ? (
-          <button className="text-xs text-gray-600" onClick={() => setOpen(!open)}>
+          <button className="text-xs text-gray-600 dark:text-gray-400" onClick={() => setOpen(!open)}>
             {open ? '▾' : '▸'}
           </button>
         ) : (

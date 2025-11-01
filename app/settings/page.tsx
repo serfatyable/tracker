@@ -28,7 +28,7 @@ export default function SettingsPage() {
   return (
     <AppShell>
       <div className="app-container p-6 max-w-md">
-        {status !== 'ready' ? <div className="text-sm text-gray-600">Loading…</div> : null}
+        {status !== 'ready' ? <div className="text-sm text-gray-600 dark:text-gray-400">Loading…</div> : null}
         <h1 className="mb-4 text-2xl font-semibold">
           {t('settings.title', { defaultValue: 'Settings' })}
         </h1>

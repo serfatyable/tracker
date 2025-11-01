@@ -200,7 +200,7 @@ export default function EnhancedProgress() {
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
           {t('resident.noProgressData', { defaultValue: 'No Progress Data' })}
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {t('resident.startRotationToTrack', {
             defaultValue: 'Start a rotation to track your progress',
           })}
@@ -271,7 +271,7 @@ export default function EnhancedProgress() {
                 {totalRemaining}
               </div>
               {analytics.daysRemaining !== null && (
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   ~{analytics.daysRemaining} {t('common.days', { defaultValue: 'days' })}
                 </div>
               )}
@@ -575,7 +575,7 @@ function FocusMode({ analytics, t, displayName, idToNode }: any) {
         </p>
 
         {analytics.needsAttention.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {t('resident.noPriorityItems', {
               defaultValue: 'Great! No items need immediate attention',
             })}
@@ -611,7 +611,7 @@ function FocusMode({ analytics, t, displayName, idToNode }: any) {
         </p>
 
         {analytics.nearlyComplete.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {t('resident.noNearlyComplete', { defaultValue: 'No items are nearly complete yet' })}
           </div>
         ) : (
@@ -645,7 +645,7 @@ function FocusMode({ analytics, t, displayName, idToNode }: any) {
         </p>
 
         {analytics.notStarted.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {t('resident.allStarted', { defaultValue: 'All items have been started!' })}
           </div>
         ) : (
@@ -724,7 +724,7 @@ function TimelineMode({ overallProgress, analytics, t }: any) {
                     <span>{t('resident.achieved', { defaultValue: 'Achieved' })}</span>
                   </div>
                 ) : (
-                  <div className="text-gray-500 text-sm">
+                  <div className="text-gray-500 dark:text-gray-400 text-sm">
                     {t('resident.pending', { defaultValue: 'Pending' })}
                   </div>
                 )}
@@ -793,7 +793,7 @@ function ProgressNode({
         style={{ paddingLeft: `${level * 1.5 + 0.5}rem` }}
         onClick={() => hasChildren && toggleNode(node.id)}
       >
-        {hasChildren && <span className="text-gray-500">{isExpanded ? '▼' : '▶'}</span>}
+        {hasChildren && <span className="text-gray-500 dark:text-gray-400">{isExpanded ? '▼' : '▶'}</span>}
         {!hasChildren && <span className="w-4" />}
 
         <span className="flex-1 text-sm text-gray-900 dark:text-gray-100">{node.name}</span>

@@ -55,8 +55,8 @@ export default function PastExamsTab({ exam, isAdmin, userId }: PastExamsTabProp
   if (sortedPastExams.length === 0 && !isAdmin) {
     return (
       <Card className="text-center py-12">
-        <DocumentTextIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-600 font-medium">{t('exams.noPastExams')}</p>
+        <DocumentTextIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-600 dark:text-gray-400 font-medium">{t('exams.noPastExams')}</p>
       </Card>
     );
   }
@@ -80,8 +80,8 @@ export default function PastExamsTab({ exam, isAdmin, userId }: PastExamsTabProp
 
       {sortedPastExams.length === 0 ? (
         <Card className="text-center py-12">
-          <DocumentTextIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium mb-4">{t('exams.noPastExams')}</p>
+          <DocumentTextIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-600 dark:text-gray-400 font-medium mb-4">{t('exams.noPastExams')}</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -89,10 +89,10 @@ export default function PastExamsTab({ exam, isAdmin, userId }: PastExamsTabProp
             <Card key={pastExam.id} className="hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <DocumentTextIcon className="h-6 w-6 text-gray-500 flex-shrink-0" />
+                  <DocumentTextIcon className="h-6 w-6 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-gray-900 truncate">{pastExam.fileName}</h3>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                       {pastExam.examDate.toDate().toLocaleDateString()}
                     </p>
                   </div>

@@ -128,7 +128,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
             </Dialog.Title>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
               disabled={loading}
             >
               <XMarkIcon className="h-5 w-5" />
@@ -175,7 +175,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
                   placeholder={t('exams.admin.examLinkPlaceholder')}
                   disabled={loading}
                 />
-                <p className="mt-1 text-xs text-gray-500">{t('exams.admin.defaultLinkHelp')}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('exams.admin.defaultLinkHelp')}</p>
               </div>
 
               {/* Active Status */}
@@ -306,7 +306,7 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
                       placeholder={t('exams.admin.subjectLinkPlaceholder')}
                       disabled={loading}
                     />
-                    <p className="mt-1 text-xs text-gray-500">{t('exams.admin.subjectLinkHelp')}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('exams.admin.subjectLinkHelp')}</p>
                   </div>
 
                   {/* Description (English) */}

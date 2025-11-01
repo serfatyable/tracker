@@ -46,8 +46,8 @@ export default function StudyMaterialsTab({ exam, isAdmin, userId }: StudyMateri
   if (exam.studyMaterials.length === 0 && !isAdmin) {
     return (
       <Card className="text-center py-12">
-        <DocumentTextIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-600 font-medium">{t('exams.noMaterials')}</p>
+        <DocumentTextIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-600 dark:text-gray-400 font-medium">{t('exams.noMaterials')}</p>
       </Card>
     );
   }
@@ -71,8 +71,8 @@ export default function StudyMaterialsTab({ exam, isAdmin, userId }: StudyMateri
 
       {exam.studyMaterials.length === 0 ? (
         <Card className="text-center py-12">
-          <DocumentTextIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium mb-4">{t('exams.noMaterials')}</p>
+          <DocumentTextIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-600 dark:text-gray-400 font-medium mb-4">{t('exams.noMaterials')}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -103,14 +103,14 @@ export default function StudyMaterialsTab({ exam, isAdmin, userId }: StudyMateri
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900">{title}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">{title}</h3>
                     {description && (
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{description}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{description}</p>
                     )}
                     {material.type === 'pdf' && material.fileName && (
-                      <p className="text-xs text-gray-500 mt-1">{material.fileName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{material.fileName}</p>
                     )}
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                       {t('common.uploaded', { defaultValue: 'Uploaded' })}{' '}
                       {material.uploadedAt.toDate().toLocaleDateString()}
                     </p>

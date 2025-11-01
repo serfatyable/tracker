@@ -251,7 +251,7 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
                   />
                 </svg>
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
-                <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{(file.size / 1024).toFixed(2)} KB</p>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -266,7 +266,7 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <svg
-                  className="w-12 h-12 text-gray-400"
+                  className="w-12 h-12 text-gray-400 dark:text-gray-500"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -281,8 +281,8 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
                 <p className="text-sm font-medium text-gray-700 dark:text-[rgb(var(--fg))]">
                   {t('import.dragDropFile')}
                 </p>
-                <p className="text-xs text-gray-500">{t('import.orClickToSelect')}</p>
-                <p className="text-xs text-gray-400 mt-2">CSV, XLSX, or XLS</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('import.orClickToSelect')}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">CSV, XLSX, or XLS</p>
               </div>
             )}
           </div>

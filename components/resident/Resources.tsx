@@ -106,7 +106,7 @@ export default function Resources({
         <div>
           <div className="text-sm font-medium mb-1 flex items-center justify-between">
             <span>{t('dashboard.favorites')}</span>
-            <button className="text-xs text-gray-500" onClick={() => setFavOpen((v) => !v)}>
+            <button className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500" onClick={() => setFavOpen((v) => !v)}>
               {favOpen ? t('auth.hide') : t('auth.show')}
             </button>
           </div>
@@ -121,7 +121,7 @@ export default function Resources({
                         {it.label}
                       </div>
                       <button
-                        className={`text-sm ${favorites.includes(it.href) ? 'text-amber-500' : 'text-gray-400'}`}
+                        className={`text-sm ${favorites.includes(it.href) ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500'}`}
                         title={
                           favorites.includes(it.href)
                             ? t('dashboard.favorites')
@@ -137,7 +137,7 @@ export default function Resources({
                         ★
                       </button>
                     </div>
-                    <div className="text-xs text-gray-500 truncate" title={it.href}>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={it.href}>
                       {it.href}
                     </div>
                     <div className="mt-2 flex items-center gap-2">
@@ -191,7 +191,7 @@ export default function Resources({
                     {it.label}
                   </div>
                   <button
-                    className={`text-sm ${favorites.includes(it.href) ? 'text-amber-500' : 'text-gray-400'}`}
+                    className={`text-sm ${favorites.includes(it.href) ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500'}`}
                     title={
                       favorites.includes(it.href)
                         ? t('dashboard.favorites')
@@ -207,7 +207,7 @@ export default function Resources({
                     ★
                   </button>
                 </div>
-                <div className="text-xs text-gray-500 truncate" title={it.href}>
+                <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={it.href}>
                   {it.href}
                 </div>
                 <div className="mt-2 flex items-center gap-2">

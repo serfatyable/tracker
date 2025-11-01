@@ -117,7 +117,7 @@ export default function PendingTasksList({
             >
               <span>{nodesById[t.itemId]?.name || t.itemId}</span>
               <span className="flex items-center gap-2">
-                <span className="text-gray-500">{t.status}</span>
+                <span className="text-gray-500 dark:text-gray-400">{t.status}</span>
                 <Link
                   href={`/resident/reflections/${t.id}?taskType=${encodeURIComponent(nodesById[t.itemId]?.name || 'Task')}`}
                 >

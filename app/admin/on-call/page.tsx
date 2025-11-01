@@ -238,7 +238,7 @@ export default function AdminOnCallImportPage() {
           <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
             <div className="space-y-4">
               <svg
-                className="mx-auto h-12 w-12 text-gray-400"
+                className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
                 stroke="currentColor"
                 fill="none"
                 viewBox="0 0 48 48"

@@ -63,7 +63,7 @@ export default function AddPastExamDialog({
             </Dialog.Title>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
               disabled={loading}
             >
               <XMarkIcon className="h-5 w-5" />
@@ -90,7 +90,7 @@ export default function AddPastExamDialog({
                 required
                 disabled={loading}
               />
-              <p className="mt-1 text-xs text-gray-500">{t('exams.admin.pastExamDate')}</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('exams.admin.pastExamDate')}</p>
             </div>
 
             {/* File Upload */}
@@ -107,7 +107,7 @@ export default function AddPastExamDialog({
                 disabled={loading}
               />
               {file && (
-                <p className="mt-1 text-xs text-gray-600">
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                   {t('common.selectedFile', { defaultValue: 'Selected' })}: {file.name}
                 </p>
               )}

@@ -214,7 +214,7 @@ export default function ExamsPage() {
             <Card className="space-y-4">
               {/* Search Input */}
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -225,7 +225,7 @@ export default function ExamsPage() {
                 {searchQuery && (
                   <button
                     onClick={handleClearSearch}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
                   >
                     <XMarkIcon className="h-5 w-5" />
                   </button>
@@ -297,7 +297,7 @@ export default function ExamsPage() {
                     </span>
                   </label>
                   {selectedExams.size > 0 && (
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       {selectedExams.size} {t('exams.admin.selected')}
                     </span>
                   )}
@@ -336,9 +336,9 @@ export default function ExamsPage() {
               </div>
             ) : (
               <Card className="text-center py-12">
-                <MagnifyingGlassIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium mb-1">{t('exams.search.noResults')}</p>
-                <p className="text-sm text-gray-500 mb-4">
+                <MagnifyingGlassIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">{t('exams.search.noResults')}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   {t('exams.search.noResultsDescription')}
                 </p>
                 <button
@@ -361,7 +361,7 @@ export default function ExamsPage() {
         {!hasExams && (
           <Card className="text-center py-12">
             <p className="text-muted text-lg mb-2">{t('exams.noExams')}</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {isAdmin &&
                 t('exams.admin.useAddButton', {
                   defaultValue: 'Use the "Add Exam" button above to create your first exam',

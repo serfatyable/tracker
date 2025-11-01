@@ -38,7 +38,7 @@ export default function PetitionsListView({ residentId }: PetitionsListViewProps
   if (petitions.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+        <div className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4">
           <EmptyIcon />
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">

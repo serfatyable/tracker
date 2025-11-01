@@ -607,12 +607,12 @@ export default function RotationBrowser({
                     >
                       {req > 0 ? (
                         <span
-                          className={`${isComplete ? 'text-green-600' : approved > 0 ? 'text-blue-600' : 'text-gray-500'}`}
+                          className={`${isComplete ? 'text-green-600' : approved > 0 ? 'text-blue-600' : 'text-gray-500 dark:text-gray-400'}`}
                         >
                           {Math.min(100, Math.round((approved / Math.max(1, req)) * 100))}%
                         </span>
                       ) : (
-                        <span className="text-gray-500">–</span>
+                        <span className="text-gray-500 dark:text-gray-400">–</span>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">

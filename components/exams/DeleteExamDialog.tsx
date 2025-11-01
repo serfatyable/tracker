@@ -67,7 +67,7 @@ export default function DeleteExamDialog({
             </div>
 
             <div className="mb-6">
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 {isMultiple
                   ? t('exams.admin.confirmDeleteMultiple', { count: exams.length })
                   : t('exams.admin.confirmDelete')}

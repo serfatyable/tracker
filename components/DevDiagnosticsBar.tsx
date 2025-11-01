@@ -52,7 +52,7 @@ export default function DevDiagnosticsBar() {
               </ul>
             </div>
           ) : null}
-          <div className="text-gray-600">
+          <div className="text-gray-600 dark:text-gray-400">
             Route: {typeof window !== 'undefined' ? window.location.pathname : '/'}
           </div>
         </div>

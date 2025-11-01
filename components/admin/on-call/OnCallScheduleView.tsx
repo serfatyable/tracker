@@ -402,7 +402,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
 
   if (loading) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
         {t('common.loading', { defaultValue: 'Loading...' })}
       </div>
     );
@@ -415,7 +415,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
           {t('onCall.noSchedule', { defaultValue: 'No schedule uploaded' })}
         </h3>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           {showUploadButton
             ? 'Upload an Excel file to add on-call assignments'
             : 'No on-call schedule is currently available'}
@@ -910,7 +910,7 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
       {filteredSchedule.length === 0 ? (
         <div className="card-levitate p-8 text-center">
           <div className="text-2xl mb-2">🔍</div>
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-gray-400">
             {searchTerm || myShiftsOnly || shiftTypeFilter.length > 0
               ? t('ui.noResults', { defaultValue: 'No results found' })
               : t('onCall.noScheduleThisMonth', { defaultValue: 'No schedule for this month' })}

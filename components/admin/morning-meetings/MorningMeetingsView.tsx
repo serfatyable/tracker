@@ -193,7 +193,7 @@ export default function MorningMeetingsView({
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
-          <p className="mt-4 text-gray-500">
+          <p className="mt-4 text-gray-500 dark:text-gray-400">
             {t('common.loading', { defaultValue: 'Loading...' })}
           </p>
         </div>
@@ -203,7 +203,7 @@ export default function MorningMeetingsView({
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
             {t('morningMeetings.noMeetings', { defaultValue: 'No meetings scheduled' })}
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {t('morningMeetings.noMeetingsDescription', {
               defaultValue: 'Check back later for upcoming meetings',
             })}
@@ -345,7 +345,7 @@ export default function MorningMeetingsView({
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 {t('ui.noResults', { defaultValue: 'No results found' })}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {t('ui.tryDifferentSearch', { defaultValue: 'Try adjusting your search terms' })}
               </p>
               {searchTerm && (

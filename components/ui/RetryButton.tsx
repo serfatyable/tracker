@@ -127,7 +127,7 @@ export function ErrorWithRetry({
 
       <RetryButton onRetry={onRetry} label={retryLabel} size="md" variant="outline" />
 
-      {children && <div className="mt-4 text-xs text-gray-500">{children}</div>}
+      {children && <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">{children}</div>}
     </div>
   );
 }

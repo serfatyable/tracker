@@ -86,7 +86,7 @@ export default function Approvals({
             >
               <span>{byId[task.itemId]?.name || task.itemId}</span>
               <span className="flex items-center gap-2">
-                <span className="text-gray-500">{task.status}</span>
+                <span className="text-gray-500 dark:text-gray-400">{task.status}</span>
                 <Button
                   size="sm"
                   variant="outline"
