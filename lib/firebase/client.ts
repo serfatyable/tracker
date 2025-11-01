@@ -3,8 +3,9 @@ import { getApps, getApp, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 
-import { validateEnv } from '../config/validateEnv';
 import { logger } from '../utils/logger';
+
+import { validateEnv } from '@/lib/config/validateEnv';
 
 type FirebasePublicConfig = {
   apiKey: string;
@@ -79,9 +80,16 @@ function getValidatedConfig(): FirebasePublicConfig {
 }
 
 export function getFirebaseApp(): FirebaseApp {
-  // Validate all environment variables at startup
-  // This ensures we fail fast with clear error messages if misconfigured
-  validateEnv();
+  const isServer = typeof window === 'undefined';
+
+  // Validate all environment variables at startup when running on the server.
+  // Dynamic access to process.env values is stripped from the browser bundle
+  // by Next.js, so client-side validation would incorrectly report missing
+  // variables even when they are defined. We still validate on the server to
+  // catch configuration issues early during SSR or API usage.
+  if (isServer) {
+    validateEnv();
+  }
 
   if (!getApps().length) {
     const app = initializeApp(getValidatedConfig());
