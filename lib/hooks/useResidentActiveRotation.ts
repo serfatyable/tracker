@@ -1,5 +1,5 @@
 'use client';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { collection, getFirestore, onSnapshot, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
@@ -11,32 +11,70 @@ export function useResidentActiveRotation() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const auth = getAuth(getFirebaseApp());
-    const uid = auth.currentUser?.uid;
-    if (!uid) {
-      setRotationId(null);
-      setLoading(false);
-      return;
-    }
-    const db = getFirestore(getFirebaseApp());
-    const qRef = query(
-      collection(db, 'assignments'),
-      where('residentId', '==', uid),
-      where('status', '==', 'active'),
-    );
-    const unsub = onSnapshot(
-      qRef,
-      (snap) => {
-        const doc = snap.docs[0];
-        setRotationId(doc ? ((doc.data() as any).rotationId as string) : null);
-        setLoading(false);
+    let unsubscribeAuth: (() => void) | null = null;
+    let unsubscribeAssignments: (() => void) | null = null;
+
+    setError(null);
+    setLoading(true);
+    setRotationId(null);
+
+    const app = getFirebaseApp();
+    const auth = getAuth(app);
+
+    const cleanupAssignments = () => {
+      if (unsubscribeAssignments) {
+        unsubscribeAssignments();
+        unsubscribeAssignments = null;
+      }
+    };
+
+    unsubscribeAuth = onAuthStateChanged(
+      auth,
+      (user) => {
+        cleanupAssignments();
+
+        if (!user) {
+          setRotationId(null);
+          setLoading(false);
+          return;
+        }
+
+        const db = getFirestore(app);
+        const qRef = query(
+          collection(db, 'assignments'),
+          where('residentId', '==', user.uid),
+          where('status', '==', 'active'),
+        );
+
+        setLoading(true);
+
+        unsubscribeAssignments = onSnapshot(
+          qRef,
+          (snap) => {
+            const doc = snap.docs[0];
+            setRotationId(doc ? ((doc.data() as any).rotationId as string) : null);
+            setLoading(false);
+          },
+          (e) => {
+            setError(e?.message || 'Failed to load assignment');
+            setLoading(false);
+          },
+        );
       },
       (e) => {
         setError(e?.message || 'Failed to load assignment');
         setLoading(false);
       },
     );
-    return () => unsub();
+
+    return () => {
+      if (unsubscribeAssignments) {
+        unsubscribeAssignments();
+      }
+      if (unsubscribeAuth) {
+        unsubscribeAuth();
+      }
+    };
   }, []);
 
   return { rotationId, loading, error } as const;

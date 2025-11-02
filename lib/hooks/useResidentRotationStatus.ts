@@ -1,5 +1,5 @@
 'use client';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { collection, getFirestore, onSnapshot, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
@@ -16,41 +16,76 @@ export function useResidentRotationStatus(rotationId: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!rotationId) {
+    let unsubscribeAuth: (() => void) | null = null;
+    let unsubscribeAssignments: (() => void) | null = null;
+
+    setError(null);
+
+    if (rotationId) {
+      setLoading(true);
+      setStatus(null);
+
+      const app = getFirebaseApp();
+      const auth = getAuth(app);
+
+      const cleanup = () => {
+        if (unsubscribeAssignments) {
+          unsubscribeAssignments();
+          unsubscribeAssignments = null;
+        }
+      };
+
+      unsubscribeAuth = onAuthStateChanged(
+        auth,
+        (user) => {
+          cleanup();
+
+          if (!user) {
+            setStatus(null);
+            setLoading(false);
+            return;
+          }
+
+          const db = getFirestore(app);
+          const qRef = query(
+            collection(db, 'assignments'),
+            where('residentId', '==', user.uid),
+            where('rotationId', '==', rotationId),
+          );
+
+          setLoading(true);
+
+          unsubscribeAssignments = onSnapshot(
+            qRef,
+            (snap) => {
+              const doc = snap.docs[0];
+              setStatus(doc ? ((doc.data() as any).status as AssignmentStatus) : null);
+              setLoading(false);
+            },
+            (e) => {
+              setError(e?.message || 'Failed to load assignment status');
+              setLoading(false);
+            },
+          );
+        },
+        (e) => {
+          setError(e?.message || 'Failed to load assignment status');
+          setLoading(false);
+        },
+      );
+    } else {
       setStatus(null);
       setLoading(false);
-      return;
     }
 
-    const auth = getAuth(getFirebaseApp());
-    const uid = auth.currentUser?.uid;
-    if (!uid) {
-      setStatus(null);
-      setLoading(false);
-      return;
-    }
-
-    const db = getFirestore(getFirebaseApp());
-    const qRef = query(
-      collection(db, 'assignments'),
-      where('residentId', '==', uid),
-      where('rotationId', '==', rotationId),
-    );
-
-    const unsub = onSnapshot(
-      qRef,
-      (snap) => {
-        const doc = snap.docs[0];
-        setStatus(doc ? ((doc.data() as any).status as AssignmentStatus) : null);
-        setLoading(false);
-      },
-      (e) => {
-        setError(e?.message || 'Failed to load assignment status');
-        setLoading(false);
-      },
-    );
-
-    return () => unsub();
+    return () => {
+      if (unsubscribeAssignments) {
+        unsubscribeAssignments();
+      }
+      if (unsubscribeAuth) {
+        unsubscribeAuth();
+      }
+    };
   }, [rotationId]);
 
   return { status, loading, error } as const;
