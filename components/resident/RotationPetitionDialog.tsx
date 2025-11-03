@@ -1,8 +1,10 @@
 'use client';
 
+import { getAuth } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getFirebaseApp } from '../../lib/firebase/client';
 import { createRotationPetition } from '../../lib/firebase/db';
 import Button from '../ui/Button';
 // import TextField from '../ui/TextField';
@@ -13,7 +15,6 @@ type RotationPetitionDialogProps = {
   rotationId: string;
   rotationName: string;
   type: 'activate' | 'finish';
-  residentId: string;
   onSuccess?: () => void;
 };
 
@@ -23,7 +24,6 @@ export default function RotationPetitionDialog({
   rotationId,
   rotationName,
   type,
-  residentId,
   onSuccess,
 }: RotationPetitionDialogProps) {
   const { t } = useTranslation();
@@ -51,9 +51,21 @@ export default function RotationPetitionDialog({
     setLoading(true);
     setError(null);
 
+    const currentUser = getAuth(getFirebaseApp()).currentUser;
+
+    if (!currentUser) {
+      setError(
+        t('petitions.authRequired', {
+          defaultValue: 'You must be signed in to submit this petition.',
+        }) as string,
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
       await createRotationPetition({
-        residentId,
+        residentId: currentUser.uid,
         rotationId,
         type,
         reason: reason.trim(),
