@@ -137,7 +137,7 @@ export async function assignResidentToRotation(
       residentId,
       rotationId,
       tutorIds: [],
-      startedAt: serverTimestamp(),
+      startedAt: null,
       endedAt: null,
       status: 'inactive',
     } as any);
@@ -175,6 +175,51 @@ export async function unassignTutorFromResident(
     if (!docSnap) return; // nothing to do
     tx.update(docSnap.ref, { tutorIds: arrayRemove(tutorId) });
   });
+}
+
+export async function unassignResidentFromRotation(
+  residentId: string,
+  rotationId: string,
+): Promise<void> {
+  const db = getFirestore(getFirebaseApp());
+  const assignmentsCol = collection(db, 'assignments');
+  let deletedAssignment = false;
+
+  await runTransaction(db, async (tx) => {
+    const assignmentsSnap = await getDocs(
+      query(
+        assignmentsCol,
+        where('residentId', '==', residentId),
+        where('rotationId', '==', rotationId),
+      ),
+    );
+
+    const assignmentDoc = assignmentsSnap.docs[0];
+    if (!assignmentDoc) return;
+
+    tx.delete(assignmentDoc.ref);
+    deletedAssignment = true;
+  });
+
+  if (!deletedAssignment) return;
+
+  // Clean up any pending petitions for the resident/rotation pair so the UI resets fully.
+  const pendingPetitionsSnap = await getDocs(
+    query(
+      collection(db, 'rotationPetitions'),
+      where('residentId', '==', residentId),
+      where('rotationId', '==', rotationId),
+      where('status', '==', 'pending'),
+    ),
+  );
+
+  if (pendingPetitionsSnap.empty) return;
+
+  const batch = writeBatch(db);
+  pendingPetitionsSnap.docs.forEach((petitionDoc) => {
+    batch.delete(petitionDoc.ref);
+  });
+  await batch.commit();
 }
 
 // New assignment functions for UI management
@@ -289,7 +334,7 @@ export async function assignTutorToResidentForRotation(
         residentId,
         rotationId,
         tutorIds: [tutorId],
-        startedAt: serverTimestamp(),
+        startedAt: null,
         endedAt: null,
         status: 'inactive',
         isGlobal: false,
@@ -1267,7 +1312,11 @@ export async function approveRotationPetition(petitionId: string, adminUid: stri
       } else {
         // Update existing assignment to 'active'
         const assignmentRef = assignmentsSnap.docs[0]!.ref;
-        tx.update(assignmentRef, { status: 'active' } as any);
+        tx.update(assignmentRef, {
+          status: 'active',
+          startedAt: serverTimestamp(),
+          endedAt: null,
+        } as any);
       }
     } else if (p.type === 'finish') {
       // Update assignment status to 'finished' and set endedAt

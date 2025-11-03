@@ -8,11 +8,13 @@ import {
   updateUsersStatus,
   updateUsersRole,
   listAssignmentsWithDetails,
+  unassignResidentFromRotation,
 } from '../../../lib/firebase/admin';
 import type { AssignmentWithDetails } from '../../../types/assignments';
 import type { UserProfile, Role } from '../../../types/auth';
 import { TableSkeleton } from '../../dashboard/Skeleton';
 import Button from '../../ui/Button';
+import { Dialog, DialogHeader, DialogFooter } from '../../ui/Dialog';
 import EmptyState, { ChecklistIcon } from '../../ui/EmptyState';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
@@ -33,6 +35,7 @@ function UserCard({
   actionLoading,
   assignments,
   t,
+  onManageRotations,
 }: {
   user: UserProfile;
   userId: string;
@@ -44,6 +47,7 @@ function UserCard({
   actionLoading: Record<string, boolean>;
   assignments: AssignmentWithDetails[];
   t: any;
+  onManageRotations: () => void;
 }) {
   return (
     <div className="card-levitate p-4 space-y-3">
@@ -95,7 +99,12 @@ function UserCard({
           <div className="text-xs font-medium text-muted mb-1">
             {t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })}
           </div>
-          <AssignmentBadges assignments={assignments} maxVisible={3} className="text-xs" />
+          <AssignmentBadges
+            assignments={assignments}
+            maxVisible={3}
+            className="text-xs"
+            onManageRotations={onManageRotations}
+          />
         </div>
       )}
 
@@ -126,6 +135,87 @@ function UserCard({
   );
 }
 
+interface ManageRotationsDialogProps {
+  isOpen: boolean;
+  residentName: string;
+  assignments: AssignmentWithDetails[];
+  onClose: () => void;
+  onUnassign: (assignment: AssignmentWithDetails) => void;
+  unassigningRotationId: string | null;
+}
+
+function ManageRotationsDialog({
+  isOpen,
+  residentName,
+  assignments,
+  onClose,
+  onUnassign,
+  unassigningRotationId,
+}: ManageRotationsDialogProps) {
+  const { t } = useTranslation();
+
+  const title = t('admin.users.manageRotationsFor', {
+    defaultValue: 'Manage rotations for {{name}}',
+    name: residentName,
+  });
+
+  return (
+    <Dialog open={isOpen} onClose={onClose}>
+      <DialogHeader>{title}</DialogHeader>
+
+      {assignments.length === 0 ? (
+        <p className="text-sm text-muted">
+          {t('admin.users.noActiveRotations', {
+            defaultValue: 'No active rotations for this resident.',
+          })}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {assignments.map((assignment) => {
+            const rotationName =
+              assignment.rotationName ||
+              t('admin.users.unknownRotation', { defaultValue: 'Unknown rotation' });
+            const statusLabel = t(`assignments.status.${assignment.status}`, {
+              defaultValue:
+                assignment.status === 'active'
+                  ? 'Active'
+                  : assignment.status === 'inactive'
+                    ? 'Inactive'
+                    : 'Finished',
+            });
+
+            return (
+              <div
+                key={assignment.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-muted/40 bg-surface p-3"
+              >
+                <div>
+                  <div className="text-sm font-medium text-foreground">{rotationName}</div>
+                  <div className="text-xs text-muted capitalize">{statusLabel}</div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  loading={unassigningRotationId === assignment.rotationId}
+                  onClick={() => onUnassign(assignment)}
+                >
+                  {t('ui.unassign', { defaultValue: 'Unassign' })}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <DialogFooter>
+        <Button variant="ghost" onClick={onClose}>
+          {t('ui.close', { defaultValue: 'Close' })}
+        </Button>
+      </DialogFooter>
+    </Dialog>
+  );
+}
+
 export default function UserManagementTable() {
   const { t } = useTranslation();
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -137,6 +227,11 @@ export default function UserManagementTable() {
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(
     null,
   );
+  const [manageDialog, setManageDialog] = useState<{
+    residentId: string;
+    residentName: string;
+  } | null>(null);
+  const [unassigningRotationId, setUnassigningRotationId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'pending' | 'active' | 'disabled' | ''>('');
   const [roleFilter, setRoleFilter] = useState<Role | ''>('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -178,6 +273,59 @@ export default function UserManagementTable() {
   function getAssignmentsForResident(residentId: string): AssignmentWithDetails[] {
     return assignments.filter((a) => a.residentId === residentId);
   }
+
+  const openManageRotations = (residentId: string, residentName: string) => {
+    setManageDialog({ residentId, residentName });
+  };
+
+  const handleCloseManageDialog = () => {
+    setManageDialog(null);
+    setUnassigningRotationId(null);
+  };
+
+  const manageAssignments = manageDialog
+    ? getAssignmentsForResident(manageDialog.residentId).filter(
+        (assignment) => assignment.status !== 'finished' && !assignment.isGlobal,
+      )
+    : [];
+
+  const handleUnassignRotation = async (assignment: AssignmentWithDetails) => {
+    if (!manageDialog) return;
+    if (!assignment.rotationId) return;
+
+    const rotationName =
+      assignment.rotationName ||
+      t('admin.users.unknownRotation', { defaultValue: 'this rotation' });
+    const confirmMessage = t('admin.users.confirmUnassignRotation', {
+      defaultValue: 'Are you sure you want to unassign {{resident}} from {{rotation}}?',
+      resident: manageDialog.residentName,
+      rotation: rotationName,
+    });
+
+    if (typeof window !== 'undefined' && !window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setUnassigningRotationId(assignment.rotationId);
+    try {
+      await unassignResidentFromRotation(manageDialog.residentId, assignment.rotationId);
+      setToast({
+        message: t('admin.users.unassignSuccess', {
+          defaultValue: 'Rotation unassigned successfully.',
+        }),
+        variant: 'success',
+      });
+      await refresh();
+    } catch (error) {
+      console.error('Failed to unassign rotation:', error);
+      setToast({
+        message: t('ui.operationFailed'),
+        variant: 'error',
+      });
+    } finally {
+      setUnassigningRotationId(null);
+    }
+  };
 
   const handleApproveUser = async (userId: string) => {
     setActionLoading((prev) => ({ ...prev, [`approve-${userId}`]: true }));
@@ -401,6 +549,7 @@ export default function UserManagementTable() {
                     actionLoading={actionLoading}
                     assignments={getAssignmentsForResident(userId)}
                     t={t}
+                    onManageRotations={() => openManageRotations(userId, user.fullName || userId)}
                   />
                 );
               })}
@@ -532,6 +681,20 @@ export default function UserManagementTable() {
                                   <option value="tutor">Tutor</option>
                                   <option value="admin">Admin</option>
                                 </Select>
+                                {user.role === 'resident' && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="btn-levitate"
+                                    onClick={() =>
+                                      openManageRotations(userId, user.fullName || userId)
+                                    }
+                                  >
+                                    {t('admin.users.manageRotations', {
+                                      defaultValue: 'Manage rotations',
+                                    })}
+                                  </Button>
+                                )}
                               </div>
                             </TD>
                           </TR>
@@ -572,6 +735,14 @@ export default function UserManagementTable() {
           </div>
         </div>
       </div>
+      <ManageRotationsDialog
+        isOpen={!!manageDialog}
+        residentName={manageDialog?.residentName || ''}
+        assignments={manageAssignments}
+        onClose={handleCloseManageDialog}
+        onUnassign={handleUnassignRotation}
+        unassigningRotationId={unassigningRotationId}
+      />
     </>
   );
 }

@@ -7,7 +7,7 @@ export type Assignment = {
   residentId: string;
   rotationId: string;
   tutorIds: string[];
-  startedAt: Timestamp;
+  startedAt: Timestamp | null;
   endedAt: Timestamp | null;
   status: AssignmentStatus; // Per-resident status: inactive (not started), active (working), finished (completed)
   isGlobal?: boolean; // true for global assignments (no specific rotation)
