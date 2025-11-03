@@ -114,7 +114,8 @@ service cloud.firestore {
 
     // Rotation petitions
     match /rotationPetitions/{petitionId} {
-      allow read: if isAdminApproved() || isTutorApproved();
+      allow read: if isAdminApproved() || isTutorApproved() ||
+        (isSignedIn() && resource.data.residentId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.residentId == request.auth.uid && request.resource.data.status == 'pending';
       // Approved tutors may resolve petitions for rotations they own; must be a status transition from pending -> approved/denied
       allow update: if isAdminApproved() || (isTutorApproved() && isOwnerOfRotation(resource.data.rotationId) && resource.data.status == 'pending' && (request.resource.data.status in ['approved', 'denied']));
