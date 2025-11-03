@@ -131,7 +131,11 @@ export default function RotationPetitionDialog({
             <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
               {t('ui.cancel')}
             </Button>
-            <Button onClick={handleSubmit} loading={loading} className="flex-1">
+            <Button
+              onClick={handleSubmit}
+              loading={loading}
+              className="flex-1 bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            >
               {t('petitions.submit', { defaultValue: 'Submit' })}
             </Button>
           </div>
