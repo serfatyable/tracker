@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/layout/AppShell';
 import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 import EnhancedProgress from '../../components/resident/EnhancedProgress';
+import { ResidentActiveRotationProvider } from '../../components/resident/ResidentActiveRotationProvider';
 
-export default function ProgressPage() {
+function ProgressPageContent() {
   const { t } = useTranslation();
   return (
     <AppShell>
@@ -14,5 +15,13 @@ export default function ProgressPage() {
         <EnhancedProgress />
       </div>
     </AppShell>
+  );
+}
+
+export default function ProgressPage() {
+  return (
+    <ResidentActiveRotationProvider>
+      <ProgressPageContent />
+    </ResidentActiveRotationProvider>
   );
 }
