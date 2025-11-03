@@ -9,11 +9,12 @@ import KPICardsResident from '../../components/resident/KPICardsResident';
 import PendingTasksList from '../../components/resident/PendingTasksList';
 import QuickActions from '../../components/resident/QuickActions';
 import RecentLogs from '../../components/resident/RecentLogs';
+import { ResidentActiveRotationProvider } from '../../components/resident/ResidentActiveRotationProvider';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 
-export default function ResidentDashboard() {
+function ResidentDashboardContent() {
   const { t } = useTranslation();
   const { data: _me } = useCurrentUserProfile();
   const { rotationId: activeRotationId } = useResidentActiveRotation();
@@ -54,5 +55,13 @@ export default function ResidentDashboard() {
         </div>
       </AppShell>
     </AuthGate>
+  );
+}
+
+export default function ResidentDashboardPage() {
+  return (
+    <ResidentActiveRotationProvider>
+      <ResidentDashboardContent />
+    </ResidentActiveRotationProvider>
   );
 }

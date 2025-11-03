@@ -17,6 +17,7 @@ import RotationBrowser from '../../../components/resident/RotationBrowser';
 import RotationOverview from '../../../components/resident/RotationOverview';
 import RotationPickerSheet from '../../../components/resident/RotationPickerSheet';
 import RotationResources from '../../../components/resident/RotationResources';
+import { ResidentActiveRotationProvider } from '../../../components/resident/ResidentActiveRotationProvider';
 import SegmentedView from '../../../components/resident/SegmentedView';
 import { getFirebaseApp } from '../../../lib/firebase/client';
 import { createTask } from '../../../lib/firebase/db';
@@ -24,7 +25,7 @@ import { useResidentActiveRotation } from '../../../lib/hooks/useResidentActiveR
 import { useRotationsIndex } from '../../../lib/hooks/useRotationsIndex';
 import type { RotationNode } from '../../../types/rotations';
 
-export default function ResidentRotationsPage() {
+function ResidentRotationsContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -290,5 +291,13 @@ export default function ResidentRotationsPage() {
         />
       </AppShell>
     </AuthGate>
+  );
+}
+
+export default function ResidentRotationsPage() {
+  return (
+    <ResidentActiveRotationProvider>
+      <ResidentRotationsContent />
+    </ResidentActiveRotationProvider>
   );
 }

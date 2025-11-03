@@ -1,43 +1,17 @@
 'use client';
-import { getAuth } from 'firebase/auth';
-import { collection, getFirestore, onSnapshot, query, where } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
 
-import { getFirebaseApp } from '../firebase/client';
+import { useContext } from 'react';
+
+import { ResidentActiveRotationContext } from '../../components/resident/ResidentActiveRotationProvider';
 
 export function useResidentActiveRotation() {
-  const [rotationId, setRotationId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const context = useContext(ResidentActiveRotationContext);
 
-  useEffect(() => {
-    const auth = getAuth(getFirebaseApp());
-    const uid = auth.currentUser?.uid;
-    if (!uid) {
-      setRotationId(null);
-      setLoading(false);
-      return;
-    }
-    const db = getFirestore(getFirebaseApp());
-    const qRef = query(
-      collection(db, 'assignments'),
-      where('residentId', '==', uid),
-      where('status', '==', 'active'),
+  if (!context) {
+    throw new Error(
+      'useResidentActiveRotation must be used within a ResidentActiveRotationProvider',
     );
-    const unsub = onSnapshot(
-      qRef,
-      (snap) => {
-        const doc = snap.docs[0];
-        setRotationId(doc ? ((doc.data() as any).rotationId as string) : null);
-        setLoading(false);
-      },
-      (e) => {
-        setError(e?.message || 'Failed to load assignment');
-        setLoading(false);
-      },
-    );
-    return () => unsub();
-  }, []);
+  }
 
-  return { rotationId, loading, error } as const;
+  return context;
 }

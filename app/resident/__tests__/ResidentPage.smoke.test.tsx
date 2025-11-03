@@ -1,10 +1,14 @@
 import { render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { vi } from 'vitest';
 
 import * as clientMod from '../../../lib/firebase/client';
 import ResidentPage from '../page';
 
 vi.mock('../../../components/TopBar', () => ({ default: () => null }));
+vi.mock('../../../components/resident/ResidentActiveRotationProvider', () => ({
+  ResidentActiveRotationProvider: ({ children }: { children: ReactNode }) => children,
+}));
 
 const { replaceMock } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
