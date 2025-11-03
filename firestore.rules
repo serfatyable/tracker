@@ -114,6 +114,8 @@ service cloud.firestore {
 
     // Rotation petitions
     match /rotationPetitions/{petitionId} {
+      // Residents must be able to read their own petition so the "Start Rotation" flow
+      // can verify whether there is already a pending request.
       allow read: if isAdminApproved() || isTutorApproved() ||
         (isSignedIn() && resource.data.residentId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.residentId == request.auth.uid && request.resource.data.status == 'pending';
