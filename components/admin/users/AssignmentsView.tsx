@@ -280,23 +280,29 @@ export default function AssignmentsView() {
       <div className="space-y-4">
         {/* Header with View Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === 'byResident' ? 'default' : 'outline'}
+          <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700">
+            <button
               onClick={() => setViewMode('byResident')}
-              className="flex items-center gap-2"
+              className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 rounded-none min-h-[44px] ${
+                viewMode === 'byResident'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/30'
+              }`}
             >
               <UserGroupIcon className="w-4 h-4" />
               {t('ui.byResident', { defaultValue: 'By Resident' })}
-            </Button>
-            <Button
-              variant={viewMode === 'byTutor' ? 'default' : 'outline'}
+            </button>
+            <button
               onClick={() => setViewMode('byTutor')}
-              className="flex items-center gap-2"
+              className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 rounded-none min-h-[44px] ${
+                viewMode === 'byTutor'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/30'
+              }`}
             >
               <AcademicCapIcon className="w-4 h-4" />
               {t('ui.byTutor', { defaultValue: 'By Tutor' })}
-            </Button>
+            </button>
           </div>
 
           <Button
@@ -341,7 +347,7 @@ export default function AssignmentsView() {
               onChange={(e) => setUnassignedOnly(e.target.checked)}
               className="w-4 h-4"
             />
-            <span className="text-sm">
+            <span className="text-sm text-gray-900 dark:text-gray-50">
               {t('ui.unassignedOnly', { defaultValue: 'Unassigned Only' })}
             </span>
           </label>

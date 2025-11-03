@@ -29,24 +29,28 @@ export default function AdminUsersPage() {
       <div className="app-container p-4">
         {/* Tab Navigation */}
         <div className="flex items-center gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
-          <Button
-            variant={activeTab === 'users' ? 'default' : 'ghost'}
+          <button
             onClick={() => setActiveTab('users')}
-            className="flex items-center gap-2 rounded-none border-b-2 border-transparent data-[active=true]:border-blue-500 data-[active=true]:bg-transparent"
-            data-active={activeTab === 'users'}
+            className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all border-b-2 rounded-none min-h-[44px] ${
+              activeTab === 'users'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/30'
+            }`}
           >
             <UserGroupIcon className="w-4 h-4" />
             {t('ui.users', { defaultValue: 'Users' })}
-          </Button>
-          <Button
-            variant={activeTab === 'assignments' ? 'default' : 'ghost'}
+          </button>
+          <button
             onClick={() => setActiveTab('assignments')}
-            className="flex items-center gap-2 rounded-none border-b-2 border-transparent data-[active=true]:border-blue-500 data-[active=true]:bg-transparent"
-            data-active={activeTab === 'assignments'}
+            className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all border-b-2 rounded-none min-h-[44px] ${
+              activeTab === 'assignments'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/30'
+            }`}
           >
             <AcademicCapIcon className="w-4 h-4" />
             {t('ui.assignments', { defaultValue: 'Assignments' })}
-          </Button>
+          </button>
         </div>
 
         {/* Tab Content */}
