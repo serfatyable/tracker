@@ -1,7 +1,7 @@
 'use client';
 
 import { getAuth } from 'firebase/auth';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
@@ -26,6 +26,7 @@ export default function RotationOverview({ rotationId }: Props) {
   const [petitionDialogOpen, setPetitionDialogOpen] = useState(false);
   const [petitionType, setPetitionType] = useState<'activate' | 'finish'>('activate');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const successTimeoutRef = useRef<number | null>(null);
 
   const currentUser = getAuth(getFirebaseApp()).currentUser;
   const residentId = currentUser?.uid || '';
@@ -62,9 +63,26 @@ export default function RotationOverview({ rotationId }: Props) {
   };
 
   const handlePetitionSuccess = () => {
+    if (successTimeoutRef.current !== null) {
+      window.clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+
     setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 5000);
+    successTimeoutRef.current = window.setTimeout(() => {
+      setShowSuccessMessage(false);
+      successTimeoutRef.current = null;
+    }, 5000);
   };
+
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current !== null) {
+        window.clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Status pill styling
   const getStatusPillClasses = () => {
