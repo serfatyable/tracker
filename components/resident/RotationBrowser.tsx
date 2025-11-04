@@ -404,7 +404,7 @@ export default function RotationBrowser({
               <button
                 key={c.key}
                 type="button"
-                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 ${
+                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 text-gray-700 dark:text-gray-300 ${
                   categoryFilter === c.key
                     ? 'ring-1 ring-primary-token bg-primary/10 text-primary'
                     : ''
@@ -444,7 +444,7 @@ export default function RotationBrowser({
               <button
                 key={s.key}
                 type="button"
-                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 ${
+                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 text-gray-700 dark:text-gray-300 ${
                   statusFilter === s.key ? `ring-1 ring-primary-token ${s.cls}` : ''
                 }`}
                 onClick={() => setStatusFilter(s.key)}
@@ -500,7 +500,7 @@ export default function RotationBrowser({
           </span>
           {categoryFilter !== 'all' && (
             <button
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-gray-700 dark:text-gray-300"
               onClick={() => setCategoryFilter('all')}
             >
               {(t('ui.category', { defaultValue: 'Category' }) as any) || 'Category'}:{' '}
@@ -509,7 +509,7 @@ export default function RotationBrowser({
           )}
           {domainFilter !== 'all' && (
             <button
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-gray-700 dark:text-gray-300"
               onClick={() => onSelectDomain && onSelectDomain('all')}
             >
               {(t('ui.domain', { defaultValue: 'Domain' }) as any) || 'Domain'}: {domainFilter} ×
@@ -517,7 +517,7 @@ export default function RotationBrowser({
           )}
           {statusFilter !== 'all' && (
             <button
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-gray-700 dark:text-gray-300"
               onClick={() => setStatusFilter('all')}
             >
               {t('ui.status', { defaultValue: 'Status' })}: {statusFilter} ×
