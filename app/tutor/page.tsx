@@ -4,8 +4,6 @@ import { lazy, Suspense, useMemo as _useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // Link import moved above per import order
 
-import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
-import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 import AuthGate from '../../components/auth/AuthGate';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
@@ -68,26 +66,13 @@ export default function TutorDashboard() {
               </div>
             </Suspense>
 
-            {/* 2) On-Call today/tonight */}
-            <OnCallScheduleView showUploadButton={false} />
-
-            {/* 3) Rotations progress */}
+            {/* 2) Rotations progress */}
             <Suspense fallback={<SpinnerSkeleton />}>
               <TutorRotationsTab />
             </Suspense>
 
-            {/* 4) Reflections queue */}
+            {/* 3) Reflections queue */}
             <TutorReflectionsInline />
-
-            {/* 5) Morning Meetings */}
-            <MorningMeetingsView showUploadButton={false} />
-
-            {/* 6) Settings link only */}
-            <div className="flex justify-end">
-              <Link href="/settings" className="pill text-xs">
-                {t('ui.settings')}
-              </Link>
-            </div>
           </div>
         </div>
       </AppShell>
