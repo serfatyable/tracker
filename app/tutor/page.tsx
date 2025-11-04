@@ -4,8 +4,6 @@ import { lazy, Suspense, useMemo as _useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // Link import moved above per import order
 
-import MorningMeetingsView from '../../components/admin/morning-meetings/MorningMeetingsView';
-import OnCallScheduleView from '../../components/admin/on-call/OnCallScheduleView';
 import AuthGate from '../../components/auth/AuthGate';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
@@ -20,8 +18,8 @@ import { useTutorDashboardData } from '../../lib/hooks/useTutorDashboardData';
 // Lazy load heavy components
 const AssignedResidents = lazy(() => import('../../components/tutor/AssignedResidents'));
 const PendingApprovals = lazy(() => import('../../components/tutor/PendingApprovals'));
+const PendingTaskApprovals = lazy(() => import('../../components/tutor/PendingTaskApprovals'));
 const RotationsTab = lazy(() => import('../../components/tutor/tabs/RotationsTab'));
-const TutorTodos = lazy(() => import('../../components/tutor/TutorTodos'));
 
 export default function TutorDashboard() {
   const { t } = useTranslation();
@@ -44,16 +42,6 @@ export default function TutorDashboard() {
         <LargeTitleHeader title={t('ui.home', { defaultValue: 'Home' }) as string} />
         <div className="app-container p-6">
           <div className="w-full space-y-6">
-            {/* Quick links */}
-            <div className="flex items-center justify-end gap-2">
-              <Link href="/tutor/residents" className="pill text-xs">
-                {t('tutor.tabs.residents')}
-              </Link>
-              <Link href="/tutor/tasks" className="pill text-xs">
-                {t('ui.tasks')}
-              </Link>
-            </div>
-
             {/* 1) Overview (personal KPIs/sections) */}
             <Suspense
               fallback={
@@ -68,26 +56,13 @@ export default function TutorDashboard() {
               </div>
             </Suspense>
 
-            {/* 2) On-Call today/tonight */}
-            <OnCallScheduleView showUploadButton={false} />
-
-            {/* 3) Rotations progress */}
+            {/* 2) Rotations progress */}
             <Suspense fallback={<SpinnerSkeleton />}>
               <TutorRotationsTab />
             </Suspense>
 
-            {/* 4) Reflections queue */}
+            {/* 3) Reflections queue */}
             <TutorReflectionsInline />
-
-            {/* 5) Morning Meetings */}
-            <MorningMeetingsView showUploadButton={false} />
-
-            {/* 6) Settings link only */}
-            <div className="flex justify-end">
-              <Link href="/settings" className="pill text-xs">
-                {t('ui.settings')}
-              </Link>
-            </div>
           </div>
         </div>
       </AppShell>
@@ -96,7 +71,7 @@ export default function TutorDashboard() {
 }
 
 function TutorDashboardSections() {
-  const { me, assignments, rotations, residents, tutors, ownedRotationIds, petitions, todos } =
+  const { me, assignments, rotations, residents, tutors, ownedRotationIds, petitions, tasks } =
     useTutorDashboardData();
   const residentIdToName = (id: string) => residents.find((r) => r.uid === id)?.fullName || id;
   return (
@@ -119,7 +94,7 @@ function TutorDashboardSections() {
           ownedRotationIds={ownedRotationIds}
         />
       ) : null}
-      <TutorTodos todos={todos} onRefresh={() => {}} />
+      <PendingTaskApprovals tasks={tasks} residents={residents} rotations={rotations} />
     </Suspense>
   );
 }

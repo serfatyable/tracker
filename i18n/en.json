@@ -412,10 +412,13 @@
   "ui2": {},
   "tutor": {
     "pendingApprovals": "Pending approvals",
+    "pendingTaskApprovals": "Pending task approvals",
     "assignedResidents": "Assigned residents",
     "myTodos": "My to-dos",
     "approve": "Approve",
     "deny": "Deny",
+    "approveTask": "Approve task",
+    "denyTask": "Deny task",
     "openProfile": "Open profile",
     "selfAssign": "Self-assign",
     "unassign": "Unassign",
