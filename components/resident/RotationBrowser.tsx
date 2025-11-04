@@ -578,14 +578,30 @@ export default function RotationBrowser({
               // Section header when first item of a domain in windowed sequence
               const isFirstInDomain = idx === 0 || windowed[idx - 1]!.key !== key;
               const groupTotals = groupedByDomain[key]?.totals || { approved: 0, required: 0 };
+              const percent =
+                req > 0 ? Math.min(100, Math.round((approved / Math.max(1, req)) * 100)) : null;
+              const progressStyles = isComplete
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-900/20 dark:text-emerald-100'
+                : approved > 0
+                  ? 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/40 dark:bg-sky-900/20 dark:text-sky-100'
+                  : 'border-gray-200 bg-gray-50 text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-300';
+              const completionBadgeTone = isComplete
+                ? 'ring-emerald-200 bg-emerald-50 text-emerald-700 dark:ring-emerald-500/40 dark:bg-emerald-900/30 dark:text-emerald-100'
+                : approved > 0
+                  ? 'ring-sky-200 bg-sky-50 text-sky-700 dark:ring-sky-500/40 dark:bg-sky-900/30 dark:text-sky-100'
+                  : 'ring-gray-200 bg-gray-50 text-gray-600 dark:ring-gray-600/40 dark:bg-gray-900/40 dark:text-gray-200';
+
               return (
-                <div key={item.id}>
+                <div key={item.id} className="space-y-2">
                   {isFirstInDomain ? (
-                    <div className="flex items-center justify-between mt-3 mb-1 px-0">
-                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-50">
+                    <div className="flex items-center justify-between pt-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                         {key}
                       </div>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge
+                        variant="outline"
+                        className="text-[11px] font-medium ring-1 ring-inset ring-gray-200/80 bg-transparent text-gray-600 dark:ring-white/15 dark:text-gray-200"
+                      >
                         {groupTotals.approved}/{groupTotals.required}
                       </Badge>
                     </div>
@@ -600,69 +616,69 @@ export default function RotationBrowser({
                         onSelectLeaf(item);
                       }
                     }}
-                    className={`card-levitate w-full text-left flex items-start gap-3 min-h-[56px] py-3 hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]`}
+                    className="card-levitate group relative w-full cursor-pointer overflow-hidden border border-transparent bg-white/80 text-left transition-colors hover:border-gray-200/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-token dark:bg-[rgb(var(--surface))] dark:hover:border-white/10"
                     aria-label={item.name}
                   >
-                    <div
-                      className="h-9 w-9 rounded-full grid place-items-center border text-xs font-semibold"
-                      aria-hidden
-                    >
-                      {req > 0 ? (
-                        <span
-                          className={`${isComplete ? 'text-green-600' : approved > 0 ? 'text-blue-600' : 'text-gray-500 dark:text-gray-400'}`}
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex flex-1 items-start gap-3">
+                        <div
+                          className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border text-sm font-semibold transition-colors ${progressStyles}`}
+                          aria-hidden
                         >
-                          {Math.min(100, Math.round((approved / Math.max(1, req)) * 100))}%
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 dark:text-gray-400">–</span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50 break-words">
-                        {debouncedTerm.trim() ? highlight(item.name, debouncedTerm) : item.name}
-                      </div>
-                      {subtitle ? (
-                        <div className="text-xs text-gray-600 dark:text-gray-300 break-words">
-                          {subtitle}
+                          {percent !== null ? <span>{percent}%</span> : <span>–</span>}
                         </div>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {req > 0 ? (
-                        <Badge
+                        <div className="min-w-0 flex-1 space-y-1">
+                          {subtitle ? (
+                            <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                              {subtitle}
+                            </div>
+                          ) : null}
+                          <div className="text-sm font-semibold leading-5 text-gray-900 dark:text-gray-50">
+                            {debouncedTerm.trim() ? highlight(item.name, debouncedTerm) : item.name}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-3 sm:min-w-[160px]">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {req > 0 ? (
+                            <Badge
+                              variant="outline"
+                              className={`text-xs font-semibold tracking-tight ${completionBadgeTone}`}
+                              title={`${approved}/${req}`}
+                              aria-label={`${approved} of ${req} approved`}
+                            >
+                              {approved}/{req}
+                            </Badge>
+                          ) : null}
+                          {pending > 0 ? (
+                            <Badge
+                              variant="outline"
+                              className="text-[11px] font-semibold tracking-tight ring-amber-200 bg-amber-50 text-amber-700 dark:ring-amber-500/40 dark:bg-amber-900/30 dark:text-amber-100"
+                              aria-label={`${pendingLabel} ${pending}`}
+                            >
+                              {pendingLabel} +{pending}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <Button
                           variant="secondary"
-                          className={`text-xs font-bold ${isComplete ? '!bg-green-100 !text-green-800 dark:!bg-green-900/60 dark:!text-green-200' : approved > 0 ? '!bg-amber-100 !text-amber-800 dark:!bg-amber-900/60 dark:!text-amber-200' : '!bg-red-100 !text-red-800 dark:!bg-red-900/60 dark:!text-red-200'}`}
-                          title={`${approved}/${req}`}
-                          aria-label={`${approved} of ${req} approved`}
+                          size="sm"
+                          className="self-end"
+                          disabled={!canLog(item)}
+                          onClick={(e) => {
+                            console.log('[DEBUG] +1 button clicked for:', item.name);
+                            e.stopPropagation();
+                            onLog(item, 1);
+                          }}
+                          title={
+                            !canLog(item)
+                              ? 'Only available for your currently active rotation'
+                              : 'Submit for approval'
+                          }
                         >
-                          {approved}/{req}
-                        </Badge>
-                      ) : null}
-                      {pending > 0 ? (
-                        <Badge
-                          variant="secondary"
-                          className="text-[11px] font-semibold !bg-amber-100 !text-amber-900 dark:!bg-amber-900/60 dark:!text-amber-100"
-                          aria-label={`${pendingLabel} ${pending}`}
-                        >
-                          {pendingLabel} +{pending}
-                        </Badge>
-                      ) : null}
-                      <Button
-                        size="sm"
-                        disabled={!canLog(item)}
-                        onClick={(e) => {
-                          console.log('[DEBUG] +1 button clicked for:', item.name);
-                          e.stopPropagation();
-                          onLog(item, 1);
-                        }}
-                        title={
-                          !canLog(item)
-                            ? 'Only available for your currently active rotation'
-                            : 'Submit for approval'
-                        }
-                      >
-                        +1
-                      </Button>
+                          +1
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
