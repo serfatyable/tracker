@@ -207,58 +207,43 @@ export async function createRotationPetition(params: {
   type: 'activate' | 'finish';
   reason?: string;
 }): Promise<{ id: string }> {
-  const db = getFirestore(getFirebaseApp());
-  const auth = getAuth(getFirebaseApp());
+  const app = getFirebaseApp();
+  const auth = getAuth(app);
   const currentUser = auth.currentUser;
 
   if (!currentUser) {
     throw new Error('auth/missing-current-user');
   }
 
-  const residentId = currentUser.uid;
+  const token = await currentUser.getIdToken();
+  const response = await fetch('/api/rotation-petitions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      rotationId: params.rotationId,
+      type: params.type,
+      reason: params.reason?.trim() ?? '',
+    }),
+  });
 
-  // Validation: Check for existing pending petition for this rotation
-  const existingPetitionSnap = await getDocs(
-    query(
-      collection(db, 'rotationPetitions'),
-      where('residentId', '==', residentId),
-      where('rotationId', '==', params.rotationId),
-      where('status', '==', 'pending'),
-    ),
-  );
+  const payload = await response.json().catch(() => ({}));
 
-  if (!existingPetitionSnap.empty) {
-    throw new Error(
-      'You already have a pending petition for this rotation. Please wait for admin approval.',
-    );
+  if (!response.ok) {
+    const message =
+      typeof payload?.error === 'string' && payload.error.length > 0
+        ? payload.error
+        : 'Failed to create petition. Please try again later.';
+    throw new Error(message);
   }
 
-  // Validation: Prevent activating a rotation if resident already has an active rotation
-  if (params.type === 'activate') {
-    const activeAssignmentsSnap = await getDocs(
-      query(
-        collection(db, 'assignments'),
-        where('residentId', '==', residentId),
-        where('status', '==', 'active'),
-      ),
-    );
-
-    if (!activeAssignmentsSnap.empty) {
-      throw new Error(
-        'You cannot have two rotations active at the same time. Please finish your current rotation first.',
-      );
-    }
+  if (!payload || typeof payload.id !== 'string') {
+    throw new Error('Unexpected response when creating petition.');
   }
 
-  const ref = await addDoc(collection(db, 'rotationPetitions'), {
-    residentId,
-    rotationId: params.rotationId,
-    type: params.type,
-    reason: params.reason || '',
-    status: 'pending',
-    requestedAt: serverTimestamp(),
-  } as any);
-  return { id: ref.id };
+  return { id: payload.id };
 }
 
 export async function getResidentPetitions(residentId: string): Promise<RotationPetition[]> {
