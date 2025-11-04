@@ -42,9 +42,14 @@ export default function RotationBrowser({
 }: Props) {
   const { t, i18n } = useTranslation();
   const { rotationId: residentActiveRotationId } = useResidentActiveRotation();
-  const { tasks } = useUserTasks();
+  const { tasks, refresh: refreshTasks } = useUserTasks();
   const { nodes, loading } = useRotationNodes(activeRotationId || null);
   const [debouncedTerm, setDebouncedTerm] = useState('');
+  const [localOptimisticPending, setLocalOptimisticPending] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    setLocalOptimisticPending({});
+  }, [tasks]);
 
   // Debounce search term for smoother global search UX
   useEffect(() => {
@@ -116,14 +121,21 @@ export default function RotationBrowser({
   }, [tasks]);
 
   const effectiveCounts = useMemo(() => {
-    if (!optimisticCounts) return countsByItemId;
     const map = { ...countsByItemId };
-    for (const [id, delta] of Object.entries(optimisticCounts)) {
+    const applyOptimistic = (id: string, delta: { pending?: number }) => {
       const bucket = (map[id] = map[id] || { approved: 0, pending: 0 });
       bucket.pending += delta.pending || 0;
+    };
+    if (optimisticCounts) {
+      for (const [id, delta] of Object.entries(optimisticCounts)) {
+        applyOptimistic(id, delta);
+      }
+    }
+    for (const [id, pending] of Object.entries(localOptimisticPending)) {
+      applyOptimistic(id, { pending });
     }
     return map;
-  }, [countsByItemId, optimisticCounts]);
+  }, [countsByItemId, optimisticCounts, localOptimisticPending]);
 
   // Overall rotation progress (across all leaves in the selected rotation only)
   const overall = useMemo(() => {
@@ -185,13 +197,36 @@ export default function RotationBrowser({
     const uid = auth.currentUser?.uid;
     if (!uid) return;
     const req = leaf.requiredCount || 0;
-    await createTask({
-      userId: uid,
-      rotationId: leaf.rotationId,
-      itemId: leaf.id,
-      count,
-      requiredCount: req,
-      note,
+    const optimisticDelta = count;
+    setLocalOptimisticPending((prev) => ({
+      ...prev,
+      [leaf.id]: (prev[leaf.id] || 0) + optimisticDelta,
+    }));
+    try {
+      await createTask({
+        userId: uid,
+        rotationId: leaf.rotationId,
+        itemId: leaf.id,
+        count,
+        requiredCount: req,
+        note,
+      });
+    } catch (error) {
+      setLocalOptimisticPending((prev) => {
+        const next = { ...prev };
+        const updated = (next[leaf.id] || 0) - optimisticDelta;
+        if (updated > 0) {
+          next[leaf.id] = updated;
+        } else {
+          delete next[leaf.id];
+        }
+        return next;
+      });
+      console.error('Failed to log activity', error);
+      return;
+    }
+    await refreshTasks?.().catch((error) => {
+      console.error('Failed to refresh tasks', error);
     });
   }
 
@@ -666,7 +701,6 @@ export default function RotationBrowser({
                           className="self-end"
                           disabled={!canLog(item)}
                           onClick={(e) => {
-                            console.log('[DEBUG] +1 button clicked for:', item.name);
                             e.stopPropagation();
                             onLog(item, 1);
                           }}
