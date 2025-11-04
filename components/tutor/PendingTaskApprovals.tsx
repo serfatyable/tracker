@@ -6,7 +6,6 @@ import { getFirestore, collection, getDocs, query, where } from 'firebase/firest
 import { updateTasksStatus } from '../../lib/firebase/admin';
 import { getFirebaseApp } from '../../lib/firebase/client';
 import type { TaskDoc } from '../../lib/firebase/db';
-import { getLocalized } from '../../lib/i18n/getLocalized';
 import type { UserProfile } from '../../types/auth';
 import type { Rotation, RotationNode } from '../../types/rotations';
 import Button from '../ui/Button';
@@ -95,9 +94,19 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
           const resident = resById.get(task.userId);
           const rotation = rotById.get(task.rotationId);
           const node = nodeById.get(task.itemId);
-          const taskName = node ? getLocalized(node, 'name', i18n.language) : task.itemId;
+
+          // Get localized task name
+          const taskName = node
+            ? i18n.language === 'he' && node.name_he
+              ? node.name_he
+              : node.name_en || node.name
+            : task.itemId;
+
+          // Get localized rotation name
           const rotationName = rotation
-            ? getLocalized(rotation, 'name', i18n.language)
+            ? i18n.language === 'he' && rotation.name_he
+              ? rotation.name_he
+              : rotation.name_en || rotation.name
             : task.rotationId;
 
           return (
