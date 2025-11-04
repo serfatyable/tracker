@@ -335,6 +335,7 @@
     "actions.deny": "Deny",
     "unassigned": "Unassigned",
     "allResidentsAssigned": "All residents are assigned",
+    "assignRotation": "Assign to rotation",
     "moveResidentToRotation": "Move resident to rotation",
     "assignTutor": "Assign tutor",
     "unassignTutor": "Unassign tutor",
