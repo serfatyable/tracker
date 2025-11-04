@@ -376,6 +376,7 @@ export async function listTasks(params?: {
   limit?: number;
   startAfter?: unknown;
   status?: 'pending' | 'approved' | 'rejected';
+  tutorId?: string;
 }): Promise<ListPage<TaskDoc>> {
   const db = getFirestore(getFirebaseApp());
   const pageSize = params?.limit ?? 20;
@@ -384,6 +385,7 @@ export async function listTasks(params?: {
     try {
       const parts: any[] = [];
       if (params?.status) parts.push(where('status', '==', params.status));
+      if (params?.tutorId) parts.push(where('tutorIds', 'array-contains', params.tutorId));
       parts.push(qLimit(pageSize));
       if (params?.startAfter) parts.push(qStartAfter(params.startAfter as any));
       const snap = await getDocs(query(collection(db, 'tasks'), ...(parts as any)));
