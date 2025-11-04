@@ -202,6 +202,18 @@ export default function RotationBrowser({
       ...prev,
       [leaf.id]: (prev[leaf.id] || 0) + optimisticDelta,
     }));
+    const clearOptimistic = () => {
+      setLocalOptimisticPending((prev) => {
+        const current = prev[leaf.id];
+        if (current === undefined) return prev;
+        const nextValue = current - optimisticDelta;
+        if (nextValue > 0) {
+          return { ...prev, [leaf.id]: nextValue };
+        }
+        const { [leaf.id]: _removed, ...rest } = prev;
+        return rest;
+      });
+    };
     try {
       await createTask({
         userId: uid,
@@ -212,22 +224,17 @@ export default function RotationBrowser({
         note,
       });
     } catch (error) {
-      setLocalOptimisticPending((prev) => {
-        const next = { ...prev };
-        const updated = (next[leaf.id] || 0) - optimisticDelta;
-        if (updated > 0) {
-          next[leaf.id] = updated;
-        } else {
-          delete next[leaf.id];
-        }
-        return next;
-      });
+      clearOptimistic();
       console.error('Failed to log activity', error);
       return;
     }
-    await refreshTasks?.().catch((error) => {
+    try {
+      await refreshTasks?.();
+    } catch (error) {
       console.error('Failed to refresh tasks', error);
-    });
+    } finally {
+      clearOptimistic();
+    }
   }
 
   // Compute filtered list for cards based on rotation, search, category, domain, and status
