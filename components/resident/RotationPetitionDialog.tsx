@@ -154,8 +154,7 @@ export default function RotationPetitionDialog({
             <Button
               onClick={handleSubmit}
               loading={loading}
-              disabled={loading || authStatus === 'loading'}
-              className="flex-1"
+              className="flex-1 bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               {t('petitions.submit', { defaultValue: 'Submit' })}
             </Button>
