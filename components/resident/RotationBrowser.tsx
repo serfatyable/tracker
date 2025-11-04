@@ -364,6 +364,8 @@ export default function RotationBrowser({
     return { all: baseForStatusCounts.length, approved, pending };
   }, [baseForStatusCounts, effectiveCounts]);
 
+  const pendingLabel = t('ui.pending', { defaultValue: 'Pending' }) as string;
+
   return (
     <div className="space-y-3">
       {/* Header bar: rotation title + tiny progress ring (overall, not filtered) + remaining count */}
@@ -565,7 +567,7 @@ export default function RotationBrowser({
           <>
             {windowed.map(({ key, item }, idx) => {
               const approved = effectiveCounts[item.id]?.approved || 0;
-              const _pending = effectiveCounts[item.id]?.pending || 0;
+              const pending = effectiveCounts[item.id]?.pending || 0;
               const req = item.requiredCount || 0;
               const isComplete = req > 0 && approved >= req;
               const subtitle =
@@ -634,6 +636,15 @@ export default function RotationBrowser({
                           aria-label={`${approved} of ${req} approved`}
                         >
                           {approved}/{req}
+                        </Badge>
+                      ) : null}
+                      {pending > 0 ? (
+                        <Badge
+                          variant="secondary"
+                          className="text-[11px] font-semibold !bg-amber-100 !text-amber-900 dark:!bg-amber-900/60 dark:!text-amber-100"
+                          aria-label={`${pendingLabel} ${pending}`}
+                        >
+                          {pendingLabel} +{pending}
                         </Badge>
                       ) : null}
                       <Button
