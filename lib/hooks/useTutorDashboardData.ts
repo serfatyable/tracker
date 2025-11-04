@@ -45,22 +45,40 @@ export function useTutorDashboardData() {
   }, [residents, supervisedResidentIds]);
 
   useEffect(() => {
+    if (!me?.uid) {
+      setPetitions([]);
+      setTasks([]);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
     (async () => {
       try {
         setLoading(true);
         const [petPage, taskPage] = await Promise.all([
           listRotationPetitions({ status: 'pending' }),
-          listTasks({ status: 'pending' }),
+          listTasks({ status: 'pending', tutorId: me.uid }),
         ]);
-        setPetitions(petPage.items || []);
-        setTasks(taskPage.items || []);
+        if (!cancelled) {
+          setPetitions(petPage.items || []);
+          setTasks(taskPage.items || []);
+        }
       } catch (e: any) {
-        setError(e?.message || 'Failed to load');
+        if (!cancelled) {
+          setError(e?.message || 'Failed to load');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     })();
-  }, [me]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [me?.uid]);
 
   const filteredPetitions = useMemo(() => {
     const set = supervisedResidentIds;
