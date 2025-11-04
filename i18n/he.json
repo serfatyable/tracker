@@ -406,10 +406,13 @@
   },
   "tutor": {
     "pendingApprovals": "אישורים ממתינים",
+    "pendingTaskApprovals": "אישורי משימות ממתינים",
     "assignedResidents": "מתמחים משובצים",
     "myTodos": "המשימות שלי",
     "approve": "אשר",
     "deny": "דחה",
+    "approveTask": "אשר משימה",
+    "denyTask": "דחה משימה",
     "openProfile": "פתח פרופיל",
     "selfAssign": "שייך לעצמך",
     "unassign": "בטל שיוך",
