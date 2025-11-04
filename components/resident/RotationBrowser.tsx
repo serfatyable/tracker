@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
-import { createTask } from '../../lib/firebase/db';
+import { createTask, deleteTask } from '../../lib/firebase/db';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
@@ -14,6 +14,7 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { EmptyIcon } from '../ui/EmptyState';
 import ProgressRing from '../ui/ProgressRing';
+import Toast from '../ui/Toast';
 
 type Props = {
   activeRotationId: string | null;
@@ -46,6 +47,27 @@ export default function RotationBrowser({
   const { nodes, loading } = useRotationNodes(activeRotationId || null);
   const [debouncedTerm, setDebouncedTerm] = useState('');
   const [localOptimisticPending, setLocalOptimisticPending] = useState<Record<string, number>>({});
+  const [toastState, setToastState] = useState<{
+    message: string;
+    variant?: 'success' | 'error' | 'warning' | 'info';
+    action?: 'undo';
+  } | null>(null);
+  const undoContextRef = useRef<{
+    taskId: string;
+    leafId: string;
+    count: number;
+  } | null>(null);
+
+  const updateOptimisticPending = useCallback((leafId: string, delta: number) => {
+    setLocalOptimisticPending((prev) => {
+      const nextValue = (prev[leafId] || 0) + delta;
+      if (nextValue === 0) {
+        const { [leafId]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [leafId]: nextValue };
+    });
+  }, []);
 
   useEffect(() => {
     setLocalOptimisticPending({});
@@ -198,24 +220,21 @@ export default function RotationBrowser({
     if (!uid) return;
     const req = leaf.requiredCount || 0;
     const optimisticDelta = count;
-    setLocalOptimisticPending((prev) => ({
-      ...prev,
-      [leaf.id]: (prev[leaf.id] || 0) + optimisticDelta,
-    }));
+    updateOptimisticPending(leaf.id, optimisticDelta);
     const clearOptimistic = () => {
       setLocalOptimisticPending((prev) => {
         const current = prev[leaf.id];
         if (current === undefined) return prev;
         const nextValue = current - optimisticDelta;
-        if (nextValue > 0) {
-          return { ...prev, [leaf.id]: nextValue };
+        if (nextValue === 0) {
+          const { [leaf.id]: _removed, ...rest } = prev;
+          return rest;
         }
-        const { [leaf.id]: _removed, ...rest } = prev;
-        return rest;
+        return { ...prev, [leaf.id]: nextValue };
       });
     };
     try {
-      await createTask({
+      const created = await createTask({
         userId: uid,
         rotationId: leaf.rotationId,
         itemId: leaf.id,
@@ -223,9 +242,27 @@ export default function RotationBrowser({
         requiredCount: req,
         note,
       });
+      undoContextRef.current = {
+        taskId: created.id,
+        leafId: leaf.id,
+        count,
+      };
+      setToastState({
+        message: t('ui.logUndoPrompt', {
+          count,
+          defaultValue: 'Logged +1 pending item.',
+        }) as string,
+        variant: 'success',
+        action: 'undo',
+      });
     } catch (error) {
       clearOptimistic();
       console.error('Failed to log activity', error);
+      undoContextRef.current = null;
+      setToastState({
+        message: t('ui.logError', { defaultValue: 'Failed to log' }) as string,
+        variant: 'error',
+      });
       return;
     }
     try {
@@ -236,6 +273,43 @@ export default function RotationBrowser({
       clearOptimistic();
     }
   }
+
+  const handleToastClear = useCallback(() => {
+    setToastState(null);
+    undoContextRef.current = null;
+  }, []);
+
+  const performUndo = useCallback(async () => {
+    const ctx = undoContextRef.current;
+    if (!ctx) return;
+    updateOptimisticPending(ctx.leafId, -ctx.count);
+    try {
+      await deleteTask(ctx.taskId);
+    } catch (error) {
+      updateOptimisticPending(ctx.leafId, ctx.count);
+      console.error('Failed to undo task', error);
+      setToastState({
+        message: t('toasts.failedToUndo', { defaultValue: 'Failed to undo' }) as string,
+        variant: 'error',
+      });
+      undoContextRef.current = null;
+      return;
+    }
+    try {
+      await refreshTasks?.();
+    } catch (error) {
+      console.error('Failed to refresh tasks after undo', error);
+    }
+    undoContextRef.current = null;
+    setToastState({
+      message: t('ui.logUndoSuccess', { defaultValue: 'Log entry removed.' }) as string,
+      variant: 'success',
+    });
+  }, [refreshTasks, t, updateOptimisticPending]);
+
+  const handleUndoClick = useCallback(() => {
+    void performUndo();
+  }, [performUndo]);
 
   // Compute filtered list for cards based on rotation, search, category, domain, and status
   const filteredCards: FlatLeaf[] = useMemo(() => {
@@ -409,336 +483,352 @@ export default function RotationBrowser({
   const pendingLabel = t('ui.pending', { defaultValue: 'Pending' }) as string;
 
   return (
-    <div className="space-y-3">
-      {/* Header bar: rotation title + tiny progress ring (overall, not filtered) + remaining count */}
-      {activeRotationId ? (
-        <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-          <ProgressRing
-            size={18}
-            stroke={2}
-            percent={overall.percent}
-            label={`${overall.percent}%`}
-          />
-          <span aria-hidden className="text-xs">
-            {overall.approved}/{overall.required}
-          </span>
-          {overall.remaining > 0 ? (
-            <span className="text-xs text-gray-600 dark:text-gray-400">
-              {t('ui.remainingShort', {
-                count: overall.remaining,
-                defaultValue: `Remaining ${overall.remaining}`,
-              })}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-      {/* Consolidated filter toolbar: categories (left) + status (right with counts) */}
-      <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/30 px-2 py-2 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          {/* Categories segmented */}
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-            {(
-              [
-                { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
-                { key: 'knowledge', label: t('ui.knowledge', { defaultValue: 'Knowledge' }) },
-                { key: 'skills', label: t('ui.skills', { defaultValue: 'Skills' }) },
-                { key: 'guidance', label: t('ui.guidance', { defaultValue: 'Guidance' }) },
-              ] as Array<{ key: CategoryFilter; label: string }>
-            ).map((c) => (
-              <button
-                key={c.key}
-                type="button"
-                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 text-gray-700 dark:text-gray-300 ${
-                  categoryFilter === c.key
-                    ? 'ring-1 ring-primary-token bg-primary/10 text-primary'
-                    : ''
-                }`}
-                onClick={() => setCategoryFilter(c.key)}
-                aria-pressed={categoryFilter === c.key}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Status with color accents and counts */}
-          <div className="flex gap-1">
-            {(
-              [
-                {
-                  key: 'all',
-                  label: t('ui.all', { defaultValue: 'All' }),
-                  cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-                  count: statusCounts.all,
-                },
-                {
-                  key: 'pending',
-                  label: t('ui.pending', { defaultValue: 'Pending' }),
-                  cls: '!bg-amber-100 !text-amber-900 dark:!bg-amber-900/50 dark:!text-amber-100',
-                  count: statusCounts.pending,
-                },
-                {
-                  key: 'approved',
-                  label: t('ui.approved', { defaultValue: 'Approved' }),
-                  cls: '!bg-green-100 !text-green-900 dark:!bg-green-900/50 dark:!text-green-100',
-                  count: statusCounts.approved,
-                },
-              ] as Array<{ key: StatusFilter; label: string; cls: string; count: number }>
-            ).map((s) => (
-              <button
-                key={s.key}
-                type="button"
-                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 text-gray-700 dark:text-gray-300 ${
-                  statusFilter === s.key ? `ring-1 ring-primary-token ${s.cls}` : ''
-                }`}
-                onClick={() => setStatusFilter(s.key)}
-                aria-pressed={statusFilter === s.key}
-              >
-                {s.label}
-                <span className="ml-1 text-[10px] opacity-75">({s.count})</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Domains row: prominent pills with counts */}
-      <div
-        className="flex gap-2 overflow-x-auto scrollbar-hide"
-        aria-label={t('ui.domains', { defaultValue: 'Domains' }) as string}
-      >
-        {topDomains.map((domain) => (
-          <button
-            key={domain}
-            type="button"
-            className={`px-4 py-2 rounded-full text-xs font-medium bg-white dark:bg-[rgb(var(--surface-elevated))] border hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface))] whitespace-nowrap ${
-              domainFilter === domain ? 'ring-1 ring-primary-token' : ''
-            }`}
-            onClick={() => (onSelectDomain ? onSelectDomain(domain) : onOpenDomainPicker())}
-            aria-pressed={domainFilter === domain}
-            aria-label={`Domain: ${domain} ${domainFilter === domain ? 'selected' : 'unselected'}`}
-          >
-            {domain}
-            {availableDomains.counts[domain] && (
-              <span className="ml-1 text-[10px] opacity-75">
-                ({availableDomains.counts[domain]})
-              </span>
-            )}
-          </button>
-        ))}
-        <button
-          type="button"
-          className="px-4 py-2 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 whitespace-nowrap"
-          onClick={onOpenDomainPicker}
-          aria-label={t('ui.moreDomains', { defaultValue: 'More domains' })}
-        >
-          {t('ui.moreDomains', { defaultValue: 'More domains' })}
-        </button>
-      </div>
-
-      {/* Active filter chips (only when any filter is active) */}
-      {(categoryFilter !== 'all' || statusFilter !== 'all' || domainFilter !== 'all') && (
-        <div className="flex items-center gap-2 flex-wrap text-xs mt-1">
-          <span className="text-muted-foreground">
-            {t('ui.filters', { defaultValue: 'Filters' })}:
-          </span>
-          {categoryFilter !== 'all' && (
-            <button
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-gray-700 dark:text-gray-300"
-              onClick={() => setCategoryFilter('all')}
-            >
-              {(t('ui.category', { defaultValue: 'Category' }) as any) || 'Category'}:{' '}
-              {categoryFilter} ×
-            </button>
-          )}
-          {domainFilter !== 'all' && (
-            <button
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-gray-700 dark:text-gray-300"
-              onClick={() => onSelectDomain && onSelectDomain('all')}
-            >
-              {(t('ui.domain', { defaultValue: 'Domain' }) as any) || 'Domain'}: {domainFilter} ×
-            </button>
-          )}
-          {statusFilter !== 'all' && (
-            <button
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-gray-700 dark:text-gray-300"
-              onClick={() => setStatusFilter('all')}
-            >
-              {t('ui.status', { defaultValue: 'Status' })}: {statusFilter} ×
-            </button>
-          )}
-          <button
-            className="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:underline"
-            onClick={clearFilters}
-          >
-            {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
-          </button>
-        </div>
-      )}
-
-      {/* Cards list */}
-      <div role="list" className="space-y-2">
-        {loadingToUse ? (
-          // Skeletons for first screenful
-          Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="card-levitate h-16 animate-pulse"
-              role="listitem"
-              aria-busy="true"
+    <>
+      <div className="space-y-3">
+        {/* Header bar: rotation title + tiny progress ring (overall, not filtered) + remaining count */}
+        {activeRotationId ? (
+          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <ProgressRing
+              size={18}
+              stroke={2}
+              percent={overall.percent}
+              label={`${overall.percent}%`}
             />
-          ))
-        ) : windowed.length === 0 ? (
-          <div className="py-6 text-center">
-            <EmptyIcon size={36} />
-            <div className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-50">
-              {t('ui.noResults', { defaultValue: 'No results' })}
+            <span aria-hidden className="text-xs">
+              {overall.approved}/{overall.required}
+            </span>
+            {overall.remaining > 0 ? (
+              <span className="text-xs text-gray-600 dark:text-gray-400">
+                {t('ui.remainingShort', {
+                  count: overall.remaining,
+                  defaultValue: `Remaining ${overall.remaining}`,
+                })}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        {/* Consolidated filter toolbar: categories (left) + status (right with counts) */}
+        <div className="rounded-xl border bg-gray-50 dark:bg-gray-900/30 px-2 py-2 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            {/* Categories segmented */}
+            <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+              {(
+                [
+                  { key: 'all', label: t('ui.all', { defaultValue: 'All' }) },
+                  { key: 'knowledge', label: t('ui.knowledge', { defaultValue: 'Knowledge' }) },
+                  { key: 'skills', label: t('ui.skills', { defaultValue: 'Skills' }) },
+                  { key: 'guidance', label: t('ui.guidance', { defaultValue: 'Guidance' }) },
+                ] as Array<{ key: CategoryFilter; label: string }>
+              ).map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 text-gray-700 dark:text-gray-300 ${
+                    categoryFilter === c.key
+                      ? 'ring-1 ring-primary-token bg-primary/10 text-primary'
+                      : ''
+                  }`}
+                  onClick={() => setCategoryFilter(c.key)}
+                  aria-pressed={categoryFilter === c.key}
+                >
+                  {c.label}
+                </button>
+              ))}
             </div>
-            <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-              {t('ui.clearFiltersToSeeAll', {
-                defaultValue: 'Try clearing filters or changing your search.',
-              })}
-            </div>
-            <div className="mt-3">
-              <Button onClick={clearFilters} size="sm">
-                {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
-              </Button>
+
+            {/* Status with color accents and counts */}
+            <div className="flex gap-1">
+              {(
+                [
+                  {
+                    key: 'all',
+                    label: t('ui.all', { defaultValue: 'All' }),
+                    cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+                    count: statusCounts.all,
+                  },
+                  {
+                    key: 'pending',
+                    label: t('ui.pending', { defaultValue: 'Pending' }),
+                    cls: '!bg-amber-100 !text-amber-900 dark:!bg-amber-900/50 dark:!text-amber-100',
+                    count: statusCounts.pending,
+                  },
+                  {
+                    key: 'approved',
+                    label: t('ui.approved', { defaultValue: 'Approved' }),
+                    cls: '!bg-green-100 !text-green-900 dark:!bg-green-900/50 dark:!text-green-100',
+                    count: statusCounts.approved,
+                  },
+                ] as Array<{ key: StatusFilter; label: string; cls: string; count: number }>
+              ).map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap bg-muted hover:bg-muted/70 text-gray-700 dark:text-gray-300 ${
+                    statusFilter === s.key ? `ring-1 ring-primary-token ${s.cls}` : ''
+                  }`}
+                  onClick={() => setStatusFilter(s.key)}
+                  aria-pressed={statusFilter === s.key}
+                >
+                  {s.label}
+                  <span className="ml-1 text-[10px] opacity-75">({s.count})</span>
+                </button>
+              ))}
             </div>
           </div>
-        ) : (
-          <>
-            {windowed.map(({ key, item }, idx) => {
-              const approved = effectiveCounts[item.id]?.approved || 0;
-              const pending = effectiveCounts[item.id]?.pending || 0;
-              const req = item.requiredCount || 0;
-              const isComplete = req > 0 && approved >= req;
-              const subtitle =
-                item.subjectName ||
-                item.ancestors.slice(0, -1).slice(-1)[0] ||
-                item.categoryName ||
-                '';
-              // Section header when first item of a domain in windowed sequence
-              const isFirstInDomain = idx === 0 || windowed[idx - 1]!.key !== key;
-              const groupTotals = groupedByDomain[key]?.totals || { approved: 0, required: 0 };
-              const percent =
-                req > 0 ? Math.min(100, Math.round((approved / Math.max(1, req)) * 100)) : null;
-              const progressStyles = isComplete
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-900/20 dark:text-emerald-100'
-                : approved > 0
-                  ? 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/40 dark:bg-sky-900/20 dark:text-sky-100'
-                  : 'border-gray-200 bg-gray-50 text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-300';
-              const completionBadgeTone = isComplete
-                ? 'ring-emerald-200 bg-emerald-50 text-emerald-700 dark:ring-emerald-500/40 dark:bg-emerald-900/30 dark:text-emerald-100'
-                : approved > 0
-                  ? 'ring-sky-200 bg-sky-50 text-sky-700 dark:ring-sky-500/40 dark:bg-sky-900/30 dark:text-sky-100'
-                  : 'ring-gray-200 bg-gray-50 text-gray-600 dark:ring-gray-600/40 dark:bg-gray-900/40 dark:text-gray-200';
+        </div>
 
-              return (
-                <div key={item.id} className="space-y-2">
-                  {isFirstInDomain ? (
-                    <div className="flex items-center justify-between pt-4">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        {key}
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className="text-[11px] font-medium ring-1 ring-inset ring-gray-200/80 bg-transparent text-gray-600 dark:ring-white/15 dark:text-gray-200"
-                      >
-                        {groupTotals.approved}/{groupTotals.required}
-                      </Badge>
-                    </div>
-                  ) : null}
-                  <div
-                    role="listitem"
-                    tabIndex={0}
-                    onClick={() => onSelectLeaf(item)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onSelectLeaf(item);
-                      }
-                    }}
-                    className="card-levitate group relative w-full cursor-pointer overflow-hidden border border-transparent bg-white/80 text-left transition-colors hover:border-gray-200/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-token dark:bg-[rgb(var(--surface))] dark:hover:border-white/10"
-                    aria-label={item.name}
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex flex-1 items-start gap-3">
-                        <div
-                          className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border text-sm font-semibold transition-colors ${progressStyles}`}
-                          aria-hidden
-                        >
-                          {percent !== null ? <span>{percent}%</span> : <span>–</span>}
+        {/* Domains row: prominent pills with counts */}
+        <div
+          className="flex gap-2 overflow-x-auto scrollbar-hide"
+          aria-label={t('ui.domains', { defaultValue: 'Domains' }) as string}
+        >
+          {topDomains.map((domain) => (
+            <button
+              key={domain}
+              type="button"
+              className={`px-4 py-2 rounded-full text-xs font-medium bg-white dark:bg-[rgb(var(--surface-elevated))] border hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface))] whitespace-nowrap ${
+                domainFilter === domain ? 'ring-1 ring-primary-token' : ''
+              }`}
+              onClick={() => (onSelectDomain ? onSelectDomain(domain) : onOpenDomainPicker())}
+              aria-pressed={domainFilter === domain}
+              aria-label={`Domain: ${domain} ${domainFilter === domain ? 'selected' : 'unselected'}`}
+            >
+              {domain}
+              {availableDomains.counts[domain] && (
+                <span className="ml-1 text-[10px] opacity-75">
+                  ({availableDomains.counts[domain]})
+                </span>
+              )}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="px-4 py-2 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 whitespace-nowrap"
+            onClick={onOpenDomainPicker}
+            aria-label={t('ui.moreDomains', { defaultValue: 'More domains' })}
+          >
+            {t('ui.moreDomains', { defaultValue: 'More domains' })}
+          </button>
+        </div>
+
+        {/* Active filter chips (only when any filter is active) */}
+        {(categoryFilter !== 'all' || statusFilter !== 'all' || domainFilter !== 'all') && (
+          <div className="flex items-center gap-2 flex-wrap text-xs mt-1">
+            <span className="text-muted-foreground">
+              {t('ui.filters', { defaultValue: 'Filters' })}:
+            </span>
+            {categoryFilter !== 'all' && (
+              <button
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-gray-700 dark:text-gray-300"
+                onClick={() => setCategoryFilter('all')}
+              >
+                {(t('ui.category', { defaultValue: 'Category' }) as any) || 'Category'}:{' '}
+                {categoryFilter} ×
+              </button>
+            )}
+            {domainFilter !== 'all' && (
+              <button
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-gray-700 dark:text-gray-300"
+                onClick={() => onSelectDomain && onSelectDomain('all')}
+              >
+                {(t('ui.domain', { defaultValue: 'Domain' }) as any) || 'Domain'}: {domainFilter} ×
+              </button>
+            )}
+            {statusFilter !== 'all' && (
+              <button
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-gray-700 dark:text-gray-300"
+                onClick={() => setStatusFilter('all')}
+              >
+                {t('ui.status', { defaultValue: 'Status' })}: {statusFilter} ×
+              </button>
+            )}
+            <button
+              className="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              onClick={clearFilters}
+            >
+              {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
+            </button>
+          </div>
+        )}
+
+        {/* Cards list */}
+        <div role="list" className="space-y-2">
+          {loadingToUse ? (
+            // Skeletons for first screenful
+            Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="card-levitate h-16 animate-pulse"
+                role="listitem"
+                aria-busy="true"
+              />
+            ))
+          ) : windowed.length === 0 ? (
+            <div className="py-6 text-center">
+              <EmptyIcon size={36} />
+              <div className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-50">
+                {t('ui.noResults', { defaultValue: 'No results' })}
+              </div>
+              <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                {t('ui.clearFiltersToSeeAll', {
+                  defaultValue: 'Try clearing filters or changing your search.',
+                })}
+              </div>
+              <div className="mt-3">
+                <Button onClick={clearFilters} size="sm">
+                  {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {windowed.map(({ key, item }, idx) => {
+                const approved = effectiveCounts[item.id]?.approved || 0;
+                const pending = effectiveCounts[item.id]?.pending || 0;
+                const req = item.requiredCount || 0;
+                const isComplete = req > 0 && approved >= req;
+                const subtitle =
+                  item.subjectName ||
+                  item.ancestors.slice(0, -1).slice(-1)[0] ||
+                  item.categoryName ||
+                  '';
+                // Section header when first item of a domain in windowed sequence
+                const isFirstInDomain = idx === 0 || windowed[idx - 1]!.key !== key;
+                const groupTotals = groupedByDomain[key]?.totals || { approved: 0, required: 0 };
+                const percent =
+                  req > 0 ? Math.min(100, Math.round((approved / Math.max(1, req)) * 100)) : null;
+                const progressStyles = isComplete
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-900/20 dark:text-emerald-100'
+                  : approved > 0
+                    ? 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/40 dark:bg-sky-900/20 dark:text-sky-100'
+                    : 'border-gray-200 bg-gray-50 text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-300';
+                const completionBadgeTone = isComplete
+                  ? 'ring-emerald-200 bg-emerald-50 text-emerald-700 dark:ring-emerald-500/40 dark:bg-emerald-900/30 dark:text-emerald-100'
+                  : approved > 0
+                    ? 'ring-sky-200 bg-sky-50 text-sky-700 dark:ring-sky-500/40 dark:bg-sky-900/30 dark:text-sky-100'
+                    : 'ring-gray-200 bg-gray-50 text-gray-600 dark:ring-gray-600/40 dark:bg-gray-900/40 dark:text-gray-200';
+
+                return (
+                  <div key={item.id} className="space-y-2">
+                    {isFirstInDomain ? (
+                      <div className="flex items-center justify-between pt-4">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          {key}
                         </div>
-                        <div className="min-w-0 flex-1 space-y-1">
-                          {subtitle ? (
-                            <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                              {subtitle}
+                        <Badge
+                          variant="outline"
+                          className="text-[11px] font-medium ring-1 ring-inset ring-gray-200/80 bg-transparent text-gray-600 dark:ring-white/15 dark:text-gray-200"
+                        >
+                          {groupTotals.approved}/{groupTotals.required}
+                        </Badge>
+                      </div>
+                    ) : null}
+                    <div
+                      role="listitem"
+                      tabIndex={0}
+                      onClick={() => onSelectLeaf(item)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSelectLeaf(item);
+                        }
+                      }}
+                      className="card-levitate group relative w-full cursor-pointer overflow-hidden border border-transparent bg-white/80 text-left transition-colors hover:border-gray-200/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-token dark:bg-[rgb(var(--surface))] dark:hover:border-white/10"
+                      aria-label={item.name}
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex flex-1 items-start gap-3">
+                          <div
+                            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border text-sm font-semibold transition-colors ${progressStyles}`}
+                            aria-hidden
+                          >
+                            {percent !== null ? <span>{percent}%</span> : <span>–</span>}
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            {subtitle ? (
+                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                {subtitle}
+                              </div>
+                            ) : null}
+                            <div className="text-sm font-semibold leading-5 text-gray-900 dark:text-gray-50">
+                              {debouncedTerm.trim()
+                                ? highlight(item.name, debouncedTerm)
+                                : item.name}
                             </div>
-                          ) : null}
-                          <div className="text-sm font-semibold leading-5 text-gray-900 dark:text-gray-50">
-                            {debouncedTerm.trim() ? highlight(item.name, debouncedTerm) : item.name}
                           </div>
                         </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-3 sm:min-w-[160px]">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {req > 0 ? (
-                            <Badge
-                              variant="outline"
-                              className={`text-xs font-semibold tracking-tight ${completionBadgeTone}`}
-                              title={`${approved}/${req}`}
-                              aria-label={`${approved} of ${req} approved`}
-                            >
-                              {approved}/{req}
-                            </Badge>
-                          ) : null}
-                          {pending > 0 ? (
-                            <Badge
-                              variant="outline"
-                              className="text-[11px] font-semibold tracking-tight ring-amber-200 bg-amber-50 text-amber-700 dark:ring-amber-500/40 dark:bg-amber-900/30 dark:text-amber-100"
-                              aria-label={`${pendingLabel} ${pending}`}
-                            >
-                              {pendingLabel} +{pending}
-                            </Badge>
-                          ) : null}
+                        <div className="flex flex-col items-end gap-3 sm:min-w-[160px]">
+                          <div className="flex flex-wrap justify-end gap-2">
+                            {req > 0 ? (
+                              <Badge
+                                variant="outline"
+                                className={`text-xs font-semibold tracking-tight ${completionBadgeTone}`}
+                                title={`${approved}/${req}`}
+                                aria-label={`${approved} of ${req} approved`}
+                              >
+                                {approved}/{req}
+                              </Badge>
+                            ) : null}
+                            {pending > 0 ? (
+                              <Badge
+                                variant="outline"
+                                className="text-[11px] font-semibold tracking-tight ring-amber-200 bg-amber-50 text-amber-700 dark:ring-amber-500/40 dark:bg-amber-900/30 dark:text-amber-100"
+                                aria-label={`${pendingLabel} ${pending}`}
+                              >
+                                {pendingLabel} +{pending}
+                              </Badge>
+                            ) : null}
+                          </div>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="self-end"
+                            disabled={!canLog(item)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onLog(item, 1);
+                            }}
+                            title={
+                              !canLog(item)
+                                ? 'Only available for your currently active rotation'
+                                : 'Submit for approval'
+                            }
+                          >
+                            +1
+                          </Button>
                         </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="self-end"
-                          disabled={!canLog(item)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onLog(item, 1);
-                          }}
-                          title={
-                            !canLog(item)
-                              ? 'Only available for your currently active rotation'
-                              : 'Submit for approval'
-                          }
-                        >
-                          +1
-                        </Button>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-            {hasMore ? <div ref={sentinelRef} className="h-8 w-full" aria-hidden /> : null}
-          </>
-        )}
-      </div>
-
-      {/* Load more fallback */}
-      {hasMore ? (
-        <div className="flex justify-center pt-1">
-          <Button size="sm" onClick={() => setVisibleCount((v) => v + BATCH)}>
-            {t('ui.loadMore', { defaultValue: 'Load more' })}
-          </Button>
+                );
+              })}
+              {hasMore ? <div ref={sentinelRef} className="h-8 w-full" aria-hidden /> : null}
+            </>
+          )}
         </div>
-      ) : null}
-    </div>
+
+        {/* Load more fallback */}
+        {hasMore ? (
+          <div className="flex justify-center pt-1">
+            <Button size="sm" onClick={() => setVisibleCount((v) => v + BATCH)}>
+              {t('ui.loadMore', { defaultValue: 'Load more' })}
+            </Button>
+          </div>
+        ) : null}
+      </div>
+      <Toast
+        message={toastState?.message || null}
+        variant={toastState?.variant}
+        actionLabel={
+          toastState?.action === 'undo'
+            ? (t('ui.undo', { defaultValue: 'Undo' }) as string)
+            : undefined
+        }
+        onAction={toastState?.action === 'undo' ? handleUndoClick : undefined}
+        onClear={handleToastClear}
+        duration={toastState?.action === 'undo' ? 10000 : undefined}
+      />
+    </>
   );
 }
 

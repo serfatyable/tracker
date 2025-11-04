@@ -113,6 +113,8 @@
     "plusOne": "+1",
     "showingMatches": "Showing {{shown}} of {{total}} matches",
     "logSuccess": "Logged +1",
+    "logUndoPrompt": "Logged +1 pending item.",
+    "logUndoSuccess": "Log entry removed.",
     "logError": "Failed to log",
     "saving": "Saving...",
     "recentLogs": "Recent logs",
