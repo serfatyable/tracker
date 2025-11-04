@@ -42,16 +42,6 @@ export default function TutorDashboard() {
         <LargeTitleHeader title={t('ui.home', { defaultValue: 'Home' }) as string} />
         <div className="app-container p-6">
           <div className="w-full space-y-6">
-            {/* Quick links */}
-            <div className="flex items-center justify-end gap-2">
-              <Link href="/tutor/residents" className="pill text-xs">
-                {t('tutor.tabs.residents')}
-              </Link>
-              <Link href="/tutor/tasks" className="pill text-xs">
-                {t('ui.tasks')}
-              </Link>
-            </div>
-
             {/* 1) Overview (personal KPIs/sections) */}
             <Suspense
               fallback={
