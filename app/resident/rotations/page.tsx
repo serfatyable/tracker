@@ -2,7 +2,7 @@
 
 import { getAuth } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState, useMemo } from 'react';
+import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AuthGate from '../../../components/auth/AuthGate';
@@ -21,6 +21,7 @@ import SegmentedView from '../../../components/resident/SegmentedView';
 import { getFirebaseApp } from '../../../lib/firebase/client';
 import { createTask } from '../../../lib/firebase/db';
 import { useResidentActiveRotation } from '../../../lib/hooks/useResidentActiveRotation';
+import { useRotationNodes } from '../../../lib/hooks/useRotationNodes';
 import { useRotationsIndex } from '../../../lib/hooks/useRotationsIndex';
 import type { RotationNode } from '../../../types/rotations';
 
@@ -42,11 +43,66 @@ export default function ResidentRotationsPage() {
   const [selectedItem, setSelectedItem] = useState<RotationNode | null>(null);
   const [optimistic, setOptimistic] = useState<Record<string, { pending: number }>>({});
   const [domainsList, setDomainsList] = useState<string[]>([]);
+  const [recentLeafIds, setRecentLeafIds] = useState<string[]>([]);
+  const [lastLeaf, setLastLeaf] = useState<RotationNode | null>(null);
 
   // Compute active rotation meta
   const active = useMemo(
     () => rotationIndex?.all?.find((r) => r.id === activeRotationId) ?? null,
     [rotationIndex, activeRotationId],
+  );
+
+  const { nodes: rotationNodes } = useRotationNodes(activeRotationId ?? null);
+
+  useEffect(() => {
+    setSelectedLeaf(null);
+    setRecentLeafIds([]);
+    setLastLeaf(null);
+  }, [activeRotationId]);
+
+  const leafOptions = useMemo(() => {
+    if (!rotationNodes.length)
+      return [] as Array<{ id: string; node: RotationNode; title: string; trail?: string }>;
+    const byId = new Map(rotationNodes.map((node) => [node.id, node]));
+
+    return rotationNodes
+      .filter((node) => node.type === 'leaf')
+      .map((leaf) => {
+        const ancestors: string[] = [];
+        let parentId = leaf.parentId;
+        while (parentId) {
+          const parent = byId.get(parentId);
+          if (!parent) break;
+          ancestors.push(parent.name);
+          parentId = parent.parentId;
+        }
+        const trail = ancestors.reverse();
+        return {
+          id: leaf.id,
+          node: leaf,
+          title: leaf.name,
+          trail: trail.length ? trail.join(' • ') : undefined,
+        };
+      })
+      .sort((a, b) => {
+        const aTrail = a.trail ? `${a.trail} • ${a.title}` : a.title;
+        const bTrail = b.trail ? `${b.trail} • ${b.title}` : b.title;
+        return aTrail.localeCompare(bTrail, undefined, { sensitivity: 'base' });
+      });
+  }, [rotationNodes]);
+
+  const leafOptionById = useMemo(() => {
+    const map = new Map<string, (typeof leafOptions)[number]>();
+    leafOptions.forEach((opt) => map.set(opt.id, opt));
+    return map;
+  }, [leafOptions]);
+
+  const recentLeaves = useMemo(
+    () =>
+      recentLeafIds
+        .map((id) => leafOptionById.get(id))
+        .filter((opt): opt is (typeof leafOptions)[number] => Boolean(opt)),
+    [leafOptionById, recentLeafIds],
   );
 
   // Initialize active rotation and view from URL params
@@ -140,8 +196,27 @@ export default function ResidentRotationsPage() {
   };
 
   // Handle log activity
+  const handleLeafSelection = useCallback((leaf: RotationNode | null) => {
+    setSelectedLeaf(leaf);
+    if (!leaf) return;
+    setLastLeaf(leaf);
+    setRecentLeafIds((prev) => {
+      const next = [leaf.id, ...prev.filter((id) => id !== leaf.id)];
+      return next.slice(0, 5);
+    });
+  }, []);
+
   const handleLogActivity = (item: RotationNode) => {
-    setSelectedLeaf(item);
+    handleLeafSelection(item);
+    setQuickLogOpen(true);
+  };
+
+  const handleQuickLogOpen = () => {
+    if (lastLeaf) {
+      handleLeafSelection(lastLeaf);
+    } else {
+      setSelectedLeaf(null);
+    }
     setQuickLogOpen(true);
   };
 
@@ -227,7 +302,7 @@ export default function ResidentRotationsPage() {
             <div className="fixed inset-x-0 bottom-3 flex justify-center md:hidden pointer-events-none">
               <button
                 type="button"
-                onClick={() => setQuickLogOpen(true)}
+                onClick={handleQuickLogOpen}
                 className="pointer-events-auto inline-flex items-center gap-2 rounded-full px-4 py-3 bg-blue-600 text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 active:scale-95 transition pad-safe-b"
                 aria-label={t('ui.logActivity', { defaultValue: 'Log activity' }) as string}
               >
@@ -250,6 +325,9 @@ export default function ResidentRotationsPage() {
           open={quickLogOpen}
           onClose={() => setQuickLogOpen(false)}
           leaf={selectedLeaf}
+          onSelectLeaf={handleLeafSelection}
+          leafOptions={leafOptions}
+          recentLeaves={recentLeaves}
           onLog={async (leaf, count, note) => {
             const uid = getAuth(getFirebaseApp()).currentUser?.uid;
             if (!uid || !leaf) return;
@@ -265,6 +343,7 @@ export default function ResidentRotationsPage() {
               const cur = prev[leaf.id]?.pending ?? 0;
               return { ...prev, [leaf.id]: { pending: cur + (count || 0) } };
             });
+            handleLeafSelection(leaf);
             setQuickLogOpen(false);
           }}
         />
