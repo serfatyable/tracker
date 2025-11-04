@@ -44,7 +44,6 @@ export default function ResidentRotationsPage() {
   const [optimistic, setOptimistic] = useState<Record<string, { pending: number }>>({});
   const [domainsList, setDomainsList] = useState<string[]>([]);
   const [recentLeafIds, setRecentLeafIds] = useState<string[]>([]);
-  const [lastLeaf, setLastLeaf] = useState<RotationNode | null>(null);
 
   // Compute active rotation meta
   const active = useMemo(
@@ -57,7 +56,6 @@ export default function ResidentRotationsPage() {
   useEffect(() => {
     setSelectedLeaf(null);
     setRecentLeafIds([]);
-    setLastLeaf(null);
   }, [activeRotationId]);
 
   const leafOptions = useMemo(() => {
@@ -199,7 +197,6 @@ export default function ResidentRotationsPage() {
   const handleLeafSelection = useCallback((leaf: RotationNode | null) => {
     setSelectedLeaf(leaf);
     if (!leaf) return;
-    setLastLeaf(leaf);
     setRecentLeafIds((prev) => {
       const next = [leaf.id, ...prev.filter((id) => id !== leaf.id)];
       return next.slice(0, 5);
@@ -212,11 +209,7 @@ export default function ResidentRotationsPage() {
   };
 
   const handleQuickLogOpen = () => {
-    if (lastLeaf) {
-      handleLeafSelection(lastLeaf);
-    } else {
-      setSelectedLeaf(null);
-    }
+    setSelectedLeaf(null);
     setQuickLogOpen(true);
   };
 
