@@ -91,6 +91,11 @@ export async function createTask(params: {
   return { id: ref.id };
 }
 
+export async function deleteTask(taskId: string): Promise<void> {
+  const db = getFirestore(getFirebaseApp());
+  await deleteDoc(doc(db, 'tasks', taskId));
+}
+
 /**
  * Get tutorIds from resident's active assignment
  * Used to populate task.tutorIds for authorization rules

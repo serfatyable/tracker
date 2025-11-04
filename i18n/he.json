@@ -148,6 +148,8 @@
     "fixData": "תקן כפילויות ונתונים לא תקינים",
     "auth": "אימות",
     "logSuccess": "נרשם +1",
+    "logUndoPrompt": "נרשם +1 בהמתנה.",
+    "logUndoSuccess": "הרישום בוטל.",
     "logError": "הרישום נכשל",
     "saving": "שומר...",
     "recentLogs": "רישומים אחרונים",
