@@ -8,6 +8,8 @@ import { ListSkeleton } from '../dashboard/Skeleton';
 import Button from '../ui/Button';
 import EmptyState, { ChecklistIcon } from '../ui/EmptyState';
 import Select from '../ui/Select';
+import Badge from '../ui/Badge';
+import type { TaskDoc } from '../../lib/firebase/db';
 
 export default function PendingTasksList({
   activeRotationId,
@@ -23,22 +25,68 @@ export default function PendingTasksList({
     '' | 'all' | 'Knowledge' | 'Skills' | 'Guidance'
   >('');
 
-  const list = useMemo(() => {
-    const base = tasks.filter((t) => t.status === 'pending' || t.status === 'rejected');
-    const byRotation =
-      rotationFilter === 'active' && activeRotationId
-        ? base.filter((t) => t.rotationId === activeRotationId)
-        : base;
-    const filtered =
-      categoryFilter === 'all'
-        ? byRotation
-        : byRotation.filter((t) => {
-            const node = nodesById[t.itemId];
-            // walk up via nodesById to find category name
-            return node && findCategoryName(nodesById, t.itemId) === categoryFilter;
-          });
-    return filtered;
-  }, [tasks, rotationFilter, categoryFilter, activeRotationId, nodesById]);
+    const list = useMemo(() => {
+      const base = tasks.filter((t) => t.status === 'pending' || t.status === 'rejected');
+      const byRotation =
+        rotationFilter === 'active' && activeRotationId
+          ? base.filter((t) => t.rotationId === activeRotationId)
+          : base;
+      const filtered =
+        categoryFilter === 'all'
+          ? byRotation
+          : byRotation.filter((t) => {
+              const node = nodesById[t.itemId];
+              // walk up via nodesById to find category name
+              return node && findCategoryName(nodesById, t.itemId) === categoryFilter;
+            });
+
+      type PendingListTask = TaskDoc & {
+        duplicateCount: number;
+        latestTaskId: string;
+        mostRecentCreatedAt: number;
+      };
+
+      const sorted = [...filtered].sort((a, b) => getTaskTimestamp(b) - getTaskTimestamp(a));
+      const deduped: PendingListTask[] = [];
+      const pendingMap = new Map<string, PendingListTask>();
+
+      sorted.forEach((task) => {
+        const entry: PendingListTask = {
+          ...task,
+          duplicateCount: 1,
+          latestTaskId: task.id,
+          mostRecentCreatedAt: getTaskTimestamp(task),
+        };
+
+        if (task.status !== 'pending') {
+          deduped.push(entry);
+          return;
+        }
+
+        const key = `${task.itemId}__${task.rotationId}`;
+        const existing = pendingMap.get(key);
+
+        if (!existing) {
+          pendingMap.set(key, entry);
+          deduped.push(entry);
+          return;
+        }
+
+        existing.duplicateCount += 1;
+
+        const currentTimestamp = entry.mostRecentCreatedAt;
+        if (currentTimestamp > existing.mostRecentCreatedAt) {
+          existing.id = task.id;
+          existing.note = task.note;
+          existing.feedback = task.feedback;
+          existing.createdAt = task.createdAt;
+          existing.mostRecentCreatedAt = currentTimestamp;
+          existing.latestTaskId = task.id;
+        }
+      });
+
+      return deduped;
+    }, [tasks, rotationFilter, categoryFilter, activeRotationId, nodesById]);
 
   function findCategoryName(
     map: Record<string, any>,
@@ -88,48 +136,96 @@ export default function PendingTasksList({
               {t('ui.category.all', { defaultValue: 'knowledge/skills/guidance' })}
             </option>
           ) : null}
-          <option value="all">{t('ui.all', { defaultValue: 'All' })}</option>
-          <option value="Knowledge">{t('ui.category.knowledge') || 'knowledge'}</option>
-          <option value="Skills">{t('ui.category.skills') || 'skills'}</option>
-          <option value="Guidance">{t('ui.category.guidance') || 'guidance'}</option>
-        </Select>
-      </div>
-      {list.length === 0 ? (
-        <EmptyState
-          icon={<ChecklistIcon />}
-          title={t('ui.noTasks', { defaultValue: 'No pending tasks' })}
-          description={
-            activeRotationId
-              ? t('ui.allTasksComplete', {
-                  defaultValue: 'Great work! All your tasks are approved or completed.',
-                })
-              : t('ui.noActiveRotation', {
-                  defaultValue: 'Start a rotation to see tasks appear here.',
-                })
-          }
-        />
-      ) : (
-        <ul className="space-y-1 text-sm">
-          {list.map((t) => (
-            <li
-              key={t.id}
-              className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-[rgb(var(--border))]"
-            >
-              <span>{nodesById[t.itemId]?.name || t.itemId}</span>
-              <span className="flex items-center gap-2">
-                <span className="text-gray-500 dark:text-gray-400">{t.status}</span>
-                <Link
-                  href={`/resident/reflections/${t.id}?taskType=${encodeURIComponent(nodesById[t.itemId]?.name || 'Task')}`}
-                >
-                  <Button size="sm" variant="outline">
-                    Reflect
-                  </Button>
-                </Link>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+            <option value="all">{t('ui.all', { defaultValue: 'All' })}</option>
+            <option value="Knowledge">{t('ui.category.knowledge') || 'knowledge'}</option>
+            <option value="Skills">{t('ui.category.skills') || 'skills'}</option>
+            <option value="Guidance">{t('ui.category.guidance') || 'guidance'}</option>
+          </Select>
+        </div>
+        {list.length === 0 ? (
+          <EmptyState
+            icon={<ChecklistIcon />}
+            title={t('ui.noTasks', { defaultValue: 'No pending tasks' })}
+            description={
+              activeRotationId
+                ? t('ui.allTasksComplete', {
+                    defaultValue: 'Great work! All your tasks are approved or completed.',
+                  })
+                : t('ui.noActiveRotation', {
+                    defaultValue: 'Start a rotation to see tasks appear here.',
+                  })
+            }
+          />
+        ) : (
+          <ul className="space-y-1 text-sm">
+            {list.map((t) => (
+              <li
+                key={t.status === 'pending' ? `${t.itemId}__${t.rotationId}` : t.id}
+                className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-[rgb(var(--border))]"
+              >
+                <span className="flex items-center gap-2">
+                  <span>{nodesById[t.itemId]?.name || t.itemId}</span>
+                  {t.status === 'pending' && t.duplicateCount > 1 ? (
+                    <Badge
+                      title={t('ui.pendingTasks.multipleSubmissionsLabel', {
+                        count: t.duplicateCount,
+                        defaultValue: '{{count}} pending submissions',
+                      })}
+                      aria-label={t('ui.pendingTasks.multipleSubmissionsLabel', {
+                        count: t.duplicateCount,
+                        defaultValue: '{{count}} pending submissions',
+                      })}
+                    >
+                      {t('ui.pendingTasks.multipleSubmissionsBadge', {
+                        count: t.duplicateCount,
+                        defaultValue: '×{{count}}',
+                      })}
+                    </Badge>
+                  ) : null}
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="text-gray-500 dark:text-gray-400">{t.status}</span>
+                  <Link
+                    href={`/resident/reflections/${t.latestTaskId}?taskType=${encodeURIComponent(nodesById[t.itemId]?.name || 'Task')}`}
+                  >
+                    <Button size="sm" variant="outline">
+                      Reflect
+                    </Button>
+                  </Link>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
     </div>
   );
+}
+
+function getTaskTimestamp(task: TaskDoc): number {
+  const value = task.createdAt as any;
+  if (!value) return 0;
+
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  if (typeof value.toMillis === 'function') {
+    try {
+      return value.toMillis();
+    } catch (error) {
+      // ignore and fall through
+    }
+  }
+
+  if (typeof value.seconds === 'number') {
+    const nanos = typeof value.nanoseconds === 'number' ? value.nanoseconds / 1_000_000 : 0;
+    return value.seconds * 1000 + nanos;
+  }
+
+  return 0;
 }
