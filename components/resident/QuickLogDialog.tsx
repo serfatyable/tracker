@@ -205,7 +205,7 @@ export default function QuickLogDialog({
                   <button
                     type="button"
                     onClick={() => setCount((c) => Math.max(1, c - 1))}
-                    className="h-8 w-8 rounded-full border border-gray-300 dark:border-white/20 bg-white text-gray-700 dark:bg-white/5 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-lg font-semibold text-gray-900 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--primary))] focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:bg-gray-100 active:translate-y-[1px] dark:border-white/20 dark:bg-[rgb(var(--surface))] dark:text-gray-100 dark:hover:bg-white/10 dark:focus-visible:ring-offset-gray-900"
                     aria-label={t('ui.decreaseCount', { defaultValue: 'Decrease count' }) as string}
                   >
                     −
@@ -216,7 +216,7 @@ export default function QuickLogDialog({
                   <button
                     type="button"
                     onClick={() => setCount((c) => c + 1)}
-                    className="h-8 w-8 rounded-full border border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-500/10 dark:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-[rgb(var(--primary))] text-lg font-semibold text-[rgb(var(--primary-ink))] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--primary))] focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:bg-[rgb(var(--primary))]/90 active:translate-y-[1px] dark:focus-visible:ring-offset-gray-900"
                     aria-label={t('ui.increaseCount', { defaultValue: 'Increase count' }) as string}
                   >
                     +
