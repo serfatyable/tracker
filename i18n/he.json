@@ -331,6 +331,7 @@
     "actions.deny": "דחה",
     "unassigned": "לא משובצים",
     "allResidentsAssigned": "כל המתמחים משובצים",
+    "assignRotation": "שייך לסבב",
     "moveResidentToRotation": "העבר מתמחה לסבב",
     "assignTutor": "שייך מדריך",
     "unassignTutor": "בטל שיוך מדריך",

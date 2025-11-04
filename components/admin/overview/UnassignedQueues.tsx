@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { assignResidentToRotation } from '../../../lib/firebase/admin';
 import type { Assignment } from '../../../types/assignments';
 import type { UserProfile } from '../../../types/auth';
-import Button from '../../ui/Button';
+import Select from '../../ui/Select';
 
 type Props = {
   assignments: Assignment[];
@@ -35,19 +35,27 @@ export default function UnassignedQueues({ assignments, residents, rotations }: 
               className="flex items-center justify-between border rounded p-2 hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] transition"
             >
               <div className="text-sm">{r.fullName || r.uid}</div>
-              <div className="flex items-center gap-2">
+              <Select
+                defaultValue=""
+                disabled={rotations.length === 0}
+                className="w-48 text-sm"
+                aria-label={t('overview.assignRotation', { defaultValue: 'Assign to rotation' })}
+                onChange={(event) => {
+                  const rotationId = event.target.value;
+                  if (!rotationId) return;
+                  assignResidentToRotation(r.uid, rotationId);
+                  event.target.value = '';
+                }}
+              >
+                <option value="" hidden>
+                  {t('overview.assignRotation', { defaultValue: 'Assign to rotation' })}
+                </option>
                 {rotations.map((rot) => (
-                  <Button
-                    key={rot.id}
-                    size="sm"
-                    className="btn-levitate"
-                    variant="outline"
-                    onClick={() => assignResidentToRotation(r.uid, rot.id)}
-                  >
+                  <option key={rot.id} value={rot.id}>
                     {rot.name}
-                  </Button>
+                  </option>
                 ))}
-              </div>
+              </Select>
             </div>
           ))
         )}
