@@ -85,6 +85,8 @@ export default function QuickLogDialog({
       await onLog(selected, count, trimmedNote ? trimmedNote : undefined);
       setCount(1);
       setNote('');
+    } catch (error) {
+      console.error('Failed to log activity from quick dialog', error);
     } finally {
       setSubmitting(false);
     }

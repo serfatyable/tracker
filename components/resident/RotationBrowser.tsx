@@ -1,6 +1,6 @@
 'use client';
 import { getAuth } from 'firebase/auth';
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
@@ -14,7 +14,8 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { EmptyIcon } from '../ui/EmptyState';
 import ProgressRing from '../ui/ProgressRing';
-import Toast from '../ui/Toast';
+
+import { useUndoToast } from './UndoToastProvider';
 
 type Props = {
   activeRotationId: string | null;
@@ -47,16 +48,7 @@ export default function RotationBrowser({
   const { nodes, loading } = useRotationNodes(activeRotationId || null);
   const [debouncedTerm, setDebouncedTerm] = useState('');
   const [localOptimisticPending, setLocalOptimisticPending] = useState<Record<string, number>>({});
-  const [toastState, setToastState] = useState<{
-    message: string;
-    variant?: 'success' | 'error' | 'warning' | 'info';
-    action?: 'undo';
-  } | null>(null);
-  const undoContextRef = useRef<{
-    taskId: string;
-    leafId: string;
-    count: number;
-  } | null>(null);
+  const { showToast, showUndoToast } = useUndoToast();
 
   const updateOptimisticPending = useCallback((leafId: string, delta: number) => {
     setLocalOptimisticPending((prev) => {
@@ -72,6 +64,19 @@ export default function RotationBrowser({
   useEffect(() => {
     setLocalOptimisticPending({});
   }, [tasks]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !refreshTasks) return;
+    const handle = () => {
+      refreshTasks().catch((error) => {
+        console.error('Failed to refresh tasks after external trigger', error);
+      });
+    };
+    window.addEventListener('userTasks:refresh', handle);
+    return () => {
+      window.removeEventListener('userTasks:refresh', handle);
+    };
+  }, [refreshTasks]);
 
   // Debounce search term for smoother global search UX
   useEffect(() => {
@@ -242,24 +247,42 @@ export default function RotationBrowser({
         requiredCount: req,
         note,
       });
-      undoContextRef.current = {
-        taskId: created.id,
-        leafId: leaf.id,
-        count,
-      };
-      setToastState({
+      showUndoToast({
         message: t('ui.logUndoPrompt', {
           count,
           defaultValue: 'Logged +1 pending item.',
         }) as string,
         variant: 'success',
-        action: 'undo',
+        actionLabel: t('ui.undo', { defaultValue: 'Undo' }) as string,
+        duration: 10000,
+        onAction: async () => {
+          updateOptimisticPending(leaf.id, -count);
+          try {
+            await deleteTask(created.id);
+          } catch (error) {
+            updateOptimisticPending(leaf.id, count);
+            console.error('Failed to undo task', error);
+            showToast({
+              message: t('toasts.failedToUndo', { defaultValue: 'Failed to undo' }) as string,
+              variant: 'error',
+            });
+            return;
+          }
+          try {
+            await refreshTasks?.();
+          } catch (error) {
+            console.error('Failed to refresh tasks after undo', error);
+          }
+          showToast({
+            message: t('ui.logUndoSuccess', { defaultValue: 'Log entry removed.' }) as string,
+            variant: 'success',
+          });
+        },
       });
     } catch (error) {
       clearOptimistic();
       console.error('Failed to log activity', error);
-      undoContextRef.current = null;
-      setToastState({
+      showToast({
         message: t('ui.logError', { defaultValue: 'Failed to log' }) as string,
         variant: 'error',
       });
@@ -273,43 +296,6 @@ export default function RotationBrowser({
       clearOptimistic();
     }
   }
-
-  const handleToastClear = useCallback(() => {
-    setToastState(null);
-    undoContextRef.current = null;
-  }, []);
-
-  const performUndo = useCallback(async () => {
-    const ctx = undoContextRef.current;
-    if (!ctx) return;
-    updateOptimisticPending(ctx.leafId, -ctx.count);
-    try {
-      await deleteTask(ctx.taskId);
-    } catch (error) {
-      updateOptimisticPending(ctx.leafId, ctx.count);
-      console.error('Failed to undo task', error);
-      setToastState({
-        message: t('toasts.failedToUndo', { defaultValue: 'Failed to undo' }) as string,
-        variant: 'error',
-      });
-      undoContextRef.current = null;
-      return;
-    }
-    try {
-      await refreshTasks?.();
-    } catch (error) {
-      console.error('Failed to refresh tasks after undo', error);
-    }
-    undoContextRef.current = null;
-    setToastState({
-      message: t('ui.logUndoSuccess', { defaultValue: 'Log entry removed.' }) as string,
-      variant: 'success',
-    });
-  }, [refreshTasks, t, updateOptimisticPending]);
-
-  const handleUndoClick = useCallback(() => {
-    void performUndo();
-  }, [performUndo]);
 
   // Compute filtered list for cards based on rotation, search, category, domain, and status
   const filteredCards: FlatLeaf[] = useMemo(() => {
@@ -816,18 +802,6 @@ export default function RotationBrowser({
           </div>
         ) : null}
       </div>
-      <Toast
-        message={toastState?.message || null}
-        variant={toastState?.variant}
-        actionLabel={
-          toastState?.action === 'undo'
-            ? (t('ui.undo', { defaultValue: 'Undo' }) as string)
-            : undefined
-        }
-        onAction={toastState?.action === 'undo' ? handleUndoClick : undefined}
-        onClear={handleToastClear}
-        duration={toastState?.action === 'undo' ? 10000 : undefined}
-      />
     </>
   );
 }
