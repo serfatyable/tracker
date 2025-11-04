@@ -18,8 +18,8 @@ import { useTutorDashboardData } from '../../lib/hooks/useTutorDashboardData';
 // Lazy load heavy components
 const AssignedResidents = lazy(() => import('../../components/tutor/AssignedResidents'));
 const PendingApprovals = lazy(() => import('../../components/tutor/PendingApprovals'));
+const PendingTaskApprovals = lazy(() => import('../../components/tutor/PendingTaskApprovals'));
 const RotationsTab = lazy(() => import('../../components/tutor/tabs/RotationsTab'));
-const TutorTodos = lazy(() => import('../../components/tutor/TutorTodos'));
 
 export default function TutorDashboard() {
   const { t } = useTranslation();
@@ -71,7 +71,7 @@ export default function TutorDashboard() {
 }
 
 function TutorDashboardSections() {
-  const { me, assignments, rotations, residents, tutors, ownedRotationIds, petitions, todos } =
+  const { me, assignments, rotations, residents, tutors, ownedRotationIds, petitions, tasks } =
     useTutorDashboardData();
   const residentIdToName = (id: string) => residents.find((r) => r.uid === id)?.fullName || id;
   return (
@@ -94,7 +94,7 @@ function TutorDashboardSections() {
           ownedRotationIds={ownedRotationIds}
         />
       ) : null}
-      <TutorTodos todos={todos} onRefresh={() => {}} />
+      <PendingTaskApprovals tasks={tasks} residents={residents} rotations={rotations} />
     </Suspense>
   );
 }

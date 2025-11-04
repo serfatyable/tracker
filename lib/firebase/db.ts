@@ -157,51 +157,6 @@ export async function listRecentTasksForUser(params: {
   }
 }
 
-// Tutor personal to-dos (lightweight)
-export type TutorTodo = {
-  id: string;
-  userId: string;
-  text: string;
-  done: boolean;
-  createdAt?: any;
-};
-
-export async function listTutorTodosByUser(userId: string): Promise<TutorTodo[]> {
-  const db = getFirestore(getFirebaseApp());
-  const qRef = query(
-    collection(db, 'tutorTodos'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    qLimit(100),
-  );
-  const snap = await getDocs(qRef);
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-}
-
-export async function createTutorTodo(params: {
-  userId: string;
-  text: string;
-}): Promise<{ id: string }> {
-  const db = getFirestore(getFirebaseApp());
-  const ref = await addDoc(collection(db, 'tutorTodos'), {
-    userId: params.userId,
-    text: params.text,
-    done: false,
-    createdAt: serverTimestamp(),
-  } as any);
-  return { id: ref.id };
-}
-
-export async function toggleTutorTodoDone(todoId: string, done: boolean): Promise<void> {
-  const db = getFirestore(getFirebaseApp());
-  await updateDoc(doc(db, 'tutorTodos', todoId), { done } as any);
-}
-
-export async function deleteTutorTodo(todoId: string): Promise<void> {
-  const db = getFirestore(getFirebaseApp());
-  await deleteDoc(doc(db, 'tutorTodos', todoId));
-}
-
 export async function createRotationPetition(params: {
   rotationId: string;
   type: 'activate' | 'finish';

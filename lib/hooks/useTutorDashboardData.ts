@@ -5,8 +5,7 @@ import type { Assignment } from '../../types/assignments';
 import type { RotationPetition } from '../../types/rotationPetitions';
 import type { Rotation } from '../../types/rotations';
 import { listRotationPetitions, listTasks } from '../firebase/admin';
-import type { TaskDoc, TutorTodo } from '../firebase/db';
-import { listTutorTodosByUser } from '../firebase/db';
+import type { TaskDoc } from '../firebase/db';
 
 import { useActiveAssignments } from './useActiveAssignments';
 import { useActiveRotations } from './useActiveRotations';
@@ -21,7 +20,6 @@ export function useTutorDashboardData() {
 
   const [petitions, setPetitions] = useState<RotationPetition[]>([]);
   const [tasks, setTasks] = useState<TaskDoc[]>([]);
-  const [todos, setTodos] = useState<TutorTodo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,12 +54,6 @@ export function useTutorDashboardData() {
         ]);
         setPetitions(petPage.items || []);
         setTasks(taskPage.items || []);
-        if (me) {
-          const myTodos = await listTutorTodosByUser(me.uid);
-          setTodos(myTodos);
-        } else {
-          setTodos([]);
-        }
       } catch (e: any) {
         setError(e?.message || 'Failed to load');
       } finally {
@@ -90,7 +82,6 @@ export function useTutorDashboardData() {
     supervisedResidents,
     petitions: filteredPetitions,
     tasks: filteredTasks,
-    todos,
     loading,
     error,
   } as const;
