@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { createRotationPetition } from '../../lib/firebase/db';
+import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import Button from '../ui/Button';
 // import TextField from '../ui/TextField';
 
@@ -13,7 +14,6 @@ type RotationPetitionDialogProps = {
   rotationId: string;
   rotationName: string;
   type: 'activate' | 'finish';
-  residentId: string;
   onSuccess?: () => void;
 };
 
@@ -23,13 +23,13 @@ export default function RotationPetitionDialog({
   rotationId,
   rotationName,
   type,
-  residentId,
   onSuccess,
 }: RotationPetitionDialogProps) {
   const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { status: authStatus, firebaseUser } = useCurrentUserProfile();
 
   useEffect(() => {
     if (!open) {
@@ -48,12 +48,29 @@ export default function RotationPetitionDialog({
   }, [open, onClose]);
 
   const handleSubmit = async () => {
+    if (authStatus === 'loading') {
+      setError(
+        t('petitions.authLoading', {
+          defaultValue: 'We are still loading your account. Please try again in a moment.',
+        }) as string,
+      );
+      return;
+    }
+
+    if (!firebaseUser) {
+      setError(
+        t('petitions.authRequired', {
+          defaultValue: 'You must be signed in to submit this petition.',
+        }) as string,
+      );
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       await createRotationPetition({
-        residentId,
         rotationId,
         type,
         reason: reason.trim(),
@@ -67,6 +84,9 @@ export default function RotationPetitionDialog({
           defaultValue: 'Failed to create petition. Please try again.',
         }) as string,
       );
+      if (err instanceof Error && err.message && err.message !== 'auth/missing-current-user') {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }

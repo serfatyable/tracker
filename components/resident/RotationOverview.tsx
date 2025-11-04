@@ -1,10 +1,8 @@
 'use client';
 
-import { getAuth } from 'firebase/auth';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getFirebaseApp } from '../../lib/firebase/client';
 import { useResidentPendingPetition } from '../../lib/hooks/useResidentPendingPetition';
 import { useResidentRotationStatus } from '../../lib/hooks/useResidentRotationStatus';
 import { useRotationDetails } from '../../lib/hooks/useRotationDetails';
@@ -26,9 +24,6 @@ export default function RotationOverview({ rotationId }: Props) {
   const [petitionDialogOpen, setPetitionDialogOpen] = useState(false);
   const [petitionType, setPetitionType] = useState<'activate' | 'finish'>('activate');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-
-  const currentUser = getAuth(getFirebaseApp()).currentUser;
-  const residentId = currentUser?.uid || '';
 
   // Determine the display status
   const getDisplayStatus = () => {
@@ -271,7 +266,6 @@ export default function RotationOverview({ rotationId }: Props) {
           rotationId={rotation.id}
           rotationName={rotation.name}
           type={petitionType}
-          residentId={residentId}
           onSuccess={handlePetitionSuccess}
         />
       )}
