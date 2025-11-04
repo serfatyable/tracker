@@ -21,12 +21,13 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('../../../lib/firebase/client', () => ({
-  getFirebaseApp: () => ({}),
-}));
-
-vi.mock('firebase/auth', () => ({
-  getAuth: () => ({ currentUser: { uid: 'resident-1' } }),
+vi.mock('../../../lib/hooks/useCurrentUserProfile', () => ({
+  useCurrentUserProfile: () => ({
+    status: 'ready',
+    firebaseUser: { uid: 'resident-1' },
+    data: null,
+    error: null,
+  }),
 }));
 
 vi.mock('../../../lib/hooks/useRotationDetails', () => ({

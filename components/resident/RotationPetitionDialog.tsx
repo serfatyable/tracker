@@ -1,11 +1,10 @@
 'use client';
 
-import { getAuth } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getFirebaseApp } from '../../lib/firebase/client';
 import { createRotationPetition } from '../../lib/firebase/db';
+import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import Button from '../ui/Button';
 // import TextField from '../ui/TextField';
 
@@ -30,6 +29,7 @@ export default function RotationPetitionDialog({
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { status: authStatus, firebaseUser } = useCurrentUserProfile();
 
   useEffect(() => {
     if (!open) {
@@ -48,24 +48,29 @@ export default function RotationPetitionDialog({
   }, [open, onClose]);
 
   const handleSubmit = async () => {
-    setLoading(true);
-    setError(null);
+    if (authStatus === 'loading') {
+      setError(
+        t('petitions.authLoading', {
+          defaultValue: 'We are still loading your account. Please try again in a moment.',
+        }) as string,
+      );
+      return;
+    }
 
-    const currentUser = getAuth(getFirebaseApp()).currentUser;
-
-    if (!currentUser) {
+    if (!firebaseUser) {
       setError(
         t('petitions.authRequired', {
           defaultValue: 'You must be signed in to submit this petition.',
         }) as string,
       );
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
+    setError(null);
+
     try {
       await createRotationPetition({
-        residentId: currentUser.uid,
         rotationId,
         type,
         reason: reason.trim(),
@@ -79,6 +84,9 @@ export default function RotationPetitionDialog({
           defaultValue: 'Failed to create petition. Please try again.',
         }) as string,
       );
+      if (err instanceof Error && err.message && err.message !== 'auth/missing-current-user') {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -143,7 +151,12 @@ export default function RotationPetitionDialog({
             <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
               {t('ui.cancel')}
             </Button>
-            <Button onClick={handleSubmit} loading={loading} className="flex-1">
+            <Button
+              onClick={handleSubmit}
+              loading={loading}
+              disabled={loading || authStatus === 'loading'}
+              className="flex-1"
+            >
               {t('petitions.submit', { defaultValue: 'Submit' })}
             </Button>
           </div>

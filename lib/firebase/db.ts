@@ -1,3 +1,4 @@
+import { getAuth } from 'firebase/auth';
 import {
   getFirestore,
   doc,
@@ -202,18 +203,25 @@ export async function deleteTutorTodo(todoId: string): Promise<void> {
 }
 
 export async function createRotationPetition(params: {
-  residentId: string;
   rotationId: string;
   type: 'activate' | 'finish';
   reason?: string;
 }): Promise<{ id: string }> {
   const db = getFirestore(getFirebaseApp());
+  const auth = getAuth(getFirebaseApp());
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    throw new Error('auth/missing-current-user');
+  }
+
+  const residentId = currentUser.uid;
 
   // Validation: Check for existing pending petition for this rotation
   const existingPetitionSnap = await getDocs(
     query(
       collection(db, 'rotationPetitions'),
-      where('residentId', '==', params.residentId),
+      where('residentId', '==', residentId),
       where('rotationId', '==', params.rotationId),
       where('status', '==', 'pending'),
     ),
@@ -230,7 +238,7 @@ export async function createRotationPetition(params: {
     const activeAssignmentsSnap = await getDocs(
       query(
         collection(db, 'assignments'),
-        where('residentId', '==', params.residentId),
+        where('residentId', '==', residentId),
         where('status', '==', 'active'),
       ),
     );
@@ -243,7 +251,7 @@ export async function createRotationPetition(params: {
   }
 
   const ref = await addDoc(collection(db, 'rotationPetitions'), {
-    residentId: params.residentId,
+    residentId,
     rotationId: params.rotationId,
     type: params.type,
     reason: params.reason || '',
