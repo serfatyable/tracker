@@ -25,68 +25,68 @@ export default function PendingTasksList({
     '' | 'all' | 'Knowledge' | 'Skills' | 'Guidance'
   >('');
 
-    const list = useMemo(() => {
-      const base = tasks.filter((t) => t.status === 'pending' || t.status === 'rejected');
-      const byRotation =
-        rotationFilter === 'active' && activeRotationId
-          ? base.filter((t) => t.rotationId === activeRotationId)
-          : base;
-      const filtered =
-        categoryFilter === 'all'
-          ? byRotation
-          : byRotation.filter((t) => {
-              const node = nodesById[t.itemId];
-              // walk up via nodesById to find category name
-              return node && findCategoryName(nodesById, t.itemId) === categoryFilter;
-            });
+  const list = useMemo(() => {
+    const base = tasks.filter((item) => item.status === 'pending' || item.status === 'rejected');
+    const byRotation =
+      rotationFilter === 'active' && activeRotationId
+        ? base.filter((item) => item.rotationId === activeRotationId)
+        : base;
+    const filtered =
+      categoryFilter === 'all'
+        ? byRotation
+        : byRotation.filter((item) => {
+            const node = nodesById[item.itemId];
+            // walk up via nodesById to find category name
+            return node && findCategoryName(nodesById, item.itemId) === categoryFilter;
+          });
 
-      type PendingListTask = TaskDoc & {
-        duplicateCount: number;
-        latestTaskId: string;
-        mostRecentCreatedAt: number;
+    type PendingListTask = TaskDoc & {
+      duplicateCount: number;
+      latestTaskId: string;
+      mostRecentCreatedAt: number;
+    };
+
+    const sorted = [...filtered].sort((a, b) => getTaskTimestamp(b) - getTaskTimestamp(a));
+    const deduped: PendingListTask[] = [];
+    const pendingMap = new Map<string, PendingListTask>();
+
+    sorted.forEach((task) => {
+      const entry: PendingListTask = {
+        ...task,
+        duplicateCount: 1,
+        latestTaskId: task.id,
+        mostRecentCreatedAt: getTaskTimestamp(task),
       };
 
-      const sorted = [...filtered].sort((a, b) => getTaskTimestamp(b) - getTaskTimestamp(a));
-      const deduped: PendingListTask[] = [];
-      const pendingMap = new Map<string, PendingListTask>();
+      if (task.status !== 'pending') {
+        deduped.push(entry);
+        return;
+      }
 
-      sorted.forEach((task) => {
-        const entry: PendingListTask = {
-          ...task,
-          duplicateCount: 1,
-          latestTaskId: task.id,
-          mostRecentCreatedAt: getTaskTimestamp(task),
-        };
+      const key = `${task.itemId}__${task.rotationId}`;
+      const existing = pendingMap.get(key);
 
-        if (task.status !== 'pending') {
-          deduped.push(entry);
-          return;
-        }
+      if (!existing) {
+        pendingMap.set(key, entry);
+        deduped.push(entry);
+        return;
+      }
 
-        const key = `${task.itemId}__${task.rotationId}`;
-        const existing = pendingMap.get(key);
+      existing.duplicateCount += 1;
 
-        if (!existing) {
-          pendingMap.set(key, entry);
-          deduped.push(entry);
-          return;
-        }
+      const currentTimestamp = entry.mostRecentCreatedAt;
+      if (currentTimestamp > existing.mostRecentCreatedAt) {
+        existing.id = task.id;
+        existing.note = task.note;
+        existing.feedback = task.feedback;
+        existing.createdAt = task.createdAt;
+        existing.mostRecentCreatedAt = currentTimestamp;
+        existing.latestTaskId = task.id;
+      }
+    });
 
-        existing.duplicateCount += 1;
-
-        const currentTimestamp = entry.mostRecentCreatedAt;
-        if (currentTimestamp > existing.mostRecentCreatedAt) {
-          existing.id = task.id;
-          existing.note = task.note;
-          existing.feedback = task.feedback;
-          existing.createdAt = task.createdAt;
-          existing.mostRecentCreatedAt = currentTimestamp;
-          existing.latestTaskId = task.id;
-        }
-      });
-
-      return deduped;
-    }, [tasks, rotationFilter, categoryFilter, activeRotationId, nodesById]);
+    return deduped;
+  }, [tasks, rotationFilter, categoryFilter, activeRotationId, nodesById]);
 
   function findCategoryName(
     map: Record<string, any>,
@@ -110,32 +110,32 @@ export default function PendingTasksList({
     );
   }
 
-  return (
-    <div className="card-levitate rounded border p-3">
-      <div className="mb-2 flex items-center gap-2">
-        <Select
-          aria-label="Rotation filter"
-          value={rotationFilter}
-          onChange={(e) => setRotationFilter(e.target.value as any)}
-        >
-          {rotationFilter === 'active' || rotationFilter === 'all' ? null : (
-            <option value="" disabled>
-              {t('ui.allActiveRotations', { defaultValue: 'All/Active rotations' })}
-            </option>
-          )}
-          <option value="all">{t('ui.all', { defaultValue: 'All' })}</option>
-          <option value="active">{t('ui.active', { defaultValue: 'Active' })}</option>
-        </Select>
-        <Select
-          aria-label="Category filter"
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value as any)}
-        >
-          {categoryFilter === '' ? (
-            <option value="" disabled>
-              {t('ui.category.all', { defaultValue: 'knowledge/skills/guidance' })}
-            </option>
-          ) : null}
+    return (
+      <div className="card-levitate rounded border p-3">
+        <div className="mb-2 flex items-center gap-2">
+          <Select
+            aria-label="Rotation filter"
+            value={rotationFilter}
+            onChange={(e) => setRotationFilter(e.target.value as any)}
+          >
+            {rotationFilter === 'active' || rotationFilter === 'all' ? null : (
+              <option value="" disabled>
+                {t('ui.allActiveRotations', { defaultValue: 'All/Active rotations' })}
+              </option>
+            )}
+            <option value="all">{t('ui.all', { defaultValue: 'All' })}</option>
+            <option value="active">{t('ui.active', { defaultValue: 'Active' })}</option>
+          </Select>
+          <Select
+            aria-label="Category filter"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value as any)}
+          >
+            {categoryFilter === '' ? (
+              <option value="" disabled>
+                {t('ui.category.all', { defaultValue: 'knowledge/skills/guidance' })}
+              </option>
+            ) : null}
             <option value="all">{t('ui.all', { defaultValue: 'All' })}</option>
             <option value="Knowledge">{t('ui.category.knowledge') || 'knowledge'}</option>
             <option value="Skills">{t('ui.category.skills') || 'skills'}</option>
@@ -158,35 +158,35 @@ export default function PendingTasksList({
           />
         ) : (
           <ul className="space-y-1 text-sm">
-            {list.map((t) => (
+            {list.map((task) => (
               <li
-                key={t.status === 'pending' ? `${t.itemId}__${t.rotationId}` : t.id}
+                key={task.status === 'pending' ? `${task.itemId}__${task.rotationId}` : task.id}
                 className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 dark:border-[rgb(var(--border))]"
               >
                 <span className="flex items-center gap-2">
-                  <span>{nodesById[t.itemId]?.name || t.itemId}</span>
-                  {t.status === 'pending' && t.duplicateCount > 1 ? (
+                  <span>{nodesById[task.itemId]?.name || task.itemId}</span>
+                  {task.status === 'pending' && task.duplicateCount > 1 ? (
                     <Badge
                       title={t('ui.pendingTasks.multipleSubmissionsLabel', {
-                        count: t.duplicateCount,
+                        count: task.duplicateCount,
                         defaultValue: '{{count}} pending submissions',
                       })}
                       aria-label={t('ui.pendingTasks.multipleSubmissionsLabel', {
-                        count: t.duplicateCount,
+                        count: task.duplicateCount,
                         defaultValue: '{{count}} pending submissions',
                       })}
                     >
                       {t('ui.pendingTasks.multipleSubmissionsBadge', {
-                        count: t.duplicateCount,
+                        count: task.duplicateCount,
                         defaultValue: '×{{count}}',
                       })}
                     </Badge>
                   ) : null}
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="text-gray-500 dark:text-gray-400">{t.status}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{task.status}</span>
                   <Link
-                    href={`/resident/reflections/${t.latestTaskId}?taskType=${encodeURIComponent(nodesById[t.itemId]?.name || 'Task')}`}
+                    href={`/resident/reflections/${task.latestTaskId}?taskType=${encodeURIComponent(nodesById[task.itemId]?.name || 'Task')}`}
                   >
                     <Button size="sm" variant="outline">
                       Reflect
@@ -197,8 +197,8 @@ export default function PendingTasksList({
             ))}
           </ul>
         )}
-    </div>
-  );
+      </div>
+    );
 }
 
 function getTaskTimestamp(task: TaskDoc): number {
