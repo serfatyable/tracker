@@ -523,14 +523,14 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
             return (
               <div
                 key={group.residentId}
-                className="overflow-hidden rounded-lg border border-gray-200/70 bg-[rgb(var(--surface))] dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface))]"
+                className="overflow-hidden rounded-xl border border-transparent"
               >
-              <button
-                type="button"
-                onClick={() => toggleResident(group.residentId)}
-                  className="flex w-full items-center justify-between gap-5 px-5 py-4 text-left transition hover:bg-gray-50/60 dark:hover:bg-[rgb(var(--surface-elevated))]"
-                aria-expanded={isExpanded}
-              >
+                <button
+                  type="button"
+                  onClick={() => toggleResident(group.residentId)}
+                  className="flex w-full items-center justify-between gap-5 rounded-xl px-4 py-4 text-left transition-colors hover:bg-[rgb(var(--surface-elevated))] dark:hover:bg-[rgb(var(--surface-elevated))]"
+                  aria-expanded={isExpanded}
+                >
                 <div className="flex items-center gap-3">
                   <Avatar name={group.residentName} email={group.residentEmail ?? undefined} size={36} />
                   <div>
@@ -578,7 +578,7 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
               </button>
 
                 {isExpanded ? (
-                  <div className="space-y-3 border-t border-gray-200/60 bg-[rgb(var(--surface-elevated))] px-5 py-4 dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface-elevated))]">
+                  <div className="space-y-3 border-t border-gray-200/60 px-4 py-4 dark:border-[rgb(var(--border))]">
                   {group.categories.map((category) => {
                     const categoryTaskIds = category.tasks.map((task) => task.id);
                     const categorySelectedCount = categoryTaskIds.filter((id) =>
@@ -592,9 +592,9 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                     return (
                         <div
                           key={category.categoryId}
-                          className="rounded-md border border-gray-200/60 bg-transparent dark:border-[rgb(var(--border))]"
+                          className="rounded-lg bg-transparent"
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200/60 px-5 py-3 dark:border-[rgb(var(--border))]">
+                          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50/70 dark:hover:bg-[rgb(var(--surface-elevated))]">
                           <button
                             type="button"
                             onClick={() => toggleCategoryExpansion(group.residentId, category.categoryId)}
@@ -631,16 +631,16 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                           ) : null}
                         </div>
                           {isCategoryExpanded ? (
-                            <div className="divide-y divide-gray-200/60 dark:divide-[rgb(var(--border))]">
+                            <div className="mt-2 divide-y divide-gray-200/60 pl-2 dark:divide-[rgb(var(--border))]">
                             {category.tasks.map((task) => {
                               const isSelected = selectedTaskIds.has(task.id);
                               const submittedLabel = formatDateWithTime(task.submittedAt, language);
 
                               return (
-                                <div
-                                  key={task.id}
-                                  className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between"
-                                >
+                                  <div
+                                    key={task.id}
+                                    className="flex flex-col gap-4 px-3 py-3 md:flex-row md:items-center md:justify-between"
+                                  >
                                   <div className="flex flex-1 items-start gap-3">
                                     <input
                                       type="checkbox"
