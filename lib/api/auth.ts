@@ -24,22 +24,29 @@ export type AuthResult = {
 export async function verifyAuthToken(req: NextRequest): Promise<AuthResult> {
   const authHeader = req.headers.get('authorization');
 
+  console.log('[verifyAuthToken] Auth header present:', !!authHeader);
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.error('[verifyAuthToken] Missing or invalid authorization header');
     throw new Error('Missing or invalid authorization header');
   }
 
   const idToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+  console.log('[verifyAuthToken] Token length:', idToken?.length);
 
   try {
     const app = getAdminApp();
     const auth = getAuth(app);
     const decodedToken = await auth.verifyIdToken(idToken);
 
+    console.log('[verifyAuthToken] Token verified successfully for uid:', decodedToken.uid);
+
     return {
       uid: decodedToken.uid,
       email: decodedToken.email,
     };
-  } catch {
+  } catch (error) {
+    console.error('[verifyAuthToken] Token verification failed:', error);
     throw new Error('Invalid or expired token');
   }
 }

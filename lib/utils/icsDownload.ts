@@ -88,6 +88,8 @@ export async function downloadIcsFile(options: IcsDownloadOptions): Promise<void
 
     // Get Firebase ID token
     const idToken = await currentUser.getIdToken();
+    console.log('[icsDownload] Got ID token, length:', idToken?.length);
+    console.log('[icsDownload] Fetching URL:', url);
 
     // Make authenticated request
     const response = await fetch(url, {
@@ -97,8 +99,18 @@ export async function downloadIcsFile(options: IcsDownloadOptions): Promise<void
       },
     });
 
+    console.log('[icsDownload] Response status:', response.status);
+
     // Handle errors
     if (!response.ok) {
+      // Log response for debugging
+      const responseText = await response.text();
+      console.error('[icsDownload] Error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText,
+      });
+
       let errorMsg: string;
 
       if (response.status === 401) {
