@@ -136,6 +136,10 @@
     "approved": "Approved",
     "pending": "Pending",
     "awaitingApproval": "Awaiting approval",
+    "pendingTasks": {
+      "multipleSubmissionsLabel": "{{count}} pending submissions",
+      "multipleSubmissionsBadge": "×{{count}}"
+    },
     "complete": "complete",
     "goToActiveRotation": "Go to active rotation",
     "noItems": "No items",

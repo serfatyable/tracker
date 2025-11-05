@@ -124,6 +124,10 @@
     "normal": "רגיל",
     "rejected": "נדחה",
     "reject": "דחה",
+    "pendingTasks": {
+      "multipleSubmissionsLabel": "{{count}} הגשות ממתינות",
+      "multipleSubmissionsBadge": "×{{count}}"
+    },
     "user": "משתמש",
     "rotation": "סבב",
     "item": "פריט",
