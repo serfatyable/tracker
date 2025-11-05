@@ -1,8 +1,10 @@
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon, ArrowDownTrayIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { haptic } from '@/lib/utils/haptics';
+import { downloadIcsFile } from '@/lib/utils/icsDownload';
 
 interface ExportCalendarDialogProps {
   isOpen: boolean;
@@ -11,16 +13,35 @@ interface ExportCalendarDialogProps {
 
 export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendarDialogProps) {
   const { t, i18n } = useTranslation();
+  const [error, setError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleExport = (upcomingOnly: boolean) => {
+  const handleExport = async (upcomingOnly: boolean) => {
     haptic('light');
+    setError(null);
+    setIsDownloading(true);
+
     const lang = i18n.language === 'he' ? 'he' : 'en';
     const url = `/api/ics/exams?lang=${lang}&upcoming=${upcomingOnly}`;
-    window.open(url, '_blank');
-    setTimeout(() => {
-      haptic('success');
-      onClose();
-    }, 500);
+    const filename = `exams-${lang}${upcomingOnly ? '-upcoming' : ''}.ics`;
+
+    await downloadIcsFile({
+      url,
+      filename,
+      t,
+      onError: (errorMessage) => {
+        setError(errorMessage);
+        haptic('error');
+        setIsDownloading(false);
+      },
+      onSuccess: () => {
+        haptic('success');
+        setIsDownloading(false);
+        setTimeout(() => {
+          onClose();
+        }, 500);
+      },
+    });
   };
 
   return (
@@ -43,11 +64,19 @@ export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendar
           <div className="p-6 space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">{t('exams.export.description')}</p>
 
+            {/* Error message */}
+            {error && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+              </div>
+            )}
+
             <div className="space-y-3">
               {/* All Exams */}
               <button
                 onClick={() => handleExport(false)}
-                className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-colors group"
+                disabled={isDownloading}
+                className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center gap-3">
                   <ArrowDownTrayIcon className="h-5 w-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-500" />
@@ -57,14 +86,15 @@ export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendar
                   </div>
                 </div>
                 <div className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                  →
+                  {isDownloading ? '⏳' : '→'}
                 </div>
               </button>
 
               {/* Upcoming Only */}
               <button
                 onClick={() => handleExport(true)}
-                className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-colors group"
+                disabled={isDownloading}
+                className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center gap-3">
                   <ArrowDownTrayIcon className="h-5 w-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-500" />
@@ -76,7 +106,7 @@ export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendar
                   </div>
                 </div>
                 <div className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                  →
+                  {isDownloading ? '⏳' : '→'}
                 </div>
               </button>
             </div>

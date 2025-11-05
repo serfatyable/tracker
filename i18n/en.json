@@ -82,6 +82,7 @@
     "open": "Open",
     "cancel": "Cancel",
     "importing": "Importing...",
+    "downloading": "Downloading...",
     "undo": "Undo",
     "confirmApproveUser": "Approve user?",
     "confirmDisableUser": "Disable user?",
@@ -563,7 +564,14 @@
     "tryAgain": "Try Again",
     "failedToLoadUser": "Failed to load user profile",
     "emptyFile": "File is empty",
-    "invalidFormat": "Invalid file format"
+    "invalidFormat": "Invalid file format",
+    "notAuthenticated": "Please sign in to download calendar files",
+    "unauthorized": "Authentication failed. Please sign in again.",
+    "forbidden": "You do not have permission to access this resource.",
+    "rateLimited": "Too many requests. Please try again later.",
+    "serverError": "Server error. Please try again later.",
+    "downloadFailed": "Failed to download calendar file.",
+    "networkError": "Network error. Please check your connection and try again."
   },
   "toasts": {
     "failed": "Failed",

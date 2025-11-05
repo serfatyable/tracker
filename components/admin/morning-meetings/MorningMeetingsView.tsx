@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useMorningMeetingsMultiMonth } from '../../../lib/hooks/useMorningClasses';
+import { downloadIcsFile } from '../../../lib/utils/icsDownload';
 import type { MorningMeeting } from '../../../types/morningMeetings';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
@@ -20,11 +21,44 @@ export default function MorningMeetingsView({
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Get current month key
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
+
+  const handleDownloadMyMeetings = async () => {
+    setIsDownloading(true);
+    await downloadIcsFile({
+      url: '/api/ics/morning-meetings?personal=true',
+      filename: 'my-morning-meetings.ics',
+      t,
+      onError: (errorMessage) => {
+        alert(errorMessage);
+        setIsDownloading(false);
+      },
+      onSuccess: () => {
+        setIsDownloading(false);
+      },
+    });
+  };
+
+  const handleDownloadAllMeetings = async () => {
+    setIsDownloading(true);
+    await downloadIcsFile({
+      url: '/api/ics/morning-meetings',
+      filename: 'morning-meetings.ics',
+      t,
+      onError: (errorMessage) => {
+        alert(errorMessage);
+        setIsDownloading(false);
+      },
+      onSuccess: () => {
+        setIsDownloading(false);
+      },
+    });
+  };
 
   // Fetch meetings for the next 6 months
   const { meetingsByMonth, loading } = useMorningMeetingsMultiMonth(6);
@@ -150,30 +184,32 @@ export default function MorningMeetingsView({
 
             <div className="flex flex-col sm:flex-row gap-2">
               {/* Export my meetings */}
-              <a
-                href="/api/ics/morning-meetings?personal=true"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-[rgb(var(--surface))] border-2 border-blue-300 dark:border-blue-700 rounded-lg text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all shadow-sm hover:shadow-md font-medium"
+              <button
+                onClick={handleDownloadMyMeetings}
+                disabled={isDownloading}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-[rgb(var(--surface))] border-2 border-blue-300 dark:border-blue-700 rounded-lg text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all shadow-sm hover:shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="text-sm">👤</span>
                 <span className="text-sm">
-                  {t('morningMeetings.exportMy', { defaultValue: 'My Meetings' })}
+                  {isDownloading
+                    ? t('ui.downloading', { defaultValue: 'Downloading...' })
+                    : t('morningMeetings.exportMy', { defaultValue: 'My Meetings' })}
                 </span>
-              </a>
+              </button>
 
               {/* Export all meetings */}
-              <a
-                href="/api/ics/morning-meetings"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-lg text-white transition-all shadow-sm hover:shadow-md font-medium"
+              <button
+                onClick={handleDownloadAllMeetings}
+                disabled={isDownloading}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-lg text-white transition-all shadow-sm hover:shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="text-sm">🌐</span>
                 <span className="text-sm">
-                  {t('morningMeetings.exportAll', { defaultValue: 'All Meetings' })}
+                  {isDownloading
+                    ? t('ui.downloading', { defaultValue: 'Downloading...' })
+                    : t('morningMeetings.exportAll', { defaultValue: 'All Meetings' })}
                 </span>
-              </a>
+              </button>
             </div>
           </div>
 

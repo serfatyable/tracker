@@ -82,6 +82,7 @@
     "open": "פתח",
     "cancel": "בטל",
     "importing": "מייבא...",
+    "downloading": "מוריד...",
     "undo": "בטל",
     "confirmApproveUser": "לאשר משתמש?",
     "confirmDisableUser": "להשבית משתמש?",
@@ -556,7 +557,14 @@
     "tryAgain": "נסה שוב",
     "failedToLoadUser": "טעינת פרופיל משתמש נכשלה",
     "emptyFile": "הקובץ ריק",
-    "invalidFormat": "פורמט קובץ לא תקין"
+    "invalidFormat": "פורמט קובץ לא תקין",
+    "notAuthenticated": "אנא התחבר כדי להוריד קבצי יומן",
+    "unauthorized": "האימות נכשל. אנא התחבר שוב.",
+    "forbidden": "אין לך הרשאה לגשת למשאב זה.",
+    "rateLimited": "יותר מדי בקשות. נסה שוב מאוחר יותר.",
+    "serverError": "שגיאת שרת. נסה שוב מאוחר יותר.",
+    "downloadFailed": "הורדת קובץ יומן נכשלה.",
+    "networkError": "שגיאת רשת. בדוק את החיבור שלך ונסה שוב."
   },
   "toasts": {
     "failed": "נכשל",

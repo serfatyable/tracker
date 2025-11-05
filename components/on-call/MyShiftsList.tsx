@@ -1,10 +1,10 @@
 'use client';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
+import { downloadIcsFile } from '../../lib/utils/icsDownload';
 import { stationI18nKeys } from '../../lib/on-call/stations';
 import type { StationKey } from '../../types/onCall';
 import Card from '../ui/Card';
@@ -19,6 +19,23 @@ export default function MyShiftsList({
   const { t } = useTranslation();
   const router = useRouter();
   const { shifts, loading } = useOnCallFutureByUser(userId, daysAhead);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadIcs = async () => {
+    setIsDownloading(true);
+    await downloadIcsFile({
+      url: '/api/ics/on-call?personal=true',
+      filename: 'my-on-call-shifts.ics',
+      t,
+      onError: (errorMessage) => {
+        alert(errorMessage);
+        setIsDownloading(false);
+      },
+      onSuccess: () => {
+        setIsDownloading(false);
+      },
+    });
+  };
 
   const grouped = useMemo(() => {
     const map = new Map<string, { date: Date; items: { stationKey: string }[] }>();
@@ -42,9 +59,15 @@ export default function MyShiftsList({
         <div className="text-sm font-medium">
           {t('onCall.myShifts', { defaultValue: 'My Shifts' })}
         </div>
-        <Link href="/api/ics/on-call?personal=true" className="pill text-xs" prefetch={false}>
-          {t('onCall.downloadMyIcs', { defaultValue: 'Download My ICS' })}
-        </Link>
+        <button
+          onClick={handleDownloadIcs}
+          disabled={isDownloading}
+          className="pill text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isDownloading
+            ? t('ui.downloading', { defaultValue: 'Downloading...' })
+            : t('onCall.downloadMyIcs', { defaultValue: 'Download My ICS' })}
+        </button>
       </div>
 
       {loading ? (

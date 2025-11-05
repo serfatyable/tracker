@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
+import { downloadIcsFile } from '../../../lib/utils/icsDownload';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -117,10 +118,27 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
   const [shiftTypeFilter, setShiftTypeFilter] = useState<string[]>([]);
   const [residentFilter, _setResidentFilter] = useState('');
   const [showCalendarView, setShowCalendarView] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${now.getMonth()}`;
   });
+
+  const handleDownloadMyShifts = async () => {
+    setIsDownloading(true);
+    await downloadIcsFile({
+      url: '/api/ics/on-call?personal=true',
+      filename: 'my-on-call-shifts.ics',
+      t,
+      onError: (errorMessage) => {
+        alert(errorMessage);
+        setIsDownloading(false);
+      },
+      onSuccess: () => {
+        setIsDownloading(false);
+      },
+    });
+  };
 
   // Fetch schedule for multiple months
   const [allSchedule, setAllSchedule] = useState<any[]>([]);
@@ -623,17 +641,18 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
                 </div>
               </div>
 
-              <a
-                href="/api/ics/on-call?personal=true"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 rounded-lg text-white transition-all shadow-sm hover:shadow-md font-medium"
+              <button
+                onClick={handleDownloadMyShifts}
+                disabled={isDownloading}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 rounded-lg text-white transition-all shadow-sm hover:shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="text-sm">👤</span>
                 <span className="text-sm">
-                  {t('onCall.exportMyShifts', { defaultValue: 'My Shifts Calendar' })}
+                  {isDownloading
+                    ? t('ui.downloading', { defaultValue: 'Downloading...' })
+                    : t('onCall.exportMyShifts', { defaultValue: 'My Shifts Calendar' })}
                 </span>
-              </a>
+              </button>
             </div>
           </div>
         )}
