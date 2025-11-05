@@ -125,6 +125,9 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
   const [hiddenTaskIds, setHiddenTaskIds] = useState<Set<string>>(() => new Set());
   const [expandedResidents, setExpandedResidents] = useState<Set<string>>(() => new Set());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(() => new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Map<string, Set<string>>>(
+    () => new Map(),
+  );
 
   const resById = useMemo(
     () => new Map(residents.map((resident) => [resident.uid, resident])),
@@ -295,6 +298,43 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
     );
   }, [language, nodeById, resById, rotById, visibleTasks]);
 
+  useEffect(() => {
+    setExpandedCategories((prev) => {
+      if (prev.size === 0) return prev;
+
+      const residentIds = new Set(residentGroups.map((group) => group.residentId));
+      const next = new Map<string, Set<string>>();
+      let changed = false;
+
+      residentGroups.forEach((group) => {
+        const existing = prev.get(group.residentId);
+        if (!existing || existing.size === 0) return;
+        const validCategoryIds = new Set(group.categories.map((category) => category.categoryId));
+        const filtered = new Set<string>();
+        existing.forEach((categoryId) => {
+          if (validCategoryIds.has(categoryId)) {
+            filtered.add(categoryId);
+          } else {
+            changed = true;
+          }
+        });
+        if (filtered.size > 0) {
+          next.set(group.residentId, filtered);
+        } else {
+          changed = true;
+        }
+      });
+
+      prev.forEach((_, residentId) => {
+        if (!residentIds.has(residentId)) {
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [residentGroups]);
+
   const visibleTaskIds = useMemo(() => {
     const set = new Set<string>();
     residentGroups.forEach((group) =>
@@ -382,6 +422,24 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
     });
   };
 
+  const toggleCategoryExpansion = (residentId: string, categoryId: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Map(prev);
+      const current = new Set(next.get(residentId) ?? []);
+      if (current.has(categoryId)) {
+        current.delete(categoryId);
+      } else {
+        current.add(categoryId);
+      }
+      if (current.size > 0) {
+        next.set(residentId, current);
+      } else {
+        next.delete(residentId);
+      }
+      return next;
+    });
+  };
+
   const clearSelectionForTasks = (taskIds: string[]) => {
     if (!taskIds.length) return;
     setSelectedTaskIds((prev) => {
@@ -439,7 +497,10 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
   };
 
   return (
-    <Card title={t('tutor.pendingTaskApprovals')} className="card-levitate">
+    <Card
+      title={t('tutor.pendingTaskApprovals')}
+      className="card-levitate [&>div]:p-6 [&>header]:px-6 [&>header]:py-4"
+    >
       {loadingNodes ? (
         <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
           {t('ui.loading', { defaultValue: 'Loading...' })}
@@ -450,7 +511,7 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
           {errorMessage}
         </div>
       ) : null}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {residentGroups.map((group) => {
           const isExpanded = expandedResidents.has(group.residentId);
           const groupTaskIds = group.categories.flatMap((category) =>
@@ -462,18 +523,18 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
           return (
             <div
               key={group.residentId}
-              className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface))]"
+              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface))]"
             >
               <button
                 type="button"
                 onClick={() => toggleResident(group.residentId)}
-                className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]"
+                className="flex w-full items-center justify-between gap-5 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]"
                 aria-expanded={isExpanded}
               >
                 <div className="flex items-center gap-3">
                   <Avatar name={group.residentName} email={group.residentEmail ?? undefined} size={36} />
                   <div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-50">
+                    <div className="text-base font-semibold text-gray-900 dark:text-gray-50">
                       {group.residentName}
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
@@ -517,7 +578,7 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
               </button>
 
               {isExpanded ? (
-                <div className="space-y-3 border-t border-gray-200 bg-gray-50/60 px-4 py-4 dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface-elevated))]">
+                <div className="space-y-3 border-t border-gray-200 bg-gray-50/60 px-5 py-4 dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface-elevated))]">
                   {group.categories.map((category) => {
                     const categoryTaskIds = category.tasks.map((task) => task.id);
                     const categorySelectedCount = categoryTaskIds.filter((id) =>
@@ -525,17 +586,27 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                     ).length;
                     const everySelected =
                       categorySelectedCount === category.tasks.length && category.tasks.length > 0;
+                    const isCategoryExpanded =
+                      expandedCategories.get(group.residentId)?.has(category.categoryId) ?? false;
 
                     return (
                       <div
                         key={category.categoryId}
-                        className="rounded-md border border-gray-200 bg-white shadow-sm dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface))]"
+                        className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface))]"
                       >
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-2.5 dark:border-[rgb(var(--border))]">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-50">
-                              {category.name}
-                            </span>
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-3 dark:border-[rgb(var(--border))]">
+                          <button
+                            type="button"
+                            onClick={() => toggleCategoryExpansion(group.residentId, category.categoryId)}
+                            className="flex flex-1 items-center gap-2 text-left text-sm font-semibold text-gray-900 transition hover:text-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:text-gray-50 dark:hover:text-teal-200"
+                            aria-expanded={isCategoryExpanded}
+                          >
+                            {isCategoryExpanded ? (
+                              <ChevronDownIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                            ) : (
+                              <ChevronRightIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                            )}
+                            <span>{category.name}</span>
                             <Badge variant="outline">
                               {t('tutor.tasksPendingCount', {
                                 count: category.tasks.length,
@@ -545,92 +616,96 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                                     : `${category.tasks.length} pending`,
                               })}
                             </Badge>
-                          </div>
-                          <button
-                            type="button"
-                            className="text-xs font-medium text-teal-700 transition hover:text-teal-600 disabled:cursor-not-allowed disabled:opacity-60 dark:text-teal-300 dark:hover:text-teal-200"
-                            onClick={() => toggleCategorySelection(category)}
-                            disabled={isProcessing || category.tasks.length === 0}
-                          >
-                            {everySelected
-                              ? t('tutor.clearSelection', { defaultValue: 'Clear selection' })
-                              : t('tutor.selectAll', { defaultValue: 'Select all' })}
                           </button>
+                          {isCategoryExpanded ? (
+                            <button
+                              type="button"
+                              className="text-xs font-medium text-teal-700 transition hover:text-teal-600 disabled:cursor-not-allowed disabled:opacity-60 dark:text-teal-300 dark:hover:text-teal-200"
+                              onClick={() => toggleCategorySelection(category)}
+                              disabled={isProcessing || category.tasks.length === 0}
+                            >
+                              {everySelected
+                                ? t('tutor.clearSelection', { defaultValue: 'Clear selection' })
+                                : t('tutor.selectAll', { defaultValue: 'Select all' })}
+                            </button>
+                          ) : null}
                         </div>
-                        <div className="divide-y divide-gray-200 dark:divide-[rgb(var(--border))]">
-                          {category.tasks.map((task) => {
-                            const isSelected = selectedTaskIds.has(task.id);
-                            const submittedLabel = formatDateWithTime(task.submittedAt, language);
+                        {isCategoryExpanded ? (
+                          <div className="divide-y divide-gray-200 dark:divide-[rgb(var(--border))]">
+                            {category.tasks.map((task) => {
+                              const isSelected = selectedTaskIds.has(task.id);
+                              const submittedLabel = formatDateWithTime(task.submittedAt, language);
 
-                            return (
-                              <div
-                                key={task.id}
-                                className="flex flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-between"
-                              >
-                                <div className="flex flex-1 items-start gap-3">
-                                  <input
-                                    type="checkbox"
-                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500 dark:border-[rgb(var(--border))]"
-                                    checked={isSelected}
-                                    onChange={() => toggleTaskSelection(task.id)}
-                                    disabled={isProcessing}
-                                    aria-label={t('tutor.selectTaskLabel', {
-                                      task: task.name,
-                                      defaultValue: `Select task ${task.name}`,
-                                    })}
-                                  />
-                                  <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-50">
-                                      <span>{task.name}</span>
-                                      <Badge variant="secondary">{task.rotationName}</Badge>
-                                      <span className="text-xs font-medium text-gray-500 dark:text-gray-300">
-                                        {task.count}/{task.requiredCount}
-                                      </span>
+                              return (
+                                <div
+                                  key={task.id}
+                                  className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between"
+                                >
+                                  <div className="flex flex-1 items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500 dark:border-[rgb(var(--border))]"
+                                      checked={isSelected}
+                                      onChange={() => toggleTaskSelection(task.id)}
+                                      disabled={isProcessing}
+                                      aria-label={t('tutor.selectTaskLabel', {
+                                        task: task.name,
+                                        defaultValue: `Select task ${task.name}`,
+                                      })}
+                                    />
+                                    <div className="space-y-1">
+                                      <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-50">
+                                        <span>{task.name}</span>
+                                        <Badge variant="secondary">{task.rotationName}</Badge>
+                                        <span className="text-xs font-medium text-gray-500 dark:text-gray-300">
+                                          {task.count}/{task.requiredCount}
+                                        </span>
+                                      </div>
+                                      {task.note ? (
+                                        <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
+                                          {task.note}
+                                        </p>
+                                      ) : null}
+                                      {submittedLabel ? (
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                          {t('tutor.taskSubmittedOn', {
+                                            date: submittedLabel,
+                                            defaultValue: `Submitted ${submittedLabel}`,
+                                          })}
+                                        </p>
+                                      ) : null}
                                     </div>
-                                    {task.note ? (
-                                      <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
-                                        {task.note}
-                                      </p>
-                                    ) : null}
-                                    {submittedLabel ? (
-                                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        {t('tutor.taskSubmittedOn', {
-                                          date: submittedLabel,
-                                          defaultValue: `Submitted ${submittedLabel}`,
-                                        })}
-                                      </p>
-                                    ) : null}
+                                  </div>
+                                  <div className="flex items-center gap-2 self-start md:self-center">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="border-green-500 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/30"
+                                      onClick={() => handleSingleAction(task.id, 'approve')}
+                                      disabled={isProcessing}
+                                    >
+                                      {t('tutor.approve')}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="border-red-500 text-red-700 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
+                                      onClick={() => handleSingleAction(task.id, 'reject')}
+                                      disabled={isProcessing}
+                                    >
+                                      {t('tutor.deny')}
+                                    </Button>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 self-start md:self-center">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-green-500 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/30"
-                                    onClick={() => handleSingleAction(task.id, 'approve')}
-                                    disabled={isProcessing}
-                                  >
-                                    {t('tutor.approve')}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-red-500 text-red-700 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
-                                    onClick={() => handleSingleAction(task.id, 'reject')}
-                                    disabled={isProcessing}
-                                  >
-                                    {t('tutor.deny')}
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                              );
+                            })}
+                          </div>
+                        ) : null}
                       </div>
                     );
                   })}
 
-                  <div className="flex flex-col gap-3 border-t border-gray-200 pt-3 text-sm dark:border-[rgb(var(--border))] md:flex-row md:items-center md:justify-between">
+                  <div className="flex flex-col gap-3 border-t border-gray-200 pt-4 text-sm dark:border-[rgb(var(--border))] md:flex-row md:items-center md:justify-between">
                     <div className="text-xs text-gray-600 dark:text-gray-300">
                       {groupSelectedIds.length
                         ? t('tutor.selectedCount', {
