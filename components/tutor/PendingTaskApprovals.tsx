@@ -520,15 +520,15 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
           const groupSelectedIds = groupTaskIds.filter((id) => selectedTaskIds.has(id));
           const earliestLabel = formatDateWithTime(group.earliestSubmittedAt, language);
 
-          return (
-            <div
-              key={group.residentId}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface))]"
-            >
+            return (
+              <div
+                key={group.residentId}
+                className="overflow-hidden rounded-lg border border-gray-200/70 bg-[rgb(var(--surface))] dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface))]"
+              >
               <button
                 type="button"
                 onClick={() => toggleResident(group.residentId)}
-                className="flex w-full items-center justify-between gap-5 px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))]"
+                  className="flex w-full items-center justify-between gap-5 px-5 py-4 text-left transition hover:bg-gray-50/60 dark:hover:bg-[rgb(var(--surface-elevated))]"
                 aria-expanded={isExpanded}
               >
                 <div className="flex items-center gap-3">
@@ -577,8 +577,8 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                 </div>
               </button>
 
-              {isExpanded ? (
-                <div className="space-y-3 border-t border-gray-200 bg-gray-50/60 px-5 py-4 dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface-elevated))]">
+                {isExpanded ? (
+                  <div className="space-y-3 border-t border-gray-200/60 bg-[rgb(var(--surface-elevated))] px-5 py-4 dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface-elevated))]">
                   {group.categories.map((category) => {
                     const categoryTaskIds = category.tasks.map((task) => task.id);
                     const categorySelectedCount = categoryTaskIds.filter((id) =>
@@ -590,11 +590,11 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                       expandedCategories.get(group.residentId)?.has(category.categoryId) ?? false;
 
                     return (
-                      <div
-                        key={category.categoryId}
-                        className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface))]"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-3 dark:border-[rgb(var(--border))]">
+                        <div
+                          key={category.categoryId}
+                          className="rounded-md border border-gray-200/60 bg-transparent dark:border-[rgb(var(--border))]"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200/60 px-5 py-3 dark:border-[rgb(var(--border))]">
                           <button
                             type="button"
                             onClick={() => toggleCategoryExpansion(group.residentId, category.categoryId)}
@@ -630,8 +630,8 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                             </button>
                           ) : null}
                         </div>
-                        {isCategoryExpanded ? (
-                          <div className="divide-y divide-gray-200 dark:divide-[rgb(var(--border))]">
+                          {isCategoryExpanded ? (
+                            <div className="divide-y divide-gray-200/60 dark:divide-[rgb(var(--border))]">
                             {category.tasks.map((task) => {
                               const isSelected = selectedTaskIds.has(task.id);
                               const submittedLabel = formatDateWithTime(task.submittedAt, language);
