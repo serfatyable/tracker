@@ -372,9 +372,6 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
           next.add(id);
         }
       });
-      if (next.size === 0 && residentGroups[0]) {
-        next.add(residentGroups[0].residentId);
-      }
       const unchanged =
         next.size === prev.size && Array.from(next).every((id) => prev.has(id));
       return unchanged ? prev : next;
