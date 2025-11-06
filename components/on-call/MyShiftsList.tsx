@@ -1,12 +1,12 @@
 'use client';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
 import { stationI18nKeys } from '../../lib/on-call/stations';
 import type { StationKey } from '../../types/onCall';
+import { fetchWithAuth } from '../../lib/api/client';
 import Card from '../ui/Card';
 
 export default function MyShiftsList({
@@ -19,6 +19,7 @@ export default function MyShiftsList({
   const { t } = useTranslation();
   const router = useRouter();
   const { shifts, loading } = useOnCallFutureByUser(userId, daysAhead);
+  const [downloading, setDownloading] = useState(false);
 
   const grouped = useMemo(() => {
     const map = new Map<string, { date: Date; items: { stationKey: string }[] }>();
@@ -34,6 +35,35 @@ export default function MyShiftsList({
     }));
   }, [shifts]);
 
+  const handleDownload = useCallback(async () => {
+    try {
+      setDownloading(true);
+      const response = await fetchWithAuth('/api/ics/on-call?personal=true');
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+      const icsText = await response.text();
+      const blob = new Blob([icsText], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'on-call-my-shifts.ics';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download on-call ICS', error);
+      window.alert(
+        t('onCall.downloadError', {
+          defaultValue: 'Failed to download calendar. Please try again.',
+        }),
+      );
+    } finally {
+      setDownloading(false);
+    }
+  }, [t]);
+
   if (!userId) return null;
 
   return (
@@ -42,9 +72,17 @@ export default function MyShiftsList({
         <div className="text-sm font-medium">
           {t('onCall.myShifts', { defaultValue: 'My Shifts' })}
         </div>
-        <Link href="/api/ics/on-call?personal=true" className="pill text-xs" prefetch={false}>
-          {t('onCall.downloadMyIcs', { defaultValue: 'Download My ICS' })}
-        </Link>
+        <button
+          type="button"
+          onClick={handleDownload}
+          className="pill text-xs"
+          disabled={downloading}
+          aria-busy={downloading}
+        >
+          {downloading
+            ? t('ui.downloading', { defaultValue: 'Downloading…' })
+            : t('onCall.downloadMyIcs', { defaultValue: 'Download My ICS' })}
+        </button>
       </div>
 
       {loading ? (
