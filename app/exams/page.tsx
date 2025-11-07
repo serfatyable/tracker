@@ -233,27 +233,41 @@ export default function ExamsPage() {
     return (
       <div className="flex flex-col gap-4 text-left lg:flex-row lg:items-start lg:justify-end lg:gap-6 lg:text-right">
         {hasExams ? (
-          <div className="flex w-full flex-col gap-3 rounded-2xl border border-gray-200/70 bg-white/85 p-5 text-left shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 lg:max-w-sm">
-            <div className="space-y-1 text-gray-600 dark:text-gray-300">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                {optionLabel}
-              </div>
-              <p className="text-sm leading-relaxed">{optionDescription}</p>
+          <>
+            <div className="lg:hidden">
+              <Button
+                variant="ghost"
+                size="md"
+                className="w-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-0 focus-visible:ring-white/60 active:translate-y-0 dark:focus-visible:ring-white/40"
+                leftIcon={<SparklesIcon className="h-5 w-5" />}
+                onClick={handleExportClick}
+                aria-label={`${optionLabel} – ${downloadLabel}`}
+              >
+                {downloadLabel}
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="lg"
-              className="w-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-0 focus-visible:ring-white/60 active:translate-y-0 dark:focus-visible:ring-white/40"
-              leftIcon={<SparklesIcon className="h-5 w-5" />}
-              onClick={handleExportClick}
-              aria-label={`${optionLabel} – ${downloadLabel}`}
-            >
-              {downloadLabel}
-            </Button>
-          </div>
+            <div className="hidden w-full flex-col gap-3 rounded-2xl border border-gray-200/70 bg-white/85 p-5 text-left shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 lg:flex lg:max-w-sm">
+              <div className="space-y-1 text-gray-600 dark:text-gray-300">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {optionLabel}
+                </div>
+                <p className="text-sm leading-relaxed">{optionDescription}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="w-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-0 focus-visible:ring-white/60 active:translate-y-0 dark:focus-visible:ring-white/40"
+                leftIcon={<SparklesIcon className="h-5 w-5" />}
+                onClick={handleExportClick}
+                aria-label={`${optionLabel} – ${downloadLabel}`}
+              >
+                {downloadLabel}
+              </Button>
+            </div>
+          </>
         ) : null}
         {isAdmin ? (
-          <div className="flex flex-col gap-3 lg:items-end">
+          <div className="flex w-full flex-col gap-3 lg:w-auto lg:items-end">
             <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
               <Button
                 size="sm"

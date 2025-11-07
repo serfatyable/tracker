@@ -42,7 +42,7 @@ export default function LargeTitleHeader({
       aria-live="polite"
     >
       <div className="app-container px-0">
-        <div className="flex items-end justify-between gap-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
             <h1
               className={`transition-all duration-200 ease-out font-bold text-gray-900 dark:text-gray-50 ${compact ? 'text-xl' : 'text-3xl'}`}
@@ -58,7 +58,7 @@ export default function LargeTitleHeader({
             ) : null}
           </div>
           {rightSlot ? (
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-full md:w-auto">
               {typeof rightSlot === 'function' ? rightSlot({ compact }) : rightSlot}
             </div>
           ) : null}
