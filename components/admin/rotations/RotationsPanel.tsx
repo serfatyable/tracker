@@ -155,7 +155,7 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
                     setOpenImport(true);
                   }}
                 >
-                  {t('ui.importCsv')}
+                  {t('ui.import')}
                 </Button>
                 <Button
                   className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
