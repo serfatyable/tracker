@@ -5,9 +5,13 @@ import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import TopBar from '../TopBar';
 import NetworkStatusIndicator from '../ui/NetworkStatusIndicator';
 
+type AppShellStyle = CSSProperties & {
+  '--top-bar-offset'?: string;
+};
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { data: _me } = useCurrentUserProfile();
-  const shellStyle: CSSProperties = {
+  const shellStyle: AppShellStyle = {
     '--top-bar-offset': 'calc(env(safe-area-inset-top, 0px) + 3rem)',
   };
   return (
