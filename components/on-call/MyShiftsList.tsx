@@ -27,11 +27,15 @@ export default function MyShiftsList({
       link.download = 'my-shifts.ics';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
     } catch {
       router.push('/api/ics/on-call?personal=true');
     }
   }, [router]);
+
+  const downloadLabel = t('onCall.downloadMyCalendar', {
+    defaultValue: 'Download My Calendar',
+  });
 
   const grouped = useMemo(() => {
     const map = new Map<string, { date: Date; items: { stationKey: string }[] }>();
@@ -59,9 +63,9 @@ export default function MyShiftsList({
           type="button"
           onClick={handleDownload}
           className="pill text-xs"
-          aria-label={t('onCall.downloadMyCalendar', { defaultValue: 'Download My Calendar' })}
+          aria-label={downloadLabel}
         >
-          {t('onCall.downloadMyCalendar', { defaultValue: 'Download My Calendar' })}
+          {downloadLabel}
         </button>
       </div>
 
