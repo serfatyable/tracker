@@ -1,5 +1,5 @@
 'use client';
-import { ArrowDownTrayIcon, CloudArrowDownIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon } from '@heroicons/react/24/outline';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
@@ -37,56 +37,10 @@ export default function MyShiftsList({
   );
 
   const downloadLabel = translate('onCall.downloadMyIcs', 'Download My ICS');
-
-  const downloadOptions = useMemo(
-    () => [
-      {
-        id: 'gradient',
-        label: translate('onCall.downloadOptionGradientLabel', 'Option A'),
-        description: translate(
-          'onCall.downloadOptionGradientDescription',
-          'Vibrant gradient spotlight with a subtle glow.',
-        ),
-        buttonProps: {
-          variant: 'ghost' as const,
-          size: 'lg' as const,
-          className:
-            'w-full sm:w-auto bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 focus-visible:ring-offset-0 focus-visible:ring-white/60 dark:focus-visible:ring-white/40',
-          leftIcon: <SparklesIcon className="h-5 w-5" />,
-        },
-      },
-      {
-        id: 'outline',
-        label: translate('onCall.downloadOptionOutlineLabel', 'Option B'),
-        description: translate(
-          'onCall.downloadOptionOutlineDescription',
-          'Structured outline with an indigo accent and hover fill.',
-        ),
-        buttonProps: {
-          variant: 'outline' as const,
-          size: 'md' as const,
-          className:
-            'w-full sm:w-auto border-2 border-dashed border-indigo-400 text-indigo-600 dark:text-indigo-300 hover:border-indigo-500 hover:bg-indigo-500/10 focus-visible:ring-indigo-500',
-          leftIcon: <ArrowDownTrayIcon className="h-5 w-5" />,
-        },
-      },
-      {
-        id: 'soft',
-        label: translate('onCall.downloadOptionSoftLabel', 'Option C'),
-        description: translate(
-          'onCall.downloadOptionSoftDescription',
-          'Soft glassmorphism-inspired pill with a gentle glow.',
-        ),
-        buttonProps: {
-          variant: 'secondary' as const,
-          size: 'md' as const,
-          className:
-            'w-full sm:w-auto bg-white/80 text-gray-900 shadow-inner shadow-gray-200/60 border border-white/60 backdrop-blur-sm hover:bg-white hover:shadow-md dark:bg-white/10 dark:text-white/90 dark:border-white/10 dark:hover:bg-white/20',
-          leftIcon: <CloudArrowDownIcon className="h-5 w-5" />,
-        },
-      },
-    ],
-    [translate],
+  const optionLabel = translate('onCall.downloadOptionGradientLabel', 'Option A');
+  const optionDescription = translate(
+    'onCall.downloadOptionGradientDescription',
+    'Vibrant gradient spotlight with a subtle glow.',
   );
 
   const grouped = useMemo(() => {
@@ -177,30 +131,21 @@ export default function MyShiftsList({
             {t('onCall.myShifts', { defaultValue: 'My Shifts' })}
           </div>
           <div className="flex w-full flex-col gap-3 text-left lg:w-auto lg:text-right">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              {translate('onCall.downloadOptionsHeading', 'Download options')}
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
-              {downloadOptions.map((option) => (
-                <div
-                  key={option.id}
-                  className="flex w-full flex-col items-stretch gap-2 rounded-xl border border-gray-200/70 bg-white/80 p-3 text-left shadow-sm dark:border-white/10 dark:bg-white/5 sm:w-auto sm:max-w-[220px]"
-                >
-                  <Button
-                    {...option.buttonProps}
-                    onClick={handleDownload}
-                    aria-label={`${option.label} – ${downloadLabel}`}
-                  >
-                    {downloadLabel}
-                  </Button>
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {option.label}
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-300">
-                    {option.description}
-                  </div>
-                </div>
-              ))}
+            <div className="flex flex-col gap-2 rounded-xl border border-gray-200/70 bg-white/80 p-4 text-left shadow-sm dark:border-white/10 dark:bg-white/5 sm:w-72">
+              <Button
+                variant="ghost"
+                size="lg"
+                className="w-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-0 focus-visible:ring-white/60 active:translate-y-0 dark:focus-visible:ring-white/40"
+                leftIcon={<SparklesIcon className="h-5 w-5" />}
+                onClick={handleDownload}
+                aria-label={`${optionLabel} – ${downloadLabel}`}
+              >
+                {downloadLabel}
+              </Button>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {optionLabel}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-300">{optionDescription}</div>
             </div>
           </div>
         </div>
