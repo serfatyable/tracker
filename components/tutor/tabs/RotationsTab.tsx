@@ -13,6 +13,7 @@ type Props = {
   assignments: Assignment[];
   residents: UserProfile[];
   petitions: RotationPetition[];
+  tutors: UserProfile[];
 };
 
 export default function RotationsTab({
@@ -21,6 +22,7 @@ export default function RotationsTab({
   assignments,
   residents,
   petitions,
+  tutors,
 }: Props) {
   const owned = useMemo(
     () =>
@@ -30,6 +32,7 @@ export default function RotationsTab({
     [rotations, meUid],
   );
   const _resById = useMemo(() => new Map(residents.map((r) => [r.uid, r])), [residents]);
+  const tutorById = useMemo(() => new Map(tutors.map((t) => [t.uid, t])), [tutors]);
   const assignmentsByRotation = useMemo(() => {
     const map = new Map<string, Assignment[]>();
     for (const a of assignments) {
@@ -75,7 +78,10 @@ export default function RotationsTab({
               </Button>
             </div>
             <div className="mt-2 text-xs opacity-70">
-              Owners: {(r.ownerTutorIds || []).join(', ') || '-'}
+              Owners:{' '}
+              {(r.ownerTutorIds || [])
+                .map((id) => tutorById.get(id)?.fullName || id)
+                .join(', ') || '-'}
             </div>
           </div>
         );
