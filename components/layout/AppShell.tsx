@@ -1,12 +1,17 @@
 'use client';
+import type { CSSProperties } from 'react';
+
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import TopBar from '../TopBar';
 import NetworkStatusIndicator from '../ui/NetworkStatusIndicator';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { data: _me } = useCurrentUserProfile();
+  const shellStyle: CSSProperties = {
+    '--top-bar-offset': 'calc(env(safe-area-inset-top, 0px) + 3rem)',
+  };
   return (
-    <div className="min-h-dvh pad-safe-t pad-safe-b bg-bg text-fg">
+    <div className="min-h-dvh pad-safe-t pad-safe-b bg-bg text-fg" style={shellStyle}>
       <div
         className="sticky top-0 z-40 bg-bg/95 backdrop-blur supports-[backdrop-filter]:bg-bg/80 pad-safe-t w-full max-w-[min(100%,100svw)] border-b border-gray-200 dark:border-[rgb(var(--border))]"
         data-top-bar
