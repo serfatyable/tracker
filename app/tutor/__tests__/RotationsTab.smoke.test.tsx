@@ -19,6 +19,15 @@ describe('RotationsTab smoke', () => {
         fullName: 'Alice',
       } as any,
     ];
+    const tutors = [
+      {
+        uid: 't1',
+        role: 'tutor',
+        status: 'active',
+        settings: { language: 'en' },
+        fullName: 'Dr. Smith',
+      } as any,
+    ];
     const petitions = [
       { id: 'p1', residentId: 'r1', rotationId: 'icu', type: 'activate', status: 'pending' } as any,
     ];
@@ -29,6 +38,7 @@ describe('RotationsTab smoke', () => {
         assignments={assignments as any}
         residents={residents as any}
         petitions={petitions as any}
+        tutors={tutors as any}
       />,
     );
     await screen.findByText('ICU');

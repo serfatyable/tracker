@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import type { Assignment } from '../../../types/assignments';
@@ -13,6 +14,7 @@ type Props = {
   assignments: Assignment[];
   residents: UserProfile[];
   petitions: RotationPetition[];
+  tutors: UserProfile[];
 };
 
 export default function RotationsTab({
@@ -21,7 +23,9 @@ export default function RotationsTab({
   assignments,
   residents,
   petitions,
+  tutors,
 }: Props) {
+  const router = useRouter();
   const owned = useMemo(
     () =>
       rotations
@@ -30,6 +34,7 @@ export default function RotationsTab({
     [rotations, meUid],
   );
   const _resById = useMemo(() => new Map(residents.map((r) => [r.uid, r])), [residents]);
+  const tutorById = useMemo(() => new Map(tutors.map((t) => [t.uid, t])), [tutors]);
   const assignmentsByRotation = useMemo(() => {
     const map = new Map<string, Assignment[]>();
     for (const a of assignments) {
@@ -61,7 +66,7 @@ export default function RotationsTab({
                 size="sm"
                 className="btn-levitate"
                 variant="outline"
-                onClick={() => window.open(`/curriculum?rotation=${r.id}`, '_self')}
+                onClick={() => router.push(`/resident/rotations?rot=${r.id}`)}
               >
                 Open curriculum
               </Button>
@@ -69,13 +74,16 @@ export default function RotationsTab({
                 size="sm"
                 className="btn-levitate"
                 variant="outline"
-                onClick={() => window.open(`/tutor?tab=residents&rotation=${r.id}`, '_self')}
+                onClick={() => router.push(`/tutor/residents?rotation=${r.id}`)}
               >
                 View residents
               </Button>
             </div>
             <div className="mt-2 text-xs opacity-70">
-              Owners: {(r.ownerTutorIds || []).join(', ') || '-'}
+              Owners:{' '}
+              {(r.ownerTutorIds || [])
+                .map((id) => tutorById.get(id)?.fullName || id)
+                .join(', ') || '-'}
             </div>
           </div>
         );

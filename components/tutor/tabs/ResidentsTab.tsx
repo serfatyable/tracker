@@ -15,6 +15,7 @@ type Props = {
   rotations: Rotation[];
   petitions: RotationPetition[];
   ownedRotationIds: Set<string>;
+  filterRotationId?: string;
   onApprove: (petitionId: string) => Promise<void>;
   onDeny: (petitionId: string) => Promise<void>;
   onSelfAssign: (residentId: string) => Promise<void>;
@@ -28,6 +29,7 @@ export default function ResidentsTab({
   rotations,
   petitions,
   ownedRotationIds,
+  filterRotationId,
   onApprove,
   onDeny,
   onSelfAssign,
@@ -78,6 +80,7 @@ export default function ResidentsTab({
         if (q && !hay.includes(q)) return false;
         if (onlyWithPetitions && (x.petitions || []).length === 0) return false;
         if (onlyOwned && !ownedRotationIds.has(x.rotation.id)) return false;
+        if (filterRotationId && x.rotation.id !== filterRotationId) return false;
         return true;
       })
       .sort((a, b) =>
@@ -94,6 +97,7 @@ export default function ResidentsTab({
     onlyWithPetitions,
     onlyOwned,
     ownedRotationIds,
+    filterRotationId,
   ]);
 
   return (

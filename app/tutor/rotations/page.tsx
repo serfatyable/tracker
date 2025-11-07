@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,7 +12,7 @@ import { useTutorDashboardData } from '../../../lib/hooks/useTutorDashboardData'
 
 export default function TutorRotationsPage() {
   const { t } = useTranslation();
-  const { me, rotations, assignments, residents, petitions } = useTutorDashboardData();
+  const { me, rotations, assignments, residents, petitions, tutors } = useTutorDashboardData();
   return (
     <AuthGate requiredRole="tutor">
       <AppShell>
@@ -27,16 +26,12 @@ export default function TutorRotationsPage() {
                 assignments={assignments}
                 residents={residents}
                 petitions={petitions}
+                tutors={tutors}
               />
             ) : (
               <CardSkeleton />
             )}
           </Suspense>
-          <div className="mt-4 flex justify-end">
-            <Link href="/tutor/residents" className="pill text-xs">
-              {t('tutor.tabs.residents')}
-            </Link>
-          </div>
         </div>
       </AppShell>
     </AuthGate>
