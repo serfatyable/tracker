@@ -1,18 +1,9 @@
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  doc,
-  getDoc,
-} from 'firebase/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { verifyAuthToken, createAuthErrorResponse } from '../../../../lib/api/auth';
-import { getFirebaseApp } from '../../../../lib/firebase/client';
+import { getAdminApp } from '../../../../lib/firebase/admin-sdk';
 import { buildOnCallIcs } from '../../../../lib/ics/buildOnCallIcs';
 
 /**
@@ -30,12 +21,12 @@ export async function GET(req: NextRequest) {
     const auth = await verifyAuthToken(req);
     const uid = auth.uid;
 
-    const app = getFirebaseApp();
+    const app = getAdminApp();
     const db = getFirestore(app);
 
     // Verify user is approved
-    const userSnap = await getDoc(doc(db, 'users', uid));
-    if (!userSnap.exists()) {
+    const userSnap = await db.collection('users').doc(uid).get();
+    if (!userSnap.exists) {
       return new NextResponse('User not found', { status: 404 });
     }
 
@@ -53,9 +44,11 @@ export async function GET(req: NextRequest) {
     now.setMonth(now.getMonth() - 1); // Include past month
     const startKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
-    const col = collection(db, 'onCallDays');
-    const q = query(col, where('dateKey', '>=', startKey), orderBy('dateKey', 'asc'));
-    const snap = await getDocs(q);
+    const snap = await db
+      .collection('onCallDays')
+      .where('dateKey', '>=', startKey)
+      .orderBy('dateKey', 'asc')
+      .get();
 
     // Build shifts, filtering by uid when personal=true
     const myShifts: Array<{ date: Date; shiftType: string; dateKey: string }> = [];
