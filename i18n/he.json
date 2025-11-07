@@ -846,7 +846,10 @@
       "allExams": "כל המבחנים",
       "upcomingOnly": "מבחנים קרובים בלבד",
       "downloadICS": "הורד קובץ ICS",
-      "exportButton": "📅 ייצוא"
+      "exportButton": "📅 ייצוא",
+      "gradientOptionLabel": "אופציה א׳",
+      "gradientOptionDescription": "גרדיאנט חי עם הילה עדינה.",
+      "error": "הורדת לוח המבחנים נכשלה."
     }
   }
 }
