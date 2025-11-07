@@ -23,13 +23,21 @@ function TutorResidentsPageInner() {
   const { me, residents, assignments, rotations, petitions, ownedRotationIds } =
     useTutorDashboardData();
 
-  const handleApprove = useCallback(async (petitionId: string) => {
-    await approveRotationPetition(petitionId);
-  }, []);
+  const handleApprove = useCallback(
+    async (petitionId: string) => {
+      if (!me?.uid) return;
+      await approveRotationPetition(petitionId, me.uid);
+    },
+    [me?.uid],
+  );
 
-  const handleDeny = useCallback(async (petitionId: string) => {
-    await denyRotationPetition(petitionId);
-  }, []);
+  const handleDeny = useCallback(
+    async (petitionId: string) => {
+      if (!me?.uid) return;
+      await denyRotationPetition(petitionId, me.uid);
+    },
+    [me?.uid],
+  );
 
   const handleSelfAssign = useCallback(
     async (residentId: string) => {
