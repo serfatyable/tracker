@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +22,7 @@ type Props = {
 
 export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<Rotation[]>([] as any);
   const [_cursor, setCursor] = useState<any | undefined>(undefined);
@@ -160,7 +162,7 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
                 <Button
                   className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
                   variant="outline"
-                  onClick={() => window.open(`/admin?tab=overview`, '_self')}
+                  onClick={() => router.push(`/admin/users?rotation=${r.id}`)}
                 >
                   {t('ui.viewResidents')}
                 </Button>
