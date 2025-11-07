@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 
 export default function LargeTitleHeader({
   title,
@@ -9,12 +10,11 @@ export default function LargeTitleHeader({
 }: {
   title: string;
   subtitle?: string;
-  rightSlot?: React.ReactNode;
+  rightSlot?: ReactNode | ((context: { compact: boolean }) => ReactNode);
   collapseOnScroll?: boolean;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [compact, setCompact] = useState(false);
-
   useEffect(() => {
     if (!collapseOnScroll) return;
     const el = ref.current;
@@ -37,7 +37,8 @@ export default function LargeTitleHeader({
   return (
     <div
       ref={ref}
-      className="sticky top-0 z-30 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-2 backdrop-blur-md bg-bg/85 supports-[backdrop-filter]:bg-bg/75 border-b border-muted/20"
+      className="sticky z-30 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-2 backdrop-blur-md bg-bg/85 supports-[backdrop-filter]:bg-bg/75 border-b border-muted/20"
+      style={{ top: 'var(--top-bar-offset, 3rem)' }}
       aria-live="polite"
     >
       <div className="app-container px-0">
@@ -57,7 +58,9 @@ export default function LargeTitleHeader({
             ) : null}
           </div>
           {rightSlot ? (
-            <div className="flex items-center gap-2 flex-shrink-0">{rightSlot}</div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {typeof rightSlot === 'function' ? rightSlot({ compact }) : rightSlot}
+            </div>
           ) : null}
         </div>
       </div>

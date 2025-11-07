@@ -189,51 +189,102 @@ export default function ExamsPage() {
 
   const hasExams = allExams.length > 0;
 
+  const headerActions = ({ compact }: { compact: boolean }) => {
+    if (compact) {
+      return (
+        <div className="flex flex-wrap items-center justify-end gap-2 text-right">
+          {hasExams ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/30 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-offset-0 focus-visible:ring-white/70 dark:focus-visible:ring-white/40"
+              leftIcon={<SparklesIcon className="h-4 w-4" />}
+              onClick={handleExportClick}
+              aria-label={`${optionLabel} – ${downloadLabel}`}
+            >
+              {downloadLabel}
+            </Button>
+          ) : null}
+          {isAdmin ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-green-500/80 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-200 dark:hover:bg-green-400/10"
+                leftIcon={<ArrowUpTrayIcon className="h-4 w-4" />}
+                onClick={handleImportClick}
+              >
+                Import
+              </Button>
+              <Button
+                size="sm"
+                className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+                leftIcon={<PlusIcon className="h-4 w-4" />}
+                onClick={handleCreateClick}
+              >
+                Add New
+              </Button>
+            </>
+          ) : null}
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-4 text-left lg:flex-row lg:items-start lg:justify-end lg:gap-6 lg:text-right">
+        {hasExams ? (
+          <div className="flex w-full flex-col gap-3 rounded-2xl border border-gray-200/70 bg-white/85 p-5 text-left shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 lg:max-w-sm">
+            <div className="space-y-1 text-gray-600 dark:text-gray-300">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {optionLabel}
+              </div>
+              <p className="text-sm leading-relaxed">{optionDescription}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="lg"
+              className="w-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-0 focus-visible:ring-white/60 active:translate-y-0 dark:focus-visible:ring-white/40"
+              leftIcon={<SparklesIcon className="h-5 w-5" />}
+              onClick={handleExportClick}
+              aria-label={`${optionLabel} – ${downloadLabel}`}
+            >
+              {downloadLabel}
+            </Button>
+          </div>
+        ) : null}
+        {isAdmin ? (
+          <div className="flex flex-col gap-3 lg:items-end">
+            <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-green-500/80 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-200 dark:hover:bg-green-400/10"
+                leftIcon={<ArrowUpTrayIcon className="h-4 w-4" />}
+                onClick={handleImportClick}
+              >
+                Import Exams
+              </Button>
+              <Button
+                size="sm"
+                className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+                leftIcon={<PlusIcon className="h-4 w-4" />}
+                onClick={handleCreateClick}
+              >
+                Add New Exam
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <AppShell>
       <LargeTitleHeader
         title={t('exams.title')}
         subtitle={t('exams.subtitle')}
-        rightSlot={
-          <div className="flex flex-col gap-3 text-left lg:text-right">
-            {hasExams && (
-              <div className="flex flex-col gap-2 rounded-xl border border-gray-200/70 bg-white/80 p-4 text-left shadow-sm dark:border-white/10 dark:bg-white/5 sm:w-72">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="w-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-0 focus-visible:ring-white/60 active:translate-y-0 dark:focus-visible:ring-white/40"
-                  leftIcon={<SparklesIcon className="h-5 w-5" />}
-                  onClick={handleExportClick}
-                  aria-label={`${optionLabel} – ${downloadLabel}`}
-                >
-                  {downloadLabel}
-                </Button>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {optionLabel}
-                </div>
-                <div className="text-xs text-gray-600 dark:text-gray-300">{optionDescription}</div>
-              </div>
-            )}
-            {isAdmin && (
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={handleImportClick}
-                  className="inline-flex items-center gap-1 justify-center rounded-md border border-green-500 bg-green-50 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 min-h-[24px]"
-                >
-                  <ArrowUpTrayIcon className="h-3 w-3" />
-                  Import
-                </button>
-                <button
-                  onClick={handleCreateClick}
-                  className="inline-flex items-center gap-1 justify-center rounded-md border border-blue-500 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[24px]"
-                >
-                  <PlusIcon className="h-3 w-3" />
-                  Add New
-                </button>
-              </div>
-            )}
-          </div>
-        }
+        rightSlot={headerActions}
       />
       <div className="app-container p-3 sm:p-4 space-y-4">
         {hasExams && (
