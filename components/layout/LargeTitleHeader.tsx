@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 
 export default function LargeTitleHeader({
   title,
@@ -9,7 +10,7 @@ export default function LargeTitleHeader({
 }: {
   title: string;
   subtitle?: string;
-  rightSlot?: React.ReactNode;
+  rightSlot?: ReactNode | ((context: { compact: boolean }) => ReactNode);
   collapseOnScroll?: boolean;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -57,7 +58,9 @@ export default function LargeTitleHeader({
             ) : null}
           </div>
           {rightSlot ? (
-            <div className="flex items-center gap-2 flex-shrink-0">{rightSlot}</div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {typeof rightSlot === 'function' ? rightSlot({ compact }) : rightSlot}
+            </div>
           ) : null}
         </div>
       </div>
