@@ -117,6 +117,7 @@ function TutorRotationsTab() {
         assignments={data.assignments}
         residents={data.residents}
         petitions={data.petitions as any}
+        tutors={data.tutors}
       />
     </div>
   );

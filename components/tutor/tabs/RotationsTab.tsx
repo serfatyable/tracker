@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import type { Assignment } from '../../../types/assignments';
@@ -24,6 +25,7 @@ export default function RotationsTab({
   petitions,
   tutors,
 }: Props) {
+  const router = useRouter();
   const owned = useMemo(
     () =>
       rotations
@@ -64,7 +66,7 @@ export default function RotationsTab({
                 size="sm"
                 className="btn-levitate"
                 variant="outline"
-                onClick={() => window.open(`/curriculum?rotation=${r.id}`, '_self')}
+                onClick={() => router.push(`/resident/rotations?rot=${r.id}`)}
               >
                 Open curriculum
               </Button>
@@ -72,7 +74,7 @@ export default function RotationsTab({
                 size="sm"
                 className="btn-levitate"
                 variant="outline"
-                onClick={() => window.open(`/tutor?tab=residents&rotation=${r.id}`, '_self')}
+                onClick={() => router.push(`/tutor/residents?rotation=${r.id}`)}
               >
                 View residents
               </Button>
