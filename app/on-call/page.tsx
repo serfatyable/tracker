@@ -73,32 +73,44 @@ export default function OnCallPage() {
       />
       <div className="app-container p-3 sm:p-4 space-y-4">
         <div className="sticky top-[52px] z-20 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 bg-bg/80 backdrop-blur supports-[backdrop-filter]:bg-bg/70 py-2 border-b border-muted/20">
-          <div className="flex gap-2">
+          <div
+            className="flex gap-2"
+            role="tablist"
+            aria-label={t('onCall.navigation', { defaultValue: 'On-call navigation' })}
+          >
             <button
+              type="button"
+              role="tab"
               className={`tab-levitate ${tab === 'my' ? 'ring-1 ring-primary' : ''}`}
               onClick={() => onSelectTab('my')}
-              aria-pressed={tab === 'my'}
+              aria-selected={tab === 'my'}
             >
               {t('onCall.myShifts', { defaultValue: 'My Shifts' })}
             </button>
             <button
+              type="button"
+              role="tab"
               className={`tab-levitate ${tab === 'today' ? 'ring-1 ring-primary' : ''}`}
               onClick={() => onSelectTab('today')}
-              aria-pressed={tab === 'today'}
+              aria-selected={tab === 'today'}
             >
               {t('onCall.today')}
             </button>
             <button
+              type="button"
+              role="tab"
               className={`tab-levitate ${tab === 'team' ? 'ring-1 ring-primary' : ''}`}
               onClick={() => onSelectTab('team')}
-              aria-pressed={tab === 'team'}
+              aria-selected={tab === 'team'}
             >
               {t('onCall.team')}
             </button>
             <button
+              type="button"
+              role="tab"
               className={`tab-levitate ${tab === 'timeline' ? 'ring-1 ring-primary' : ''}`}
               onClick={() => onSelectTab('timeline')}
-              aria-pressed={tab === 'timeline'}
+              aria-selected={tab === 'timeline'}
             >
               {t('onCall.timeline', { defaultValue: 'Timeline' })}
             </button>

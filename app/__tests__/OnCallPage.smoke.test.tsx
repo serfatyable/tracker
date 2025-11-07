@@ -27,8 +27,8 @@ describe('OnCallPage smoke', () => {
     });
     render(<OnCallPage />);
     // Assert tab buttons are present
-    expect(screen.getByRole('button', { name: /my/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /today/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /timeline/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /my/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /today/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /timeline/i })).toBeInTheDocument();
   });
 });
