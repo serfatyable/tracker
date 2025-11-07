@@ -1,6 +1,7 @@
 'use client';
 import { UserGroupIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,7 +20,9 @@ type Tab = 'users' | 'assignments';
 
 export default function AdminUsersPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<Tab>('users');
+  const searchParams = useSearchParams();
+  const rotationParam = searchParams.get('rotation');
+  const [activeTab, setActiveTab] = useState<Tab>(rotationParam ? 'assignments' : 'users');
 
   return (
     <AppShell>

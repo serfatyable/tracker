@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +22,7 @@ type Props = {
 
 export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<Rotation[]>([] as any);
   const [_cursor, setCursor] = useState<any | undefined>(undefined);
@@ -73,33 +75,28 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-1">
-          <Input
-            placeholder={t('ui.searchRotations') as string}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
-            variant="outline"
-            onClick={() => setOpen(true)}
-          >
-            {t('ui.create')}
-          </Button>
-          <a href="/api/templates/rotation.csv" className="btn-levitate" download>
-            {t('ui.downloadTemplate') as string}
-          </a>
-          <Button
-            className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
-            variant="outline"
-            onClick={() => setOpenImport(true)}
-          >
-            {t('ui.importFromCsv')}
-          </Button>
-        </div>
+      <div className="flex items-center gap-2">
+        <Button
+          className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
+          variant="outline"
+          onClick={() => setOpen(true)}
+        >
+          {t('ui.create')}
+        </Button>
+        <Button
+          className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
+          variant="outline"
+          onClick={() => setOpenImport(true)}
+        >
+          {t('ui.import')}
+        </Button>
+      </div>
+      <div>
+        <Input
+          placeholder={t('ui.searchRotations') as string}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -160,12 +157,12 @@ export default function RotationsPanel({ onOpenEditor: _onOpenEditor }: Props) {
                     setOpenImport(true);
                   }}
                 >
-                  {t('ui.importCsv')}
+                  {t('ui.import')}
                 </Button>
                 <Button
                   className="btn-levitate border-[rgba(0,87,184,0.35)] hover:bg-[rgba(0,150,255,0.08)] text-[rgba(0,87,184,0.95)] dark:text-[rgba(0,150,255,0.95)]"
                   variant="outline"
-                  onClick={() => window.open(`/admin?tab=overview`, '_self')}
+                  onClick={() => router.push(`/admin/users?rotation=${r.id}`)}
                 >
                   {t('ui.viewResidents')}
                 </Button>

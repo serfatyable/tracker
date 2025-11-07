@@ -6,6 +6,7 @@ import {
   UserGroupIcon,
   AcademicCapIcon,
 } from '@heroicons/react/24/outline';
+import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -36,13 +37,14 @@ type ViewMode = 'byResident' | 'byTutor';
 
 export default function AssignmentsView() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [tutors, setTutors] = useState<UserProfile[]>([]);
   const [rotations, setRotations] = useState<Rotation[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('byResident');
   const [searchQuery, setSearchQuery] = useState('');
-  const [rotationFilter, setRotationFilter] = useState('');
+  const [rotationFilter, setRotationFilter] = useState(searchParams.get('rotation') || '');
   const [unassignedOnly, setUnassignedOnly] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(
     null,
