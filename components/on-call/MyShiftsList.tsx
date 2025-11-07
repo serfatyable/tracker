@@ -1,7 +1,6 @@
 'use client';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
@@ -19,6 +18,20 @@ export default function MyShiftsList({
   const { t } = useTranslation();
   const router = useRouter();
   const { shifts, loading } = useOnCallFutureByUser(userId, daysAhead);
+
+  const handleDownload = useCallback(() => {
+    try {
+      const link = document.createElement('a');
+      link.href = '/api/ics/on-call?personal=true';
+      link.rel = 'nofollow';
+      link.download = 'my-shifts.ics';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch {
+      router.push('/api/ics/on-call?personal=true');
+    }
+  }, [router]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, { date: Date; items: { stationKey: string }[] }>();
@@ -42,9 +55,14 @@ export default function MyShiftsList({
         <div className="text-sm font-medium">
           {t('onCall.myShifts', { defaultValue: 'My Shifts' })}
         </div>
-        <Link href="/api/ics/on-call?personal=true" className="pill text-xs" prefetch={false}>
-          {t('onCall.downloadMyIcs', { defaultValue: 'Download My ICS' })}
-        </Link>
+        <button
+          type="button"
+          onClick={handleDownload}
+          className="pill text-xs"
+          aria-label={t('onCall.downloadMyCalendar', { defaultValue: 'Download My Calendar' })}
+        >
+          {t('onCall.downloadMyCalendar', { defaultValue: 'Download My Calendar' })}
+        </button>
       </div>
 
       {loading ? (
