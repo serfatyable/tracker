@@ -37,7 +37,7 @@ export default function LargeTitleHeader({
   return (
     <div
       ref={ref}
-      className="sticky top-0 z-30 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-2 backdrop-blur-md bg-bg/85 supports-[backdrop-filter]:bg-bg/75 border-b border-muted/20"
+      className="sticky top-12 supports-[top:calc(env(safe-area-inset-top)+3rem)]:top-[calc(env(safe-area-inset-top)+3rem)] z-30 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-2 backdrop-blur-md bg-bg/85 supports-[backdrop-filter]:bg-bg/75 border-b border-muted/20"
       aria-live="polite"
     >
       <div className="app-container px-0">
