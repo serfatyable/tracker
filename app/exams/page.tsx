@@ -3,11 +3,11 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
-  CalendarIcon,
   ArrowUpTrayIcon,
   TrashIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import CreateExamDialog from '@/components/exams/CreateExamDialog';
@@ -17,6 +17,7 @@ import ExportCalendarDialog from '@/components/exams/ExportCalendarDialog';
 import ImportExamsDialog from '@/components/exams/ImportExamsDialog';
 import AppShell from '@/components/layout/AppShell';
 import LargeTitleHeader from '@/components/layout/LargeTitleHeader';
+import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
 import { useCategorizedExams } from '@/lib/hooks/useExams';
@@ -92,6 +93,24 @@ export default function ExamsPage() {
     haptic('light');
     setShowCreateDialog(true);
   };
+
+  const translate = useCallback(
+    (key: string, defaultValue: string) => {
+      const value = t(key, { defaultValue });
+      if (typeof value === 'string' && value.trim().length > 0) {
+        return value;
+      }
+      return defaultValue;
+    },
+    [t],
+  );
+
+  const downloadLabel = translate('exams.export.downloadICS', 'Download ICS File');
+  const optionLabel = translate('exams.export.gradientOptionLabel', 'Option A');
+  const optionDescription = translate(
+    'exams.export.gradientOptionDescription',
+    'Vibrant gradient spotlight with a subtle glow.',
+  );
 
   const handleExportClick = () => {
     haptic('light');
@@ -176,18 +195,27 @@ export default function ExamsPage() {
         title={t('exams.title')}
         subtitle={t('exams.subtitle')}
         rightSlot={
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-3 text-left lg:text-right">
             {hasExams && (
-              <button
-                onClick={handleExportClick}
-                className="inline-flex items-center gap-1 justify-center rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 min-h-[24px]"
-              >
-                <CalendarIcon className="h-3 w-3" />
-                {t('exams.export.exportButton')}
-              </button>
+              <div className="flex flex-col gap-2 rounded-xl border border-gray-200/70 bg-white/80 p-4 text-left shadow-sm dark:border-white/10 dark:bg-white/5 sm:w-72">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-0 focus-visible:ring-white/60 active:translate-y-0 dark:focus-visible:ring-white/40"
+                  leftIcon={<SparklesIcon className="h-5 w-5" />}
+                  onClick={handleExportClick}
+                  aria-label={`${optionLabel} – ${downloadLabel}`}
+                >
+                  {downloadLabel}
+                </Button>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {optionLabel}
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-300">{optionDescription}</div>
+              </div>
             )}
             {isAdmin && (
-              <>
+              <div className="flex flex-col gap-1">
                 <button
                   onClick={handleImportClick}
                   className="inline-flex items-center gap-1 justify-center rounded-md border border-green-500 bg-green-50 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 min-h-[24px]"
@@ -202,7 +230,7 @@ export default function ExamsPage() {
                   <PlusIcon className="h-3 w-3" />
                   Add New
                 </button>
-              </>
+              </div>
             )}
           </div>
         }
@@ -337,7 +365,9 @@ export default function ExamsPage() {
             ) : (
               <Card className="text-center py-12">
                 <MagnifyingGlassIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">{t('exams.search.noResults')}</p>
+                <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">
+                  {t('exams.search.noResults')}
+                </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   {t('exams.search.noResultsDescription')}
                 </p>
