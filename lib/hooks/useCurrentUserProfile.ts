@@ -14,11 +14,22 @@ export function useCurrentUserProfile(): {
   firebaseUser: User | null;
   data: UserProfile | null;
   error: string | null;
+  refetch: () => Promise<void>;
 } {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [status, setStatus] = useState<HookStatus>('loading');
   const [error, setError] = useState<string | null>(null);
+
+  const refetch = async () => {
+    if (!firebaseUser) return;
+    try {
+      const p = await fetchUserProfile(firebaseUser.uid);
+      setProfile(p);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load profile');
+    }
+  };
 
   useEffect(() => {
     const config = getFirebaseStatus();
@@ -49,5 +60,5 @@ export function useCurrentUserProfile(): {
     return () => unsub();
   }, []);
 
-  return { status, firebaseUser, data: profile, error } as const;
+  return { status, firebaseUser, data: profile, error, refetch } as const;
 }

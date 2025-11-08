@@ -277,6 +277,11 @@
   "settings": {
     "title": "הגדרות",
     "save": "שמור",
+    "saving": "שומר...",
+    "cancel": "ביטול",
+    "edit": "ערוך",
+    "confirm": "אישור",
+    "confirming": "מאשר...",
     "language": "שפה",
     "theme": "ערכת נושא",
     "theme.light": "בהיר",
@@ -287,7 +292,54 @@
     "notifications.inApp": "באפליקציה",
     "notifications.email": "אימייל",
     "saved": "ההגדרות נשמרו",
-    "error": "שמירת ההגדרות נכשלה"
+    "error": "שמירת ההגדרות נכשלה",
+    "profile": {
+      "title": "פרופיל",
+      "email": "אימייל",
+      "emailUpdated": "האימייל עודכן בהצלחה",
+      "confirmEmailChange": "אישור שינוי אימייל",
+      "confirmEmailChangeDesc": "אנא הזן את הסיסמה הנוכחית שלך כדי לאשר את שינוי האימייל.",
+      "fullName": "שם מלא",
+      "fullNameEnglish": "אנגלית",
+      "fullNameHebrew": "עברית",
+      "namesUpdated": "השמות עודכנו בהצלחה",
+      "residencyStartDate": "תאריך התחלת התמחות",
+      "residencyDateUpdated": "תאריך התחלת התמחות עודכן בהצלחה",
+      "updateError": "עדכון הפרופיל נכשל"
+    },
+    "preferences": {
+      "title": "העדפות"
+    },
+    "security": {
+      "title": "אבטחה",
+      "changePassword": "שנה סיסמה",
+      "currentPassword": "סיסמה נוכחית",
+      "newPassword": "סיסמה חדשה",
+      "confirmNewPassword": "אשר סיסמה חדשה",
+      "passwordUpdated": "הסיסמה עודכנה בהצלחה",
+      "passwordUpdateError": "עדכון הסיסמה נכשל",
+      "passwordRequired": "נדרשת סיסמה",
+      "incorrectPassword": "סיסמה שגויה",
+      "authError": "האימות נכשל",
+      "fillAllFields": "אנא מלא את כל השדות",
+      "passwordMismatch": "הסיסמאות אינן תואמות"
+    },
+    "account": {
+      "title": "חשבון",
+      "dangerZone": "אזור מסוכן",
+      "deleteAccount": "מחק חשבון",
+      "deleteDescription": "ברגע שתמחק את החשבון שלך, אין דרך חזרה. כל הנתונים שלך יימחקו לצמיתות.",
+      "deleteAccountTitle": "מחיקת חשבון",
+      "deleteWarning": "פעולה זו אינה ניתנת לביטול. פעולה זו תמחק לצמיתות את החשבון שלך ותסיר את כל הנתונים:",
+      "deleteWarning1": "הפרופיל ומידע החשבון שלך",
+      "deleteWarning2": "כל המשימות והמקרים שיצרת",
+      "deleteWarning3": "כל ההתקדמות ויומני הפעילות",
+      "deleteConfirmLabel": "הקלד DELETE לאישור",
+      "deleteConfirmHint": "הקלד את המילה DELETE באותיות גדולות כדי לאשר את המחיקה",
+      "deleteTypeMismatch": "אנא הקלד DELETE כדי לאשר",
+      "deleteError": "מחיקת החשבון נכשלה",
+      "deleting": "מוחק..."
+    }
   },
   "petitions": {
     "requestActivation": "בקשת הפעלה",
