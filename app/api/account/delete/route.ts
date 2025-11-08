@@ -1,6 +1,6 @@
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import type { FirebaseFirestore } from 'firebase-admin/firestore';
+import type { Firestore } from 'firebase-admin/firestore';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -11,7 +11,7 @@ import { getAdminApp } from '@/lib/firebase/admin-sdk';
 const DELETE_BATCH_SIZE = 250;
 
 async function deleteUserDocs(
-  db: FirebaseFirestore.Firestore,
+  db: Firestore,
   collection: string,
   uid: string,
   field: string = 'userId',
