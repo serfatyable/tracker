@@ -34,7 +34,9 @@
     "rotations": "סבבים",
     "changeRole": "שנה תפקיד",
     "disable": "השבת",
+    "reject": "דחה",
     "approve": "אשר",
+    "pendingRotations": "סבבים ממתינים",
     "searchUsers": "חפש משתמשים",
     "status": "מצב",
     "role": "תפקיד",
@@ -408,6 +410,14 @@
     "systemHealthQuotas": "מצב מערכת ומכסה"
   },
   "admin": {
+    "users": {
+      "rotationApprovalNeedsCurrent": "יש לבחור סבב פעיל לפני האישור.",
+      "rotationApprovalSuccess": "בחירת הסבבים אושרה.",
+      "rotationApprovalRejected": "בחירת הסבבים סומנה כנדחתה.",
+      "noPendingRotationRequests": "אין בקשות סבב ממתינות לאישור",
+      "noPendingRotationRequestsDescription": "בחירות סבב חדשות של מתמחים יופיעו כאן לאחר השליחה.",
+      "rotationRequestSubmittedAt": "נשלח {{time}}"
+    },
     "kpi": {
       "residents": "מתמחים",
       "activeRotations": "סבבים פעילים",

@@ -23,7 +23,7 @@ import {
 } from 'firebase/firestore';
 
 import type { Assignment, AssignmentWithDetails } from '../../types/assignments';
-import type { UserProfile, Role } from '../../types/auth';
+import type { UserProfile, Role, ResidentProfile } from '../../types/auth';
 import type { ReflectionTemplate, ReflectionSection } from '../../types/reflections';
 import type { RotationPetition, RotationPetitionWithDetails } from '../../types/rotationPetitions';
 import type { Rotation, RotationNode } from '../../types/rotations';
@@ -103,6 +103,97 @@ export async function listUsers(params?: {
     }
   }
   throw lastErr instanceof Error ? lastErr : new Error('Failed to list users');
+}
+
+export async function listPendingRotationRequests(): Promise<ResidentProfile[]> {
+  const db = getFirestore(getFirebaseApp());
+  const snap = await getDocs(
+    query(
+      collection(db, 'users'),
+      where('role', '==', 'resident'),
+      where('rotationSelectionRequest.status', '==', 'pending'),
+    ),
+  );
+
+  const items = snap.docs.map(
+    (d) => ({ uid: d.id, ...(d.data() as Record<string, any>) }) as ResidentProfile,
+  );
+
+  return items.sort((a, b) => {
+    const aTs = (a.rotationSelectionRequest?.submittedAt as any)?.toMillis?.() || 0;
+    const bTs = (b.rotationSelectionRequest?.submittedAt as any)?.toMillis?.() || 0;
+    return bTs - aTs;
+  });
+}
+
+export async function approveRotationSelectionRequest(params: {
+  residentId: string;
+  completedRotationIds: string[];
+  currentRotationId: string;
+}): Promise<void> {
+  const db = getFirestore(getFirebaseApp());
+  const ref = doc(db, 'users', params.residentId);
+
+  const normalizedCurrent = params.currentRotationId?.trim();
+  if (!normalizedCurrent) {
+    throw new Error('Current rotation is required for approval');
+  }
+
+  const sanitizedCompleted = Array.from(
+    new Set(
+      (params.completedRotationIds || []).filter(
+        (id) => typeof id === 'string' && id.trim() !== '',
+      ),
+    ),
+  );
+  if (!sanitizedCompleted.includes(normalizedCurrent)) {
+    sanitizedCompleted.push(normalizedCurrent);
+  }
+
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error('User not found');
+    const data = snap.data() as Record<string, any>;
+    const request = data.rotationSelectionRequest || {};
+
+    tx.update(ref, {
+      completedRotationIds: sanitizedCompleted,
+      currentRotationId: normalizedCurrent,
+      rotationSelectionRequest: {
+        ...request,
+        status: 'approved',
+        requestedCompletedRotationIds: sanitizedCompleted,
+        requestedCurrentRotationId: normalizedCurrent,
+        submittedAt: request.submittedAt || serverTimestamp(),
+        resolvedAt: serverTimestamp(),
+      },
+    });
+  });
+}
+
+export async function rejectRotationSelectionRequest(residentId: string): Promise<void> {
+  const db = getFirestore(getFirebaseApp());
+  const ref = doc(db, 'users', residentId);
+
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error('User not found');
+    const data = snap.data() as Record<string, any>;
+    const request = data.rotationSelectionRequest || {};
+
+    tx.update(ref, {
+      rotationSelectionRequest: {
+        ...request,
+        status: 'rejected',
+        requestedCompletedRotationIds: Array.isArray(request.requestedCompletedRotationIds)
+          ? request.requestedCompletedRotationIds
+          : [],
+        requestedCurrentRotationId: request.requestedCurrentRotationId ?? null,
+        submittedAt: request.submittedAt || serverTimestamp(),
+        resolvedAt: serverTimestamp(),
+      },
+    });
+  });
 }
 
 // Assignments

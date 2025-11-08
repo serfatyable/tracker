@@ -30,6 +30,15 @@ export type ResidentProfile = BaseUserProfile & {
   studyprogramtype: '4-year' | '6-year'; // Medical school program type
   completedRotationIds?: string[]; // IDs of rotations already completed
   currentRotationId?: string; // ID of current rotation
+  rotationSelectionRequest?: RotationSelectionRequest | null;
+};
+
+export type RotationSelectionRequest = {
+  status: 'pending' | 'approved' | 'rejected';
+  requestedCompletedRotationIds: string[];
+  requestedCurrentRotationId: string | null;
+  submittedAt?: Date;
+  resolvedAt?: Date | null;
 };
 
 export type TutorProfile = BaseUserProfile & { role: 'tutor' };
