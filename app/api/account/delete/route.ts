@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
