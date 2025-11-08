@@ -14,9 +14,11 @@ vi.mock('../../../lib/hooks/useCurrentUserProfile', () => ({
       email: 't@example.com',
       role: 'resident',
       status: 'active',
+      residencyStartDate: '2020-01-01',
       settings: { language: 'en', theme: 'system', notifications: { inApp: true, email: true } },
     },
     error: null,
+    refetch: vi.fn(),
   }),
 }));
 
@@ -25,6 +27,10 @@ const { updateFns } = vi.hoisted(() => ({
     updateUserLanguage: vi.fn(async () => {}),
     updateUserTheme: vi.fn(async () => {}),
     updateUserNotifications: vi.fn(async () => {}),
+    updateUserEmail: vi.fn(async () => {}),
+    updateUserProfile: vi.fn(async () => {}),
+    updateUserPassword: vi.fn(async () => {}),
+    deleteUserAccount: vi.fn(async () => {}),
   },
 }));
 
@@ -41,10 +47,13 @@ describe('SettingsPanel', () => {
     expect(screen.getByText(/theme/i)).toBeTruthy();
     const themeSelect = screen.getAllByRole('combobox')[1] as HTMLSelectElement;
 
+    // Check for notifications section
+    expect(screen.getByText(/notifications/i)).toBeTruthy();
     const inApp = screen.getByText(/in app/i);
-    const email = screen.getByText(/email/i);
     expect(inApp).toBeTruthy();
-    expect(email).toBeTruthy();
+    // Email text appears in both Profile and Preferences sections
+    const emailTexts = screen.getAllByText(/email/i);
+    expect(emailTexts.length).toBeGreaterThan(0);
 
     fireEvent.change(themeSelect, { target: { value: 'dark' } });
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
