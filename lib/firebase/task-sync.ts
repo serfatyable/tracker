@@ -49,27 +49,32 @@ export async function syncTutorIdsToTasks(
   }
 
   // Update tasks in batches (Firestore limit: 500 per batch)
-  const batch = writeBatch(db);
-  let count = 0;
+  let batch = writeBatch(db);
+  let writesInBatch = 0;
+  let updated = 0;
+
+  const commitCurrentBatch = async () => {
+    if (writesInBatch === 0) return;
+    await batch.commit();
+    batch = writeBatch(db);
+    writesInBatch = 0;
+  };
 
   for (const taskDoc of tasksSnap.docs) {
     batch.update(taskDoc.ref, {
-      tutorIds: tutorIds, // Overwrite with current assignment tutorIds
+      tutorIds, // Overwrite with current assignment tutorIds
     });
-    count++;
+    writesInBatch++;
+    updated++;
 
-    // Commit batch if we hit the limit
-    if (count % 500 === 0) {
-      await batch.commit();
+    if (writesInBatch === 500) {
+      await commitCurrentBatch();
     }
   }
 
-  // Commit remaining updates
-  if (count % 500 !== 0) {
-    await batch.commit();
-  }
+  await commitCurrentBatch();
 
-  return { updated: count };
+  return { updated };
 }
 
 /**
@@ -86,26 +91,32 @@ export async function clearTutorIdsFromTasks(residentId: string): Promise<{ upda
     return { updated: 0 };
   }
 
-  const batch = writeBatch(db);
-  let count = 0;
+  let batch = writeBatch(db);
+  let writesInBatch = 0;
+  let updated = 0;
+
+  const commitCurrentBatch = async () => {
+    if (writesInBatch === 0) return;
+    await batch.commit();
+    batch = writeBatch(db);
+    writesInBatch = 0;
+  };
 
   for (const taskDoc of tasksSnap.docs) {
-    // Remove tutorIds field entirely
     batch.update(taskDoc.ref, {
       tutorIds: [],
     });
-    count++;
+    writesInBatch++;
+    updated++;
 
-    if (count % 500 === 0) {
-      await batch.commit();
+    if (writesInBatch === 500) {
+      await commitCurrentBatch();
     }
   }
 
-  if (count % 500 !== 0) {
-    await batch.commit();
-  }
+  await commitCurrentBatch();
 
-  return { updated: count };
+  return { updated };
 }
 
 /**
