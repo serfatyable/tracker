@@ -5,8 +5,25 @@ import {
   createUserWithEmailAndPassword,
   signOut as fbSignOut,
   sendPasswordResetEmail,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updateEmail,
+  updatePassword,
+  deleteUser,
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  writeBatch,
+} from 'firebase/firestore';
 
 import type {
   Role,
@@ -197,4 +214,114 @@ export async function updateUserNotifications(notifications: { inApp?: boolean; 
 export async function requestPasswordReset(email: string) {
   const { auth } = getAuthDb();
   await sendPasswordResetEmail(auth, email);
+}
+
+/**
+ * Re-authenticate the current user with their password.
+ * Required before sensitive operations like email/password changes or account deletion.
+ */
+export async function reauthenticateUser(password: string) {
+  const { auth } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current || !current.email) throw new Error('Not authenticated');
+  const credential = EmailAuthProvider.credential(current.email, password);
+  await reauthenticateWithCredential(current, credential);
+}
+
+/**
+ * Update the current user's email address.
+ * Requires re-authentication first.
+ */
+export async function updateUserEmail(newEmail: string, password: string) {
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+
+  // Re-authenticate first
+  await reauthenticateUser(password);
+
+  // Update email in Firebase Auth
+  await updateEmail(current, newEmail);
+
+  // Update email in Firestore
+  const ref = doc(db, 'users', current.uid);
+  await updateDoc(ref, {
+    email: newEmail,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Update the current user's password.
+ * Requires re-authentication first.
+ */
+export async function updateUserPassword(currentPassword: string, newPassword: string) {
+  const { auth } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+
+  // Re-authenticate first
+  await reauthenticateUser(currentPassword);
+
+  // Update password
+  await updatePassword(current, newPassword);
+}
+
+/**
+ * Update user profile fields (fullName, fullNameHe, residencyStartDate).
+ */
+export async function updateUserProfile(fields: {
+  fullName?: string;
+  fullNameHe?: string;
+  residencyStartDate?: string;
+}) {
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+
+  const ref = doc(db, 'users', current.uid);
+  await updateDoc(ref, {
+    ...fields,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Delete the current user's account and all associated data.
+ * Requires re-authentication first.
+ * WARNING: This action is irreversible.
+ */
+export async function deleteUserAccount(password: string) {
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+
+  // Re-authenticate first
+  await reauthenticateUser(password);
+
+  const uid = current.uid;
+
+  // Delete all user-associated data in Firestore
+  const batch = writeBatch(db);
+
+  // Delete user profile
+  batch.delete(doc(db, 'users', uid));
+
+  // Delete user's tasks
+  const tasksSnapshot = await getDocs(query(collection(db, 'tasks'), where('userId', '==', uid)));
+  tasksSnapshot.forEach((taskDoc) => {
+    batch.delete(taskDoc.ref);
+  });
+
+  // Delete user's cases
+  const casesSnapshot = await getDocs(query(collection(db, 'cases'), where('userId', '==', uid)));
+  casesSnapshot.forEach((caseDoc) => {
+    batch.delete(caseDoc.ref);
+  });
+
+  // Commit all deletions
+  await batch.commit();
+
+  // Delete the Firebase Auth user (this will also sign them out)
+  await deleteUser(current);
 }

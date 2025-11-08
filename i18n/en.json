@@ -281,6 +281,11 @@
   "settings": {
     "title": "Settings",
     "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "confirming": "Confirming...",
     "language": "Language",
     "theme": "Theme",
     "theme.light": "Light",
@@ -291,7 +296,54 @@
     "notifications.inApp": "In-app",
     "notifications.email": "Email",
     "saved": "Settings saved",
-    "error": "Failed to save settings"
+    "error": "Failed to save settings",
+    "profile": {
+      "title": "Profile",
+      "email": "Email",
+      "emailUpdated": "Email updated successfully",
+      "confirmEmailChange": "Confirm email change",
+      "confirmEmailChangeDesc": "Please enter your current password to confirm the email change.",
+      "fullName": "Full name",
+      "fullNameEnglish": "English",
+      "fullNameHebrew": "Hebrew",
+      "namesUpdated": "Names updated successfully",
+      "residencyStartDate": "Residency start date",
+      "residencyDateUpdated": "Residency start date updated successfully",
+      "updateError": "Failed to update profile"
+    },
+    "preferences": {
+      "title": "Preferences"
+    },
+    "security": {
+      "title": "Security",
+      "changePassword": "Change password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "passwordUpdated": "Password updated successfully",
+      "passwordUpdateError": "Failed to update password",
+      "passwordRequired": "Password is required",
+      "incorrectPassword": "Incorrect password",
+      "authError": "Authentication failed",
+      "fillAllFields": "Please fill in all fields",
+      "passwordMismatch": "Passwords do not match"
+    },
+    "account": {
+      "title": "Account",
+      "dangerZone": "Danger Zone",
+      "deleteAccount": "Delete Account",
+      "deleteDescription": "Once you delete your account, there is no going back. All your data will be permanently deleted.",
+      "deleteAccountTitle": "Delete Account",
+      "deleteWarning": "This action cannot be undone. This will permanently delete your account and remove all data:",
+      "deleteWarning1": "Your profile and account information",
+      "deleteWarning2": "All tasks and cases you've created",
+      "deleteWarning3": "All progress and activity logs",
+      "deleteConfirmLabel": "Type DELETE to confirm",
+      "deleteConfirmHint": "Type the word DELETE in all caps to confirm deletion",
+      "deleteTypeMismatch": "Please type DELETE to confirm",
+      "deleteError": "Failed to delete account",
+      "deleting": "Deleting..."
+    }
   },
   "petitions": {
     "requestActivation": "Request Activation",
