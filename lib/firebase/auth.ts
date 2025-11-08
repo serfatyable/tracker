@@ -9,21 +9,8 @@ import {
   reauthenticateWithCredential,
   updateEmail,
   updatePassword,
-  deleteUser,
 } from 'firebase/auth';
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp,
-  updateDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-  writeBatch,
-} from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
 import type {
   Role,
@@ -307,36 +294,41 @@ export async function updateUserProfile(fields: {
  * WARNING: This action is irreversible.
  */
 export async function deleteUserAccount(password: string) {
-  const { auth, db } = getAuthDb();
+  const { auth } = getAuthDb();
   const current = auth.currentUser;
   if (!current) throw new Error('Not authenticated');
 
   // Re-authenticate first
   await reauthenticateUser(password);
 
-  const uid = current.uid;
+  const idToken = await current.getIdToken(true);
 
-  // Delete all user-associated data in Firestore
-  const batch = writeBatch(db);
-
-  // Delete user profile
-  batch.delete(doc(db, 'users', uid));
-
-  // Delete user's tasks
-  const tasksSnapshot = await getDocs(query(collection(db, 'tasks'), where('userId', '==', uid)));
-  tasksSnapshot.forEach((taskDoc) => {
-    batch.delete(taskDoc.ref);
+  const response = await fetch('/api/account/delete', {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+    },
   });
 
-  // Delete user's cases
-  const casesSnapshot = await getDocs(query(collection(db, 'cases'), where('userId', '==', uid)));
-  casesSnapshot.forEach((caseDoc) => {
-    batch.delete(caseDoc.ref);
-  });
+  if (!response.ok) {
+    let message = 'Failed to delete account';
+    try {
+      const payload = await response.json();
+      if (payload?.error) {
+        message = payload.error;
+      }
+    } catch {
+      // Ignore JSON parse errors and use default message
+    }
 
-  // Commit all deletions
-  await batch.commit();
+    const error: any = new Error(message);
+    if (response.status === 401) {
+      error.code = 'auth/invalid-credential';
+    } else if (response.status === 403) {
+      error.code = 'auth/permission-denied';
+    }
+    throw error;
+  }
 
-  // Delete the Firebase Auth user (this will also sign them out)
-  await deleteUser(current);
+  await fbSignOut(auth);
 }
