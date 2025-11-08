@@ -34,7 +34,9 @@
     "rotations": "Rotations",
     "changeRole": "Change role...",
     "disable": "Disable",
+    "reject": "Reject",
     "approve": "Approve",
+    "pendingRotations": "Pending rotations",
     "searchUsers": "Search users",
     "status": "Status",
     "role": "Role",
@@ -412,6 +414,14 @@
     "systemHealthQuotas": "System Health & Quotas"
   },
   "admin": {
+    "users": {
+      "rotationApprovalNeedsCurrent": "Select an active rotation before approving.",
+      "rotationApprovalSuccess": "Rotation selections approved.",
+      "rotationApprovalRejected": "Rotation selections marked as rejected.",
+      "noPendingRotationRequests": "No pending rotation approvals",
+      "noPendingRotationRequestsDescription": "New resident rotation selections will appear here once submitted.",
+      "rotationRequestSubmittedAt": "Submitted {{time}}"
+    },
     "kpi": {
       "residents": "Residents",
       "activeRotations": "Active rotations",

@@ -76,6 +76,14 @@ export async function signUp(params: {
 
   let userDoc: UserProfile;
   if (role === 'resident') {
+    const normalizedCurrentRotationId = currentRotationId?.trim() ? currentRotationId : null;
+    const requestedCompleted = Array.from(
+      new Set((completedRotationIds || []).filter((id) => id && id.trim() !== '')),
+    );
+    if (normalizedCurrentRotationId && !requestedCompleted.includes(normalizedCurrentRotationId)) {
+      requestedCompleted.push(normalizedCurrentRotationId);
+    }
+
     const residentDoc: ResidentProfile = {
       uid: cred.user.uid,
       fullName,
@@ -87,8 +95,15 @@ export async function signUp(params: {
       createdAt: serverTimestamp() as unknown as Date,
       residencyStartDate: residencyStartDate || '',
       studyprogramtype: studyprogramtype || '6-year',
-      completedRotationIds: completedRotationIds || [],
-      currentRotationId: currentRotationId || undefined,
+      completedRotationIds: [],
+      currentRotationId: undefined,
+      rotationSelectionRequest: {
+        status: 'pending',
+        requestedCompletedRotationIds: requestedCompleted,
+        requestedCurrentRotationId: normalizedCurrentRotationId,
+        submittedAt: serverTimestamp() as unknown as Date,
+        resolvedAt: null,
+      },
     };
     userDoc = residentDoc;
   } else if (role === 'tutor') {
