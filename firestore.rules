@@ -76,6 +76,7 @@ service cloud.firestore {
       allow create: if isOwner(uid);
       allow read: if isOwner(uid) || isTutorOrAdminApproved();
       allow update: if isOwner(uid) || isTutorOrAdminApproved();
+      allow delete: if isOwner(uid) || isTutorOrAdminApproved();
     }
 
     // Tasks: owners can read/create/update their own tasks; approved tutors/admins have restricted access
@@ -97,7 +98,15 @@ service cloud.firestore {
         (isTutorApproved() && isOwnerOfRotation(resource.data.rotationId)) || 
         (isSignedIn() && resource.data.userId == request.auth.uid);
       
-      allow delete: if isAdminApproved();
+      allow delete: if isAdminApproved() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    // Cases: residents can manage their own cases; approved tutors/admins retain full access
+    match /cases/{caseId} {
+      allow read: if isAdminApproved() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdminApproved() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow delete: if isAdminApproved() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     // Rotations: approved admin-only write; read allowed to anyone (including unauthenticated users during signup)

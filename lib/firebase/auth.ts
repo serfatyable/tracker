@@ -1,4 +1,3 @@
-import type { User } from 'firebase/auth';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -11,6 +10,7 @@ import {
   updatePassword,
   deleteUser,
 } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import {
   getFirestore,
   doc,
@@ -23,7 +23,10 @@ import {
   where,
   getDocs,
   writeBatch,
+  limit,
+  deleteDoc,
 } from 'firebase/firestore';
+import type { Firestore as ClientFirestore } from 'firebase/firestore';
 
 import type {
   Role,
@@ -39,6 +42,8 @@ function getAuthDb() {
   const app = getFirebaseApp();
   return { auth: getAuth(app), db: getFirestore(app) };
 }
+
+const CLIENT_DELETE_BATCH_SIZE = 250;
 
 export async function signIn(email: string, password: string) {
   const { auth } = getAuthDb();
@@ -243,6 +248,35 @@ export async function reauthenticateUser(password: string) {
   await reauthenticateWithCredential(current, credential);
 }
 
+async function deleteUserDocsClientSide(
+  db: ClientFirestore,
+  collectionName: string,
+  uid: string,
+  field: string = 'userId',
+) {
+  while (true) {
+    const snapshot = await getDocs(
+      query(
+        collection(db, collectionName),
+        where(field, '==', uid),
+        limit(CLIENT_DELETE_BATCH_SIZE),
+      ),
+    );
+
+    if (snapshot.empty) {
+      break;
+    }
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((docSnap) => batch.delete(docSnap.ref));
+    await batch.commit();
+
+    if (snapshot.size < CLIENT_DELETE_BATCH_SIZE) {
+      break;
+    }
+  }
+}
+
 /**
  * Update the current user's email address.
  * Requires re-authentication first.
@@ -314,29 +348,82 @@ export async function deleteUserAccount(password: string) {
   // Re-authenticate first
   await reauthenticateUser(password);
 
-  const uid = current.uid;
+  const idToken = await current.getIdToken(true);
 
-  // Delete all user-associated data in Firestore
-  const batch = writeBatch(db);
+  let deletionComplete = false;
+  let lastError: any = null;
 
-  // Delete user profile
-  batch.delete(doc(db, 'users', uid));
+  try {
+    const response = await fetch('/api/account/delete', {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    });
 
-  // Delete user's tasks
-  const tasksSnapshot = await getDocs(query(collection(db, 'tasks'), where('userId', '==', uid)));
-  tasksSnapshot.forEach((taskDoc) => {
-    batch.delete(taskDoc.ref);
-  });
+    if (!response.ok) {
+      let message = 'Failed to delete account';
+      try {
+        const payload = await response.json();
+        if (payload?.error) {
+          message = payload.error;
+        }
+      } catch {
+        // Ignore JSON parse errors and use default message
+      }
 
-  // Delete user's cases
-  const casesSnapshot = await getDocs(query(collection(db, 'cases'), where('userId', '==', uid)));
-  casesSnapshot.forEach((caseDoc) => {
-    batch.delete(caseDoc.ref);
-  });
+      const error: any = new Error(message);
+      if (response.status === 401) {
+        error.code = 'auth/invalid-credential';
+      } else if (response.status === 403) {
+        error.code = 'auth/permission-denied';
+      }
 
-  // Commit all deletions
-  await batch.commit();
+      lastError = error;
 
-  // Delete the Firebase Auth user (this will also sign them out)
-  await deleteUser(current);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/permission-denied') {
+        throw error;
+      }
+    } else {
+      deletionComplete = true;
+    }
+  } catch (error) {
+    if (
+      (error as any)?.code === 'auth/invalid-credential' ||
+      (error as any)?.code === 'auth/permission-denied'
+    ) {
+      throw error;
+    }
+    lastError = error;
+  }
+
+  if (!deletionComplete) {
+    try {
+      await deleteUserDocsClientSide(db, 'tasks', current.uid);
+      await deleteUserDocsClientSide(db, 'cases', current.uid);
+      await deleteUserDocsClientSide(db, 'cases', current.uid, 'residentId');
+      await deleteDoc(doc(db, 'users', current.uid));
+      await deleteUser(current);
+      deletionComplete = true;
+    } catch (fallbackError) {
+      if (lastError) {
+        throw lastError;
+      }
+      throw fallbackError;
+    }
+  }
+
+  if (!deletionComplete) {
+    throw lastError ?? new Error('Failed to delete account');
+  }
+
+  try {
+    await fbSignOut(auth);
+  } catch {
+    // Ignore errors if the user was already deleted
+  }
+
+  if (typeof window !== 'undefined') {
+    window.location.replace('/auth');
+  }
 }
