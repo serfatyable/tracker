@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { listUsers, listRotations } from '../../../lib/firebase/admin';
+import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import type { UserProfile } from '../../../types/auth';
 import type { Rotation } from '../../../types/rotations';
 import Button from '../../ui/Button';
@@ -85,10 +86,9 @@ export default function AssignTutorDialog({
     }
   }, [isOpen]);
 
+  const tutorMatcher = createSynonymMatcher(searchQuery);
   const filteredTutors = tutors.filter(
-    (tutor) =>
-      tutor.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tutor.email?.toLowerCase().includes(searchQuery.toLowerCase()),
+    (tutor) => tutorMatcher(tutor.fullName || '') || tutorMatcher(tutor.email || ''),
   );
 
   const handleSubmit = async () => {
@@ -186,7 +186,9 @@ export default function AssignTutorDialog({
                         }`}
                       >
                         <div className="font-medium text-sm">{tutor.fullName}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{tutor.email}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {tutor.email}
+                        </div>
                       </button>
                     ))
                   )}

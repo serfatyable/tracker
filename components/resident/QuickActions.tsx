@@ -6,10 +6,12 @@ import Button from '../ui/Button';
 export default function QuickActions({
   onGoRotations,
   onFocusSearch,
+  onGoActiveRotation,
   favorites,
 }: {
   onGoRotations: () => void;
   onFocusSearch: () => void;
+  onGoActiveRotation: () => void;
   favorites: Array<{ id: string; name: string; onSelect: () => void }>;
 }) {
   const { t } = useTranslation();
@@ -36,7 +38,7 @@ export default function QuickActions({
           size="sm"
           variant="outline"
           className="btn-levitate text-primary border-primary/40"
-          onClick={onGoRotations}
+          onClick={onGoActiveRotation}
         >
           {t('ui.goToActiveRotation') || 'Go to active rotation'}
         </Button>

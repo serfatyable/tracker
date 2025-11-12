@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useMorningMeetingsMultiMonth } from '../../../lib/hooks/useMorningClasses';
+import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import type { MorningMeeting } from '../../../types/morningMeetings';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
@@ -32,15 +33,10 @@ export default function MorningMeetingsView({
   // Filter meetings by search term
   const filteredMeetings = useMemo(() => {
     const monthMeetings = meetingsByMonth.get(selectedMonth) || [];
-    if (!searchTerm.trim()) return monthMeetings;
-
-    const needle = searchTerm.toLowerCase();
+    const matcher = createSynonymMatcher(searchTerm);
     return monthMeetings.filter(
       (m) =>
-        m.title.toLowerCase().includes(needle) ||
-        m.lecturer?.toLowerCase().includes(needle) ||
-        m.moderator?.toLowerCase().includes(needle) ||
-        m.organizer?.toLowerCase().includes(needle),
+        matcher(m.title) || matcher(m.lecturer) || matcher(m.moderator) || matcher(m.organizer),
     );
   }, [meetingsByMonth, selectedMonth, searchTerm]);
 

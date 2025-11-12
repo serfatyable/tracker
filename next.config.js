@@ -12,11 +12,12 @@ const nextConfig = {
   // Performance optimizations and instrumentation
   experimental: {
     optimizePackageImports: ['@heroicons/react', 'firebase'],
-    // Enable instrumentation for Sentry initialization
-    instrumentationHook: true,
   },
-  // Webpack configuration for xlsx library
+  // Webpack configuration for xlsx library and pnpm symlinks
   webpack: (config, { isServer }) => {
+    // Enable symlink resolution for pnpm
+    config.resolve.symlinks = true;
+
     // Don't resolve xlsx on the client side with Node.js dependencies
     if (!isServer) {
       config.resolve.fallback = {

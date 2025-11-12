@@ -21,6 +21,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
 import { useCategorizedExams } from '@/lib/hooks/useExams';
+import { createSynonymMatcher } from '@/lib/search/synonyms';
 import { haptic } from '@/lib/utils/haptics';
 import type { Exam } from '@/types/exam';
 
@@ -66,7 +67,7 @@ export default function ExamsPage() {
 
     // Apply search filter
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+      const matcher = createSynonymMatcher(searchQuery);
       exams = exams.filter((exam) => {
         // Search in subject titles and descriptions
         const subjectMatches = exam.subjects.some((subject) => {
@@ -75,10 +76,10 @@ export default function ExamsPage() {
             i18n.language === 'he' ? subject.descriptionHe : subject.descriptionEn;
 
           return (
-            title.toLowerCase().includes(query) ||
-            description?.toLowerCase().includes(query) ||
-            subject.topics.some((topic) => topic.toLowerCase().includes(query)) ||
-            subject.bookChapters.some((chapter) => chapter.toLowerCase().includes(query))
+            matcher(title) ||
+            matcher(description) ||
+            subject.topics.some((topic) => matcher(topic)) ||
+            subject.bookChapters.some((chapter) => matcher(chapter))
           );
         });
 

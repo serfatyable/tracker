@@ -138,6 +138,12 @@
 - ✅ Removed console.error from `components/admin/rotations/RotationsPanel.tsx` (1 instance)
 - **Total Removed:** 5 out of 56 identified console statements
 
+### Phase 4: Observability & Resilience (November 2025)
+
+- ✅ Route and global error boundaries now surface Sentry reference codes, copy-to-clipboard controls, and direct support contact links.
+- ✅ Added TTL-based in-memory cache for `listRotationNodes` (30s) with automatic invalidation on writes to reduce Firestore reads.
+- ✅ Lazy-loads `RotationTree` editor via dynamic import to lower initial admin bundle size.
+
 ---
 
 ## 🔄 In Progress / Not Started

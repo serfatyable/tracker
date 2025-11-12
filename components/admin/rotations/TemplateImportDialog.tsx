@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import * as XLSX from 'xlsx';
 
 import { importRotationFromCsv } from '../../../lib/firebase/admin';
 import Button from '../../ui/Button';
@@ -26,26 +25,6 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
   const [dragActive, setDragActive] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  async function parseFile(file: File): Promise<string> {
-    const ext = file.name.toLowerCase().split('.').pop();
-
-    if (ext === 'csv') {
-      return await file.text();
-    } else if (ext === 'xlsx' || ext === 'xls') {
-      // Parse Excel file
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      if (!sheetName) throw new Error('No sheets found in Excel file');
-      const worksheet = workbook.Sheets[sheetName];
-      if (!worksheet) throw new Error('Could not read worksheet');
-      // Convert to CSV
-      return XLSX.utils.sheet_to_csv(worksheet);
-    } else {
-      throw new Error('Unsupported file format. Please use CSV or Excel (.xlsx)');
-    }
-  }
-
   async function doImport() {
     // Validate: file must be selected
     if (!file) {
@@ -56,11 +35,20 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
     setImporting(true);
 
     try {
-      const csvText = await parseFile(file);
+      const ext = file.name.toLowerCase().split('.').pop();
+
+      if (ext !== 'xlsx' && ext !== 'xls') {
+        setErrors(['Unsupported file format. Please use Excel (.xlsx or .xls)']);
+        setImporting(false);
+        return;
+      }
+
+      // Parse Excel file directly
+      const buffer = await file.arrayBuffer();
       const res = await importRotationFromCsv({
         mode,
         rotationId: mode === 'merge' ? rotationId : undefined,
-        csvText,
+        excelBuffer: buffer,
         rotationMeta:
           mode === 'create'
             ? {
@@ -176,21 +164,6 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
               </p>
               <div className="flex gap-2">
                 <a
-                  href="/api/templates/rotation.csv"
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-white dark:bg-[rgb(var(--surface))] border border-gray-300 dark:border-[rgb(var(--border))] hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] transition-colors"
-                  download
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  CSV Template
-                </a>
-                <a
                   href="/api/templates/rotation.xlsx"
                   className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-white dark:bg-[rgb(var(--surface))] border border-gray-300 dark:border-[rgb(var(--border))] hover:bg-gray-50 dark:hover:bg-[rgb(var(--surface-elevated))] transition-colors"
                   download
@@ -230,7 +203,7 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
           >
             <input
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept=".xlsx,.xls"
               onChange={handleFileChange}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
@@ -251,7 +224,9 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
                   />
                 </svg>
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{(file.size / 1024).toFixed(2)} KB</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(file.size / 1024).toFixed(2)} KB
+                </p>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -281,8 +256,10 @@ export default function TemplateImportDialog({ open, onClose, onImported, rotati
                 <p className="text-sm font-medium text-gray-700 dark:text-[rgb(var(--fg))]">
                   {t('import.dragDropFile')}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('import.orClickToSelect')}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">CSV, XLSX, or XLS</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('import.orClickToSelect')}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">XLSX or XLS</p>
               </div>
             )}
           </div>

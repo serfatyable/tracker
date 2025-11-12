@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
+import { createSynonymMatcher } from '../../lib/search/synonyms';
 import Button from '../ui/Button';
 import EmptyState, { DocumentIcon } from '../ui/EmptyState';
 import Input from '../ui/Input';
@@ -50,8 +51,8 @@ export default function Resources({
         .map((l: any) => ({ type: 'link', href: l.href, label: l.label || n.name, nodeId: n.id })),
     ];
     const list = source.flatMap(collect);
-    const q = search.trim().toLowerCase();
-    return q ? list.filter((i) => (i.label + ' ' + i.href).toLowerCase().includes(q)) : list;
+    const matcher = createSynonymMatcher(search);
+    return list.filter((i) => matcher(i.label) || matcher(i.href));
   }, [nodes, allNodes, scope, search]);
 
   const favoritesKey = 'resident.resources.favorites';
@@ -106,7 +107,10 @@ export default function Resources({
         <div>
           <div className="text-sm font-medium mb-1 flex items-center justify-between">
             <span>{t('dashboard.favorites')}</span>
-            <button className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500" onClick={() => setFavOpen((v) => !v)}>
+            <button
+              className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500"
+              onClick={() => setFavOpen((v) => !v)}
+            >
               {favOpen ? t('auth.hide') : t('auth.show')}
             </button>
           </div>
@@ -137,7 +141,10 @@ export default function Resources({
                         ★
                       </button>
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={it.href}>
+                    <div
+                      className="text-xs text-gray-500 dark:text-gray-400 truncate"
+                      title={it.href}
+                    >
                       {it.href}
                     </div>
                     <div className="mt-2 flex items-center gap-2">

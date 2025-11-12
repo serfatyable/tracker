@@ -1,6 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 
+import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import type { Assignment } from '../../../types/assignments';
 import type { UserProfile } from '../../../types/auth';
 import type { RotationPetition } from '../../../types/rotationPetitions';
@@ -59,6 +60,9 @@ export default function ResidentsTab({
     return new Map<string, number>();
   }, []);
 
+  const searchMatcher = useMemo(() => createSynonymMatcher(search), [search]);
+  const hasSearch = search.trim().length > 0;
+
   const cards = useMemo(() => {
     const list = myAssignments
       .map((a) => ({
@@ -73,11 +77,12 @@ export default function ResidentsTab({
       rotation: Rotation;
       petitions: RotationPetition[];
     }>;
-    const q = search.trim().toLowerCase();
     return list
       .filter((x) => {
-        const hay = `${x.resident.fullName || ''} ${x.resident.email || ''}`.toLowerCase();
-        if (q && !hay.includes(q)) return false;
+        if (hasSearch) {
+          const haystackParts = [x.resident.fullName, x.resident.email, x.rotation.name];
+          if (!haystackParts.some((part) => searchMatcher(part || ''))) return false;
+        }
         if (onlyWithPetitions && (x.petitions || []).length === 0) return false;
         if (onlyOwned && !ownedRotationIds.has(x.rotation.id)) return false;
         if (filterRotationId && x.rotation.id !== filterRotationId) return false;
@@ -93,11 +98,12 @@ export default function ResidentsTab({
     resById,
     rotById,
     petitionsByResident,
-    search,
     onlyWithPetitions,
     onlyOwned,
     ownedRotationIds,
     filterRotationId,
+    searchMatcher,
+    hasSearch,
   ]);
 
   return (

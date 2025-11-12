@@ -4,6 +4,7 @@ export type ParsedRow = {
   Topic?: string;
   SubTopic?: string;
   ItemTitle?: string;
+  ItemTitleFrom?: 'item' | 'subTopic' | 'topic';
   RequiredCount?: string;
   mcqUrl?: string;
   Resources?: string;
@@ -11,6 +12,214 @@ export type ParsedRow = {
   notes_he?: string;
   Links?: Array<{ label: string; href: string }>; // aggregated from Link1_Label/Link1_URL pairs
 };
+
+/**
+ * Parse Excel file directly (more reliable than CSV conversion)
+ * Uses XLSX.utils.sheet_to_json like other imports
+ */
+export async function parseRotationExcel(buffer: ArrayBuffer): Promise<{
+  header: string[];
+  rows: ParsedRow[];
+}> {
+  const XLSX = await import('xlsx');
+  const workbook = XLSX.read(buffer, { type: 'array' });
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0] as string];
+  if (!firstSheet) {
+    throw new Error('No sheets found in Excel file');
+  }
+
+  // Convert to JSON with header row (2D array)
+  const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
+
+  if (jsonData.length < 2) {
+    return { header: [], rows: [] };
+  }
+
+  const headerRow = jsonData[0] as string[];
+  const header = headerRow.map((h) => String(h || '').trim());
+
+  // Find column indices using flexible matching
+  const findColumnIndex = (possibleNames: string[]): number => {
+    for (let idx = 0; idx < header.length; idx++) {
+      const h = header[idx] || '';
+      const hNorm = h.toLowerCase().replace(/\s+/g, '').replace(/:/g, '').replace(/\./g, '');
+      for (const name of possibleNames) {
+        const nameNorm = name.toLowerCase().replace(/\s+/g, '');
+        // Exact match (after normalization)
+        if (hNorm === nameNorm) {
+          return idx;
+        }
+        // Header contains the name (e.g., "Item Title" contains "itemtitle")
+        if (hNorm.length >= nameNorm.length && hNorm.includes(nameNorm)) {
+          return idx;
+        }
+        // Name contains the header (e.g., "itemtitle" contains "item" - but be careful)
+        // Only allow this if the header is at least 3 chars to avoid false matches
+        if (hNorm.length >= 3 && nameNorm.includes(hNorm)) {
+          return idx;
+        }
+      }
+    }
+    return -1;
+  };
+
+  // Try to find columns with multiple variations
+  const categoryCol = findColumnIndex([
+    'Category',
+    'category',
+    'קטגוריה', // Hebrew: category
+  ]);
+  const subjectCol = findColumnIndex([
+    'Subject',
+    'subject',
+    'נושא', // Hebrew: subject
+  ]);
+  const topicCol = findColumnIndex([
+    'Topic',
+    'topic',
+    'נושא משנה', // Hebrew: subtopic (might be used)
+  ]);
+  const subTopicCol = findColumnIndex([
+    'SubTopic',
+    'Sub Topic',
+    'subtopic',
+    'sub topic',
+    'תת נושא', // Hebrew: subtopic
+  ]);
+  let itemTitleCol = findColumnIndex([
+    'ItemTitle',
+    'Item Title',
+    'ItemTitle:',
+    'Item Title:',
+    'itemtitle',
+    'item title',
+    'Item',
+    'כותרת פריט', // Hebrew: item title
+    'פריט', // Hebrew: item
+    'תיאור', // Hebrew: description
+  ]);
+
+  // If ItemTitle column not found, try to find it by position (5th column is common)
+  // This is a fallback for files that might have different column names
+  if (itemTitleCol === -1 && header.length >= 5) {
+    // Try column index 4 (5th column, 0-indexed) as fallback
+    const fallbackCol = header[4];
+    if (fallbackCol && String(fallbackCol).trim().length > 0) {
+      // Use it if it looks like it might be ItemTitle (has some content)
+      itemTitleCol = 4;
+    }
+  }
+  const requiredCountCol = findColumnIndex([
+    'RequiredCount',
+    'Required Count',
+    'requiredcount',
+    'required count',
+  ]);
+  const mcqUrlCol = findColumnIndex(['mcqUrl', 'mcq Url', 'mcqurl', 'mcq url']);
+  const resourcesCol = findColumnIndex(['Resources', 'resources']);
+  const notesEnCol = findColumnIndex(['notes_en', 'notes en', 'Notes (EN)', 'notes_en']);
+  const notesHeCol = findColumnIndex(['notes_he', 'notes he', 'Notes (HE)', 'notes_he']);
+
+  // Find link columns
+  const linkColumns: Array<{ num: number; labelCol: number; urlCol: number }> = [];
+  header.forEach((h, idx) => {
+    const match = String(h || '').match(/^Link(\d+)[_\s](Label|URL)$/i);
+    if (match) {
+      const num = parseInt(match[1]!, 10);
+      const type = match[2]!.toLowerCase();
+      const existing = linkColumns.find((l) => l.num === num);
+      if (existing) {
+        if (type === 'label') existing.labelCol = idx;
+        else existing.urlCol = idx;
+      } else {
+        linkColumns.push({
+          num,
+          labelCol: type === 'label' ? idx : -1,
+          urlCol: type === 'url' ? idx : -1,
+        });
+      }
+    }
+  });
+
+  const rows: ParsedRow[] = [];
+
+  // Process data rows (skip header row)
+  for (let i = 1; i < jsonData.length; i++) {
+    const row = jsonData[i] as any[];
+    if (!row || row.length === 0) continue;
+
+    const getValue = (colIdx: number): string => {
+      if (colIdx === -1 || colIdx >= row.length) return '';
+      const val = row[colIdx];
+      return String(val || '').trim();
+    };
+
+    // Collect links
+    const linkPairs: Array<{ label: string; href: string }> = [];
+    linkColumns.forEach((link) => {
+      const href = getValue(link.urlCol);
+      if (href) {
+        const label = getValue(link.labelCol) || `Link ${link.num}`;
+        linkPairs.push({ label, href });
+      }
+    });
+
+    // Get values
+    const category = getValue(categoryCol);
+    const subject = getValue(subjectCol);
+    const topic = getValue(topicCol);
+    const subTopicValue = getValue(subTopicCol);
+    const subTopic = subTopicValue || undefined;
+    let itemTitle = getValue(itemTitleCol);
+    let itemTitleFrom: 'item' | 'subTopic' | 'topic' = 'item';
+
+    // Fallback logic: If ItemTitle is empty, use SubTopic; if that's also empty, use Topic
+    if (!itemTitle || itemTitle.trim().length === 0) {
+      if (subTopic && subTopic.trim().length > 0) {
+        itemTitle = subTopic;
+        itemTitleFrom = 'subTopic';
+      } else if (topic && topic.trim().length > 0) {
+        itemTitle = topic;
+        itemTitleFrom = 'topic';
+      }
+    }
+
+    const parsedRow: ParsedRow = {
+      Category: category,
+      Subject: subject,
+      Topic: topic,
+      SubTopic: subTopic,
+      ItemTitle: itemTitle,
+      ItemTitleFrom: itemTitleFrom,
+      RequiredCount: getValue(requiredCountCol),
+      mcqUrl: getValue(mcqUrlCol) || undefined,
+      Resources: getValue(resourcesCol) || undefined,
+      notes_en: getValue(notesEnCol) || undefined,
+      notes_he: getValue(notesHeCol) || undefined,
+      Links: linkPairs,
+    };
+
+    rows.push(parsedRow);
+  }
+
+  return { header, rows };
+}
+
+/**
+ * Find column value by matching multiple possible header names (case-insensitive, handles spaces)
+ */
+function findColumnValue(rec: Record<string, string>, possibleNames: string[]): string {
+  for (const name of possibleNames) {
+    // Try exact match first
+    if (rec[name] !== undefined) return rec[name] || '';
+    // Try case-insensitive match
+    const found = Object.keys(rec).find(
+      (key) => key.toLowerCase().replace(/\s+/g, '') === name.toLowerCase().replace(/\s+/g, ''),
+    );
+    if (found !== undefined) return rec[found] || '';
+  }
+  return '';
+}
 
 export function parseRotationCsvText(text: string): { header: string[]; rows: ParsedRow[] } {
   const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
@@ -31,7 +240,7 @@ export function parseRotationCsvText(text: string): { header: string[]; rows: Pa
 
     // Find all link numbers by scanning for both _Label and _URL patterns
     header.forEach((h) => {
-      const match = h.match(/^Link(\d+)_(Label|URL)$/i);
+      const match = h.match(/^Link(\d+)[_\s](Label|URL)$/i);
       if (match) {
         linkNumbers.add(parseInt(match[1]!, 10));
       }
@@ -41,8 +250,10 @@ export function parseRotationCsvText(text: string): { header: string[]; rows: Pa
     Array.from(linkNumbers)
       .sort((a, b) => a - b)
       .forEach((num) => {
-        const label = rec[`Link${num}_Label`] || '';
-        const href = rec[`Link${num}_URL`] || '';
+        const labelKey = header.find((h) => h.match(new RegExp(`^Link${num}[_\\s]Label$`, 'i')));
+        const urlKey = header.find((h) => h.match(new RegExp(`^Link${num}[_\\s]URL$`, 'i')));
+        const label = labelKey ? rec[labelKey] || '' : '';
+        const href = urlKey ? rec[urlKey] || '' : '';
         if (href) {
           // Only add if URL is provided
           linkPairs.push({
@@ -53,16 +264,22 @@ export function parseRotationCsvText(text: string): { header: string[]; rows: Pa
       });
 
     const row: ParsedRow = {
-      Category: rec['Category'] || '',
-      Subject: rec['Subject'] || '',
-      Topic: rec['Topic'] || '',
-      SubTopic: rec['SubTopic'] || '',
-      ItemTitle: rec['ItemTitle'] || '',
-      RequiredCount: rec['RequiredCount'] || '',
-      mcqUrl: rec['mcqUrl'] || '',
-      Resources: rec['Resources'] || '',
-      notes_en: rec['notes_en'] || '',
-      notes_he: rec['notes_he'] || '',
+      Category: findColumnValue(rec, ['Category', 'category']),
+      Subject: findColumnValue(rec, ['Subject', 'subject']),
+      Topic: findColumnValue(rec, ['Topic', 'topic']),
+      SubTopic: findColumnValue(rec, ['SubTopic', 'Sub Topic', 'subtopic', 'sub topic']),
+      ItemTitle: findColumnValue(rec, ['ItemTitle', 'Item Title', 'itemtitle', 'item title']),
+      ItemTitleFrom: 'item',
+      RequiredCount: findColumnValue(rec, [
+        'RequiredCount',
+        'Required Count',
+        'requiredcount',
+        'required count',
+      ]),
+      mcqUrl: findColumnValue(rec, ['mcqUrl', 'mcq Url', 'mcqurl', 'mcq url']),
+      Resources: findColumnValue(rec, ['Resources', 'resources']),
+      notes_en: findColumnValue(rec, ['notes_en', 'notes en', 'Notes (EN)', 'notes_en']),
+      notes_he: findColumnValue(rec, ['notes_he', 'notes he', 'Notes (HE)', 'notes_he']),
       Links: linkPairs,
     };
     rows.push(row);
@@ -84,21 +301,93 @@ export type NormalizedLeaf = {
   links: Array<{ label: string; href: string }>;
 };
 
+/**
+ * Map category name (English or Hebrew) to normalized English category
+ */
+function normalizeCategory(category: string): 'Knowledge' | 'Skills' | 'Guidance' | null {
+  const catTrimmed = category.trim();
+  const catLower = catTrimmed.toLowerCase();
+
+  // English categories (case-insensitive)
+  if (catLower === 'knowledge') return 'Knowledge';
+  if (catLower === 'skills') return 'Skills';
+  if (catLower === 'guidance') return 'Guidance';
+
+  // Hebrew categories: ידע (Knowledge), מיומנות (Skills), הדרכה (Guidance)
+  // Note: Hebrew doesn't have lowercase, so we check the trimmed value directly
+  if (catTrimmed === 'ידע') return 'Knowledge';
+  if (catTrimmed === 'מיומנות') return 'Skills';
+  if (catTrimmed === 'הדרכה') return 'Guidance';
+
+  return null;
+}
+
 export function normalizeParsedRows(rows: ParsedRow[]): {
   leaves: NormalizedLeaf[];
   errors: string[];
 } {
   const errors: string[] = [];
   const leaves: NormalizedLeaf[] = [];
-  const allowedCats = new Set(['Knowledge', 'Skills', 'Guidance']);
+
+  // Track if we've shown the column debug message
+  let shownColumnDebug = false;
+
   rows.forEach((r, idx) => {
     const rowNum = idx + 2; // header is line 1
-    if (!allowedCats.has(r.Category))
-      errors.push(`Row ${rowNum}: invalid Category '${r.Category}'`);
-    const itemTitle = (r.ItemTitle || '').trim();
-    const subject = (r.Subject || '').trim();
+
+    // Normalize category (accept both English and Hebrew)
+    const normalizedCategory = normalizeCategory(r.Category);
+    if (!normalizedCategory && r.Category) {
+      errors.push(
+        `Row ${rowNum}: invalid Category '${r.Category}'. Valid values: Knowledge/Skills/Guidance or ידע/מיומנות/הדרכה`,
+      );
+    }
+
+    // Apply fallback logic: ItemTitle → SubTopic → Topic
+    let itemTitle = (r.ItemTitle || '').trim();
+    let subTopic = (r.SubTopic || '').trim();
     const topic = (r.Topic || '').trim();
-    if (!itemTitle) errors.push(`Row ${rowNum}: ItemTitle is required`);
+    let fallbackSource: 'item' | 'subTopic' | 'topic' = r.ItemTitleFrom || 'item';
+
+    if (!itemTitle || itemTitle.length === 0) {
+      if (subTopic && subTopic.length > 0) {
+        itemTitle = subTopic;
+        fallbackSource = 'subTopic';
+      } else if (topic && topic.length > 0) {
+        itemTitle = topic;
+        fallbackSource = 'topic';
+      }
+    }
+
+    if (fallbackSource === 'subTopic') {
+      subTopic = '';
+    }
+
+    const subject = (r.Subject || '').trim();
+
+    // Only show column mapping error if ItemTitle column is completely missing AND we can't fallback
+    if (!itemTitle && !shownColumnDebug && idx === 0) {
+      shownColumnDebug = true;
+      // Check if ItemTitle column exists but is empty vs doesn't exist at all
+      const hasItemTitleColumn = 'ItemTitle' in r;
+      if (!hasItemTitleColumn) {
+        const parsedFields = Object.entries(r)
+          .filter(([_, v]) => v && String(v).trim().length > 0)
+          .map(([k]) => k)
+          .join(', ');
+        if (parsedFields) {
+          errors.push(
+            `Note: 'ItemTitle' column not found in Excel file. Using fallback: SubTopic → Topic. Parsed fields from first row: ${parsedFields}.`,
+          );
+        }
+      }
+    }
+
+    if (!itemTitle) {
+      errors.push(
+        `Row ${rowNum}: ItemTitle is required (tried fallback: SubTopic → Topic, but both are empty)`,
+      );
+    }
     if (!subject) errors.push(`Row ${rowNum}: Subject is required`);
     if (!topic) errors.push(`Row ${rowNum}: Topic is required`);
     const required = parseInt(String(r.RequiredCount || '0'), 10);
@@ -116,12 +405,13 @@ export function normalizeParsedRows(rows: ParsedRow[]): {
       errors.push(`Row ${rowNum}: notes_he exceeds 500 characters (${notes_he.length} chars)`);
     }
 
-    if (allowedCats.has(r.Category) && itemTitle && subject && topic) {
+    if (normalizedCategory && itemTitle && subject && topic) {
+      const effectiveSubTopic = subTopic ? subTopic : undefined;
       leaves.push({
-        category: r.Category as any,
+        category: normalizedCategory,
         subject,
         topic,
-        subTopic: (r.SubTopic || '').trim() || undefined,
+        subTopic: effectiveSubTopic,
         itemTitle,
         requiredCount,
         mcqUrl: (r.mcqUrl || '').trim() || undefined,

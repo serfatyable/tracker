@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
+import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -275,7 +276,10 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
   // Filter by search, my shifts, shift type, and resident
   const filteredSchedule = useMemo(() => {
     const monthSchedule = scheduleByMonth.get(selectedMonth) || [];
-    const _userName = currentUser?.fullName || '';
+    const matcher = createSynonymMatcher(searchTerm);
+    const residentMatcher = createSynonymMatcher(residentFilter);
+    const hasSearch = searchTerm.trim().length > 0;
+    const hasResidentFilter = residentFilter.trim().length > 0;
 
     return monthSchedule.filter((day) => {
       // My shifts filter
@@ -297,19 +301,16 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
       }
 
       // Resident filter
-      if (residentFilter) {
+      if (hasResidentFilter) {
         const hasResident = Object.values(day.shifts).some((name: any) =>
-          String(name).toLowerCase().includes(residentFilter.toLowerCase()),
+          residentMatcher(String(name)),
         );
         if (!hasResident) return false;
       }
 
       // Search filter
-      if (searchTerm.trim()) {
-        const needle = searchTerm.toLowerCase();
-        return Object.values(day.shifts).some((name: any) =>
-          String(name).toLowerCase().includes(needle),
-        );
+      if (hasSearch) {
+        return Object.values(day.shifts).some((name: any) => matcher(String(name)));
       }
 
       return true;

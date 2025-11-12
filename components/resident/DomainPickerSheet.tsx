@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { createSynonymMatcher } from '../../lib/search/synonyms';
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -56,9 +58,8 @@ export default function DomainPickerSheet({
   };
 
   const filteredDomains = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return domains;
-    return domains.filter((domain) => domain.toLowerCase().includes(term));
+    const matcher = createSynonymMatcher(searchTerm);
+    return domains.filter((domain) => matcher(domain));
   }, [domains, searchTerm]);
 
   const sortedDomains = useMemo(() => {

@@ -10,14 +10,19 @@
  */
 
 export async function register() {
-  // Determine the runtime environment
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
-    // Server-side (API routes, SSR)
+  const runtime = process.env.NEXT_RUNTIME;
+
+  if (runtime === 'nodejs') {
     await import('./sentry.server.config');
+    await import('./lib/telemetry/register');
+    return;
   }
 
-  if (process.env.NEXT_RUNTIME === 'edge') {
-    // Edge runtime (middleware, edge functions)
+  if (runtime === 'edge') {
     await import('./sentry.edge.config');
+    await import('./lib/telemetry/register');
+    return;
   }
+
+  await import('./lib/telemetry/register');
 }

@@ -3,8 +3,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// Custom dialog implementation for mobile sheet
 import type { RotationMeta, Status } from '../../lib/hooks/useRotationsIndex';
+import { createSynonymMatcher } from '../../lib/search/synonyms';
+
+// Custom dialog implementation for mobile sheet
 
 type Props = {
   open: boolean;
@@ -23,9 +25,9 @@ export default function RotationPickerSheet({ open, onClose, activeId, onSelect,
   const [searchTerm, setSearchTerm] = useState('');
 
   const { mine, allFiltered } = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
-    const mine = index.mine.filter((r) => r.name.toLowerCase().includes(term));
-    const all = index.all.filter((r) => r.name.toLowerCase().includes(term));
+    const matcher = createSynonymMatcher(searchTerm);
+    const mine = index.mine.filter((r) => matcher(r.name));
+    const all = index.all.filter((r) => matcher(r.name));
     return { mine, allFiltered: all };
   }, [index.mine, index.all, searchTerm]);
 

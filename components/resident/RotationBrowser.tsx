@@ -9,6 +9,7 @@ import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRota
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../lib/hooks/useUserTasks';
 import { getLocalized } from '../../lib/i18n/getLocalized';
+import { createSynonymMatcher } from '../../lib/search/synonyms';
 import type { RotationNode } from '../../types/rotations';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
@@ -27,6 +28,7 @@ type Props = {
   onSelectDomain?: (domain: string | 'all') => void;
   // New: report computed domains to parent for the bottom sheet
   onDomainsComputed?: (domains: string[]) => void;
+  onShowNodeDetails?: (nodeId: string) => void;
   optimisticCounts?: Record<string, { pending: number }>;
 };
 
@@ -40,6 +42,7 @@ export default function RotationBrowser({
   onOpenDomainPicker,
   onSelectDomain,
   onDomainsComputed,
+  onShowNodeDetails,
   optimisticCounts,
 }: Props) {
   const { t, i18n } = useTranslation();
@@ -84,6 +87,9 @@ export default function RotationBrowser({
     return () => clearTimeout(handle);
   }, [searchTerm]);
 
+  const searchMatcher = useMemo(() => createSynonymMatcher(debouncedTerm), [debouncedTerm]);
+  const hasSearchTerm = debouncedTerm.trim().length > 0;
+
   // Extract domain from ancestors (skip top-level category, take next ancestor)
   const getDomain = (ancestors: string[]): string => {
     // Skip the top-level category (Knowledge/Skills/Guidance)
@@ -112,6 +118,7 @@ export default function RotationBrowser({
     subjectName: string | null;
     domain: string;
     ancestors: string[];
+    ancestorPath: Array<{ id: string; name: string; type: RotationNode['type'] }>;
   };
 
   const flatLeaves: FlatLeaf[] = useMemo(() => {
@@ -123,12 +130,16 @@ export default function RotationBrowser({
         const subj = ancestors.find((a) => a.type === 'subject')?.name || null;
         const ancestorNames = nextAnc.map((a) => a.name);
         const domain = getDomain(ancestorNames);
+        const ancestorPath = nextAnc
+          .slice(0, -1)
+          .map((a) => ({ id: a.id, name: a.name, type: a.type }));
         out.push({
           ...(n as RotationNode),
           categoryName: cat,
           subjectName: subj,
           domain,
           ancestors: ancestorNames,
+          ancestorPath,
         });
       }
       n.children.forEach((c) => walk(c as TreeNode, nextAnc));
@@ -299,13 +310,12 @@ export default function RotationBrowser({
 
   // Compute filtered list for cards based on rotation, search, category, domain, and status
   const filteredCards: FlatLeaf[] = useMemo(() => {
-    const term = debouncedTerm.trim().toLowerCase();
     function matchesRotation(n: FlatLeaf) {
       if (!activeRotationId) return true; // Show all when no rotation selected
       return n.rotationId === activeRotationId;
     }
     function matchesTerm(n: FlatLeaf) {
-      if (!term) return true;
+      if (!hasSearchTerm) return true;
       const display =
         getLocalized<string>({
           he: (n as any).name_he as any,
@@ -313,10 +323,15 @@ export default function RotationBrowser({
           fallback: n.name as any,
           lang: (i18n.language === 'he' ? 'he' : 'en') as 'he' | 'en',
         }) || n.name;
-      const hay = [display, n.mcqUrl || '', ...(n.links || []).map((l) => l.href || '')]
-        .join(' ')
-        .toLowerCase();
-      return hay.includes(term);
+      const haystackParts = [
+        display,
+        n.categoryName,
+        n.subjectName,
+        n.domain,
+        n.mcqUrl || '',
+        ...(n.links || []).map((l) => l.href || ''),
+      ];
+      return haystackParts.some((part) => searchMatcher(part || ''));
     }
     function matchesCategory(n: FlatLeaf) {
       if (categoryFilter === 'all') return true;
@@ -355,12 +370,13 @@ export default function RotationBrowser({
   }, [
     flatLeaves,
     activeRotationId,
-    debouncedTerm,
     i18n.language,
     categoryFilter,
     domainFilter,
     statusFilter,
     effectiveCounts,
+    searchMatcher,
+    hasSearchTerm,
   ]);
 
   // Group by domain for section headers with progress
@@ -424,17 +440,21 @@ export default function RotationBrowser({
 
   // Base set for status counts (apply rotation/term/category/domain, but not status)
   const baseForStatusCounts = useMemo(() => {
-    const term = debouncedTerm.trim().toLowerCase();
     function matchesRotation(n: FlatLeaf) {
       if (!activeRotationId) return true;
       return n.rotationId === activeRotationId;
     }
     function matchesTerm(n: FlatLeaf) {
-      if (!term) return true;
-      const hay = [n.name, n.mcqUrl || '', ...(n.links || []).map((l) => l.href || '')]
-        .join(' ')
-        .toLowerCase();
-      return hay.includes(term);
+      if (!hasSearchTerm) return true;
+      const haystackParts = [
+        n.name,
+        n.categoryName,
+        n.subjectName,
+        n.domain,
+        n.mcqUrl || '',
+        ...(n.links || []).map((l) => l.href || ''),
+      ];
+      return haystackParts.some((part) => searchMatcher(part || ''));
     }
     function matchesCategory(n: FlatLeaf) {
       if (categoryFilter === 'all') return true;
@@ -451,7 +471,7 @@ export default function RotationBrowser({
     return flatLeaves.filter(
       (n) => matchesRotation(n) && matchesTerm(n) && matchesCategory(n) && matchesDomain(n),
     );
-  }, [flatLeaves, activeRotationId, debouncedTerm, categoryFilter, domainFilter]);
+  }, [flatLeaves, activeRotationId, categoryFilter, domainFilter, searchMatcher, hasSearchTerm]);
 
   const statusCounts = useMemo(() => {
     let approved = 0;
@@ -678,6 +698,7 @@ export default function RotationBrowser({
                   item.ancestors.slice(0, -1).slice(-1)[0] ||
                   item.categoryName ||
                   '';
+                const ancestorsToShow = item.ancestorPath.slice(-3);
                 // Section header when first item of a domain in windowed sequence
                 const isFirstInDomain = idx === 0 || windowed[idx - 1]!.key !== key;
                 const groupTotals = groupedByDomain[key]?.totals || { approved: 0, required: 0 };
@@ -731,6 +752,41 @@ export default function RotationBrowser({
                             {percent !== null ? <span>{percent}%</span> : <span>–</span>}
                           </div>
                           <div className="min-w-0 flex-1 space-y-1">
+                            {ancestorsToShow.length ? (
+                              <div className="flex flex-wrap items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
+                                {ancestorsToShow.map((ancestor, ancestorIdx) => {
+                                  const element = onShowNodeDetails ? (
+                                    <button
+                                      type="button"
+                                      className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 transition hover:bg-gray-200 dark:bg-[rgb(var(--surface-elevated))] dark:text-gray-300 dark:hover:bg-[rgb(var(--surface))]"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        onShowNodeDetails?.(ancestor.id);
+                                      }}
+                                    >
+                                      {ancestor.name}
+                                    </button>
+                                  ) : (
+                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-[rgb(var(--surface-elevated))] dark:text-gray-300">
+                                      {ancestor.name}
+                                    </span>
+                                  );
+                                  return (
+                                    <span
+                                      key={`${ancestor.id}-${ancestorIdx}`}
+                                      className="flex items-center gap-1"
+                                    >
+                                      {element}
+                                      {ancestorIdx < ancestorsToShow.length - 1 ? (
+                                        <span className="text-[10px]" aria-hidden>
+                                          ›
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            ) : null}
                             {subtitle ? (
                               <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                                 {subtitle}
