@@ -77,7 +77,11 @@ export default function RotationOwnersEditor({ rotationId }: Props) {
                   key={uid}
                   className="flex items-center gap-3 rounded-lg border border-muted/30 bg-[rgb(var(--surface))] px-3 py-2"
                 >
-                  <Avatar name={tutor?.fullName || uid} email={tutor?.email} size={32} />
+                  <Avatar
+                    name={tutor?.fullName || uid}
+                    email={tutor && tutor.email != null ? tutor.email : undefined}
+                    size={32}
+                  />
                   <div className="flex flex-1 flex-col">
                     <span className="text-sm font-medium text-[rgb(var(--fg))]">
                       {tutor?.fullName || uid}
@@ -147,7 +151,11 @@ export default function RotationOwnersEditor({ rotationId }: Props) {
                     });
                   }}
                 >
-                  <Avatar name={tutor.fullName || tutor.uid} email={tutor.email} size={28} />
+                  <Avatar
+                    name={tutor.fullName || tutor.uid}
+                    email={tutor.email != null ? tutor.email : undefined}
+                    size={28}
+                  />
                   <div className="flex-1">
                     <div className="text-sm text-[rgb(var(--fg))]">
                       {tutor.fullName || tutor.uid}
