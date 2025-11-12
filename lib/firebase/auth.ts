@@ -81,9 +81,13 @@ export async function signUp(params: {
 
   let userDoc: UserProfile;
   if (role === 'resident') {
-    const normalizedCurrentRotationId = currentRotationId?.trim() ? currentRotationId : null;
+    const normalizedCurrentRotationId = currentRotationId?.trim() || null;
     const requestedCompleted = Array.from(
-      new Set((completedRotationIds || []).filter((id) => id && id.trim() !== '')),
+      new Set(
+        (completedRotationIds || [])
+          .map((id) => (typeof id === 'string' ? id.trim() : ''))
+          .filter((id) => id !== ''),
+      ),
     );
     if (normalizedCurrentRotationId && !requestedCompleted.includes(normalizedCurrentRotationId)) {
       requestedCompleted.push(normalizedCurrentRotationId);
@@ -92,7 +96,6 @@ export async function signUp(params: {
     const residentDoc: ResidentProfile = {
       uid: cred.user.uid,
       fullName,
-      fullNameHe,
       email,
       role: 'resident',
       status: 'pending',
@@ -109,33 +112,41 @@ export async function signUp(params: {
         resolvedAt: null,
       },
     };
+
     if (normalizedCurrentRotationId) {
       residentDoc.currentRotationId = normalizedCurrentRotationId;
+    }
+    if (fullNameHe?.trim()) {
+      residentDoc.fullNameHe = fullNameHe.trim();
     }
     userDoc = residentDoc;
   } else if (role === 'tutor') {
     const tutorDoc: TutorProfile = {
       uid: cred.user.uid,
       fullName,
-      fullNameHe,
       email,
       role: 'tutor',
       status: 'pending',
       settings: { language },
       createdAt: serverTimestamp() as unknown as Date,
     };
+    if (fullNameHe?.trim()) {
+      tutorDoc.fullNameHe = fullNameHe.trim();
+    }
     userDoc = tutorDoc;
   } else {
     const adminDoc: AdminProfile = {
       uid: cred.user.uid,
       fullName,
-      fullNameHe,
       email,
       role: 'admin',
       status: 'pending',
       settings: { language },
       createdAt: serverTimestamp() as unknown as Date,
     };
+    if (fullNameHe?.trim()) {
+      adminDoc.fullNameHe = fullNameHe.trim();
+    }
     userDoc = adminDoc;
   }
 
