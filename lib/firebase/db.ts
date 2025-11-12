@@ -11,7 +11,6 @@ import {
   orderBy,
   limit as qLimit,
   serverTimestamp,
-  updateDoc,
   deleteDoc,
 } from 'firebase/firestore';
 
@@ -117,6 +116,15 @@ async function getCurrentTutorIdsForResident(residentId: string): Promise<string
 
   const assignment = assignmentsSnap.docs[0]?.data() as any;
   return assignment.tutorIds || [];
+}
+
+/**
+ * Get the first tutorId from resident's active assignment (for reflections)
+ * Returns null if no tutors are assigned
+ */
+export async function getFirstTutorIdForResident(residentId: string): Promise<string | null> {
+  const tutorIds = await getCurrentTutorIdsForResident(residentId);
+  return tutorIds.length > 0 ? tutorIds[0] : null;
 }
 
 export async function listRecentTasksByLeaf(params: {

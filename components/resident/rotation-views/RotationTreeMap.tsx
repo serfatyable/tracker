@@ -9,6 +9,7 @@ import { useResidentProgress, type NodeProgress } from '../../../lib/hooks/useRe
 import { useRotationNodes } from '../../../lib/hooks/useRotationNodes';
 import { useUserTasks } from '../../../lib/hooks/useUserTasks';
 import { getLocalized } from '../../../lib/i18n/getLocalized';
+import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import TextField from '../../ui/TextField';
 
 interface RotationTreeMapProps {
@@ -86,8 +87,11 @@ export default function RotationTreeMap({ rotationId, onSelectNode }: RotationTr
     };
 
     // Apply search filter
+    const searchMatcher = createSynonymMatcher(searchTerm);
+    const hasSearch = searchTerm.trim().length > 0;
+
     const matchesSearch = (node: NodeProgress): boolean => {
-      if (!searchTerm.trim()) return true;
+      if (!hasSearch) return true;
       const label =
         getLocalized<string>({
           he: (node as any).name_he as any,
@@ -95,7 +99,7 @@ export default function RotationTreeMap({ rotationId, onSelectNode }: RotationTr
           fallback: node.name as any,
           lang: 'en',
         }) || node.name;
-      return label.toLowerCase().includes(searchTerm.toLowerCase());
+      return searchMatcher(label);
     };
 
     // Root node

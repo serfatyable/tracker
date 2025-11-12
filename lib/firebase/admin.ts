@@ -26,9 +26,10 @@ import type { Assignment, AssignmentWithDetails } from '../../types/assignments'
 import type { UserProfile, Role, ResidentProfile } from '../../types/auth';
 import type { ReflectionTemplate, ReflectionSection } from '../../types/reflections';
 import type { RotationPetition, RotationPetitionWithDetails } from '../../types/rotationPetitions';
-import type { Rotation, RotationNode } from '../../types/rotations';
-import { normalizeParsedRows, parseRotationCsvText } from '../rotations/import';
+import type { Rotation, RotationNode, RotationSource, RotationStatus } from '../../types/rotations';
+import { normalizeParsedRows, parseRotationExcel, type NormalizedLeaf } from '../rotations/import';
 
+import { getCacheValue, invalidateCache, setCacheValue } from './cache';
 import { getFirebaseApp } from './client';
 import type { TaskDoc } from './db';
 
@@ -591,17 +592,37 @@ async function dedupeRootCategories(rotationId: string): Promise<void> {
 }
 export async function createRotation(data: {
   name: string;
+  name_en?: string;
+  name_he?: string;
   startDate: any;
   endDate: any;
+  color?: string | null;
+  description?: string | null;
+  status?: RotationStatus;
+  ownerTutorIds?: string[];
+  source?: RotationSource;
 }): Promise<{ id: string }> {
   const db = getFirestore(getFirebaseApp());
-  const ref = await addDoc(collection(db, 'rotations'), {
+  const now = serverTimestamp();
+  const payload: Record<string, any> = {
     name: data.name,
-    name_en: data.name,
+    name_en: data.name_en ?? data.name,
+    name_he: data.name_he ?? data.name,
     startDate: data.startDate,
     endDate: data.endDate,
-    createdAt: serverTimestamp(),
-  });
+    createdAt: now,
+    updatedAt: now,
+    status: data.status ?? 'active',
+    source: data.source ?? 'manual',
+    ownerTutorIds: data.ownerTutorIds ?? [],
+  };
+  if (data.description !== undefined) {
+    payload.description = data.description;
+  }
+  if (data.color) {
+    payload.color = data.color;
+  }
+  const ref = await addDoc(collection(db, 'rotations'), payload);
   await ensureRootCategories(ref.id);
   return { id: ref.id };
 }
@@ -628,15 +649,122 @@ export async function listRotations(params?: {
 
 export async function updateRotation(
   id: string,
-  data: Partial<Pick<Rotation, 'name' | 'startDate' | 'endDate'>>,
+  data: Partial<
+    Pick<
+      Rotation,
+      | 'name'
+      | 'name_en'
+      | 'name_he'
+      | 'startDate'
+      | 'endDate'
+      | 'description'
+      | 'status'
+      | 'color'
+      | 'ownerTutorIds'
+    >
+  >,
 ): Promise<void> {
   const db = getFirestore(getFirebaseApp());
-  await updateDoc(doc(db, 'rotations', id), data as any);
+  const payload: Record<string, any> = { ...data, updatedAt: serverTimestamp() };
+  await updateDoc(doc(db, 'rotations', id), payload as any);
 }
 
 export async function deleteRotation(id: string): Promise<void> {
   const db = getFirestore(getFirebaseApp());
   await deleteDoc(doc(db, 'rotations', id));
+}
+
+export async function duplicateRotation(
+  rotationId: string,
+  overrides?: Partial<{
+    name: string;
+    startDate: any;
+    endDate: any;
+    color: string | null;
+    description: string | null;
+    status: RotationStatus;
+    ownerTutorIds: string[];
+  }>,
+): Promise<{ id: string }> {
+  const db = getFirestore(getFirebaseApp());
+  const sourceSnap = await getDoc(doc(db, 'rotations', rotationId));
+  if (!sourceSnap.exists()) {
+    throw new Error('Rotation not found');
+  }
+  const sourceData = sourceSnap.data() as Record<string, any>;
+  const baseName = sourceData.name_en || sourceData.name || 'Rotation';
+  const cloneName = overrides?.name || `${baseName} Copy`;
+  const created = await createRotation({
+    name: cloneName,
+    name_en: cloneName,
+    name_he: sourceData.name_he,
+    startDate: overrides?.startDate ?? sourceData.startDate,
+    endDate: overrides?.endDate ?? sourceData.endDate,
+    color: overrides?.color ?? sourceData.color ?? null,
+    description: overrides?.description ?? sourceData.description ?? '',
+    status: overrides?.status ?? sourceData.status ?? 'active',
+    ownerTutorIds: overrides?.ownerTutorIds ?? sourceData.ownerTutorIds ?? [],
+    source: 'manual',
+  });
+  const newRotationId = created.id;
+
+  const nodes = await listRotationNodes(rotationId);
+  if (nodes.length) {
+    const rootMap = await ensureRootCategories(newRotationId);
+    const defaultRootNameMap = new Map<string, string>([
+      ['knowledge', rootMap.Knowledge],
+      ['skills', rootMap.Skills],
+      ['guidance', rootMap.Guidance],
+    ]);
+    const idMap = new Map<string, string>();
+
+    let iterations = 0;
+    // Safety guard to avoid infinite loops in case of malformed data
+    while (idMap.size < nodes.length && iterations < nodes.length * 3) {
+      iterations += 1;
+      for (const node of nodes) {
+        if (idMap.has(node.id)) continue;
+        const parentMapped = node.parentId === null || idMap.has(node.parentId);
+        if (!parentMapped) continue;
+
+        let targetId: string | null = null;
+        const parentId = node.parentId === null ? null : idMap.get(node.parentId) || null;
+
+        if (node.parentId === null && node.type === 'category') {
+          const match = defaultRootNameMap.get(node.name.toLowerCase());
+          if (match) {
+            targetId = match;
+            await updateDoc(doc(db, 'rotationNodes', match), {
+              name: node.name,
+              order: node.order,
+            } as any);
+          }
+        }
+
+        if (!targetId) {
+          const createdNode = await createNode({
+            rotationId: newRotationId,
+            parentId,
+            type: node.type,
+            name: node.name,
+            order: node.order,
+            requiredCount: node.requiredCount,
+            links: node.links,
+            mcqUrl: node.mcqUrl,
+            resources: node.resources,
+            notes_en: node.notes_en,
+            notes_he: node.notes_he,
+          } as any);
+          targetId = createdNode.id;
+        }
+
+        idMap.set(node.id, targetId);
+      }
+    }
+  }
+
+  await updateDoc(doc(db, 'rotations', newRotationId), { updatedAt: serverTimestamp() });
+  return { id: newRotationId };
 }
 
 // Rotation owners (admin)
@@ -653,15 +781,27 @@ export async function setRotationOwners(
   ownerTutorIds: string[],
 ): Promise<void> {
   const db = getFirestore(getFirebaseApp());
-  await updateDoc(doc(db, 'rotations', rotationId), { ownerTutorIds } as any);
+  await updateDoc(doc(db, 'rotations', rotationId), {
+    ownerTutorIds,
+    updatedAt: serverTimestamp(),
+  } as any);
 }
 
 export async function listRotationNodes(rotationId: string): Promise<RotationNode[]> {
+  const cacheKey = `rotationNodes:${rotationId}`;
+  const cached = getCacheValue<RotationNode[]>(cacheKey);
+  if (cached) return cached;
+
   const db = getFirestore(getFirebaseApp());
   const snap = await getDocs(
     query(collection(db, 'rotationNodes'), where('rotationId', '==', rotationId)),
   );
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as unknown as RotationNode[];
+  const nodes = snap.docs.map((d) => ({
+    id: d.id,
+    ...(d.data() as any),
+  })) as unknown as RotationNode[];
+  setCacheValue(cacheKey, nodes, 30_000);
+  return nodes;
 }
 
 export async function createNode(input: Omit<RotationNode, 'id'>): Promise<{ id: string }> {
@@ -675,25 +815,36 @@ export async function createNode(input: Omit<RotationNode, 'id'>): Promise<{ id:
   }
 
   const ref = await addDoc(collection(db, 'rotationNodes'), sanitizedInput as any);
+  invalidateCache(`rotationNodes:${input.rotationId}`);
   return { id: ref.id };
 }
 
 export async function updateNode(id: string, data: Partial<RotationNode>): Promise<void> {
   const db = getFirestore(getFirebaseApp());
+  const ref = doc(db, 'rotationNodes', id);
+  const snapshot = await getDoc(ref);
 
-  // Validate and sanitize requiredCount to prevent negative or invalid values
   const sanitizedData = { ...data };
   if ('requiredCount' in sanitizedData && sanitizedData.requiredCount !== undefined) {
     const parsed = parseInt(String(sanitizedData.requiredCount), 10);
     sanitizedData.requiredCount = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
   }
 
-  await updateDoc(doc(db, 'rotationNodes', id), sanitizedData as any);
+  await updateDoc(ref, sanitizedData as any);
+  const rotationId =
+    sanitizedData.rotationId ?? (snapshot.data()?.rotationId as string | undefined);
+  if (rotationId) {
+    invalidateCache(`rotationNodes:${rotationId}`);
+  }
 }
 
 export async function deleteNode(id: string): Promise<void> {
   const db = getFirestore(getFirebaseApp());
-  await deleteDoc(doc(db, 'rotationNodes', id));
+  const ref = doc(db, 'rotationNodes', id);
+  const snapshot = await getDoc(ref);
+  await deleteDoc(ref);
+  const rotationId = snapshot?.data()?.rotationId;
+  if (rotationId) invalidateCache(`rotationNodes:${rotationId}`);
 }
 
 /**
@@ -1147,7 +1298,7 @@ export async function ensureDefaultReflectionTemplatesSeeded(): Promise<void> {
 export async function importRotationFromCsv(params: {
   mode: 'create' | 'merge';
   rotationId?: string;
-  csvText: string;
+  excelBuffer: ArrayBuffer;
   rotationMeta?: {
     name: string;
     startDate: any;
@@ -1155,7 +1306,14 @@ export async function importRotationFromCsv(params: {
     status: 'active' | 'inactive' | 'finished';
   };
 }): Promise<{ rotationId: string; errors: string[] }> {
-  const { rows } = parseRotationCsvText(params.csvText);
+  if (!params.excelBuffer) {
+    return { rotationId: params.rotationId || '', errors: ['No Excel file provided'] };
+  }
+
+  // Parse Excel directly
+  const result = await parseRotationExcel(params.excelBuffer);
+  const rows = result.rows;
+
   const { leaves, errors } = normalizeParsedRows(rows);
   if (errors.length) return { rotationId: params.rotationId || '', errors };
 
@@ -1163,7 +1321,7 @@ export async function importRotationFromCsv(params: {
   if (params.mode === 'create') {
     if (!params.rotationMeta)
       return { rotationId: '', errors: ['Missing rotation meta for create mode'] };
-    const created = await createRotation(params.rotationMeta);
+    const created = await createRotation({ ...params.rotationMeta, source: 'import' });
     rotationId = created.id;
   }
 
@@ -1220,7 +1378,49 @@ export async function importRotationFromCsv(params: {
     return created.id;
   }
 
+  // Deduplicate leaves before processing: merge leaves with same (parentPath + itemTitle)
+  // This prevents duplicates caused by fallback logic (empty ItemTitle → SubTopic → Topic)
+  const deduplicatedLeaves = new Map<string, NormalizedLeaf>();
+
   for (const leaf of leaves) {
+    // Normalize hierarchy to avoid redundant nodes (e.g., subTopic == topic)
+    const canonicalLeaf: NormalizedLeaf = { ...leaf };
+    const subTopicName = canonicalLeaf.subTopic;
+    if (subTopicName && norm(subTopicName) === norm(canonicalLeaf.topic)) {
+      delete (canonicalLeaf as any).subTopic;
+    }
+
+    // Create a unique key: category + subject + topic + (subTopic || '') + itemTitle
+    const parentPath = `${canonicalLeaf.category}|${canonicalLeaf.subject}|${canonicalLeaf.topic}|${
+      canonicalLeaf.subTopic || ''
+    }`;
+    const key = `${parentPath}|${norm(canonicalLeaf.itemTitle)}`;
+
+    const existing = deduplicatedLeaves.get(key);
+    if (existing) {
+      // Merge data: combine links, take max requiredCount, merge notes
+      const mergedLinks = [...(existing.links || []), ...(canonicalLeaf.links || [])];
+      // Remove duplicate links by href
+      const uniqueLinks = Array.from(
+        new Map(mergedLinks.map((link) => [link.href, link])).values(),
+      );
+
+      deduplicatedLeaves.set(key, {
+        ...existing,
+        requiredCount: Math.max(existing.requiredCount, canonicalLeaf.requiredCount),
+        mcqUrl: existing.mcqUrl || canonicalLeaf.mcqUrl,
+        resources: existing.resources || canonicalLeaf.resources,
+        notes_en: existing.notes_en || canonicalLeaf.notes_en,
+        notes_he: existing.notes_he || canonicalLeaf.notes_he,
+        links: uniqueLinks,
+      });
+    } else {
+      deduplicatedLeaves.set(key, canonicalLeaf);
+    }
+  }
+
+  // Process deduplicated leaves
+  for (const leaf of deduplicatedLeaves.values()) {
     const catNode = allNodes.find(
       (n) => n.parentId === null && n.type === 'category' && n.name === leaf.category,
     );
@@ -1232,9 +1432,28 @@ export async function importRotationFromCsv(params: {
       ? await ensureChild(topicId as string, 'subTopic', leaf.subTopic as string)
       : topicId;
 
+    const targetName = norm(leaf.itemTitle);
+
+    // If the leaf doesn't use a subTopic, collapse any existing subTopic with identical name
+    if (!leaf.subTopic) {
+      const redundantSubTopics = allNodes.filter(
+        (n) => n.parentId === topicId && n.type === 'subTopic' && norm(n.name) === targetName,
+      );
+      for (const redundant of redundantSubTopics) {
+        // Move children up to the topic node
+        const children = allNodes.filter((n) => n.parentId === redundant.id);
+        for (const child of children) {
+          await updateNode(child.id as string, { parentId: topicId });
+          child.parentId = topicId;
+        }
+        // Delete the redundant subTopic node
+        await deleteNode(redundant.id as string);
+        allNodes.splice(allNodes.indexOf(redundant), 1);
+      }
+    }
+
     // Check if leaf already exists to prevent duplicates
     const siblings = allNodes.filter((n) => n.parentId === parentId && n.type === 'leaf');
-    const targetName = norm(leaf.itemTitle);
     const existing = siblings.find((n) => norm(n.name) === targetName);
 
     if (existing) {
@@ -1280,6 +1499,9 @@ export async function importRotationFromCsv(params: {
       } as any);
     }
   }
+
+  // After processing, clean up any duplicates that may still remain from previous imports
+  await cleanupDuplicateNodes(rotationId);
 
   return { rotationId, errors: [] };
 }

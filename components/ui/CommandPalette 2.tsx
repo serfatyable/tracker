@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { createSynonymMatcher } from '../../lib/search/synonyms';
 
 export default function CommandPalette() {
   const { t } = useTranslation();
@@ -69,7 +70,8 @@ export default function CommandPalette() {
     ];
   }, [role, t]);
 
-  const filtered = items.filter((it) => it.label.toLowerCase().includes(q.toLowerCase()));
+  const matcher = useMemo(() => createSynonymMatcher(q), [q]);
+  const filtered = useMemo(() => items.filter((it) => matcher(it.label)), [items, matcher]);
 
   if (!open) return null;
 

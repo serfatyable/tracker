@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
 import AuthGate from '../../components/auth/AuthGate';
@@ -18,6 +19,7 @@ export default function ResidentDashboard() {
   const { data: _me } = useCurrentUserProfile();
   const { rotationId: activeRotationId } = useResidentActiveRotation();
   const { nodes: activeNodes } = useRotationNodes(activeRotationId || null);
+  const router = useRouter();
 
   function getFavorites(
     nodes: any[] | null,
@@ -37,9 +39,22 @@ export default function ResidentDashboard() {
         <div className="app-container p-3 sm:p-4 md:p-6 space-y-3">
           <KPICardsResident />
           <QuickActions
-            onGoRotations={() => {}}
-            onFocusSearch={() => {}}
-            favorites={getFavorites(activeNodes, () => {})}
+            onGoRotations={() => router.push('/resident/rotations')}
+            onFocusSearch={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('tracker:command-palette'));
+              }
+            }}
+            onGoActiveRotation={() => {
+              if (activeRotationId) {
+                router.push(`/resident/rotations?selected=${activeRotationId}`);
+              } else {
+                router.push('/resident/rotations');
+              }
+            }}
+            favorites={getFavorites(activeNodes, (id) =>
+              router.push(`/resident/rotations?selected=${id}`),
+            )}
           />
           <PendingTasksList
             activeRotationId={activeRotationId || null}

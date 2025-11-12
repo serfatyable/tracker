@@ -1,7 +1,7 @@
 'use client';
-import { Bars3Icon } from '@heroicons/react/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '../lib/hooks/useCurrentUserProfile';
@@ -17,6 +17,11 @@ export default function TopBar() {
   const { t, i18n: i18next } = useTranslation();
   const { show, meeting } = useTomorrowLecturerReminder();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const openCommandPalette = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new Event('tracker:command-palette'));
+  }, []);
 
   useEffect(() => {
     const onOpen = () => setDrawerOpen(true);
@@ -76,32 +81,47 @@ export default function TopBar() {
   }
 
   return (
-    <header
-      className={`sticky top-0 z-40 flex h-12 items-center justify-between px-2 transition-colors duration-200 bg-background border-b dark:border-white/10 text-foreground dark:text-white shadow-elev1`}
-    >
-      <div className="flex items-center gap-2 text-base flex-shrink-0">
+    <header className="topbar glass-panel">
+      <div className="flex items-center gap-2 text-base flex-shrink-0 min-w-0">
         <button
           type="button"
-          className="h-11 w-11 grid place-items-center rounded-full hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 text-foreground dark:text-white"
+          className="icon-button icon-button--primary"
           aria-label={t('ui.openMenu', { defaultValue: 'Open menu' })}
           onClick={() => setDrawerOpen(true)}
         >
           <Bars3Icon className="h-5 w-5" stroke="currentColor" />
         </button>
-        <span
-          className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white"
-          aria-label="TRACKER"
-        >
+        <span className="app-wordmark" aria-label="TRACKER">
           TRACKER
         </span>
       </div>
-      <nav className="flex items-center gap-1 sm:gap-2 flex-shrink min-w-0" aria-label="User menu">
+      <nav className="flex items-center gap-2 flex-shrink min-w-0" aria-label="User menu">
+        <button
+          type="button"
+          className="command-button hidden sm:flex"
+          onClick={openCommandPalette}
+          aria-label={t('ui.search', { defaultValue: 'Search' })}
+        >
+          <MagnifyingGlassIcon className="h-5 w-5 flex-shrink-0" />
+          <span className="inline-flex items-center gap-2 text-sm font-medium">
+            {t('ui.search', { defaultValue: 'Search' })}
+            <kbd className="shortcut-kbd">⌘K</kbd>
+          </span>
+        </button>
         {show && meeting ? (
-          <div className="hidden md:block rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-900 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
+          <div className="hidden md:block alert-chip">
             {t('morningMeetings.lecturerReminder')} — {meeting?.title}
           </div>
         ) : null}
-        <div className="hidden md:block">
+        <button
+          type="button"
+          className="command-button sm:hidden"
+          onClick={openCommandPalette}
+          aria-label={t('ui.search', { defaultValue: 'Search' })}
+        >
+          <MagnifyingGlassIcon className="h-5 w-5" />
+        </button>
+        <div className="hidden sm:block">
           <LangToggle />
         </div>
         <div className="min-w-0">
@@ -111,6 +131,9 @@ export default function TopBar() {
             size={32}
             className="h-8 w-8 rounded-full"
           />
+        </div>
+        <div className="sm:hidden">
+          <LangToggle />
         </div>
       </nav>
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />

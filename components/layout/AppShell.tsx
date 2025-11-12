@@ -3,7 +3,10 @@ import type { CSSProperties } from 'react';
 
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import TopBar from '../TopBar';
+import CommandPalette from '../ui/CommandPalette';
 import NetworkStatusIndicator from '../ui/NetworkStatusIndicator';
+
+import RoleTabs from './RoleTabs';
 
 type AppShellStyle = CSSProperties & {
   '--top-bar-offset'?: string;
@@ -16,12 +19,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   };
   return (
     <div className="min-h-dvh pad-safe-t pad-safe-b bg-bg text-fg" style={shellStyle}>
-      <div
-        className="sticky top-0 z-40 bg-bg/95 backdrop-blur supports-[backdrop-filter]:bg-bg/80 pad-safe-t w-full max-w-[min(100%,100svw)] border-b border-gray-200 dark:border-[rgb(var(--border))]"
-        data-top-bar
-      >
-        <div className="app-container">
+      <div className="top-shell" data-top-bar>
+        <div className="app-container space-y-2">
           <TopBar />
+          <RoleTabs />
         </div>
       </div>
       <div className="mx-auto flex w-full max-w-6xl">
@@ -30,6 +31,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <NetworkStatusIndicator show="offline-only" position="bottom" />
+      <CommandPalette />
     </div>
   );
 }

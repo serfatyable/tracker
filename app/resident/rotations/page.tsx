@@ -11,6 +11,7 @@ import AppShell from '../../../components/layout/AppShell';
 import LargeTitleHeader from '../../../components/layout/LargeTitleHeader';
 import DomainPickerSheet from '../../../components/resident/DomainPickerSheet';
 import ItemDetailSheet from '../../../components/resident/ItemDetailSheet';
+import NodeDetailsSheet from '../../../components/resident/NodeDetailsSheet';
 import QuickLogDialog from '../../../components/resident/QuickLogDialog';
 import RotationActivity from '../../../components/resident/RotationActivity';
 import RotationBrowser from '../../../components/resident/RotationBrowser';
@@ -56,6 +57,11 @@ function ResidentRotationsPageInner() {
   const [optimistic, setOptimistic] = useState<Record<string, { pending: number }>>({});
   const [domainsList, setDomainsList] = useState<string[]>([]);
   const [recentLeafIds, setRecentLeafIds] = useState<string[]>([]);
+  const [nodeDetailsOpen, setNodeDetailsOpen] = useState(false);
+  const [selectedNodeDetail, setSelectedNodeDetail] = useState<{
+    node: RotationNode;
+    ancestors: RotationNode[];
+  } | null>(null);
 
   // Compute active rotation meta
   const active = useMemo(
@@ -64,10 +70,17 @@ function ResidentRotationsPageInner() {
   );
 
   const { nodes: rotationNodes } = useRotationNodes(activeRotationId ?? null);
+  const rotationNodesById = useMemo(() => {
+    const map = new Map<string, RotationNode>();
+    rotationNodes.forEach((n) => map.set(n.id, n));
+    return map;
+  }, [rotationNodes]);
 
   useEffect(() => {
     setSelectedLeaf(null);
     setRecentLeafIds([]);
+    setNodeDetailsOpen(false);
+    setSelectedNodeDetail(null);
   }, [activeRotationId]);
 
   const leafOptions = useMemo(() => {
@@ -215,6 +228,27 @@ function ResidentRotationsPageInner() {
     });
   }, []);
 
+  const handleShowNodeDetails = useCallback(
+    (nodeId: string) => {
+      const nodeToView = rotationNodesById.get(nodeId);
+      if (!nodeToView) return;
+      const ancestorStack: RotationNode[] = [];
+      let parentId = nodeToView.parentId;
+      while (parentId) {
+        const parent = rotationNodesById.get(parentId);
+        if (!parent) break;
+        ancestorStack.push(parent);
+        parentId = parent.parentId;
+      }
+      setSelectedNodeDetail({
+        node: nodeToView,
+        ancestors: ancestorStack.reverse(),
+      });
+      setNodeDetailsOpen(true);
+    },
+    [rotationNodesById],
+  );
+
   const handleLogActivity = (item: RotationNode) => {
     handleLeafSelection(item);
     setQuickLogOpen(true);
@@ -307,6 +341,7 @@ function ResidentRotationsPageInner() {
                 onOpenDomainPicker={() => setDomainPickerOpen(true)}
                 onSelectDomain={(d) => handleDomainSelect(d)}
                 onDomainsComputed={(ds) => setDomainsList(ds)}
+                onShowNodeDetails={handleShowNodeDetails}
                 optimisticCounts={optimistic}
               />
             )}
@@ -429,6 +464,16 @@ function ResidentRotationsPageInner() {
         domains={domainsList}
         active={domainFilter}
         onSelect={handleDomainSelect}
+      />
+      <NodeDetailsSheet
+        open={nodeDetailsOpen}
+        onClose={() => {
+          setNodeDetailsOpen(false);
+          setSelectedNodeDetail(null);
+        }}
+        node={selectedNodeDetail?.node ?? null}
+        ancestors={selectedNodeDetail?.ancestors ?? []}
+        onSelectNode={handleShowNodeDetails}
       />
       <ItemDetailSheet
         open={itemDetailOpen}

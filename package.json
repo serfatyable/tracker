@@ -28,6 +28,7 @@
     "analyze": "ANALYZE=true next build",
     "build:analyze": "pnpm build && pnpm analyze",
     "perf": "pnpm build && pnpm start",
+    "perf:lighthouse": "pnpm dlx @lhci/cli@0.13.0 collect --url=http://localhost:3000 --collect.numberOfRuns=3 --collect.settings.formFactor=desktop --collect.settings.throttlingMethod=provided --collect.settings.screenEmulation.disabled=true --upload.target=filesystem --upload.outputDir=.lighthouse-baseline",
     "audit:deps": "pnpm audit --audit-level moderate",
     "audit:security": "pnpm audit --audit-level high"
   },

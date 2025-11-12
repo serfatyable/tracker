@@ -3,6 +3,7 @@ import './globals.css';
 import { cookies } from 'next/headers';
 
 import { I18nProvider } from '../lib/i18n/Provider';
+import { SentryInit } from '../lib/sentry/SentryInit';
 
 export const metadata: Metadata = {
   title: {
@@ -47,6 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang} dir={dir} suppressHydrationWarning>
       <body suppressHydrationWarning>
+        <SentryInit />
         <I18nProvider>
           {children}
           {/* Dev diagnostics are gated and default-off */}

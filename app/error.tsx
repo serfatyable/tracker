@@ -1,23 +1,29 @@
 'use client';
 
 import * as Sentry from '@sentry/nextjs';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   const { t } = useTranslation();
+  const [eventId, setEventId] = useState<string | null>(null);
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@tracker.app';
+
   useEffect(() => {
     // Log the error to console for development
     console.error('Route error caught by error boundary:', error);
 
     // Send error to Sentry in production
     if (process.env.NODE_ENV === 'production') {
-      Sentry.captureException(error, {
+      const id = Sentry.captureException(error, {
         level: 'error',
         tags: {
           errorBoundary: 'app',
         },
       });
+      setEventId(id);
+    } else {
+      setEventId('dev-mode');
     }
   }, [error]);
 
@@ -57,6 +63,19 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
             </pre>
           </details>
         )}
+        {eventId && (
+          <div className="mb-4 rounded-md border border-dashed border-blue-200 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-100">
+            <p className="font-semibold mb-1">
+              {t('errors.referenceCode', { defaultValue: 'Reference code' })}: {eventId}
+            </p>
+            <button
+              className="btn-levitate text-xs"
+              onClick={() => navigator.clipboard.writeText(eventId)}
+            >
+              {t('errors.copyCode', { defaultValue: 'Copy code' })}
+            </button>
+          </div>
+        )}
         <div className="flex gap-2 justify-end">
           <button
             className="btn-levitate border-blue-500 text-blue-700 hover:bg-blue-50 dark:border-blue-500 dark:text-blue-300 dark:hover:bg-blue-900/30"
@@ -64,6 +83,12 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
           >
             {t('errors.goHome')}
           </button>
+          <a
+            className="btn-levitate"
+            href={`mailto:${supportEmail}?subject=Tracker%20error%20${eventId ?? ''}`}
+          >
+            {t('errors.contactSupport', { defaultValue: 'Contact support' })}
+          </a>
           <button className="btn-levitate" onClick={() => reset()}>
             {t('errors.tryAgain')}
           </button>

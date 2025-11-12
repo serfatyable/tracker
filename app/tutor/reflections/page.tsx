@@ -9,6 +9,7 @@ import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
 import { useReflectionsForTutor } from '../../../lib/hooks/useReflections';
+import { createSynonymMatcher } from '../../../lib/search/synonyms';
 
 export default function TutorReflectionsPage() {
   const { t } = useTranslation();
@@ -17,12 +18,14 @@ export default function TutorReflectionsPage() {
   const [to, setTo] = useState<string>('');
   const [residentFilter, setResidentFilter] = useState<string>('');
   const { list, loading } = useReflectionsForTutor(me?.uid || null);
+  const residentMatcher = createSynonymMatcher(residentFilter);
+  const hasResidentFilter = residentFilter.trim().length > 0;
 
   const filtered = (list || []).filter((r) => {
     const submitted = (r as any).submittedAt?.toDate?.() as Date | undefined;
     if (from && submitted && submitted < new Date(from)) return false;
     if (to && submitted && submitted > new Date(to)) return false;
-    if (residentFilter && !(r as any).residentId?.includes(residentFilter)) return false;
+    if (hasResidentFilter && !residentMatcher((r as any).residentId)) return false;
     return true;
   });
 

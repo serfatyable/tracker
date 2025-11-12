@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { listUsers, listRotations } from '../../../lib/firebase/admin';
+import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import type { UserProfile } from '../../../types/auth';
 import type { Rotation } from '../../../types/rotations';
 import Button from '../../ui/Button';
@@ -85,10 +86,9 @@ export default function AssignResidentDialog({
     }
   }, [isOpen]);
 
+  const residentMatcher = createSynonymMatcher(searchQuery);
   const filteredResidents = residents.filter(
-    (resident) =>
-      resident.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      resident.email?.toLowerCase().includes(searchQuery.toLowerCase()),
+    (resident) => residentMatcher(resident.fullName || '') || residentMatcher(resident.email || ''),
   );
 
   const handleSubmit = async () => {
@@ -188,7 +188,9 @@ export default function AssignResidentDialog({
                         }`}
                       >
                         <div className="font-medium text-sm">{resident.fullName}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{resident.email}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {resident.email}
+                        </div>
                       </button>
                     ))
                   )}

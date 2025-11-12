@@ -18,6 +18,7 @@ import {
   unassignTutorFromResident,
   listRotations,
 } from '../../../lib/firebase/admin';
+import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import type { AssignmentWithDetails } from '../../../types/assignments';
 import type { UserProfile } from '../../../types/auth';
 import type { Rotation } from '../../../types/rotations';
@@ -103,11 +104,12 @@ export default function AssignmentsView() {
   }, [loadData]);
 
   // Filter assignments based on search and filters
+  const searchMatcher = createSynonymMatcher(searchQuery);
   const filteredAssignments = assignments.filter((assignment) => {
     const matchesSearch =
-      !searchQuery ||
-      assignment.residentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      assignment.tutorNames?.some((name) => name.toLowerCase().includes(searchQuery.toLowerCase()));
+      searchMatcher(assignment.residentName || '') ||
+      assignment.tutorNames?.some((name) => searchMatcher(name)) ||
+      searchMatcher(assignment.rotationName || '');
 
     const matchesRotation =
       !rotationFilter ||

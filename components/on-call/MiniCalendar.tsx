@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useOnCallByDate } from '../../lib/hooks/useOnCallByDate';
 import { stationKeys, stationI18nKeys } from '../../lib/on-call/stations';
+import { createSynonymMatcher } from '../../lib/search/synonyms';
 import { Skeleton } from '../dashboard/Skeleton';
 
 function toDateKey(d: Date) {
@@ -27,6 +28,8 @@ function DayCard({
 }) {
   const { t } = useTranslation();
   const { data, loading } = useOnCallByDate(dateKey);
+  const doctorMatcher = createSynonymMatcher(filterDoctor);
+  const hasDoctorFilter = filterDoctor.trim().length > 0;
 
   return (
     <div className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]">
@@ -44,11 +47,7 @@ function DayCard({
             const entry = (data.stations as any)[sk];
             if (!entry) return null;
             if (filterStation && sk !== filterStation) return null;
-            if (
-              filterDoctor &&
-              !String(entry.userDisplayName).toLowerCase().includes(filterDoctor.toLowerCase())
-            )
-              return null;
+            if (hasDoctorFilter && !doctorMatcher(String(entry.userDisplayName))) return null;
             return (
               <div key={sk} className="flex items-center justify-between gap-2 text-sm">
                 <div className="opacity-70">{t(stationI18nKeys[sk])}</div>
