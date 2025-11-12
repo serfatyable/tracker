@@ -101,7 +101,6 @@ export async function signUp(params: {
       residencyStartDate: residencyStartDate || '',
       studyprogramtype: studyprogramtype || '6-year',
       completedRotationIds: [],
-      currentRotationId: undefined,
       rotationSelectionRequest: {
         status: 'pending',
         requestedCompletedRotationIds: requestedCompleted,
@@ -110,6 +109,9 @@ export async function signUp(params: {
         resolvedAt: null,
       },
     };
+    if (normalizedCurrentRotationId) {
+      residentDoc.currentRotationId = normalizedCurrentRotationId;
+    }
     userDoc = residentDoc;
   } else if (role === 'tutor') {
     const tutorDoc: TutorProfile = {
