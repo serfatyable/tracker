@@ -853,13 +853,17 @@ export async function deleteNode(id: string): Promise<void> {
  * Keeps the node with the highest requiredCount (or most recent if tied).
  * Returns statistics about the cleanup operation.
  */
-export async function cleanupDuplicateNodes(rotationId: string): Promise<{
+export async function cleanupDuplicateNodes(
+  rotationId: string,
+  options?: { dryRun?: boolean },
+): Promise<{
   duplicatesFound: number;
   nodesDeleted: number;
   details: Array<{ name: string; kept: string; deleted: string[] }>;
 }> {
   const db = getFirestore(getFirebaseApp());
   const nodes = await listRotationNodes(rotationId);
+  const dryRun = options?.dryRun ?? false;
 
   // Group nodes by composite key: parentId + type + normalized name
   const groupKey = (n: RotationNode) =>
@@ -892,13 +896,18 @@ export async function cleanupDuplicateNodes(rotationId: string): Promise<{
     const keeper = sorted[0]!;
     const toDelete = sorted.slice(1);
 
-    // Delete duplicates
-    const batch = writeBatch(db);
-    for (const node of toDelete) {
-      batch.delete(doc(db, 'rotationNodes', node.id));
-      nodesDeleted++;
+    if (!dryRun) {
+      // Delete duplicates
+      const batch = writeBatch(db);
+      for (const node of toDelete) {
+        batch.delete(doc(db, 'rotationNodes', node.id));
+        nodesDeleted++;
+      }
+      await batch.commit();
+    } else {
+      // In dry run, just count what would be deleted
+      nodesDeleted += toDelete.length;
     }
-    await batch.commit();
 
     details.push({
       name: keeper.name,
@@ -918,12 +927,16 @@ export async function cleanupDuplicateNodes(rotationId: string): Promise<{
  * Fixes any nodes with invalid requiredCount values (negative or NaN).
  * Sets them to 0.
  */
-export async function fixInvalidRequiredCounts(rotationId: string): Promise<{
+export async function fixInvalidRequiredCounts(
+  rotationId: string,
+  options?: { dryRun?: boolean },
+): Promise<{
   nodesFixed: number;
   details: Array<{ id: string; name: string; oldValue: any; newValue: number }>;
 }> {
   const db = getFirestore(getFirebaseApp());
   const nodes = await listRotationNodes(rotationId);
+  const dryRun = options?.dryRun ?? false;
 
   const details: Array<{ id: string; name: string; oldValue: any; newValue: number }> = [];
   const batch = writeBatch(db);
@@ -936,7 +949,9 @@ export async function fixInvalidRequiredCounts(rotationId: string): Promise<{
 
       // Check if invalid: negative, NaN, or not a finite number
       if (!Number.isFinite(parsed) || parsed < 0) {
-        batch.update(doc(db, 'rotationNodes', node.id), { requiredCount: 0 });
+        if (!dryRun) {
+          batch.update(doc(db, 'rotationNodes', node.id), { requiredCount: 0 });
+        }
         details.push({
           id: node.id,
           name: node.name,
@@ -948,7 +963,7 @@ export async function fixInvalidRequiredCounts(rotationId: string): Promise<{
     }
   }
 
-  if (nodesFixed > 0) {
+  if (nodesFixed > 0 && !dryRun) {
     await batch.commit();
   }
 

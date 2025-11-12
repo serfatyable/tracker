@@ -12,8 +12,6 @@ const nextConfig = {
   // Performance optimizations and instrumentation
   experimental: {
     optimizePackageImports: ['@heroicons/react', 'firebase'],
-    // Enable instrumentation for Sentry initialization
-    instrumentationHook: true,
   },
   // Webpack configuration for xlsx library and pnpm symlinks
   webpack: (config, { isServer }) => {
