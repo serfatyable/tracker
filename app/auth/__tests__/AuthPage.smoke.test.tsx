@@ -40,6 +40,17 @@ vi.mock('../../../lib/firebase/auth', () => ({
   requestPasswordReset: requestPasswordResetMock,
 }));
 
+vi.mock('../../../lib/hooks/useRotations', () => ({
+  useRotations: () => ({
+    rotations: [
+      { id: 'rotation-1', name: 'Rotation One', name_en: 'Rotation One', name_he: 'סבב אחד' },
+      { id: 'rotation-2', name: 'Rotation Two', name_en: 'Rotation Two', name_he: 'סבב שתיים' },
+    ],
+    loading: false,
+    error: null,
+  }),
+}));
+
 describe('AuthPage smoke', () => {
   beforeEach(() => {
     pushMock.mockClear();
@@ -70,8 +81,8 @@ describe('AuthPage smoke', () => {
     // Residency date field should be visible for resident role (default)
     expect(screen.getByLabelText(/residency start date/i)).toBeInTheDocument();
 
-    // Submit button should be present
-    expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();
+    // Sign-up button should be present
+    expect(screen.getByRole('button', { name: /sign up/i })).toBeInTheDocument();
   });
 
   it('allows sign-in and navigates to awaiting-approval', async () => {
@@ -112,6 +123,62 @@ describe('AuthPage smoke', () => {
     await waitFor(() => {
       expect(requestPasswordResetMock).toHaveBeenCalledWith('user@example.com');
       expect(screen.getByRole('status')).toHaveTextContent(/reset email has been sent/i);
+    });
+  });
+
+  it('submits sign-up form for tutor role', async () => {
+    const user = userEvent.setup();
+    render(<AuthPage />);
+
+    await user.click(screen.getByRole('tab', { name: /sign up/i }));
+
+    await user.type(screen.getByLabelText(/^Full name$/i), 'Tutor Test');
+    await user.type(screen.getByLabelText(/^Email$/i), 'tutor@example.com');
+    await user.type(screen.getByLabelText(/^Password$/i), 'password123');
+
+    await user.click(screen.getByRole('button', { name: /Tutor/i }));
+
+    await user.click(screen.getByRole('button', { name: /sign up/i }));
+
+    await waitFor(() => {
+      expect(signUpMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fullName: 'Tutor Test',
+          email: 'tutor@example.com',
+          role: 'tutor',
+        }),
+      );
+      expect(pushMock).toHaveBeenCalledWith('/awaiting-approval');
+    });
+  });
+
+  it('requires rotation selection for resident sign-up', async () => {
+    const user = userEvent.setup();
+    render(<AuthPage />);
+
+    await user.click(screen.getByRole('tab', { name: /sign up/i }));
+
+    await user.type(screen.getByLabelText(/^Full name$/i), 'Resident Test');
+    await user.type(screen.getByLabelText(/^Email$/i), 'resident@example.com');
+    await user.type(screen.getByLabelText(/^Password$/i), 'password123');
+    await user.type(screen.getByLabelText(/residency start date/i), '2020-01-01');
+    await user.selectOptions(screen.getByLabelText(/study program/i), '4-year');
+
+    // Attempt submit without choosing current rotation
+    await user.click(screen.getByRole('button', { name: /sign up/i }));
+
+    expect(signUpMock).not.toHaveBeenCalled();
+    expect(screen.getByText(/rotation required/i)).toBeInTheDocument();
+
+    // Select current rotation and retry
+    const rotationSelect = screen.getAllByRole('combobox')[1]!;
+    await user.selectOptions(rotationSelect, 'rotation-1');
+    await user.click(screen.getByRole('button', { name: /sign up/i }));
+
+    await waitFor(() => {
+      expect(signUpMock).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'resident', currentRotationId: 'rotation-1' }),
+      );
     });
   });
 });

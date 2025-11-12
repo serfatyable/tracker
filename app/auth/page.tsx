@@ -453,7 +453,7 @@ export default function AuthPage() {
                   className="btn-levitate w-full"
                   suppressHydrationWarning
                 >
-                  {t('auth.submit')}
+                  {t('auth.signUp')}
                 </button>
               </form>
             </Tab.Panel>
