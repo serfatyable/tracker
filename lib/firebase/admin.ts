@@ -626,6 +626,13 @@ export async function listRotations(params?: {
   return { items, lastCursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined };
 }
 
+export async function getRotation(rotationId: string): Promise<Rotation | null> {
+  const db = getFirestore(getFirebaseApp());
+  const snap = await getDoc(doc(db, 'rotations', rotationId));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...(snap.data() as any) } as unknown as Rotation;
+}
+
 export async function updateRotation(
   id: string,
   data: Partial<Pick<Rotation, 'name' | 'startDate' | 'endDate'>>,
