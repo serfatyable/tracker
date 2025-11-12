@@ -124,7 +124,7 @@ async function getCurrentTutorIdsForResident(residentId: string): Promise<string
  */
 export async function getFirstTutorIdForResident(residentId: string): Promise<string | null> {
   const tutorIds = await getCurrentTutorIdsForResident(residentId);
-  return tutorIds.length > 0 ? tutorIds[0] : null;
+  return tutorIds[0] ?? null;
 }
 
 export async function listRecentTasksByLeaf(params: {
