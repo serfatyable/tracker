@@ -2,27 +2,19 @@
 import { collection, getDocs, getFirestore, orderBy, query, where } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 
+import type { OnCallDay, OnCallShift, StationAssignment, StationKey } from '@/types/onCall';
 import { getFirebaseApp } from '../firebase/client';
+import { DEFAULT_DAYS_AHEAD } from '../on-call/constants';
+import { getDateRange } from '../utils/dateUtils';
+import { getNetworkErrorMessage, withTimeoutAndRetry } from '../utils/networkUtils';
 
-export type MyShift = {
-  date: Date;
-  dateKey: string;
-  stationKey: string;
-  userDisplayName: string;
-};
-
-export function useOnCallFutureByUser(userId?: string, daysAhead: number = 40) {
-  const [shifts, setShifts] = useState<MyShift[]>([]);
+export function useOnCallFutureByUser(userId?: string, daysAhead: number = DEFAULT_DAYS_AHEAD) {
+  const [shifts, setShifts] = useState<OnCallShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const { startKey, endKey } = useMemo(() => {
-    const today = new Date();
-    const end = new Date(today);
-    end.setDate(end.getDate() + Math.max(0, daysAhead));
-    const fmt = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return { startKey: fmt(today), endKey: fmt(end) };
+    return getDateRange(new Date(), daysAhead);
   }, [daysAhead]);
 
   useEffect(() => {
@@ -36,41 +28,53 @@ export function useOnCallFutureByUser(userId?: string, daysAhead: number = 40) {
     (async () => {
       try {
         setLoading(true);
-        const db = getFirestore(getFirebaseApp());
-        const snap = await getDocs(
-          query(
-            collection(db, 'onCallDays'),
-            where('dateKey', '>=', startKey),
-            where('dateKey', '<=', endKey),
-            orderBy('dateKey', 'asc'),
-          ),
-        );
+        setError(null);
 
-        const nextShifts: MyShift[] = [];
-        for (const d of snap.docs) {
-          const rec = d.data() as any;
-          const stations = (rec.stations || {}) as Record<
-            string,
-            { userId: string; userDisplayName: string }
-          >;
-          for (const [stationKey, entry] of Object.entries(stations)) {
-            if (entry && entry.userId === userId) {
-              nextShifts.push({
-                date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date),
-                dateKey: rec.dateKey,
-                stationKey,
-                userDisplayName: entry.userDisplayName,
-              });
+        const nextShifts = await withTimeoutAndRetry(
+          async () => {
+            const db = getFirestore(getFirebaseApp());
+            const snap = await getDocs(
+              query(
+                collection(db, 'onCallDays'),
+                where('dateKey', '>=', startKey),
+                where('dateKey', '<=', endKey),
+                orderBy('dateKey', 'asc'),
+              ),
+            );
+
+            const shifts: OnCallShift[] = [];
+            for (const d of snap.docs) {
+              const rec = d.data() as OnCallDay;
+              const stations = rec.stations;
+              for (const [stationKey, entry] of Object.entries(stations) as [StationKey, StationAssignment][]) {
+                if (entry && entry.userId === userId) {
+                  shifts.push({
+                    date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date as any),
+                    dateKey: rec.dateKey,
+                    stationKey,
+                    userDisplayName: entry.userDisplayName,
+                    userId: entry.userId,
+                  });
+                }
+              }
             }
-          }
-        }
+            return shifts;
+          },
+          {
+            timeout: 15000, // 15 seconds for query with multiple docs
+            retries: 3,
+            operationName: 'load user on-call shifts',
+          },
+        );
 
         if (!cancelled) {
           setShifts(nextShifts);
-          setError(null);
         }
       } catch (e: any) {
-        if (!cancelled) setError(e?.message || 'Failed to load user on-call shifts');
+        if (!cancelled) {
+          const userMessage = getNetworkErrorMessage(e, 'Failed to load user on-call shifts');
+          setError(userMessage);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

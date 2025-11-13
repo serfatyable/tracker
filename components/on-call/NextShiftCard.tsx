@@ -9,7 +9,7 @@ import EmptyState, { CalendarIcon } from '../ui/EmptyState';
 
 export default function NextShiftCard({ userId }: { userId?: string }) {
   const { t } = useTranslation();
-  const { next, loading } = useOnCallUpcomingByUser(userId);
+  const { next, loading, error } = useOnCallUpcomingByUser(userId);
 
   if (!userId) return null;
 
@@ -19,6 +19,17 @@ export default function NextShiftCard({ userId }: { userId?: string }) {
         <Skeleton className="h-3 w-24 mb-2" />
         <Skeleton className="h-4 w-40" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <EmptyState
+        icon={<CalendarIcon size={36} />}
+        title={t('ui.error', { defaultValue: 'Error' })}
+        description={error}
+        className="py-4"
+      />
     );
   }
 

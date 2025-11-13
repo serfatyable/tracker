@@ -2,20 +2,13 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { StationAssignment, StationKey } from '@/types/onCall';
 import { useOnCallByDate } from '../../lib/hooks/useOnCallByDate';
+import { TIMELINE_DAYS_COUNT } from '../../lib/on-call/constants';
 import { stationKeys, stationI18nKeys } from '../../lib/on-call/stations';
 import { createSynonymMatcher } from '../../lib/search/synonyms';
+import { addDays, toDateKey } from '../../lib/utils/dateUtils';
 import { Skeleton } from '../dashboard/Skeleton';
-
-function toDateKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function addDays(d: Date, n: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-}
 
 function DayCard({
   dateKey,
@@ -44,10 +37,10 @@ function DayCard({
       ) : (
         <div className="mt-2 space-y-1">
           {stationKeys.map((sk) => {
-            const entry = (data.stations as any)[sk];
+            const entry: StationAssignment | undefined = data.stations[sk];
             if (!entry) return null;
             if (filterStation && sk !== filterStation) return null;
-            if (hasDoctorFilter && !doctorMatcher(String(entry.userDisplayName))) return null;
+            if (hasDoctorFilter && !doctorMatcher(entry.userDisplayName)) return null;
             return (
               <div key={sk} className="flex items-center justify-between gap-2 text-sm">
                 <div className="opacity-70">{t(stationI18nKeys[sk])}</div>
@@ -67,7 +60,7 @@ export default function MiniCalendar() {
   const [filterStation, setFilterStation] = useState<string>('');
   const [filterDoctor, setFilterDoctor] = useState<string>('');
 
-  const days = useMemo(() => Array.from({ length: 21 }).map((_, i) => addDays(start, i)), [start]);
+  const days = useMemo(() => Array.from({ length: TIMELINE_DAYS_COUNT }).map((_, i) => addDays(start, i)), [start]);
   const dayKeys = days.map((d) => toDateKey(d));
 
   return (

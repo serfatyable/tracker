@@ -2,15 +2,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { StationAssignment, StationKey } from '@/types/onCall';
 import { useOnCallByDate } from '../../lib/hooks/useOnCallByDate';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
-import type { StationKey } from '../../types/onCall';
+import { toDateKey } from '../../lib/utils/dateUtils';
 import { Skeleton } from '../dashboard/Skeleton';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';
-
-function toDateKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 export default function TeamForDate({ initialDateKey }: { initialDateKey?: string }) {
   const { t } = useTranslation();
@@ -58,16 +55,14 @@ export default function TeamForDate({ initialDateKey }: { initialDateKey?: strin
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {stationKeys.map((sk) => {
-            const entry = (data.stations as any)[sk] as
-              | { userId: string; userDisplayName: string }
-              | undefined;
+            const entry: StationAssignment | undefined = data.stations[sk];
             if (!entry) return null;
             return (
               <div
                 key={sk}
                 className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]"
               >
-                <div className="text-xs opacity-70">{t(stationI18nKeys[sk as StationKey])}</div>
+                <div className="text-xs opacity-70">{t(stationI18nKeys[sk])}</div>
                 <div className="mt-1 font-medium">{entry.userDisplayName}</div>
               </div>
             );

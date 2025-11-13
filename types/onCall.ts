@@ -32,10 +32,52 @@ export type OnCallAssignment = {
   createdBy?: string; // uid
 };
 
+/**
+ * Station assignment entry - represents a user assigned to a station
+ */
+export type StationAssignment = {
+  userId: string;
+  userDisplayName: string;
+};
+
+/**
+ * Collection of station assignments for a given day
+ */
+export type StationsMap = Partial<Record<StationKey, StationAssignment>>;
+
 export type OnCallDay = {
   id?: string; // same as dateKey
   dateKey: string; // YYYY-MM-DD
   date: Timestamp; // start of day (Asia/Jerusalem) stored as UTC midnight
-  stations: Partial<Record<StationKey, { userId: string; userDisplayName: string }>>;
+  stations: StationsMap;
   createdAt?: Timestamp;
+};
+
+/**
+ * Client-side representation of an on-call shift (used in UI)
+ */
+export type OnCallShift = {
+  date: Date;
+  dateKey: string;
+  stationKey: StationKey;
+  userDisplayName: string;
+  userId: string;
+};
+
+/**
+ * Statistics about on-call shifts for a user
+ */
+export type OnCallStats = {
+  totalShifts: number;
+  mostCommonStation: StationKey | null;
+  stationCounts: Partial<Record<StationKey, number>>;
+  upcomingShifts: number;
+};
+
+/**
+ * Date range for querying on-call data
+ */
+export type DateRange = {
+  startKey: string;
+  endKey: string;
 };

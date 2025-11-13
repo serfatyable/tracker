@@ -5,17 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { StationKey } from '@/types/onCall';
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
+import { DEFAULT_DAYS_AHEAD } from '../../lib/on-call/constants';
 import { stationI18nKeys } from '../../lib/on-call/stations';
-import type { StationKey } from '../../types/onCall';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Toast from '../ui/Toast';
 
 export default function MyShiftsList({
   userId,
-  daysAhead = 40,
+  daysAhead = DEFAULT_DAYS_AHEAD,
 }: {
   userId?: string;
   daysAhead?: number;

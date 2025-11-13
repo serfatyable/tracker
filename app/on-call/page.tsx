@@ -119,7 +119,7 @@ export default function OnCallPage() {
         {tab === 'my' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
             <div className="md:col-span-2">
-              <MyShiftsList userId={me?.uid} daysAhead={40} />
+              <MyShiftsList userId={me?.uid} />
             </div>
             <div className="md:col-span-1" ref={nextRef}>
               <Card>
