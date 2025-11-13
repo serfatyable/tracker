@@ -2,7 +2,7 @@
 
 import { getAuth } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
+import { Suspense, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AuthGate from '../../../components/auth/AuthGate';
@@ -20,12 +20,16 @@ import RotationPickerSheet from '../../../components/resident/RotationPickerShee
 import RotationResources from '../../../components/resident/RotationResources';
 import SegmentedView from '../../../components/resident/SegmentedView';
 import { UndoToastProvider, useUndoToast } from '../../../components/resident/UndoToastProvider';
+import Button from '../../../components/ui/Button';
+import Input from '../../../components/ui/Input';
 import { getFirebaseApp } from '../../../lib/firebase/client';
 import { createTask, deleteTask } from '../../../lib/firebase/db';
 import { useResidentActiveRotation } from '../../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../../lib/hooks/useRotationNodes';
 import { useRotationsIndex } from '../../../lib/hooks/useRotationsIndex';
 import type { RotationNode } from '../../../types/rotations';
+
+import { applyQueryParam, normalizeDomainFilter, shouldShowDesktopQuickLog } from './utils';
 
 export default function ResidentRotationsPage() {
   return (
@@ -44,7 +48,7 @@ function ResidentRotationsPageInner() {
   const { rotationId } = useResidentActiveRotation();
   const rotationIndex = useRotationsIndex();
   const { showToast, showUndoToast } = useUndoToast();
-  const [searchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [activeRotationId, setActiveRotationId] = useState<string | null>(null);
   const [quickLogOpen, setQuickLogOpen] = useState(false);
   const [selectedLeaf, setSelectedLeaf] = useState<RotationNode | null>(null);
@@ -69,19 +73,34 @@ function ResidentRotationsPageInner() {
     [rotationIndex, activeRotationId],
   );
 
-  const { nodes: rotationNodes } = useRotationNodes(activeRotationId ?? null);
+  const { nodes: rotationNodes, loading: rotationNodesLoading } = useRotationNodes(
+    activeRotationId ?? null,
+  );
   const rotationNodesById = useMemo(() => {
     const map = new Map<string, RotationNode>();
     rotationNodes.forEach((n) => map.set(n.id, n));
     return map;
   }, [rotationNodes]);
 
+  const previousRotationRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
+    if (previousRotationRef.current === activeRotationId) {
+      return;
+    }
     setSelectedLeaf(null);
     setRecentLeafIds([]);
     setNodeDetailsOpen(false);
     setSelectedNodeDetail(null);
-  }, [activeRotationId]);
+    if (previousRotationRef.current !== undefined) {
+      setDomainFilter('all');
+      setDomainPickerOpen(false);
+      const params = new URLSearchParams(searchParams);
+      const query = applyQueryParam(params, 'domain', '');
+      const newUrl = query ? `?${query}` : '';
+      router.replace(`/resident/rotations${newUrl}`, { scroll: false });
+    }
+    previousRotationRef.current = activeRotationId;
+  }, [activeRotationId, router, searchParams]);
 
   const leafOptions = useMemo(() => {
     if (!rotationNodes.length)
@@ -133,6 +152,7 @@ function ResidentRotationsPageInner() {
     const rotParam = searchParams.get('rot');
     const viewParam = searchParams.get('view') as 'overview' | 'items' | 'resources' | 'activity';
     const domainParam = searchParams.get('domain');
+    const searchParam = searchParams.get('search') ?? '';
 
     if (rotParam) {
       setActiveRotationId(rotParam);
@@ -148,8 +168,22 @@ function ResidentRotationsPageInner() {
 
     if (domainParam) {
       setDomainFilter(domainParam);
+    } else {
+      setDomainFilter('all');
     }
+
+    setSearchTerm((prev) => (prev === searchParam ? prev : searchParam));
   }, [searchParams, rotationId]);
+
+  useEffect(() => {
+    const normalized = normalizeDomainFilter(domainFilter, domainsList);
+    if (normalized === domainFilter) return;
+    setDomainFilter(normalized);
+    const params = new URLSearchParams(searchParams);
+    const query = applyQueryParam(params, 'domain', normalized === 'all' ? '' : normalized);
+    const newUrl = query ? `?${query}` : '';
+    router.replace(`/resident/rotations${newUrl}`, { scroll: false });
+  }, [domainFilter, domainsList, router, searchParams]);
 
   // Sync URL when activeRotationId changes
   useEffect(() => {
@@ -203,12 +237,16 @@ function ResidentRotationsPageInner() {
   const handleDomainSelect = (domain: string | 'all') => {
     setDomainFilter(domain);
     const params = new URLSearchParams(searchParams);
-    if (domain !== 'all') {
-      params.set('domain', domain);
-    } else {
-      params.delete('domain');
-    }
-    const newUrl = params.toString() ? `?${params.toString()}` : '';
+    const query = applyQueryParam(params, 'domain', domain === 'all' ? '' : domain);
+    const newUrl = query ? `?${query}` : '';
+    router.replace(`/resident/rotations${newUrl}`, { scroll: false });
+  };
+
+  const handleSearchTermChange = (value: string) => {
+    setSearchTerm(value);
+    const params = new URLSearchParams(searchParams);
+    const query = applyQueryParam(params, 'search', value);
+    const newUrl = query ? `?${query}` : '';
     router.replace(`/resident/rotations${newUrl}`, { scroll: false });
   };
 
@@ -322,6 +360,59 @@ function ResidentRotationsPageInner() {
       </div>
 
       <div className="app-container p-4 pt-2 space-y-3 pb-24 pad-safe-b">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="relative w-full md:max-w-sm">
+            <label htmlFor="rotation-search" className="sr-only">
+              {t('ui.searchRotationsOrItems', { defaultValue: 'Search rotations or items...' })}
+            </label>
+            <Input
+              id="rotation-search"
+              value={searchTerm}
+              onChange={(event) => handleSearchTermChange(event.target.value)}
+              placeholder={
+                t('ui.searchRotationsOrItems', {
+                  defaultValue: 'Search rotations or items...',
+                }) as string
+              }
+              aria-label={
+                t('ui.searchRotationsOrItems', {
+                  defaultValue: 'Search rotations or items...',
+                }) as string
+              }
+            />
+            {searchTerm ? (
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                onClick={() => handleSearchTermChange('')}
+                aria-label={t('ui.clearSearch', { defaultValue: 'Clear search' }) as string}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+          {shouldShowDesktopQuickLog(activeRotationId, view) ? (
+            <Button
+              type="button"
+              onClick={handleQuickLogOpen}
+              className="hidden md:inline-flex md:shrink-0"
+              leftIcon={
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                >
+                  <path d="M12 4.5a.75.75 0 01.75.75V11h5.75a.75.75 0 010 1.5H12.75v5.75a.75.75 0 01-1.5 0V12.5H5.5a.75.75 0 010-1.5h5.75V5.25A.75.75 0 0112 4.5z" />
+                </svg>
+              }
+              data-testid="desktop-quick-log"
+            >
+              {t('ui.logActivity', { defaultValue: 'Log activity' })}
+            </Button>
+          ) : null}
+        </div>
         {/* Segmented view control */}
         <SegmentedView activeTab={view} onTabChange={handleViewChange} />
 
@@ -337,6 +428,8 @@ function ResidentRotationsPageInner() {
                 activeRotationId={activeRotationId}
                 searchTerm={searchTerm}
                 domainFilter={domainFilter}
+                nodes={rotationNodes}
+                nodesLoading={rotationNodesLoading}
                 onSelectLeaf={handleItemSelect}
                 onOpenDomainPicker={() => setDomainPickerOpen(true)}
                 onSelectDomain={(d) => handleDomainSelect(d)}
@@ -355,7 +448,7 @@ function ResidentRotationsPageInner() {
           </div>
         </Suspense>
         {/* Sticky CTA FAB */}
-        {activeRotationId && view === 'items' ? (
+        {shouldShowDesktopQuickLog(activeRotationId, view) ? (
           <div className="fixed inset-x-0 bottom-3 flex justify-center md:hidden pointer-events-none">
             <button
               type="button"

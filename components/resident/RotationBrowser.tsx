@@ -22,6 +22,8 @@ type Props = {
   activeRotationId: string | null;
   searchTerm: string;
   domainFilter: string | 'all';
+  nodes?: RotationNode[];
+  nodesLoading?: boolean;
   onSelectLeaf: (leaf: RotationNode) => void;
   onOpenDomainPicker: () => void;
   // New: allow parent to directly set a domain from top chips
@@ -38,6 +40,8 @@ export default function RotationBrowser({
   activeRotationId,
   searchTerm,
   domainFilter,
+  nodes: providedNodes,
+  nodesLoading: providedNodesLoading,
   onSelectLeaf,
   onOpenDomainPicker,
   onSelectDomain,
@@ -48,7 +52,10 @@ export default function RotationBrowser({
   const { t, i18n } = useTranslation();
   const { rotationId: residentActiveRotationId } = useResidentActiveRotation();
   const { tasks, refresh: refreshTasks } = useUserTasks();
-  const { nodes, loading } = useRotationNodes(activeRotationId || null);
+  const shouldUseProvided = Boolean(activeRotationId && providedNodes);
+  const { nodes, loading } = useRotationNodes(activeRotationId || null, {
+    enabled: !shouldUseProvided,
+  });
   const [debouncedTerm, setDebouncedTerm] = useState('');
   const [localOptimisticPending, setLocalOptimisticPending] = useState<Record<string, number>>({});
   const { showToast, showUndoToast } = useUndoToast();
@@ -107,8 +114,10 @@ export default function RotationBrowser({
 
   // When activeRotationId is null, we need to load all nodes for "all rotations" view
   const { nodes: allNodes, loading: allLoading } = useRotationNodes(null);
-  const nodesToUse = activeRotationId ? nodes : allNodes;
-  const loadingToUse = activeRotationId ? loading : allLoading;
+  const nodesToUse = activeRotationId ? (providedNodes ?? nodes) : allNodes;
+  const loadingToUse = activeRotationId
+    ? (providedNodesLoading ?? (shouldUseProvided ? false : loading))
+    : allLoading;
 
   const tree = useMemo(() => buildTree(nodesToUse), [nodesToUse]);
 
