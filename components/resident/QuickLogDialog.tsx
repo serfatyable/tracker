@@ -1,6 +1,7 @@
 'use client';
 import { getAuth } from 'firebase/auth';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ChangeEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
@@ -11,7 +12,12 @@ import { logError } from '../../lib/utils/logger';
 import type { RotationNode } from '../../types/rotations';
 import ReflectionForm from '../reflections/ReflectionForm';
 import Button from '../ui/Button';
+import TextAreaField from '../ui/TextAreaField';
 import TextField from '../ui/TextField';
+
+const QUICK_ADD_COUNTS = [1, 2, 5] as const;
+const NOTE_MAX_LENGTH = 500;
+const COUNT_MIN = 1;
 
 type QuickLogDialogProps = {
   open: boolean;
@@ -44,6 +50,12 @@ export default function QuickLogDialog({
 }: QuickLogDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const countInputRef = useRef<HTMLInputElement | null>(null);
+  const titleize = useCallback(
+    (value: string) => (value ? value.charAt(0).toUpperCase() + value.slice(1) : value),
+    [],
+  );
+  const titleId = useId();
   const [count, setCount] = useState(1);
   const [note, setNote] = useState('');
   const [selected, setSelected] = useState<RotationNode | null>(leaf);
@@ -53,6 +65,7 @@ export default function QuickLogDialog({
   const [showReflectionForm, setShowReflectionForm] = useState(false);
   const [createdTaskId, setCreatedTaskId] = useState<string | null>(null);
   const [submittingReflection, setSubmittingReflection] = useState(false);
+  const selectedId = selected?.id ?? null;
 
   // Get reflection template
   const taskType = selected?.name || 'Task';
@@ -71,6 +84,11 @@ export default function QuickLogDialog({
       setCreatedTaskId(null);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !selected) return;
+    countInputRef.current?.focus();
+  }, [open, selected]);
 
   useEffect(() => {
     if (!open) return;
@@ -92,12 +110,72 @@ export default function QuickLogDialog({
     });
   }, [leafOptions, search]);
 
+  const optionLookup = useMemo(() => {
+    const map = new Map<string, { title: string; trail?: string }>();
+    leafOptions.forEach((opt) => {
+      map.set(opt.node.id, { title: opt.title, trail: opt.trail });
+    });
+    recentLeaves.forEach((opt) => {
+      if (!map.has(opt.node.id)) {
+        map.set(opt.node.id, { title: opt.title, trail: opt.trail });
+      }
+    });
+    return map;
+  }, [leafOptions, recentLeaves]);
+
+  const selectedMeta = selected ? (optionLookup.get(selected.id) ?? null) : null;
+
   const handleLeafPick = (node: RotationNode) => {
     setSelected(node);
     onSelectLeaf?.(node);
   };
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+    if (!selectedId) return;
+    setCount(1);
+    setNote('');
+  }, [selectedId]);
+
+  const updateCount = useCallback((updater: (prev: number) => number) => {
+    setCount((prev) => {
+      const next = updater(prev);
+      if (!Number.isFinite(next)) return COUNT_MIN;
+      const rounded = Math.round(next);
+      return rounded >= COUNT_MIN ? rounded : COUNT_MIN;
+    });
+  }, []);
+
+  const handleCountInputChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const raw = Number(event.target.value);
+      updateCount(() => (Number.isNaN(raw) ? COUNT_MIN : raw));
+    },
+    [updateCount],
+  );
+
+  const handleQuickAdd = useCallback(
+    (value: number) => {
+      updateCount((prev) => prev + value);
+      countInputRef.current?.focus();
+    },
+    [updateCount],
+  );
+
+  const handleCountKey = useCallback(
+    (event: ReactKeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        updateCount((prev) => prev + 1);
+      }
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        updateCount((prev) => prev - 1);
+      }
+    },
+    [updateCount],
+  );
+
+  const handleSubmit = useCallback(async () => {
     if (!selected || submitting) return;
     try {
       setSubmitting(true);
@@ -134,7 +212,7 @@ export default function QuickLogDialog({
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [alsoLogReflection, count, note, onClose, onLog, selected, submitting]);
 
   async function handleReflectionSubmit(answers: Record<string, string>) {
     const auth = getAuth(getFirebaseApp());
@@ -173,19 +251,51 @@ export default function QuickLogDialog({
     }
   }
 
+  const handleDialogKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (showReflectionForm) return;
+      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        handleSubmit();
+      }
+    },
+    [handleSubmit, showReflectionForm],
+  );
+
+  const logButtonLabel =
+    count === 1
+      ? t('ui.logPlusOne', { defaultValue: 'Log +1' })
+      : `${titleize(t('ui.log', { defaultValue: 'Log' }))} +${count}`;
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[120] p-4 flex items-end sm:items-center justify-center bg-black/30">
       <div
         ref={dialogRef}
-        className="w-full max-w-md rounded-lg border bg-white dark:bg-[rgb(var(--surface))] border-gray-200 dark:border-[rgb(var(--border))] shadow-lg p-4"
+        className="w-full max-w-md rounded-xl border bg-white dark:bg-[rgb(var(--surface))] border-gray-200 dark:border-[rgb(var(--border))] shadow-xl p-4 sm:p-5"
+        onKeyDown={handleDialogKeyDown}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
       >
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm font-semibold text-gray-900 dark:text-gray-50">
-            {showReflectionForm
-              ? t('reflections.writeReflection', { defaultValue: 'Write Reflection' })
-              : t('ui.logActivity', { defaultValue: 'Log activity' })}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <h2 id={titleId} className="text-sm font-semibold text-gray-900 dark:text-gray-50">
+              {showReflectionForm
+                ? t('reflections.writeReflection', { defaultValue: 'Write Reflection' })
+                : t('ui.logActivity', { defaultValue: 'Log activity' })}
+            </h2>
+            {selected ? (
+              <div className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-50 whitespace-normal break-words">
+                {selectedMeta?.title ?? selected.name}
+              </div>
+            ) : null}
+            {selected && selectedMeta?.trail ? (
+              <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-normal break-words">
+                {selectedMeta.trail}
+              </div>
+            ) : null}
           </div>
           <button
             onClick={onClose}
@@ -220,14 +330,14 @@ export default function QuickLogDialog({
                       {recentLeaves.map((r) => (
                         <button
                           key={`recent-${r.id}`}
-                          className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          className="w-full rounded-lg border border-gray-200/70 dark:border-white/10 bg-gradient-to-r from-white to-blue-50/60 dark:from-white/5 dark:to-white/0 px-3 py-2 text-left hover:border-blue-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                           onClick={() => handleLeafPick(r.node)}
                         >
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-50 whitespace-normal break-words">
                             {r.title}
                           </div>
                           {r.trail ? (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-normal break-words">
                               {r.trail}
                             </div>
                           ) : null}
@@ -244,14 +354,14 @@ export default function QuickLogDialog({
                     {filteredLeaves.map((opt) => (
                       <button
                         key={opt.id}
-                        className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        className="w-full rounded-lg border border-gray-200/70 dark:border-white/10 bg-white/90 dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         onClick={() => handleLeafPick(opt.node)}
                       >
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-50 whitespace-normal break-words">
                           {opt.title}
                         </div>
                         {opt.trail ? (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-normal break-words">
                             {opt.trail}
                           </div>
                         ) : null}
@@ -267,121 +377,166 @@ export default function QuickLogDialog({
               </div>
             </div>
           ) : (
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
-                {selected.name}
-              </div>
-              {leafOptions.length > 0 ? (
-                <button
-                  type="button"
-                  className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-300"
-                  onClick={() => {
-                    setSelected(null);
-                    onSelectLeaf?.(null);
-                  }}
-                >
-                  {t('ui.chooseDifferentItem', { defaultValue: 'Choose a different item' })}
-                </button>
-              ) : null}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-600 dark:text-gray-300">
-                  {t('ui.count', { defaultValue: 'Count' })}
-                </span>
-                <div className="flex items-center gap-1">
+            <div className="space-y-3">
+              <div className="rounded-lg border border-gray-200/80 dark:border-[rgb(var(--border))] bg-white/80 dark:bg-white/5 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-50 whitespace-normal break-words">
+                      {selected.name}
+                    </div>
+                    {selectedMeta?.trail ? (
+                      <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 whitespace-normal break-words">
+                        {selectedMeta.trail}
+                      </div>
+                    ) : null}
+                  </div>
+                  {selected.requiredCount ? (
+                    <div className="rounded-md bg-[rgb(var(--primary))]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--primary))] dark:text-[rgb(var(--primary-ink))]">
+                      {titleize(t('ui.goal', { defaultValue: 'Goal' }))}: {selected.requiredCount}
+                    </div>
+                  ) : null}
+                </div>
+                {leafOptions.length > 0 ? (
                   <button
                     type="button"
-                    onClick={() => setCount((c) => Math.max(1, c - 1))}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-lg font-semibold text-gray-900 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--primary))] focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:bg-gray-100 active:translate-y-[1px] dark:border-white/20 dark:bg-[rgb(var(--surface))] dark:text-gray-100 dark:hover:bg-white/10 dark:focus-visible:ring-offset-gray-900"
+                    className="mt-2 text-xs font-medium text-blue-600 hover:underline dark:text-blue-300"
+                    onClick={() => {
+                      setSelected(null);
+                      onSelectLeaf?.(null);
+                    }}
+                  >
+                    {t('ui.chooseDifferentItem', { defaultValue: 'Choose a different item' })}
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="rounded-xl border border-gray-200/80 dark:border-[rgb(var(--border))] bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-white/5 dark:via-white/5 dark:to-white/10 p-3 shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-900/80 dark:text-blue-200">
+                    {t('ui.count', { defaultValue: 'Count' })}
+                  </span>
+                  <span className="hidden text-[10px] text-blue-900/70 dark:text-blue-200/80 sm:inline">
+                    Ctrl+Enter
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickAdd(-1)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-blue-200 bg-white text-lg font-semibold text-blue-600 shadow-sm transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-blue-300/40 dark:bg-[rgb(var(--surface))] dark:text-blue-200"
                     aria-label={t('ui.decreaseCount', { defaultValue: 'Decrease count' }) as string}
                   >
                     −
                   </button>
-                  <div className="min-w-[3rem] text-center text-lg font-semibold text-gray-900 dark:text-gray-50">
-                    {count}
-                  </div>
+                  <input
+                    ref={countInputRef}
+                    type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    min={COUNT_MIN}
+                    value={count}
+                    onChange={handleCountInputChange}
+                    onKeyDown={handleCountKey}
+                    className="w-20 rounded-md border border-blue-200 bg-white px-3 py-2 text-center text-lg font-semibold text-blue-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-blue-200/40 dark:bg-[rgb(var(--surface))] dark:text-blue-100"
+                    aria-live="polite"
+                  />
                   <button
                     type="button"
-                    onClick={() => setCount((c) => c + 1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-[rgb(var(--primary))] text-lg font-semibold text-[rgb(var(--primary-ink))] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--primary))] focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:bg-[rgb(var(--primary))]/90 active:translate-y-[1px] dark:focus-visible:ring-offset-gray-900"
+                    onClick={() => handleQuickAdd(1)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-[rgb(var(--primary))] text-lg font-semibold text-[rgb(var(--primary-ink))] shadow-sm transition hover:bg-[rgb(var(--primary))]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--primary))] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900"
                     aria-label={t('ui.increaseCount', { defaultValue: 'Increase count' }) as string}
                   >
                     +
                   </button>
                 </div>
+                <div className="mt-4 border-t border-blue-100 pt-3 dark:border-blue-200/30">
+                  <div className="text-[11px] uppercase tracking-wide text-blue-900/70 dark:text-blue-200/80">
+                    {titleize(t('ui.quickAdd', { defaultValue: 'Quick add' }))}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {QUICK_ADD_COUNTS.map((value) => (
+                      <button
+                        key={`quick-add-${value}`}
+                        type="button"
+                        onClick={() => handleQuickAdd(value)}
+                        className="rounded-full border border-blue-200/70 bg-white/80 px-3 py-1 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-blue-200/30 dark:bg-white/10 dark:text-blue-100 dark:hover:bg-white/20"
+                      >
+                        +{value}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <TextField
+
+              <TextAreaField
                 placeholder={t('ui.optionalNote', { defaultValue: 'Optional note' }) as string}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
+                maxLength={NOTE_MAX_LENGTH}
+                rows={3}
                 className="text-sm"
+                helpText={`${note.length}/${NOTE_MAX_LENGTH} characters`}
               />
-              <div className="rounded-lg border border-gray-200 dark:border-[rgb(var(--border))] bg-gray-50 dark:bg-gray-800/50 p-2.5 mt-2">
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <svg
-                        className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400 flex-shrink-0"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                      <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
-                        {t('reflections.alsoLogReflection', {
-                          defaultValue: 'Also log reflection',
-                        })}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-gray-600 dark:text-gray-400 ml-5 leading-tight">
-                      {alsoLogReflection
-                        ? t('reflections.reflectionEnabledDesc', {
-                            defaultValue: 'Reflection form will appear after logging',
-                          })
-                        : t('reflections.reflectionDisabledDesc', {
-                            defaultValue: 'Enable to add reflection',
+
+              <div className="space-y-2.5">
+                <div className="rounded-lg border border-gray-200/80 dark:border-[rgb(var(--border))] bg-white/90 dark:bg-white/5 p-2.5 shadow-sm">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <svg
+                          className="h-3.5 w-3.5 text-blue-600 dark:text-blue-200 flex-shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        <span className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                          {t('reflections.alsoLogReflection', {
+                            defaultValue: 'Also log reflection',
                           })}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={alsoLogReflection}
-                    aria-label={
-                      alsoLogReflection
-                        ? (t('reflections.reflectionEnabled', {
-                            defaultValue: 'Reflection enabled',
-                          }) as string)
-                        : (t('reflections.reflectionDisabled', {
-                            defaultValue: 'Reflection disabled',
-                          }) as string)
-                    }
-                    onClick={() => setAlsoLogReflection(!alsoLogReflection)}
-                    disabled={submitting}
-                    className={`
-                      relative inline-flex h-6 w-[44px] flex-shrink-0 cursor-pointer rounded-full transition-colors duration-300 ease-in-out
-                      focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
-                      ${
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-tight">
+                        {alsoLogReflection
+                          ? t('reflections.reflectionEnabledDesc', {
+                              defaultValue: 'Reflection form will appear after logging',
+                            })
+                          : t('reflections.reflectionDisabledDesc', {
+                              defaultValue: 'Enable to add reflection',
+                            })}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={alsoLogReflection}
+                      aria-label={
                         alsoLogReflection
-                          ? 'bg-[rgb(var(--primary))]'
-                          : 'bg-gray-300 dark:bg-gray-600'
+                          ? (t('reflections.reflectionEnabled', {
+                              defaultValue: 'Reflection enabled',
+                            }) as string)
+                          : (t('reflections.reflectionDisabled', {
+                              defaultValue: 'Reflection disabled',
+                            }) as string)
                       }
-                      ${submitting ? 'opacity-50 cursor-not-allowed' : ''}
-                    `}
-                  >
-                    <span
+                      onClick={() => setAlsoLogReflection((prev) => !prev)}
+                      disabled={submitting}
                       className={`
-                        pointer-events-none inline-block h-[26px] w-[26px] transform rounded-full bg-white shadow-sm
-                        transition-all duration-300 ease-in-out
-                        ${alsoLogReflection ? 'translate-x-[18px]' : 'translate-x-[2px]'}
+                        relative inline-flex h-7 w-[48px] flex-shrink-0 cursor-pointer items-center rounded-full px-0.5 transition-all duration-300 ease-in-out
+                        focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 focus:ring-offset-white dark:focus:ring-offset-gray-900
+                        ${alsoLogReflection ? 'justify-end bg-gradient-to-r from-[rgb(var(--primary))] to-blue-500' : 'justify-start bg-gray-300 dark:bg-gray-600'}
+                        ${submitting ? 'opacity-50 cursor-not-allowed' : ''}
                       `}
-                    />
-                  </button>
+                    >
+                      <span className="pointer-events-none inline-flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm transition duration-300 ease-in-out" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -423,7 +578,7 @@ export default function QuickLogDialog({
               disabled={!selected || submittingReflection}
               loading={submitting}
             >
-              {t('ui.logPlusOne', { defaultValue: 'Log +1' })}
+              {logButtonLabel}
             </Button>
           </div>
         )}

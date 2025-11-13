@@ -1,8 +1,20 @@
 'use client';
+import {
+  BookOpenIcon,
+  ChatBubbleLeftRightIcon,
+  SparklesIcon,
+  WrenchScrewdriverIcon,
+} from '@heroicons/react/24/outline';
+import { clsx } from 'clsx';
 import { getAuth } from 'firebase/auth';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  getProgressMedallionClasses,
+  inferDomainPalette,
+} from '../../app/resident/rotations/utils';
+import type { RotationDomainPaletteKey } from '../../app/resident/rotations/utils';
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { createTask, deleteTask } from '../../lib/firebase/db';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
@@ -16,12 +28,15 @@ import Button from '../ui/Button';
 import { EmptyIcon } from '../ui/EmptyState';
 import ProgressRing from '../ui/ProgressRing';
 
+
 import { useUndoToast } from './UndoToastProvider';
 
 type Props = {
   activeRotationId: string | null;
   searchTerm: string;
   domainFilter: string | 'all';
+  nodes?: RotationNode[];
+  nodesLoading?: boolean;
   onSelectLeaf: (leaf: RotationNode) => void;
   onOpenDomainPicker: () => void;
   // New: allow parent to directly set a domain from top chips
@@ -34,10 +49,77 @@ type Props = {
 
 type TreeNode = RotationNode & { children: TreeNode[] };
 
+type PaletteStyles = {
+  card: string;
+  domainHeader: string;
+  domainHeaderBadge: string;
+  domainChip: string;
+  domainChipText: string;
+  domainChipIcon: string;
+  quickLog: string;
+};
+
+const domainPaletteStyles: Record<RotationDomainPaletteKey, PaletteStyles> = {
+  knowledge: {
+    card: 'bg-gradient-to-br from-sky-50 via-white to-white border-sky-100/70 hover:border-sky-200/80 dark:from-sky-950/40 dark:via-slate-950 dark:to-slate-950 dark:border-sky-500/25 dark:hover:border-sky-400/40',
+    domainHeader: 'text-sky-700 dark:text-sky-200',
+    domainHeaderBadge:
+      'bg-white/70 text-sky-700 ring-sky-200/80 dark:bg-sky-950/30 dark:text-sky-100 dark:ring-sky-500/30',
+    domainChip: 'bg-sky-100/80 ring-sky-200/70 dark:bg-sky-900/40 dark:ring-sky-500/30',
+    domainChipText: 'text-sky-800 dark:text-sky-100',
+    domainChipIcon: 'text-sky-600 dark:text-sky-200',
+    quickLog:
+      'ring-sky-200/70 text-sky-900 hover:bg-sky-100/70 hover:text-sky-900 hover:ring-sky-300 focus-visible:ring-sky-300 dark:text-sky-100 dark:ring-sky-500/40 dark:hover:bg-sky-900/40 dark:hover:text-sky-100 dark:hover:ring-sky-400/50 dark:focus-visible:ring-sky-500',
+  },
+  skills: {
+    card: 'bg-gradient-to-br from-emerald-50 via-white to-white border-emerald-100/70 hover:border-emerald-200/70 dark:from-emerald-950/40 dark:via-slate-950 dark:to-slate-950 dark:border-emerald-500/25 dark:hover:border-emerald-400/40',
+    domainHeader: 'text-emerald-700 dark:text-emerald-200',
+    domainHeaderBadge:
+      'bg-white/70 text-emerald-700 ring-emerald-200/80 dark:bg-emerald-950/30 dark:text-emerald-100 dark:ring-emerald-500/30',
+    domainChip:
+      'bg-emerald-100/80 ring-emerald-200/70 dark:bg-emerald-900/40 dark:ring-emerald-500/30',
+    domainChipText: 'text-emerald-800 dark:text-emerald-100',
+    domainChipIcon: 'text-emerald-600 dark:text-emerald-200',
+    quickLog:
+      'ring-emerald-200/70 text-emerald-900 hover:bg-emerald-100/70 hover:text-emerald-900 hover:ring-emerald-300 focus-visible:ring-emerald-300 dark:text-emerald-100 dark:ring-emerald-500/40 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-100 dark:hover:ring-emerald-400/50 dark:focus-visible:ring-emerald-500',
+  },
+  guidance: {
+    card: 'bg-gradient-to-br from-amber-50 via-white to-white border-amber-100/70 hover:border-amber-200/80 dark:from-amber-950/40 dark:via-slate-950 dark:to-slate-950 dark:border-amber-500/25 dark:hover:border-amber-400/40',
+    domainHeader: 'text-amber-700 dark:text-amber-200',
+    domainHeaderBadge:
+      'bg-white/70 text-amber-700 ring-amber-200/80 dark:bg-amber-950/30 dark:text-amber-100 dark:ring-amber-500/30',
+    domainChip: 'bg-amber-100/80 ring-amber-200/70 dark:bg-amber-900/40 dark:ring-amber-500/30',
+    domainChipText: 'text-amber-800 dark:text-amber-100',
+    domainChipIcon: 'text-amber-600 dark:text-amber-200',
+    quickLog:
+      'ring-amber-200/70 text-amber-900 hover:bg-amber-100/70 hover:text-amber-900 hover:ring-amber-300 focus-visible:ring-amber-300 dark:text-amber-100 dark:ring-amber-500/40 dark:hover:bg-amber-900/40 dark:hover:text-amber-100 dark:hover:ring-amber-400/50 dark:focus-visible:ring-amber-500',
+  },
+  general: {
+    card: 'bg-gradient-to-br from-violet-50 via-fuchsia-50 to-white border-violet-100/70 hover:border-violet-200/80 dark:from-violet-950/40 dark:via-slate-950 dark:to-slate-950 dark:border-violet-500/25 dark:hover:border-violet-400/40',
+    domainHeader: 'text-violet-700 dark:text-violet-200',
+    domainHeaderBadge:
+      'bg-white/70 text-violet-700 ring-violet-200/80 dark:bg-violet-950/30 dark:text-violet-100 dark:ring-violet-500/40',
+    domainChip: 'bg-violet-100/80 ring-violet-200/70 dark:bg-violet-900/40 dark:ring-violet-500/30',
+    domainChipText: 'text-violet-800 dark:text-violet-100',
+    domainChipIcon: 'text-violet-600 dark:text-violet-200',
+    quickLog:
+      'ring-violet-200/70 text-violet-900 hover:bg-violet-100/70 hover:text-violet-900 hover:ring-violet-300 focus-visible:ring-violet-300 dark:text-violet-100 dark:ring-violet-500/40 dark:hover:bg-violet-900/40 dark:hover:text-violet-100 dark:hover:ring-violet-400/50 dark:focus-visible:ring-violet-500',
+  },
+};
+
+const domainPaletteIcons: Record<RotationDomainPaletteKey, typeof BookOpenIcon> = {
+  knowledge: BookOpenIcon,
+  skills: WrenchScrewdriverIcon,
+  guidance: ChatBubbleLeftRightIcon,
+  general: SparklesIcon,
+};
+
 export default function RotationBrowser({
   activeRotationId,
   searchTerm,
   domainFilter,
+  nodes: providedNodes,
+  nodesLoading: providedNodesLoading,
   onSelectLeaf,
   onOpenDomainPicker,
   onSelectDomain,
@@ -48,7 +130,10 @@ export default function RotationBrowser({
   const { t, i18n } = useTranslation();
   const { rotationId: residentActiveRotationId } = useResidentActiveRotation();
   const { tasks, refresh: refreshTasks } = useUserTasks();
-  const { nodes, loading } = useRotationNodes(activeRotationId || null);
+  const shouldUseProvided = Boolean(activeRotationId && providedNodes);
+  const { nodes, loading } = useRotationNodes(activeRotationId || null, {
+    enabled: !shouldUseProvided,
+  });
   const [debouncedTerm, setDebouncedTerm] = useState('');
   const [localOptimisticPending, setLocalOptimisticPending] = useState<Record<string, number>>({});
   const { showToast, showUndoToast } = useUndoToast();
@@ -107,8 +192,10 @@ export default function RotationBrowser({
 
   // When activeRotationId is null, we need to load all nodes for "all rotations" view
   const { nodes: allNodes, loading: allLoading } = useRotationNodes(null);
-  const nodesToUse = activeRotationId ? nodes : allNodes;
-  const loadingToUse = activeRotationId ? loading : allLoading;
+  const nodesToUse = activeRotationId ? (providedNodes ?? nodes) : allNodes;
+  const loadingToUse = activeRotationId
+    ? (providedNodesLoading ?? (shouldUseProvided ? false : loading))
+    : allLoading;
 
   const tree = useMemo(() => buildTree(nodesToUse), [nodesToUse]);
 
@@ -698,17 +785,18 @@ export default function RotationBrowser({
                   item.ancestors.slice(0, -1).slice(-1)[0] ||
                   item.categoryName ||
                   '';
-                const ancestorsToShow = item.ancestorPath.slice(-3);
                 // Section header when first item of a domain in windowed sequence
                 const isFirstInDomain = idx === 0 || windowed[idx - 1]!.key !== key;
                 const groupTotals = groupedByDomain[key]?.totals || { approved: 0, required: 0 };
                 const percent =
                   req > 0 ? Math.min(100, Math.round((approved / Math.max(1, req)) * 100)) : null;
-                const progressStyles = isComplete
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-900/20 dark:text-emerald-100'
-                  : approved > 0
-                    ? 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/40 dark:bg-sky-900/20 dark:text-sky-100'
-                    : 'border-gray-200 bg-gray-50 text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-300';
+                const paletteKey = inferDomainPalette(item.categoryName || null, item.domain);
+                const palette = domainPaletteStyles[paletteKey];
+                const DomainIcon = domainPaletteIcons[paletteKey];
+                const progressStyles = getProgressMedallionClasses(percent);
+                const supportingAncestors = item.ancestorPath
+                  .slice(-3)
+                  .filter((ancestor) => ancestor.name !== item.domain);
                 const completionBadgeTone = isComplete
                   ? 'ring-emerald-200 bg-emerald-50 text-emerald-700 dark:ring-emerald-500/40 dark:bg-emerald-900/30 dark:text-emerald-100'
                   : approved > 0
@@ -719,12 +807,20 @@ export default function RotationBrowser({
                   <div key={item.id} className="space-y-2">
                     {isFirstInDomain ? (
                       <div className="flex items-center justify-between pt-4">
-                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        <div
+                          className={clsx(
+                            'text-xs font-semibold uppercase tracking-wide',
+                            palette.domainHeader,
+                          )}
+                        >
                           {key}
                         </div>
                         <Badge
                           variant="outline"
-                          className="text-[11px] font-medium ring-1 ring-inset ring-gray-200/80 bg-transparent text-gray-600 dark:ring-white/15 dark:text-gray-200"
+                          className={clsx(
+                            'text-[11px] font-medium ring-1 ring-inset',
+                            palette.domainHeaderBadge,
+                          )}
                         >
                           {groupTotals.approved}/{groupTotals.required}
                         </Badge>
@@ -740,53 +836,71 @@ export default function RotationBrowser({
                           onSelectLeaf(item);
                         }
                       }}
-                      className="card-levitate group relative w-full cursor-pointer overflow-hidden border border-transparent bg-white/80 text-left transition-colors hover:border-gray-200/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-token dark:bg-[rgb(var(--surface))] dark:hover:border-white/10"
+                      className={clsx(
+                        'card-levitate group relative w-full cursor-pointer overflow-hidden border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-token',
+                        palette.card,
+                      )}
                       aria-label={item.name}
                     >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex flex-1 items-start gap-3">
                           <div
-                            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border text-sm font-semibold transition-colors ${progressStyles}`}
+                            className={clsx(
+                              'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border text-sm font-semibold transition-colors shadow-sm',
+                              progressStyles,
+                            )}
                             aria-hidden
                           >
                             {percent !== null ? <span>{percent}%</span> : <span>–</span>}
                           </div>
                           <div className="min-w-0 flex-1 space-y-1">
-                            {ancestorsToShow.length ? (
-                              <div className="flex flex-wrap items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
-                                {ancestorsToShow.map((ancestor, ancestorIdx) => {
-                                  const element = onShowNodeDetails ? (
-                                    <button
-                                      type="button"
-                                      className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 transition hover:bg-gray-200 dark:bg-[rgb(var(--surface-elevated))] dark:text-gray-300 dark:hover:bg-[rgb(var(--surface))]"
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        onShowNodeDetails?.(ancestor.id);
-                                      }}
-                                    >
-                                      {ancestor.name}
-                                    </button>
-                                  ) : (
-                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-[rgb(var(--surface-elevated))] dark:text-gray-300">
-                                      {ancestor.name}
-                                    </span>
-                                  );
-                                  return (
-                                    <span
-                                      key={`${ancestor.id}-${ancestorIdx}`}
-                                      className="flex items-center gap-1"
-                                    >
-                                      {element}
-                                      {ancestorIdx < ancestorsToShow.length - 1 ? (
-                                        <span className="text-[10px]" aria-hidden>
-                                          ›
-                                        </span>
-                                      ) : null}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            ) : null}
+                            <div className="flex flex-wrap items-center gap-1 text-[11px]">
+                              <span
+                                className={clsx(
+                                  'flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ring-1 ring-inset backdrop-blur-sm',
+                                  palette.domainChip,
+                                )}
+                              >
+                                <DomainIcon
+                                  className={clsx('h-3.5 w-3.5', palette.domainChipIcon)}
+                                  aria-hidden
+                                />
+                                <span className={clsx('truncate', palette.domainChipText)}>
+                                  {item.domain}
+                                </span>
+                              </span>
+                              {supportingAncestors.map((ancestor, ancestorIdx) => {
+                                const element = onShowNodeDetails ? (
+                                  <button
+                                    type="button"
+                                    className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 transition hover:bg-gray-200 dark:bg-[rgb(var(--surface-elevated))] dark:text-gray-300 dark:hover:bg-[rgb(var(--surface))]"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      onShowNodeDetails?.(ancestor.id);
+                                    }}
+                                  >
+                                    {ancestor.name}
+                                  </button>
+                                ) : (
+                                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-[rgb(var(--surface-elevated))] dark:text-gray-300">
+                                    {ancestor.name}
+                                  </span>
+                                );
+                                return (
+                                  <span
+                                    key={`${ancestor.id}-${ancestorIdx}`}
+                                    className="flex items-center gap-1 text-gray-500 dark:text-gray-400"
+                                  >
+                                    {element}
+                                    {ancestorIdx < supportingAncestors.length - 1 ? (
+                                      <span className="text-[10px]" aria-hidden>
+                                        ›
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                );
+                              })}
+                            </div>
                             {subtitle ? (
                               <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                                 {subtitle}
@@ -824,7 +938,7 @@ export default function RotationBrowser({
                           <Button
                             variant="secondary"
                             size="sm"
-                            className="self-end"
+                            className={clsx('self-end transition-colors', palette.quickLog)}
                             disabled={!canLog(item)}
                             onClick={(e) => {
                               e.stopPropagation();

@@ -8,14 +8,26 @@ import { withTimeoutAndRetry, getNetworkErrorMessage } from '../utils/networkUti
 
 const cache: Record<string, RotationNode[]> = {};
 
-export function useRotationNodes(rotationId: string | null) {
+type Options = {
+  enabled?: boolean;
+};
+
+export function useRotationNodes(rotationId: string | null, options: Options = {}) {
   const [nodes, setNodes] = useState<RotationNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (options.enabled === false) {
+      setNodes([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     if (!rotationId) {
       setNodes([]);
+      setLoading(false);
       return;
     }
     let cancelled = false;
@@ -66,7 +78,7 @@ export function useRotationNodes(rotationId: string | null) {
     return () => {
       cancelled = true;
     };
-  }, [rotationId]);
+  }, [rotationId, options.enabled]);
 
   const byId = useMemo(() => {
     const map: Record<string, RotationNode> = {};
