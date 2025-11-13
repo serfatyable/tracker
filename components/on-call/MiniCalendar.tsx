@@ -71,11 +71,13 @@ export default function MiniCalendar() {
           className="border rounded px-2 py-1 text-sm"
           value={toDateKey(start)}
           onChange={(e) => setStart(new Date(e.target.value))}
+          aria-label={t('onCall.filters.startDate', { defaultValue: 'Start date' })}
         />
         <select
           className="border rounded px-2 py-1 text-sm"
           value={filterStation}
           onChange={(e) => setFilterStation(e.target.value)}
+          aria-label={t('onCall.filters.byStation', { defaultValue: 'Filter by station' })}
         >
           <option value="">{t('onCall.filters.byStation')}</option>
           {stationKeys.map((sk) => (
@@ -85,10 +87,12 @@ export default function MiniCalendar() {
           ))}
         </select>
         <input
+          type="text"
           className="border rounded px-2 py-1 text-sm"
           placeholder={t('onCall.filters.byDoctor') as string}
           value={filterDoctor}
           onChange={(e) => setFilterDoctor(e.target.value)}
+          aria-label={t('onCall.filters.byDoctor', { defaultValue: 'Filter by doctor name' })}
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

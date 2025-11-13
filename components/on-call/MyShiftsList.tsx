@@ -10,6 +10,7 @@ import { getFirebaseApp } from '../../lib/firebase/client';
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
 import { DEFAULT_DAYS_AHEAD } from '../../lib/on-call/constants';
 import { stationI18nKeys } from '../../lib/on-call/stations';
+import { formatDateLocale } from '../../lib/utils/dateUtils';
 import { Skeleton } from '../dashboard/Skeleton';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -22,7 +23,7 @@ export default function MyShiftsList({
   userId?: string;
   daysAhead?: number;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { shifts, loading } = useOnCallFutureByUser(userId, daysAhead);
   const [error, setError] = useState<string | null>(null);
@@ -179,7 +180,7 @@ export default function MyShiftsList({
                 className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))] text-left w-full hover:bg-gray-50 dark:hover:bg-white/5"
                 onClick={() => router.push(`/on-call?tab=team&date=${g.dateKey}`)}
               >
-                <div className="text-xs opacity-70">{new Date(g.date).toLocaleDateString()}</div>
+                <div className="text-xs opacity-70">{formatDateLocale(new Date(g.date), i18n.language)}</div>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {g.items.map((it, idx) => (
                     <span key={idx} className="pill text-xs">

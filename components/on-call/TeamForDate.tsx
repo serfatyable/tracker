@@ -26,6 +26,7 @@ export default function TeamForDate({ initialDateKey }: { initialDateKey?: strin
           className="border rounded px-2 py-1 text-sm"
           value={dateKey}
           onChange={(e) => setDateKey(e.target.value)}
+          aria-label={t('onCall.selectDate', { defaultValue: 'Select date to view team' })}
         />
         <div className="text-xs opacity-70">
           {t('onCall.teamOnDate', { defaultValue: 'Team for' })}: {dateKey}

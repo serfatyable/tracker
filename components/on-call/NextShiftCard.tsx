@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useOnCallUpcomingByUser } from '../../lib/hooks/useOnCallUpcomingByUser';
 import { stationI18nKeys } from '../../lib/on-call/stations';
+import { formatDateLocale } from '../../lib/utils/dateUtils';
 import type { StationKey } from '../../types/onCall';
 import { Skeleton } from '../dashboard/Skeleton';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';
@@ -48,7 +49,8 @@ export default function NextShiftCard({ userId }: { userId?: string }) {
   const start = new Date(
     (next.startAt as any).seconds ? (next.startAt as any).seconds * 1000 : (next as any).startAt,
   );
-  const dateStr = start.toLocaleDateString();
+  const { i18n } = useTranslation();
+  const dateStr = formatDateLocale(start, i18n.language);
   const stationLabel = t(stationI18nKeys[next.stationKey as StationKey]);
 
   return (
