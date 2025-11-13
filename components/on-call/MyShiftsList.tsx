@@ -9,6 +9,7 @@ import type { StationKey } from '@/types/onCall';
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
 import { DEFAULT_DAYS_AHEAD } from '../../lib/on-call/constants';
+import { getStationBadgeClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys } from '../../lib/on-call/stations';
 import { formatDateLocale } from '../../lib/utils/dateUtils';
 import { Skeleton } from '../dashboard/Skeleton';
@@ -183,7 +184,7 @@ export default function MyShiftsList({
                 <div className="text-xs opacity-70">{formatDateLocale(new Date(g.date), i18n.language)}</div>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {g.items.map((it, idx) => (
-                    <span key={idx} className="pill text-xs">
+                    <span key={idx} className={getStationBadgeClasses(it.stationKey as StationKey)}>
                       {t(stationI18nKeys[it.stationKey as StationKey])}
                     </span>
                   ))}

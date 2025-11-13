@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { StationKey } from '@/types/onCall';
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
 import { useOnCallStats } from '../../lib/hooks/useOnCallStats';
+import { getStationColors } from '../../lib/on-call/stationColors';
 import { stationI18nKeys } from '../../lib/on-call/stations';
 import { Skeleton } from '../dashboard/Skeleton';
 import Card from '../ui/Card';
@@ -31,6 +32,10 @@ export default function ShiftStatsCard({ userId }: { userId?: string }) {
     return null; // Don't show stats if there are no shifts
   }
 
+  const stationColors = stats.mostCommonStation
+    ? getStationColors(stats.mostCommonStation as StationKey)
+    : null;
+
   return (
     <Card className="p-4">
       <div className="text-sm font-medium mb-3">
@@ -45,12 +50,12 @@ export default function ShiftStatsCard({ userId }: { userId?: string }) {
             {t('onCall.totalShifts', { defaultValue: 'Total Shifts' })}
           </div>
         </div>
-        {stats.mostCommonStation && (
-          <div className="rounded-lg bg-purple-50 dark:bg-purple-950/20 p-3">
-            <div className="text-sm font-semibold text-purple-700 dark:text-purple-400 truncate">
+        {stats.mostCommonStation && stationColors && (
+          <div className={`rounded-lg ${stationColors.bg} p-3`}>
+            <div className={`text-sm font-semibold ${stationColors.text} truncate`}>
               {t(stationI18nKeys[stats.mostCommonStation as StationKey])}
             </div>
-            <div className="text-xs text-purple-600 dark:text-purple-300">
+            <div className={`text-xs ${stationColors.text} opacity-70`}>
               {t('onCall.mostCommon', { defaultValue: 'Most Common' })} (
               {stats.stationCounts[stats.mostCommonStation]})
             </div>

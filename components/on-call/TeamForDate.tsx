@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { StationAssignment, StationKey } from '@/types/onCall';
 import { useOnCallByDate } from '../../lib/hooks/useOnCallByDate';
+import { getStationCardClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
 import { toDateKey } from '../../lib/utils/dateUtils';
 import { Skeleton } from '../dashboard/Skeleton';
@@ -59,10 +60,7 @@ export default function TeamForDate({ initialDateKey }: { initialDateKey?: strin
             const entry: StationAssignment | undefined = data.stations[sk];
             if (!entry) return null;
             return (
-              <div
-                key={sk}
-                className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]"
-              >
+              <div key={sk} className={getStationCardClasses(sk)}>
                 <div className="text-xs opacity-70">{t(stationI18nKeys[sk])}</div>
                 <div className="mt-1 font-medium">{entry.userDisplayName}</div>
               </div>

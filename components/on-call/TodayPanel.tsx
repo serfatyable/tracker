@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { StationAssignment } from '@/types/onCall';
 import { useOnCallToday } from '../../lib/hooks/useOnCallToday';
+import { getStationCardClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
 import { Skeleton } from '../dashboard/Skeleton';
 import Avatar from '../ui/Avatar';
@@ -61,10 +62,7 @@ export default function TodayPanel({ highlightUserId }: { highlightUserId?: stri
         if (!entry) return null;
         const isMe = highlightUserId && entry.userId === highlightUserId;
         return (
-          <div
-            key={sk}
-            className={`rounded border p-3 ${isMe ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/20' : 'border-gray-200 dark:border-[rgb(var(--border))]'}`}
-          >
+          <div key={sk} className={getStationCardClasses(sk, isMe)}>
             <div className="text-xs opacity-70">{t(stationI18nKeys[sk])}</div>
             <div className="mt-1 flex items-center gap-2">
               <Avatar name={entry.userDisplayName} size={20} />

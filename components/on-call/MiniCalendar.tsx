@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { StationAssignment, StationKey } from '@/types/onCall';
 import { useOnCallByDate } from '../../lib/hooks/useOnCallByDate';
 import { TIMELINE_DAYS_COUNT } from '../../lib/on-call/constants';
+import { getStationColors } from '../../lib/on-call/stationColors';
 import { stationKeys, stationI18nKeys } from '../../lib/on-call/stations';
 import { createSynonymMatcher } from '../../lib/search/synonyms';
 import { addDays, toDateKey } from '../../lib/utils/dateUtils';
@@ -41,9 +42,13 @@ function DayCard({
             if (!entry) return null;
             if (filterStation && sk !== filterStation) return null;
             if (hasDoctorFilter && !doctorMatcher(entry.userDisplayName)) return null;
+            const colors = getStationColors(sk);
             return (
               <div key={sk} className="flex items-center justify-between gap-2 text-sm">
-                <div className="opacity-70">{t(stationI18nKeys[sk])}</div>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-2 h-2 rounded-full ${colors.bg} ${colors.border} border`} />
+                  <div className="opacity-70">{t(stationI18nKeys[sk])}</div>
+                </div>
                 <div className="font-medium">{entry.userDisplayName}</div>
               </div>
             );
