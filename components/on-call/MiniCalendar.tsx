@@ -9,6 +9,7 @@ import { getStationColors } from '../../lib/on-call/stationColors';
 import { stationKeys, stationI18nKeys } from '../../lib/on-call/stations';
 import { createSynonymMatcher } from '../../lib/search/synonyms';
 import { addDays, toDateKey } from '../../lib/utils/dateUtils';
+import { getLocalStorageItem, setLocalStorageItem, ONCALL_STORAGE_KEYS } from '../../lib/utils/localStorage';
 import { Skeleton } from '../dashboard/Skeleton';
 
 function DayCard({
@@ -61,9 +62,31 @@ function DayCard({
 
 export default function MiniCalendar() {
   const { t } = useTranslation();
-  const [start, setStart] = useState<Date>(() => new Date());
-  const [filterStation, setFilterStation] = useState<string>('');
-  const [filterDoctor, setFilterDoctor] = useState<string>('');
+  const [start, setStart] = useState<Date>(() => {
+    const savedStart = getLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_START, '');
+    return savedStart ? new Date(savedStart) : new Date();
+  });
+  const [filterStation, setFilterStation] = useState<string>(() =>
+    getLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_STATION_FILTER, '')
+  );
+  const [filterDoctor, setFilterDoctor] = useState<string>(() =>
+    getLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_DOCTOR_FILTER, '')
+  );
+
+  const handleStartChange = (newDate: Date) => {
+    setStart(newDate);
+    setLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_START, toDateKey(newDate));
+  };
+
+  const handleStationFilterChange = (station: string) => {
+    setFilterStation(station);
+    setLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_STATION_FILTER, station);
+  };
+
+  const handleDoctorFilterChange = (doctor: string) => {
+    setFilterDoctor(doctor);
+    setLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_DOCTOR_FILTER, doctor);
+  };
 
   const days = useMemo(() => Array.from({ length: TIMELINE_DAYS_COUNT }).map((_, i) => addDays(start, i)), [start]);
   const dayKeys = days.map((d) => toDateKey(d));
@@ -75,13 +98,13 @@ export default function MiniCalendar() {
           type="date"
           className="border rounded px-2 py-1 text-sm"
           value={toDateKey(start)}
-          onChange={(e) => setStart(new Date(e.target.value))}
+          onChange={(e) => handleStartChange(new Date(e.target.value))}
           aria-label={t('onCall.filters.startDate', { defaultValue: 'Start date' })}
         />
         <select
           className="border rounded px-2 py-1 text-sm"
           value={filterStation}
-          onChange={(e) => setFilterStation(e.target.value)}
+          onChange={(e) => handleStationFilterChange(e.target.value)}
           aria-label={t('onCall.filters.byStation', { defaultValue: 'Filter by station' })}
         >
           <option value="">{t('onCall.filters.byStation')}</option>
@@ -96,7 +119,7 @@ export default function MiniCalendar() {
           className="border rounded px-2 py-1 text-sm"
           placeholder={t('onCall.filters.byDoctor') as string}
           value={filterDoctor}
-          onChange={(e) => setFilterDoctor(e.target.value)}
+          onChange={(e) => handleDoctorFilterChange(e.target.value)}
           aria-label={t('onCall.filters.byDoctor', { defaultValue: 'Filter by doctor name' })}
         />
       </div>

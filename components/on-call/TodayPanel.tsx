@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
 import type { StationAssignment } from '@/types/onCall';
@@ -7,6 +8,7 @@ import { getStationCardClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
 import { Skeleton } from '../dashboard/Skeleton';
 import Avatar from '../ui/Avatar';
+import Button from '../ui/Button';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';
 
 export default function TodayPanel({ highlightUserId }: { highlightUserId?: string }) {
@@ -39,6 +41,13 @@ export default function TodayPanel({ highlightUserId }: { highlightUserId?: stri
         title={t('ui.error', { defaultValue: 'Error' })}
         description={error}
         className="py-6"
+        action={
+          <Link href="/on-call?tab=timeline">
+            <Button variant="secondary" size="md">
+              {t('onCall.viewTimeline', { defaultValue: 'View Timeline' })}
+            </Button>
+          </Link>
+        }
       />
     );
   }
@@ -52,6 +61,13 @@ export default function TodayPanel({ highlightUserId }: { highlightUserId?: stri
           defaultValue: 'There are no on-call assignments for today.',
         })}
         className="py-6"
+        action={
+          <Link href="/on-call?tab=timeline">
+            <Button variant="secondary" size="md">
+              {t('onCall.viewTimeline', { defaultValue: 'View Timeline' })}
+            </Button>
+          </Link>
+        }
       />
     );
 

@@ -7,26 +7,42 @@ import { useOnCallByDate } from '../../lib/hooks/useOnCallByDate';
 import { getStationCardClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
 import { toDateKey } from '../../lib/utils/dateUtils';
+import { getLocalStorageItem, setLocalStorageItem, ONCALL_STORAGE_KEYS } from '../../lib/utils/localStorage';
 import { Skeleton } from '../dashboard/Skeleton';
+import Button from '../ui/Button';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';
+import QuickDateFilters from './QuickDateFilters';
 
 export default function TeamForDate({ initialDateKey }: { initialDateKey?: string }) {
   const { t } = useTranslation();
-  const [dateKey, setDateKey] = useState<string>(() => initialDateKey || toDateKey(new Date()));
+  const [dateKey, setDateKey] = useState<string>(() => {
+    // URL takes precedence over localStorage
+    if (initialDateKey) return initialDateKey;
+    return getLocalStorageItem(ONCALL_STORAGE_KEYS.TEAM_DATE, toDateKey(new Date()));
+  });
   const { data, loading } = useOnCallByDate(dateKey);
 
   useEffect(() => {
-    if (initialDateKey) setDateKey(initialDateKey);
+    if (initialDateKey) {
+      setDateKey(initialDateKey);
+      setLocalStorageItem(ONCALL_STORAGE_KEYS.TEAM_DATE, initialDateKey);
+    }
   }, [initialDateKey]);
 
+  const handleDateChange = (newDateKey: string) => {
+    setDateKey(newDateKey);
+    setLocalStorageItem(ONCALL_STORAGE_KEYS.TEAM_DATE, newDateKey);
+  };
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      <QuickDateFilters onDateSelect={handleDateChange} currentDate={dateKey} />
       <div className="flex items-center gap-2">
         <input
           type="date"
           className="border rounded px-2 py-1 text-sm"
           value={dateKey}
-          onChange={(e) => setDateKey(e.target.value)}
+          onChange={(e) => handleDateChange(e.target.value)}
           aria-label={t('onCall.selectDate', { defaultValue: 'Select date to view team' })}
         />
         <div className="text-xs opacity-70">
@@ -53,6 +69,15 @@ export default function TeamForDate({ initialDateKey }: { initialDateKey?: strin
             defaultValue: 'Try selecting a different date to view on-call assignments.',
           })}
           className="py-6"
+          action={
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => handleDateChange(toDateKey(new Date()))}
+            >
+              {t('onCall.viewToday', { defaultValue: 'View Today' })}
+            </Button>
+          }
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

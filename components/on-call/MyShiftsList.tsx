@@ -15,6 +15,7 @@ import { formatDateLocale } from '../../lib/utils/dateUtils';
 import { Skeleton } from '../dashboard/Skeleton';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import EmptyState, { CalendarIcon } from '../ui/EmptyState';
 import Toast from '../ui/Toast';
 
 export default function MyShiftsList({
@@ -170,9 +171,23 @@ export default function MyShiftsList({
             ))}
           </div>
         ) : grouped.length === 0 ? (
-          <div className="text-sm opacity-70">
-            {t('onCall.emptyMyShifts', { defaultValue: 'nothing in here' })}
-          </div>
+          <EmptyState
+            icon={<CalendarIcon size={40} />}
+            title={t('onCall.noUpcomingShifts', { defaultValue: 'No upcoming shifts' })}
+            description={t('onCall.noUpcomingShiftsDesc', {
+              defaultValue: 'You have no scheduled on-call shifts in the near future.',
+            })}
+            className="py-6"
+            action={
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => router.push('/on-call?tab=timeline')}
+              >
+                {t('onCall.viewTimeline', { defaultValue: 'View Timeline' })}
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-3">
             {grouped.map((g) => (

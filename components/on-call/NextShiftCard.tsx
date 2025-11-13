@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
 import { useOnCallUpcomingByUser } from '../../lib/hooks/useOnCallUpcomingByUser';
@@ -6,6 +7,7 @@ import { stationI18nKeys } from '../../lib/on-call/stations';
 import { formatDateLocale } from '../../lib/utils/dateUtils';
 import type { StationKey } from '../../types/onCall';
 import { Skeleton } from '../dashboard/Skeleton';
+import Button from '../ui/Button';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';
 
 export default function NextShiftCard({ userId }: { userId?: string }) {
@@ -30,6 +32,13 @@ export default function NextShiftCard({ userId }: { userId?: string }) {
         title={t('ui.error', { defaultValue: 'Error' })}
         description={error}
         className="py-4"
+        action={
+          <Link href="/on-call?tab=timeline">
+            <Button variant="secondary" size="sm">
+              {t('onCall.viewTimeline', { defaultValue: 'View Timeline' })}
+            </Button>
+          </Link>
+        }
       />
     );
   }
@@ -43,6 +52,13 @@ export default function NextShiftCard({ userId }: { userId?: string }) {
           defaultValue: 'You have no scheduled on-call shifts.',
         })}
         className="py-4"
+        action={
+          <Link href="/on-call?tab=timeline">
+            <Button variant="secondary" size="sm">
+              {t('onCall.viewTimeline', { defaultValue: 'View Timeline' })}
+            </Button>
+          </Link>
+        }
       />
     );
 
