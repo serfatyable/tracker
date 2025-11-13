@@ -10,6 +10,7 @@ const MiniCalendar = dynamic(() => import('../../components/on-call/MiniCalendar
 import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 import MyShiftsList from '../../components/on-call/MyShiftsList';
 import NextShiftCard from '../../components/on-call/NextShiftCard';
+import ShiftStatsCard from '../../components/on-call/ShiftStatsCard';
 import TeamForDate from '../../components/on-call/TeamForDate';
 import TodayPanel from '../../components/on-call/TodayPanel';
 import Card from '../../components/ui/Card';
@@ -121,10 +122,13 @@ export default function OnCallPage() {
             <div className="md:col-span-2">
               <MyShiftsList userId={me?.uid} />
             </div>
-            <div className="md:col-span-1" ref={nextRef}>
-              <Card>
-                <NextShiftCard userId={me?.uid} />
-              </Card>
+            <div className="md:col-span-1 space-y-3 md:space-y-4">
+              <div ref={nextRef}>
+                <Card>
+                  <NextShiftCard userId={me?.uid} />
+                </Card>
+              </div>
+              <ShiftStatsCard userId={me?.uid} />
             </div>
           </div>
         )}

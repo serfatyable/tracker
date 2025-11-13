@@ -10,6 +10,7 @@ import { getFirebaseApp } from '../../lib/firebase/client';
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
 import { DEFAULT_DAYS_AHEAD } from '../../lib/on-call/constants';
 import { stationI18nKeys } from '../../lib/on-call/stations';
+import { Skeleton } from '../dashboard/Skeleton';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Toast from '../ui/Toast';
@@ -152,7 +153,20 @@ export default function MyShiftsList({
         </div>
 
         {loading ? (
-          <div className="text-sm opacity-70">{t('ui.loading', { defaultValue: 'Loading…' })}</div>
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]"
+              >
+                <Skeleton className="h-3 w-24 mb-2" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : grouped.length === 0 ? (
           <div className="text-sm opacity-70">
             {t('onCall.emptyMyShifts', { defaultValue: 'nothing in here' })}
