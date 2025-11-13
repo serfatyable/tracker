@@ -15,7 +15,6 @@ import Button from '../ui/Button';
 import TextAreaField from '../ui/TextAreaField';
 import TextField from '../ui/TextField';
 
-const QUICK_SET_COUNTS = [1, 2, 3, 5, 10] as const;
 const QUICK_ADD_COUNTS = [1, 2, 5] as const;
 const NOTE_MAX_LENGTH = 500;
 const COUNT_MIN = 1;
@@ -66,7 +65,6 @@ export default function QuickLogDialog({
   const [showReflectionForm, setShowReflectionForm] = useState(false);
   const [createdTaskId, setCreatedTaskId] = useState<string | null>(null);
   const [submittingReflection, setSubmittingReflection] = useState(false);
-  const [stayOpen, setStayOpen] = useState(false);
   const selectedId = selected?.id ?? null;
 
   // Get reflection template
@@ -84,7 +82,6 @@ export default function QuickLogDialog({
       setAlsoLogReflection(false);
       setShowReflectionForm(false);
       setCreatedTaskId(null);
-      setStayOpen(false);
     }
   }, [open]);
 
@@ -156,14 +153,6 @@ export default function QuickLogDialog({
     [updateCount],
   );
 
-  const handleQuickSet = useCallback(
-    (value: number) => {
-      updateCount(() => value);
-      countInputRef.current?.focus();
-    },
-    [updateCount],
-  );
-
   const handleQuickAdd = useCallback(
     (value: number) => {
       updateCount((prev) => prev + value);
@@ -215,13 +204,7 @@ export default function QuickLogDialog({
         await onLog(selected, count, trimmedNote ? trimmedNote : undefined);
         setCount(1);
         setNote('');
-        if (stayOpen) {
-          setTimeout(() => {
-            countInputRef.current?.focus();
-          }, 50);
-        } else {
-          onClose();
-        }
+        onClose();
       }
     } catch (error) {
       console.error('Failed to log activity from quick dialog', error);
@@ -229,7 +212,7 @@ export default function QuickLogDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [alsoLogReflection, count, note, onClose, onLog, selected, stayOpen, submitting]);
+  }, [alsoLogReflection, count, note, onClose, onLog, selected, submitting]);
 
   async function handleReflectionSubmit(answers: Record<string, string>) {
     const auth = getAuth(getFirebaseApp());
@@ -296,12 +279,24 @@ export default function QuickLogDialog({
         aria-modal="true"
         aria-labelledby={titleId}
       >
-        <div className="flex items-center justify-between mb-2">
-          <h2 id={titleId} className="text-sm font-semibold text-gray-900 dark:text-gray-50">
-            {showReflectionForm
-              ? t('reflections.writeReflection', { defaultValue: 'Write Reflection' })
-              : t('ui.logActivity', { defaultValue: 'Log activity' })}
-          </h2>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <h2 id={titleId} className="text-sm font-semibold text-gray-900 dark:text-gray-50">
+              {showReflectionForm
+                ? t('reflections.writeReflection', { defaultValue: 'Write Reflection' })
+                : t('ui.logActivity', { defaultValue: 'Log activity' })}
+            </h2>
+            {selected ? (
+              <div className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-50 whitespace-normal break-words">
+                {selectedMeta?.title ?? selected.name}
+              </div>
+            ) : null}
+            {selected && selectedMeta?.trail ? (
+              <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-normal break-words">
+                {selectedMeta.trail}
+              </div>
+            ) : null}
+          </div>
           <button
             onClick={onClose}
             disabled={submitting || submittingReflection}
@@ -338,11 +333,11 @@ export default function QuickLogDialog({
                           className="w-full rounded-lg border border-gray-200/70 dark:border-white/10 bg-gradient-to-r from-white to-blue-50/60 dark:from-white/5 dark:to-white/0 px-3 py-2 text-left hover:border-blue-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                           onClick={() => handleLeafPick(r.node)}
                         >
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-50 whitespace-normal break-words">
                             {r.title}
                           </div>
                           {r.trail ? (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-normal break-words">
                               {r.trail}
                             </div>
                           ) : null}
@@ -362,11 +357,11 @@ export default function QuickLogDialog({
                         className="w-full rounded-lg border border-gray-200/70 dark:border-white/10 bg-white/90 dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         onClick={() => handleLeafPick(opt.node)}
                       >
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-50 whitespace-normal break-words">
                           {opt.title}
                         </div>
                         {opt.trail ? (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-normal break-words">
                             {opt.trail}
                           </div>
                         ) : null}
@@ -386,11 +381,11 @@ export default function QuickLogDialog({
               <div className="rounded-lg border border-gray-200/80 dark:border-[rgb(var(--border))] bg-white/80 dark:bg-white/5 p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-50 truncate">
+                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-50 whitespace-normal break-words">
                       {selected.name}
                     </div>
                     {selectedMeta?.trail ? (
-                      <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
+                      <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 whitespace-normal break-words">
                         {selectedMeta.trail}
                       </div>
                     ) : null}
@@ -454,29 +449,7 @@ export default function QuickLogDialog({
                     +
                   </button>
                 </div>
-                <div className="mt-4">
-                  <div className="text-[11px] uppercase tracking-wide text-blue-900/70 dark:text-blue-200/80">
-                    {titleize(t('ui.quickSet', { defaultValue: 'Quick set' }))}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {QUICK_SET_COUNTS.map((value) => (
-                      <button
-                        key={`quick-set-${value}`}
-                        type="button"
-                        onClick={() => handleQuickSet(value)}
-                        className={`rounded-full px-3 py-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900 ${
-                          count === value
-                            ? 'bg-[rgb(var(--primary))] text-[rgb(var(--primary-ink))] shadow'
-                            : 'bg-white/90 text-blue-900/80 border border-blue-200 hover:bg-blue-50 dark:bg-white/10 dark:text-blue-100 dark:border-blue-200/40'
-                        }`}
-                        aria-pressed={count === value}
-                      >
-                        {value}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-3 border-t border-blue-100 pt-3 dark:border-blue-200/30">
+                <div className="mt-4 border-t border-blue-100 pt-3 dark:border-blue-200/30">
                   <div className="text-[11px] uppercase tracking-wide text-blue-900/70 dark:text-blue-200/80">
                     {titleize(t('ui.quickAdd', { defaultValue: 'Quick add' }))}
                   </div>
@@ -505,7 +478,7 @@ export default function QuickLogDialog({
                 helpText={`${note.length}/${NOTE_MAX_LENGTH} characters`}
               />
 
-              <div className="grid gap-2.5 sm:grid-cols-2">
+              <div className="space-y-2.5">
                 <div className="rounded-lg border border-gray-200/80 dark:border-[rgb(var(--border))] bg-white/90 dark:bg-white/5 p-2.5 shadow-sm">
                   <div className="flex items-start justify-between gap-2.5">
                     <div className="flex-1 min-w-0">
@@ -555,84 +528,13 @@ export default function QuickLogDialog({
                       onClick={() => setAlsoLogReflection((prev) => !prev)}
                       disabled={submitting}
                       className={`
-                        relative inline-flex h-6 w-[44px] flex-shrink-0 cursor-pointer rounded-full transition-colors duration-300 ease-in-out
+                        relative inline-flex h-7 w-[48px] flex-shrink-0 cursor-pointer items-center rounded-full px-0.5 transition-all duration-300 ease-in-out
                         focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 focus:ring-offset-white dark:focus:ring-offset-gray-900
-                        ${
-                          alsoLogReflection
-                            ? 'bg-[rgb(var(--primary))]'
-                            : 'bg-gray-300 dark:bg-gray-600'
-                        }
+                        ${alsoLogReflection ? 'justify-end bg-gradient-to-r from-[rgb(var(--primary))] to-blue-500' : 'justify-start bg-gray-300 dark:bg-gray-600'}
                         ${submitting ? 'opacity-50 cursor-not-allowed' : ''}
                       `}
                     >
-                      <span
-                        className={`
-                          pointer-events-none inline-block h-[26px] w-[26px] transform rounded-full bg-white shadow-sm transition-all duration-300 ease-in-out
-                          ${alsoLogReflection ? 'translate-x-[18px]' : 'translate-x-[2px]'}
-                        `}
-                      />
-                    </button>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-gray-200/80 dark:border-[rgb(var(--border))] bg-white/90 dark:bg-white/5 p-2.5 shadow-sm">
-                  <div className="flex items-start justify-between gap-2.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <svg
-                          className="h-3.5 w-3.5 text-purple-500 dark:text-purple-200 flex-shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9H4m8 11a8 8 0 100-16 8 8 0 000 16zm0-8h.01"
-                          />
-                        </svg>
-                        <span className="text-xs font-semibold text-gray-900 dark:text-gray-100">
-                          {titleize(t('ui.keepDialogOpen', { defaultValue: 'Keep dialog open' }))}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-tight">
-                        {stayOpen
-                          ? t('ui.keepDialogOpenEnabled', {
-                              defaultValue: 'Log will submit but stay on this screen',
-                            })
-                          : t('ui.keepDialogOpenDisabled', {
-                              defaultValue: 'Enable when logging several entries',
-                            })}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={stayOpen}
-                      aria-label={
-                        stayOpen
-                          ? (t('ui.keepDialogOpenEnabled', {
-                              defaultValue: 'Keep dialog open enabled',
-                            }) as string)
-                          : (t('ui.keepDialogOpenDisabled', {
-                              defaultValue: 'Keep dialog open disabled',
-                            }) as string)
-                      }
-                      onClick={() => setStayOpen((prev) => !prev)}
-                      disabled={submitting}
-                      className={`
-                        relative inline-flex h-6 w-[44px] flex-shrink-0 cursor-pointer rounded-full transition-colors duration-300 ease-in-out
-                        focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1 focus:ring-offset-white dark:focus:ring-offset-gray-900
-                        ${stayOpen ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'}
-                        ${submitting ? 'opacity-50 cursor-not-allowed' : ''}
-                      `}
-                    >
-                      <span
-                        className={`
-                          pointer-events-none inline-block h-[26px] w-[26px] transform rounded-full bg-white shadow-sm transition-all duration-300 ease-in-out
-                          ${stayOpen ? 'translate-x-[18px]' : 'translate-x-[2px]'}
-                        `}
-                      />
+                      <span className="pointer-events-none inline-flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm transition duration-300 ease-in-out" />
                     </button>
                   </div>
                 </div>

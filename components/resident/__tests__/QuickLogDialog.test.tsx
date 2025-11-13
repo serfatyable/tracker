@@ -45,20 +45,17 @@ describe('QuickLogDialog', () => {
     vi.clearAllMocks();
   });
 
-  it('lets residents jump between quick set and quick add counts', () => {
+  it('lets residents adjust counts quickly', () => {
     setup();
 
     const input = screen.getByRole('spinbutton') as HTMLInputElement;
     expect(input.value).toBe('1');
 
-    fireEvent.click(screen.getByRole('button', { name: /^2$/ }));
-    expect(input.value).toBe('2');
-
     fireEvent.click(screen.getByRole('button', { name: /\+5/ }));
-    expect(input.value).toBe('7');
+    expect(input.value).toBe('6');
 
     fireEvent.click(screen.getByRole('button', { name: /decrease count/i }));
-    expect(input.value).toBe('6');
+    expect(input.value).toBe('5');
   });
 
   it('submits via keyboard shortcut', async () => {
@@ -73,21 +70,11 @@ describe('QuickLogDialog', () => {
     });
   });
 
-  it('keeps the dialog open when the toggle is enabled', async () => {
-    const onLog = vi.fn().mockResolvedValue(undefined);
-    const onClose = vi.fn();
-    setup({ onLog, onClose });
+  it('shows the selected activity title in the header', () => {
+    setup();
 
-    const stayToggle = screen.getByRole('switch', { name: /keep dialog open disabled/i });
-    fireEvent.click(stayToggle);
-
-    const submit = screen.getByRole('button', { name: /log/i });
-    fireEvent.click(submit);
-
-    await waitFor(() => {
-      expect(onLog).toHaveBeenCalledWith(leafNode, 1, undefined);
-    });
-    expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByRole('spinbutton')).toHaveValue(1);
+    expect(screen.getByRole('heading', { name: /log activity/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Airway assessment')).toHaveLength(2);
+    expect(screen.getAllByText('Airway > Basics')).toHaveLength(2);
   });
 });
