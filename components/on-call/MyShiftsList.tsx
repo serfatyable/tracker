@@ -9,6 +9,7 @@ import type { StationKey } from '@/types/onCall';
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
 import { DEFAULT_DAYS_AHEAD } from '../../lib/on-call/constants';
+import { getShiftsWithConflicts, getConflictBadgeClasses } from '../../lib/on-call/conflictDetection';
 import { getStationBadgeClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys } from '../../lib/on-call/stations';
 import { formatDateLocale } from '../../lib/utils/dateUtils';
@@ -61,6 +62,8 @@ export default function MyShiftsList({
       items,
     }));
   }, [shifts]);
+
+  const conflicts = useMemo(() => getShiftsWithConflicts(shifts), [shifts]);
 
   const handleDownload = useCallback(async () => {
     const auth = getAuth(getFirebaseApp());
@@ -190,22 +193,35 @@ export default function MyShiftsList({
           />
         ) : (
           <div className="space-y-3">
-            {grouped.map((g) => (
-              <button
-                key={g.dateKey}
-                className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))] text-left w-full hover:bg-gray-50 dark:hover:bg-white/5"
-                onClick={() => router.push(`/on-call?tab=team&date=${g.dateKey}`)}
-              >
-                <div className="text-xs opacity-70">{formatDateLocale(new Date(g.date), i18n.language)}</div>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {g.items.map((it, idx) => (
-                    <span key={idx} className={getStationBadgeClasses(it.stationKey as StationKey)}>
-                      {t(stationI18nKeys[it.stationKey as StationKey])}
-                    </span>
-                  ))}
-                </div>
-              </button>
-            ))}
+            {grouped.map((g) => {
+              const conflict = conflicts.get(g.dateKey);
+              return (
+                <button
+                  key={g.dateKey}
+                  className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))] text-left w-full hover:bg-gray-50 dark:hover:bg-white/5"
+                  onClick={() => router.push(`/on-call?tab=team&date=${g.dateKey}`)}
+                  title={conflict?.message}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs opacity-70">{formatDateLocale(new Date(g.date), i18n.language)}</div>
+                    {conflict && (
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${getConflictBadgeClasses(conflict.severity)}`}
+                      >
+                        {conflict.type === 'multiple_same_day' ? '⚠️ Multiple' : 'ℹ️ Consecutive'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {g.items.map((it, idx) => (
+                      <span key={idx} className={getStationBadgeClasses(it.stationKey as StationKey)}>
+                        {t(stationI18nKeys[it.stationKey as StationKey])}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </Card>
