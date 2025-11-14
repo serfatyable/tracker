@@ -144,7 +144,17 @@ export default function AuthPage() {
       } catch {
         /* noop */
       }
-      router.push('/awaiting-approval');
+
+      // Redirect based on user status and role
+      if (!profile || profile.status === 'pending') {
+        router.push('/awaiting-approval');
+      } else if (profile.role === 'resident') {
+        router.push('/resident');
+      } else if (profile.role === 'tutor') {
+        router.push('/tutor');
+      } else {
+        router.push('/admin');
+      }
     } catch (err: any) {
       const key = mapFirebaseAuthErrorToI18nKey('signin', err?.code);
       setFormMessage(t(key));

@@ -59,8 +59,8 @@ export default function AdminDashboard(): React.ReactElement {
     (async () => {
       const { firebaseUser, profile } = await getCurrentUserWithProfile();
       if (!firebaseUser) return router.replace('/auth');
-      if (!profile || profile.status === 'pending') return router.replace('/awaiting-approval');
-      if (profile.role !== 'admin') return router.replace('/auth');
+      if (profile?.status === 'pending') return router.replace('/awaiting-approval');
+      if (profile && profile.role !== 'admin') return router.replace('/auth');
       // Ensure core rotations exist each time an admin enters
       try {
         const mod = await import('../../lib/firebase/admin');
