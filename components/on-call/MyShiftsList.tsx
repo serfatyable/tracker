@@ -7,20 +7,30 @@ import { useTranslation } from 'react-i18next';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
+import {
+  getShiftsWithConflicts,
+  getConflictBadgeClasses,
+} from '../../lib/on-call/conflictDetection';
+import { DEFAULT_DAYS_AHEAD } from '../../lib/on-call/constants';
+import { getStationBadgeClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys } from '../../lib/on-call/stations';
-import type { StationKey } from '../../types/onCall';
+import { formatDateLocale } from '../../lib/utils/dateUtils';
+import { Skeleton } from '../dashboard/Skeleton';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import EmptyState, { CalendarIcon } from '../ui/EmptyState';
 import Toast from '../ui/Toast';
+
+import type { StationKey } from '@/types/onCall';
 
 export default function MyShiftsList({
   userId,
-  daysAhead = 40,
+  daysAhead = DEFAULT_DAYS_AHEAD,
 }: {
   userId?: string;
   daysAhead?: number;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { shifts, loading } = useOnCallFutureByUser(userId, daysAhead);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +66,8 @@ export default function MyShiftsList({
       items,
     }));
   }, [shifts]);
+
+  const conflicts = useMemo(() => getShiftsWithConflicts(shifts), [shifts]);
 
   const handleDownload = useCallback(async () => {
     const auth = getAuth(getFirebaseApp());
@@ -151,29 +163,74 @@ export default function MyShiftsList({
         </div>
 
         {loading ? (
-          <div className="text-sm opacity-70">{t('ui.loading', { defaultValue: 'Loading…' })}</div>
-        ) : grouped.length === 0 ? (
-          <div className="text-sm opacity-70">
-            {t('onCall.emptyMyShifts', { defaultValue: 'nothing in here' })}
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))]"
+              >
+                <Skeleton className="h-3 w-24 mb-2" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+              </div>
+            ))}
           </div>
+        ) : grouped.length === 0 ? (
+          <EmptyState
+            icon={<CalendarIcon size={40} />}
+            title={t('onCall.noUpcomingShifts', { defaultValue: 'No upcoming shifts' })}
+            description={t('onCall.noUpcomingShiftsDesc', {
+              defaultValue: 'You have no scheduled on-call shifts in the near future.',
+            })}
+            className="py-6"
+            action={
+              <Button
+                variant="default"
+                size="md"
+                onClick={() => router.push('/on-call?tab=timeline')}
+              >
+                {t('onCall.viewTimeline', { defaultValue: 'View Timeline' })}
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-3">
-            {grouped.map((g) => (
-              <button
-                key={g.dateKey}
-                className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))] text-left w-full hover:bg-gray-50 dark:hover:bg-white/5"
-                onClick={() => router.push(`/on-call?tab=team&date=${g.dateKey}`)}
-              >
-                <div className="text-xs opacity-70">{new Date(g.date).toLocaleDateString()}</div>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {g.items.map((it, idx) => (
-                    <span key={idx} className="pill text-xs">
-                      {t(stationI18nKeys[it.stationKey as StationKey])}
-                    </span>
-                  ))}
-                </div>
-              </button>
-            ))}
+            {grouped.map((g) => {
+              const conflict = conflicts.get(g.dateKey);
+              return (
+                <button
+                  key={g.dateKey}
+                  className="rounded border p-3 border-gray-200 dark:border-[rgb(var(--border))] text-left w-full hover:bg-gray-50 dark:hover:bg-white/5"
+                  onClick={() => router.push(`/on-call?tab=team&date=${g.dateKey}`)}
+                  title={conflict?.message}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs opacity-70">
+                      {formatDateLocale(new Date(g.date), i18n.language)}
+                    </div>
+                    {conflict && (
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${getConflictBadgeClasses(conflict.severity)}`}
+                      >
+                        {conflict.type === 'multiple_same_day' ? '⚠️ Multiple' : 'ℹ️ Consecutive'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {g.items.map((it, idx) => (
+                      <span
+                        key={idx}
+                        className={getStationBadgeClasses(it.stationKey as StationKey)}
+                      >
+                        {t(stationI18nKeys[it.stationKey as StationKey])}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </Card>

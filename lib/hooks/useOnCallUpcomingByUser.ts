@@ -10,8 +10,11 @@ import {
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
-import type { OnCallAssignment } from '../../types/onCall';
+import type { OnCallAssignment, OnCallDay, StationAssignment, StationKey } from '@/types/onCall';
 import { getFirebaseApp } from '../firebase/client';
+import { MAX_QUERY_DAYS } from '../on-call/constants';
+import { toDateKey } from '../utils/dateUtils';
+import { getNetworkErrorMessage, withTimeoutAndRetry } from '../utils/networkUtils';
 
 // Finds the next on-call shift for a user by scanning upcoming onCallDays for a matching uid
 export function useOnCallUpcomingByUser(userId?: string) {
@@ -25,63 +28,69 @@ export function useOnCallUpcomingByUser(userId?: string) {
     (async () => {
       try {
         setLoading(true);
-        const db = getFirestore(getFirebaseApp());
+        setError(null);
 
-        // Query next ~90 days of onCallDays ordered by dateKey
-        const today = new Date();
-        const startKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
-          today.getDate(),
-        ).padStart(2, '0')}`;
+        const found = await withTimeoutAndRetry(
+          async () => {
+            const db = getFirestore(getFirebaseApp());
 
-        const daysSnap = await getDocs(
-          query(
-            collection(db, 'onCallDays'),
-            where('dateKey', '>=', startKey),
-            orderBy('dateKey', 'asc'),
-            qLimit(120),
-          ),
+            // Query next ~90 days of onCallDays ordered by dateKey
+            const startKey = toDateKey(new Date());
+
+            const daysSnap = await getDocs(
+              query(
+                collection(db, 'onCallDays'),
+                where('dateKey', '>=', startKey),
+                orderBy('dateKey', 'asc'),
+                qLimit(MAX_QUERY_DAYS),
+              ),
+            );
+
+            // Find the earliest station matching this userId
+            let foundAssignment: OnCallAssignment | null = null;
+            for (const d of daysSnap.docs) {
+              const rec = d.data() as OnCallDay;
+              const stations = rec.stations;
+              for (const [stationKey, entry] of Object.entries(stations) as [StationKey, StationAssignment][]) {
+                if (entry && entry.userId === userId) {
+                  // Synthesize minimal assignment-like object for UI
+                  const parts = rec.dateKey.split('-').map((p: string) => parseInt(p, 10));
+                  const start = new Date(
+                    parts[0] as number,
+                    (parts[1] as number) - 1,
+                    parts[2] as number,
+                  );
+                  foundAssignment = {
+                    id: `${rec.dateKey}_${stationKey}_${userId}`,
+                    dateKey: rec.dateKey,
+                    stationKey,
+                    userId,
+                    userDisplayName: entry.userDisplayName,
+                    startAt: start as any, // Will be converted properly
+                    endAt: start as any, // Will be converted properly
+                  };
+                  break;
+                }
+              }
+              if (foundAssignment) break;
+            }
+            return foundAssignment;
+          },
+          {
+            timeout: 15000, // 15 seconds for large query
+            retries: 3,
+            operationName: 'load upcoming on-call',
+          },
         );
 
-        // Find the earliest station matching this userId
-        let found: null | (OnCallAssignment & { stationKey: string }) = null;
-        for (const d of daysSnap.docs) {
-          const rec = d.data() as any;
-          const stations = (rec.stations || {}) as Record<
-            string,
-            { userId: string; userDisplayName: string }
-          >;
-          for (const [stationKey, entry] of Object.entries(stations)) {
-            if (entry && entry.userId === userId) {
-              // Synthesize minimal assignment-like object for UI
-              const parts = String(rec.dateKey)
-                .split('-')
-                .map((p: string) => parseInt(p, 10));
-              const start = new Date(
-                parts[0] as number,
-                (parts[1] as number) - 1,
-                parts[2] as number,
-              );
-              found = {
-                id: `${rec.dateKey}_${stationKey}_${userId}`,
-                dateKey: rec.dateKey,
-                stationKey: stationKey as any,
-                userId,
-                userDisplayName: entry.userDisplayName,
-                startAt: start as any,
-                endAt: start as any,
-              } as any;
-              break;
-            }
-          }
-          if (found) break;
-        }
-
         if (!cancelled) {
-          setData(found ? [found as any] : []);
-          setError(null);
+          setData(found ? [found] : []);
         }
       } catch (e: any) {
-        if (!cancelled) setError(e?.message || 'Failed to load upcoming on-call');
+        if (!cancelled) {
+          const userMessage = getNetworkErrorMessage(e, 'Failed to load upcoming on-call');
+          setError(userMessage);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
