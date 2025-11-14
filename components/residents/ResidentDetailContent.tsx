@@ -261,13 +261,15 @@ export default function ResidentDetailContent({
               ].map((stat) => (
                 <div
                   key={stat.label as string}
-                  className="rounded-2xl border border-white/20 bg-white/40 p-4 shadow-sm backdrop-blur-sm transition"
+                  className="flex flex-col items-center rounded-2xl border border-white/30 bg-white/95 p-4 text-center shadow-sm backdrop-blur-sm transition dark:border-white/10 dark:bg-white/5"
                 >
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-70">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-100">
                     {stat.icon}
                     {stat.label}
                   </div>
-                  <div className="mt-2 text-2xl font-semibold leading-tight">{stat.value}</div>
+                  <div className="mt-2 text-2xl font-semibold leading-tight text-slate-900 dark:text-white">
+                    {stat.value}
+                  </div>
                 </div>
               ))}
             </div>
@@ -372,53 +374,59 @@ export default function ResidentDetailContent({
         <Card
           tone="indigo"
           variant="tinted"
+          className="text-indigo-900 dark:text-indigo-100"
           title={t('ui.activityTimeline', { defaultValue: 'Recent activity' })}
         >
           {loading ? (
-            <div className="flex items-center gap-2 text-sm opacity-80">
+            <div className="flex items-center gap-2 text-sm text-indigo-900 dark:text-indigo-100">
               <Spinner className="h-4 w-4" />
               {t('ui.loading', { defaultValue: 'Loading' })}
             </div>
           ) : timeline.length === 0 ? (
-            <div className="rounded-3xl border border-white/25 bg-white/10 p-6 text-center shadow-sm backdrop-blur">
-              <InboxArrowDownIcon className="mx-auto h-10 w-10 opacity-70" aria-hidden="true" />
-              <p className="mt-3 text-sm font-semibold">
+            <div className="rounded-3xl border border-indigo-200/60 bg-white/95 p-6 text-center text-indigo-900 shadow-sm backdrop-blur-sm dark:border-indigo-300/20 dark:bg-indigo-950/40 dark:text-indigo-100">
+              <InboxArrowDownIcon
+                className="mx-auto h-10 w-10 text-indigo-500 dark:text-indigo-200"
+                aria-hidden="true"
+              />
+              <p className="mt-3 text-sm font-semibold text-indigo-900 dark:text-indigo-100">
                 {t('ui.noRecentActivity', { defaultValue: 'No recent activity' })}
               </p>
-              <p className="mt-1 text-xs opacity-70">
+              <p className="mt-1 text-xs text-indigo-600 dark:text-indigo-200/80">
                 {t('ui.noRecentActivityDescription', {
                   defaultValue: 'New submissions, reflections, and tasks will appear here.',
                 })}
               </p>
             </div>
           ) : (
-            <ul className="space-y-4">
+            <ul className="space-y-4 text-indigo-900 dark:text-indigo-100">
               {timeline.map((task, index) => {
                 const node = nodeById?.[task.itemId];
                 const isLast = index === timeline.length - 1;
                 return (
                   <li key={task.id} className="relative pl-10">
                     <span className="absolute left-0 top-0 flex h-full w-10 items-start justify-center">
-                      <span className="relative flex h-6 w-6 items-center justify-center rounded-full bg-white/80 text-indigo-600 shadow">
+                      <span className="relative flex h-6 w-6 items-center justify-center rounded-full bg-white text-indigo-600 shadow-md dark:bg-indigo-900/70 dark:text-indigo-100">
                         <ArrowTrendingUpIcon className="h-4 w-4" aria-hidden="true" />
                       </span>
                       {!isLast ? (
                         <span
-                          className="absolute left-1/2 top-6 -ml-px h-[calc(100%-1.5rem)] w-0.5 bg-white/30"
+                          className="absolute left-1/2 top-6 -ml-px h-[calc(100%-1.5rem)] w-0.5 bg-indigo-200 dark:bg-indigo-500/40"
                           aria-hidden="true"
                         />
                       ) : null}
                     </span>
-                    <div className="rounded-2xl border border-white/20 bg-white/15 p-4 shadow-sm backdrop-blur">
+                    <div className="rounded-2xl border border-indigo-200/70 bg-white/95 p-4 text-indigo-900 shadow-sm transition dark:border-indigo-500/30 dark:bg-indigo-950/40 dark:text-indigo-100">
                       <div className="flex items-center justify-between gap-3 text-sm font-semibold">
                         <span>
                           {node?.name || task.itemId || t('ui.task', { defaultValue: 'Task' })}
                         </span>
-                        <span className="text-xs font-medium opacity-70">
+                        <span className="text-xs font-medium text-indigo-500 dark:text-indigo-200">
                           {formatDate(toDate(task.createdAt), language)}
                         </span>
                       </div>
-                      <p className="mt-1 text-xs capitalize opacity-70">{task.status}</p>
+                      <p className="mt-1 text-xs capitalize text-indigo-500 dark:text-indigo-200">
+                        {task.status}
+                      </p>
                     </div>
                   </li>
                 );

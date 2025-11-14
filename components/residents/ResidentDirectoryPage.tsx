@@ -27,7 +27,6 @@ import type { Assignment } from '@/types/assignments';
 import type { UserProfile } from '@/types/auth';
 import type { Rotation } from '@/types/rotations';
 
-
 function getUserName(user: UserProfile | undefined) {
   if (!user) return '';
   return user.fullName || user.email || user.uid;
@@ -170,7 +169,7 @@ export default function ResidentDirectoryPage() {
                 }
               />
             ) : (
-              <ul className="space-y-3 p-2">
+              <ul className="mx-auto max-w-2xl space-y-3 p-2 sm:p-3">
                 {filteredEntries.map((entry) => {
                   const isActive = entry.activeAssignment?.status === 'active';
                   const palette = getResidentPalette(

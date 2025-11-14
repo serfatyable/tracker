@@ -8,7 +8,6 @@ import AuthGate from '@/components/auth/AuthGate';
 import AppShell from '@/components/layout/AppShell';
 import LargeTitleHeader from '@/components/layout/LargeTitleHeader';
 import ResidentDetailPage from '@/components/residents/ResidentDetailPage';
-import Button from '@/components/ui/Button';
 
 export default function ResidentDetailRoutePage() {
   const params = useParams<{ residentId?: string | string[] }>();
@@ -29,11 +28,6 @@ export default function ResidentDetailRoutePage() {
       <AppShell>
         <LargeTitleHeader
           title={t('tutor.residentProfile', { defaultValue: 'Resident profile' }) as string}
-          rightSlot={
-            <Button variant="secondary" onClick={goBack}>
-              {t('ui.backToResidents', { defaultValue: 'Back to residents' })}
-            </Button>
-          }
         />
         <div className="app-container p-4">
           <ResidentDetailPage residentId={residentId} onBack={goBack} />
