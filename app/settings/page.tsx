@@ -18,7 +18,7 @@ export default function SettingsPage() {
       router.replace('/auth');
       return;
     }
-    if (!profile || profile.status === 'pending') {
+    if (profile?.status === 'pending') {
       router.replace('/awaiting-approval');
       return;
     }
