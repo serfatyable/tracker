@@ -16,7 +16,9 @@ export default function ResidentsDirectoryPage() {
           title={t('tutor.tabs.residents', { defaultValue: 'Residents' }) as string}
         />
         <div className="app-container p-4">
-          <ResidentDirectoryPage />
+          <div className="mx-auto w-full max-w-5xl">
+            <ResidentDirectoryPage />
+          </div>
         </div>
       </AppShell>
     </AuthGate>
