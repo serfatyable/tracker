@@ -2,8 +2,10 @@
 
 import {
   AcademicCapIcon,
+  BookOpenIcon,
   ClipboardDocumentCheckIcon,
   ClipboardDocumentListIcon,
+  Cog6ToothIcon,
   HomeIcon,
   MagnifyingGlassCircleIcon,
   UsersIcon,
@@ -46,6 +48,27 @@ function useResidentTabs(): Tab[] {
         (params?.get('tab') === null || params?.get('tab') === '' || params?.get('tab') === 'home'),
     },
     {
+      id: 'resident-reflections',
+      label: t('ui.reflections', { defaultValue: 'Reflections' }) as string,
+      href: '/resident/reflections',
+      icon: BookOpenIcon,
+      match: (pathname) => pathname.startsWith('/resident/reflections'),
+    },
+    {
+      id: 'resident-rotations',
+      label: t('ui.rotations', { defaultValue: 'Rotations' }) as string,
+      href: '/resident/rotations',
+      icon: ClipboardDocumentListIcon,
+      match: (pathname) => pathname.startsWith('/resident/rotations'),
+    },
+    {
+      id: 'resident-exams',
+      label: t('exams.title', { defaultValue: 'Exams' }) as string,
+      href: '/exams',
+      icon: AcademicCapIcon,
+      match: (pathname) => pathname.startsWith('/exams'),
+    },
+    {
       id: 'resident-on-call',
       label: t('ui.onCall', { defaultValue: 'On Call' }) as string,
       href: '/on-call',
@@ -67,6 +90,13 @@ function useResidentTabs(): Tab[] {
       match: (pathname, params) =>
         pathname.startsWith('/resident') && params?.get('tab') === 'progress',
       badge: pendingTasks > 0 ? pendingTasks : null,
+    },
+    {
+      id: 'resident-settings',
+      label: t('ui.settings', { defaultValue: 'Settings' }) as string,
+      href: '/settings',
+      icon: Cog6ToothIcon,
+      match: (pathname) => pathname.startsWith('/settings'),
     },
   ];
 }
@@ -97,11 +127,46 @@ function useTutorTabs(): Tab[] {
       match: (pathname) => pathname.startsWith('/tutor/tasks'),
     },
     {
+      id: 'tutor-reflections',
+      label: t('ui.reflections', { defaultValue: 'Reflections' }) as string,
+      href: '/tutor/reflections',
+      icon: BookOpenIcon,
+      match: (pathname) => pathname.startsWith('/tutor/reflections'),
+    },
+    {
+      id: 'tutor-rotations',
+      label: t('ui.rotations', { defaultValue: 'Rotations' }) as string,
+      href: '/tutor/rotations',
+      icon: ClipboardDocumentListIcon,
+      match: (pathname) => pathname.startsWith('/tutor/rotations'),
+    },
+    {
       id: 'tutor-on-call',
       label: t('ui.onCall', { defaultValue: 'On Call' }) as string,
       href: '/on-call',
       icon: ClipboardDocumentCheckIcon,
       match: (pathname) => pathname.startsWith('/on-call'),
+    },
+    {
+      id: 'tutor-meetings',
+      label: t('ui.morningMeetings', { defaultValue: 'Meetings' }) as string,
+      href: '/morning-meetings',
+      icon: UsersIcon,
+      match: (pathname) => pathname.startsWith('/morning-meetings'),
+    },
+    {
+      id: 'tutor-exams',
+      label: t('exams.title', { defaultValue: 'Exams' }) as string,
+      href: '/exams',
+      icon: AcademicCapIcon,
+      match: (pathname) => pathname.startsWith('/exams'),
+    },
+    {
+      id: 'tutor-settings',
+      label: t('ui.settings', { defaultValue: 'Settings' }) as string,
+      href: '/settings',
+      icon: Cog6ToothIcon,
+      match: (pathname) => pathname.startsWith('/settings'),
     },
   ];
 }
@@ -124,11 +189,11 @@ function useAdminTabs(): Tab[] {
       match: (pathname) => pathname.startsWith('/admin/tasks'),
     },
     {
-      id: 'admin-meetings',
-      label: t('ui.morningMeetings', { defaultValue: 'Meetings' }) as string,
-      href: '/admin/morning-meetings',
-      icon: UsersIcon,
-      match: (pathname) => pathname.startsWith('/admin/morning-meetings'),
+      id: 'admin-reflections',
+      label: t('ui.reflections', { defaultValue: 'Reflections' }) as string,
+      href: '/admin/reflections',
+      icon: BookOpenIcon,
+      match: (pathname) => pathname.startsWith('/admin/reflections'),
     },
     {
       id: 'admin-rotations',
@@ -137,8 +202,50 @@ function useAdminTabs(): Tab[] {
       icon: ClipboardDocumentCheckIcon,
       match: (pathname) => pathname.startsWith('/admin/rotations'),
     },
+    {
+      id: 'admin-on-call',
+      label: t('ui.onCall', { defaultValue: 'On Call' }) as string,
+      href: '/on-call',
+      icon: ClipboardDocumentCheckIcon,
+      match: (pathname) => pathname.startsWith('/on-call'),
+    },
+    {
+      id: 'admin-meetings',
+      label: t('ui.morningMeetings', { defaultValue: 'Meetings' }) as string,
+      href: '/admin/morning-meetings',
+      icon: UsersIcon,
+      match: (pathname) => pathname.startsWith('/admin/morning-meetings'),
+    },
+    {
+      id: 'admin-exams',
+      label: t('exams.title', { defaultValue: 'Exams' }) as string,
+      href: '/exams',
+      icon: AcademicCapIcon,
+      match: (pathname) => pathname.startsWith('/exams'),
+    },
+    {
+      id: 'admin-users',
+      label: t('ui.userManagement', { defaultValue: 'User Management' }) as string,
+      href: '/admin/users',
+      icon: UsersIcon,
+      match: (pathname) => pathname.startsWith('/admin/users'),
+    },
+    {
+      id: 'admin-settings',
+      label: t('ui.settings', { defaultValue: 'Settings' }) as string,
+      href: '/settings',
+      icon: Cog6ToothIcon,
+      match: (pathname) => pathname.startsWith('/settings'),
+    },
   ];
 }
+
+// Default tabs for new users: On Call, Morning Meetings, Rotations
+const DEFAULT_TABS = {
+  resident: ['resident-on-call', 'resident-meetings', 'resident-rotations'],
+  tutor: ['tutor-on-call', 'tutor-meetings', 'tutor-rotations'],
+  admin: ['admin-on-call', 'admin-meetings', 'admin-rotations'],
+};
 
 export default function RoleTabs() {
   const { data: me } = useCurrentUserProfile();
@@ -155,7 +262,7 @@ export default function RoleTabs() {
   const baseTabs = role === 'admin' ? adminTabs : role === 'tutor' ? tutorTabs : residentTabs;
 
   const tabs = useMemo(() => {
-    return [
+    const allTabs = [
       ...baseTabs,
       {
         id: 'global-search',
@@ -165,7 +272,24 @@ export default function RoleTabs() {
         match: (path: string) => path.startsWith('/search'),
       },
     ];
-  }, [baseTabs, t]);
+
+    // Filter tabs based on user preferences
+    const quickAccessTabs = me?.settings?.quickAccessTabs;
+
+    // If no preference set, use default tabs for new users
+    if (!quickAccessTabs) {
+      const defaultTabIds = DEFAULT_TABS[role];
+      return allTabs.filter((tab) => defaultTabIds.includes(tab.id));
+    }
+
+    // If user has empty array, show no tabs (user chose to hide all)
+    if (quickAccessTabs.length === 0) {
+      return [];
+    }
+
+    // Filter tabs based on user's selected tabs
+    return allTabs.filter((tab) => quickAccessTabs.includes(tab.id));
+  }, [baseTabs, t, me?.settings?.quickAccessTabs, role]);
 
   return (
     <nav

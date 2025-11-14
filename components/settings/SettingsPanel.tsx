@@ -5,6 +5,7 @@ import { useState } from 'react';
 import AccountSection from './AccountSection';
 import PreferencesSection from './PreferencesSection';
 import ProfileSection from './ProfileSection';
+import QuickAccessSection from './QuickAccessSection';
 import SecuritySection from './SecuritySection';
 
 import Toast from '@/components/ui/Toast';
@@ -38,6 +39,11 @@ export default function SettingsPanel() {
           firebaseUserId={firebaseUser.uid}
           onToast={setToast}
         />
+      </div>
+
+      {/* Quick Access Tabs Section */}
+      <div className="card-levitate p-6">
+        <QuickAccessSection profile={profile} onToast={setToast} />
       </div>
 
       {/* Security Section */}

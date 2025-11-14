@@ -244,6 +244,14 @@ export async function updateUserNotifications(notifications: { inApp?: boolean; 
   await setDoc(ref, { settings: { notifications } }, { merge: true });
 }
 
+export async function updateUserQuickAccessTabs(quickAccessTabs: string[]) {
+  const { auth, db } = getAuthDb();
+  const current = auth.currentUser;
+  if (!current) throw new Error('Not authenticated');
+  const ref = doc(db, 'users', current.uid);
+  await setDoc(ref, { settings: { quickAccessTabs } }, { merge: true });
+}
+
 export async function requestPasswordReset(email: string) {
   const { auth } = getAuthDb();
   await sendPasswordResetEmail(auth, email);
