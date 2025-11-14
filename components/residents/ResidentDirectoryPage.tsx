@@ -28,7 +28,7 @@ import { useResidentDetail } from '@/lib/hooks/useResidentDetail';
 import { useRotationNodes } from '@/lib/hooks/useRotationNodes';
 import { useUsersByRole } from '@/lib/hooks/useUsersByRole';
 import type { Assignment } from '@/types/assignments';
-import type { UserProfile } from '@/types/auth';
+import type { ResidentProfile, UserProfile } from '@/types/auth';
 import type { RotationPetition } from '@/types/rotationPetitions';
 import type { Rotation } from '@/types/rotations';
 
@@ -56,8 +56,8 @@ function toDate(value: any): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function calcResidencyEnd(resident: UserProfile | undefined): Date | null {
-  if (!resident || resident.role !== 'resident') return null;
+function calcResidencyEnd(resident: ResidentProfile | null | undefined): Date | null {
+  if (!resident) return null;
   const start = resident.residencyStartDate ? new Date(resident.residencyStartDate) : null;
   if (!start || Number.isNaN(start.getTime())) return null;
   const durationYears = resident.studyprogramtype === '6-year' ? 5 : 4.5;
@@ -174,7 +174,12 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
     );
   }
 
-  const residencyEnd = calcResidencyEnd(resident);
+  const residentProfile: ResidentProfile | null =
+    resident?.role === 'resident' ? (resident as ResidentProfile) : null;
+  const residencyStart = residentProfile?.residencyStartDate
+    ? new Date(residentProfile.residencyStartDate)
+    : null;
+  const residencyEnd = calcResidencyEnd(residentProfile);
 
   return (
     <div className="space-y-4">
@@ -190,10 +195,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
                 <CalendarIcon className="h-4 w-4" />
                 <span>
                   {t('ui.residencyStart', { defaultValue: 'Residency start' })}:{' '}
-                  {formatDate(
-                    resident.residencyStartDate ? new Date(resident.residencyStartDate) : null,
-                    language,
-                  )}
+                  {formatDate(residencyStart, language)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -513,7 +515,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
                       <div className="text-xs text-amber-700/80 dark:text-amber-200/80">
                         {t('ui.submittedOn', {
                           defaultValue: 'Submitted {{date}}',
-                          date: formatDate(toDate(petition.createdAt), language),
+                          date: formatDate(toDate(petition.requestedAt), language),
                         })}
                       </div>
                       {petition.reason ? (
@@ -560,7 +562,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
                       <div className="text-xs text-muted-foreground">
                         {t('ui.submittedOn', {
                           defaultValue: 'Submitted {{date}}',
-                          date: formatDate(toDate(petition.createdAt), language),
+                          date: formatDate(toDate(petition.requestedAt), language),
                         })}
                       </div>
                       {petition.reason ? (
