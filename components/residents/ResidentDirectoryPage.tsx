@@ -1,15 +1,23 @@
 'use client';
 
-import { MagnifyingGlassIcon, UserGroupIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowRightIcon,
+  MagnifyingGlassIcon,
+  UserGroupIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import Avatar from '../ui/Avatar';
 import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import Input from '../ui/Input';
 import Spinner from '../ui/Spinner';
+
+import { getResidentPalette } from './residentPalette';
 
 import { useActiveRotations } from '@/lib/hooks/useActiveRotations';
 import { useAllAssignments } from '@/lib/hooks/useAllAssignments';
@@ -18,6 +26,7 @@ import { useUsersByRole } from '@/lib/hooks/useUsersByRole';
 import type { Assignment } from '@/types/assignments';
 import type { UserProfile } from '@/types/auth';
 import type { Rotation } from '@/types/rotations';
+
 
 function getUserName(user: UserProfile | undefined) {
   if (!user) return '';
@@ -148,7 +157,7 @@ export default function ResidentDirectoryPage() {
           </div>
         </Card>
 
-        <Card className="p-2">
+        <Card className="p-0">
           {ready ? (
             filteredEntries.length === 0 ? (
               <EmptyState
@@ -161,15 +170,21 @@ export default function ResidentDirectoryPage() {
                 }
               />
             ) : (
-              <ul className="divide-y divide-muted/20">
+              <ul className="space-y-3 p-2">
                 {filteredEntries.map((entry) => {
                   const isActive = entry.activeAssignment?.status === 'active';
+                  const palette = getResidentPalette(
+                    entry.activeRotation?.id || entry.resident.uid,
+                  );
                   return (
                     <li key={entry.resident.uid}>
                       <button
                         type="button"
                         className={clsx(
-                          'flex w-full flex-col gap-1 rounded p-3 text-left transition hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/40',
+                          'group relative flex w-full items-center gap-4 overflow-hidden rounded-3xl border border-muted/20 p-4 text-left transition',
+                          'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/40',
+                          palette.rosterBackground,
+                          'hover:-translate-y-0.5 hover:shadow-2xl',
                         )}
                         onClick={() => router.push(`/residents/${entry.resident.uid}`)}
                         aria-label={
@@ -178,25 +193,58 @@ export default function ResidentDirectoryPage() {
                           }) as string
                         }
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-foreground dark:text-white">
-                            {entry.resident.fullName || entry.resident.uid}
-                          </span>
-                          {isActive ? (
-                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                              {t('ui.active', { defaultValue: 'Active' })}
+                        <span
+                          className={clsx(
+                            'absolute inset-y-0 left-0 w-1 rounded-r-full opacity-90 transition group-hover:opacity-100',
+                            palette.rosterStripe,
+                          )}
+                          aria-hidden="true"
+                        />
+                        <Avatar
+                          size={54}
+                          name={entry.resident.fullName || entry.resident.uid}
+                          email={entry.resident.email || undefined}
+                          className="text-base"
+                        />
+                        <div className="flex flex-1 flex-col gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-base font-semibold text-foreground dark:text-white">
+                              {entry.resident.fullName || entry.resident.uid}
                             </span>
-                          ) : null}
+                            {isActive ? (
+                              <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-200">
+                                {t('ui.active', { defaultValue: 'Active' })}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <span className="rounded-full bg-white/40 px-3 py-1 font-medium text-foreground/80 dark:bg-white/10 dark:text-white/80">
+                              {entry.activeRotation?.name ||
+                                t('ui.noActiveRotation', { defaultValue: 'No active rotation' })}
+                            </span>
+                            <span className="flex items-center gap-1 text-[11px] uppercase tracking-wide opacity-70">
+                              {entry.assignments.length}{' '}
+                              {t('ui.totalAssignments', { defaultValue: 'rotations' })}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            {entry.tutorNames.length > 0 ? (
+                              entry.tutorNames.map((name) => (
+                                <span
+                                  key={name}
+                                  className="rounded-full bg-black/10 px-3 py-1 font-medium text-foreground/80 dark:bg-white/10 dark:text-white/80"
+                                >
+                                  {name}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="rounded-full bg-black/10 px-3 py-1 font-medium text-foreground/70 dark:bg-white/10 dark:text-white/70">
+                                {t('ui.noTutorsAssigned', { defaultValue: 'Unassigned' })}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {entry.activeRotation?.name ||
-                            t('ui.noActiveRotation', { defaultValue: 'No active rotation' })}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {entry.tutorNames.length > 0
-                            ? entry.tutorNames.join(', ')
-                            : t('ui.noTutorsAssigned', { defaultValue: 'Unassigned' })}
-                        </div>
+                        <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-muted-foreground transition group-hover:translate-x-1" />
                       </button>
                     </li>
                   );
@@ -212,11 +260,25 @@ export default function ResidentDirectoryPage() {
         </Card>
       </div>
 
-      <div className="hidden items-center justify-center rounded border border-dashed border-muted/50 p-8 text-center text-sm text-muted-foreground lg:flex">
-        {t('tutor.residentDirectoryInstruction', {
+      <Card
+        tone="sky"
+        variant="tinted"
+        className="hidden flex-col items-center justify-center text-center lg:flex"
+        title={t('tutor.residentDirectoryInstruction', {
           defaultValue: 'Select a resident to open their detailed profile.',
         })}
-      </div>
+        subtitle={t('ui.residentDirectorySubtitle', {
+          defaultValue:
+            'Use the roster to search, filter, and jump straight into vibrant resident insights.',
+        })}
+      >
+        <div className="mx-auto max-w-sm text-sm opacity-75">
+          {t('ui.residentDirectoryHint', {
+            defaultValue:
+              'Tap any card to view progress, pending approvals, and petitions in a dedicated profile view.',
+          })}
+        </div>
+      </Card>
     </div>
   );
 }

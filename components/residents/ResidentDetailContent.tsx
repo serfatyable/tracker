@@ -1,12 +1,15 @@
 'use client';
 
 import {
-  CalendarIcon,
+  AcademicCapIcon,
+  ArrowTrendingUpIcon,
   CheckCircleIcon,
+  ClockIcon,
   ExclamationCircleIcon,
   InboxArrowDownIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,6 +17,9 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import Spinner from '../ui/Spinner';
+
+import { getResidentPalette } from './residentPalette';
+import ResidentProfileHero from './ResidentProfileHero';
 
 import { updateTasksStatus } from '@/lib/firebase/admin';
 import type { TaskDoc } from '@/lib/firebase/db';
@@ -94,7 +100,13 @@ export default function ResidentDetailContent({
     enabled: Boolean(activeRotationId),
   });
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [approvingAll, setApprovingAll] = useState(false);
   const rotationsById = useMemo(() => new Map(rotations.map((r) => [r.id, r])), [rotations]);
+
+  const palette = useMemo(
+    () => getResidentPalette(entry?.activeRotation?.id || entry?.resident.uid),
+    [entry?.activeRotation?.id, entry?.resident?.uid],
+  );
 
   const rotationStats = useMemo(() => {
     if (!entry || !activeRotationId) {
@@ -148,6 +160,20 @@ export default function ResidentDetailContent({
     [refresh, onRefresh],
   );
 
+  const handleApproveAll = useCallback(async () => {
+    if (!pendingTasks.length) return;
+    try {
+      setApprovingAll(true);
+      await updateTasksStatus({ taskIds: pendingTasks.map((task) => task.id), status: 'approved' });
+      await refresh();
+      if (onRefresh) await onRefresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setApprovingAll(false);
+    }
+  }, [pendingTasks, refresh, onRefresh]);
+
   if (!resident) {
     return (
       <Card className="p-6">
@@ -170,378 +196,402 @@ export default function ResidentDetailContent({
     ? new Date(residentProfile.residencyStartDate)
     : null;
   const residencyEnd = calcResidencyEnd(residentProfile);
+  const programLabel = residentProfile?.studyprogramtype
+    ? residentProfile.studyprogramtype === '6-year'
+      ? t('ui.sixYearProgram', { defaultValue: '6-year program' })
+      : t('ui.fourYearProgram', { defaultValue: '4-year program' })
+    : null;
+
+  const rotationDescription = nodesLoading
+    ? t('ui.loading', { defaultValue: 'Loading' })
+    : entry?.activeRotation
+      ? t('ui.rotationRequirementsDescription', {
+          defaultValue:
+            'Progress is calculated based on approved tasks compared to required counts for this rotation.',
+        })
+      : t('ui.noActiveRotationDescription', {
+          defaultValue: 'Assign a rotation to track progress for this resident.',
+        });
 
   return (
-    <div className="space-y-4">
-      <Card className="p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">{resident.fullName || resident.uid}</h2>
-            <p className="text-sm text-muted-foreground">
-              {resident.email || t('ui.noEmail', { defaultValue: 'No email on file' })}
-            </p>
-            <div className="mt-2 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                <span>
-                  {t('ui.residencyStart', { defaultValue: 'Residency start' })}:{' '}
-                  {formatDate(residencyStart, language)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                <span>
-                  {t('ui.residencyEnd', { defaultValue: 'Residency end' })}:{' '}
-                  {formatDate(residencyEnd, language)}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-2 text-sm text-muted-foreground">
-            <div>{t('ui.activeRotation', { defaultValue: 'Active rotation' })}</div>
-            <div className="text-base font-medium text-foreground">
-              {entry?.activeRotation?.name ||
-                t('ui.noActiveRotation', { defaultValue: 'Unassigned' })}
-            </div>
-            {entry?.tutorNames?.length ? (
-              <div className="text-xs">
-                {t('ui.tutors', { defaultValue: 'Tutors' })}: {entry.tutorNames.join(', ')}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </Card>
+    <div className="space-y-6">
+      <ResidentProfileHero
+        fullName={resident.fullName || resident.uid}
+        email={resident.email}
+        programLabel={programLabel}
+        residencyStartLabel={formatDate(residencyStart, language)}
+        residencyEndLabel={formatDate(residencyEnd, language)}
+        activeRotationName={entry?.activeRotation?.name || null}
+        tutorNames={entry?.tutorNames || []}
+        palette={palette}
+        rotationProgressPct={rotationStats.progressPct}
+        pendingTasks={pendingTasks.length}
+        onApproveAll={pendingTasks.length ? handleApproveAll : undefined}
+        approvingAll={approvingAll}
+      />
 
-      <div className="grid gap-4 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
-          <div className="border-b border-muted/40 p-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t('ui.rotationProgress', { defaultValue: 'Rotation progress' })}
-            </h3>
-          </div>
-          <div className="space-y-4 p-4">
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded border border-muted/40 bg-bg p-3">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {t('ui.required', { defaultValue: 'Required' })}
-                </div>
-                <div className="text-2xl font-semibold">{rotationStats.required}</div>
-              </div>
-              <div className="rounded border border-muted/40 bg-bg p-3">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {t('ui.approved', { defaultValue: 'Approved' })}
-                </div>
-                <div className="text-2xl font-semibold">{rotationStats.approved}</div>
-              </div>
-              <div className="rounded border border-muted/40 bg-bg p-3">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {t('ui.pending', { defaultValue: 'Pending' })}
-                </div>
-                <div className="text-2xl font-semibold">{rotationStats.pending}</div>
-              </div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                {t('ui.completion', { defaultValue: 'Completion' })}
-              </div>
-              <div className="mt-2 h-2 rounded-full bg-muted/40">
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Card
+          tone={palette.tone}
+          variant="tinted"
+          title={t('ui.rotationProgress', { defaultValue: 'Rotation progress' })}
+          subtitle={
+            entry?.activeRotation?.name ||
+            t('ui.noActiveRotation', { defaultValue: 'No active rotation' })
+          }
+        >
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                {
+                  label: t('ui.required', { defaultValue: 'Required' }),
+                  value: rotationStats.required,
+                  icon: <AcademicCapIcon className="h-5 w-5" aria-hidden="true" />,
+                },
+                {
+                  label: t('ui.approved', { defaultValue: 'Approved' }),
+                  value: rotationStats.approved,
+                  icon: <CheckCircleIcon className="h-5 w-5" aria-hidden="true" />,
+                },
+                {
+                  label: t('ui.pending', { defaultValue: 'Pending' }),
+                  value: rotationStats.pending,
+                  icon: <ClockIcon className="h-5 w-5" aria-hidden="true" />,
+                },
+              ].map((stat) => (
                 <div
-                  className="h-2 rounded-full bg-primary transition-all"
+                  key={stat.label as string}
+                  className="rounded-2xl border border-white/20 bg-white/40 p-4 shadow-sm backdrop-blur-sm transition"
+                >
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-70">
+                    {stat.icon}
+                    {stat.label}
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold leading-tight">{stat.value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide opacity-70">
+                <span>{t('ui.completion', { defaultValue: 'Completion' })}</span>
+                <span>{rotationStats.progressPct}%</span>
+              </div>
+              <div className="h-3 w-full overflow-hidden rounded-full bg-white/30">
+                <div
+                  className="h-full rounded-full bg-white/90 transition-all"
                   style={{ width: `${rotationStats.progressPct}%` }}
+                  aria-hidden="true"
                 />
               </div>
-              <div className="mt-1 text-sm text-muted-foreground">{rotationStats.progressPct}%</div>
-            </div>
-            <div className="rounded border border-muted/40 bg-bg p-3 text-sm text-muted-foreground">
-              {nodesLoading ? (
-                <div className="flex items-center gap-2">
-                  <Spinner className="h-4 w-4" />
-                  {t('ui.loading', { defaultValue: 'Loading' })}
-                </div>
-              ) : entry?.activeRotation ? (
-                <div>
-                  {t('ui.rotationRequirementsDescription', {
-                    defaultValue:
-                      'Progress is calculated based on approved tasks compared to required counts for this rotation.',
-                  })}
-                </div>
-              ) : (
-                <div>
-                  {t('ui.noActiveRotationDescription', {
-                    defaultValue: 'Assign a rotation to track progress for this resident.',
-                  })}
-                </div>
-              )}
+              <p className="text-xs opacity-75">{rotationDescription}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <div className="border-b border-muted/40 p-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t('ui.taskApprovals', { defaultValue: 'Task approvals' })}
-            </h3>
-          </div>
-          <div className="p-4">
-            {loading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Spinner className="h-4 w-4" />
-                {t('ui.loading', { defaultValue: 'Loading' })}
-              </div>
-            ) : pendingTasks.length === 0 ? (
-              <EmptyState
-                icon={<CheckCircleIcon className="h-12 w-12 text-emerald-500" aria-hidden="true" />}
-                title={t('ui.noPendingTasks', { defaultValue: 'No pending tasks' }) as string}
-                description={
-                  t('ui.noPendingTasksDescription', {
-                    defaultValue: 'Great job! There are no pending approvals for this resident.',
-                  }) as string
-                }
-              />
-            ) : (
-              <ul className="space-y-3">
-                {pendingTasks.map((task) => {
-                  const node = nodeById?.[task.itemId];
-                  return (
-                    <li key={task.id} className="rounded border border-muted/40 bg-bg p-3">
-                      <div className="text-sm font-medium text-foreground">
-                        {node?.name || task.itemId || t('ui.task', { defaultValue: 'Task' })}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {t('ui.submittedOn', { defaultValue: 'Submitted' })}:{' '}
-                        {formatDate(toDate(task.createdAt), language)}
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleTaskAction(task, 'approved')}
-                          disabled={pendingAction === task.id}
-                        >
-                          {pendingAction === task.id && <Spinner className="mr-2 h-3 w-3" />}
-                          {t('ui.approve', { defaultValue: 'Approve' })}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleTaskAction(task, 'rejected')}
-                          disabled={pendingAction === task.id}
-                        >
-                          {pendingAction === task.id && <Spinner className="mr-2 h-3 w-3" />}
-                          {t('ui.reject', { defaultValue: 'Reject' })}
-                        </Button>
-                      </div>
-                    </li>
-                  );
+        <Card
+          tone="rose"
+          variant="tinted"
+          title={t('ui.taskApprovals', { defaultValue: 'Task approvals' })}
+        >
+          {loading ? (
+            <div className="flex items-center gap-2 text-sm opacity-80">
+              <Spinner className="h-4 w-4" />
+              {t('ui.loading', { defaultValue: 'Loading' })}
+            </div>
+          ) : pendingTasks.length === 0 ? (
+            <div className="rounded-3xl border border-white/20 bg-white/40 p-6 text-center shadow-sm backdrop-blur-sm">
+              <CheckCircleIcon className="mx-auto h-10 w-10 opacity-70" aria-hidden="true" />
+              <p className="mt-3 text-sm font-semibold">
+                {t('ui.noPendingTasks', { defaultValue: 'No pending tasks' })}
+              </p>
+              <p className="mt-1 text-xs opacity-70">
+                {t('ui.noPendingTasksDescription', {
+                  defaultValue: 'Great job! There are no pending approvals for this resident.',
                 })}
-              </ul>
-            )}
-          </div>
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {pendingTasks.map((task) => {
+                const node = nodeById?.[task.itemId];
+                return (
+                  <li
+                    key={task.id}
+                    className="group relative overflow-hidden rounded-2xl border border-rose-500/25 bg-white/70 p-4 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold leading-5">
+                          {node?.name || task.itemId || t('ui.task', { defaultValue: 'Task' })}
+                        </div>
+                        <div className="mt-1 text-xs opacity-70">
+                          {t('ui.submittedOn', { defaultValue: 'Submitted' })}:{' '}
+                          {formatDate(toDate(task.createdAt), language)}
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-rose-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-700">
+                        {Number(task.count) || 0}
+                      </span>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleTaskAction(task, 'approved')}
+                        disabled={pendingAction === task.id}
+                        className="rounded-full px-4"
+                        leftIcon={
+                          pendingAction === task.id ? (
+                            <Spinner className="h-3 w-3" />
+                          ) : (
+                            <CheckCircleIcon className="h-4 w-4" aria-hidden="true" />
+                          )
+                        }
+                      >
+                        {t('ui.approve', { defaultValue: 'Approve' })}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleTaskAction(task, 'rejected')}
+                        disabled={pendingAction === task.id}
+                        className="rounded-full px-4"
+                        leftIcon={
+                          pendingAction === task.id ? <Spinner className="h-3 w-3" /> : undefined
+                        }
+                      >
+                        {t('ui.reject', { defaultValue: 'Reject' })}
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+
+        <Card
+          tone="indigo"
+          variant="tinted"
+          title={t('ui.activityTimeline', { defaultValue: 'Recent activity' })}
+        >
+          {loading ? (
+            <div className="flex items-center gap-2 text-sm opacity-80">
+              <Spinner className="h-4 w-4" />
+              {t('ui.loading', { defaultValue: 'Loading' })}
+            </div>
+          ) : timeline.length === 0 ? (
+            <div className="rounded-3xl border border-white/25 bg-white/10 p-6 text-center shadow-sm backdrop-blur">
+              <InboxArrowDownIcon className="mx-auto h-10 w-10 opacity-70" aria-hidden="true" />
+              <p className="mt-3 text-sm font-semibold">
+                {t('ui.noRecentActivity', { defaultValue: 'No recent activity' })}
+              </p>
+              <p className="mt-1 text-xs opacity-70">
+                {t('ui.noRecentActivityDescription', {
+                  defaultValue: 'New submissions, reflections, and tasks will appear here.',
+                })}
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-4">
+              {timeline.map((task, index) => {
+                const node = nodeById?.[task.itemId];
+                const isLast = index === timeline.length - 1;
+                return (
+                  <li key={task.id} className="relative pl-10">
+                    <span className="absolute left-0 top-0 flex h-full w-10 items-start justify-center">
+                      <span className="relative flex h-6 w-6 items-center justify-center rounded-full bg-white/80 text-indigo-600 shadow">
+                        <ArrowTrendingUpIcon className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      {!isLast ? (
+                        <span
+                          className="absolute left-1/2 top-6 -ml-px h-[calc(100%-1.5rem)] w-0.5 bg-white/30"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                    </span>
+                    <div className="rounded-2xl border border-white/20 bg-white/15 p-4 shadow-sm backdrop-blur">
+                      <div className="flex items-center justify-between gap-3 text-sm font-semibold">
+                        <span>
+                          {node?.name || task.itemId || t('ui.task', { defaultValue: 'Task' })}
+                        </span>
+                        <span className="text-xs font-medium opacity-70">
+                          {formatDate(toDate(task.createdAt), language)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs capitalize opacity-70">{task.status}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <div className="border-b border-muted/40 p-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t('ui.rotationHistory', { defaultValue: 'Rotation history' })}
-            </h3>
-          </div>
-          <div className="p-4">
-            {entry?.assignments?.length ? (
-              <ul className="space-y-3">
-                {entry.assignments.map((assignment) => {
-                  const rotation = rotationsById.get(assignment.rotationId);
-                  const startDate = formatDate(toDate(assignment.startedAt), language);
-                  const endDate = formatDate(toDate(assignment.endedAt), language);
-                  return (
-                    <li
-                      key={`${assignment.rotationId}-${assignment.startedAt}`}
-                      className="rounded border border-muted/40 bg-bg p-3"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm font-medium text-foreground">
-                          {rotation?.name || t('ui.unknownRotation', { defaultValue: 'Rotation' })}
-                        </div>
-                        <div
-                          className={`rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${
-                            assignment.status === 'active'
-                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
-                              : assignment.status === 'finished'
-                                ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
-                          }`}
-                        >
-                          {assignment.status}
-                        </div>
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {startDate} — {endDate}
-                      </div>
-                    </li>
-                  );
+        <Card
+          tone="slate"
+          variant="tinted"
+          title={t('ui.rotationHistory', { defaultValue: 'Rotation history' })}
+        >
+          {entry?.assignments?.length ? (
+            <ul className="space-y-3">
+              {entry.assignments.map((assignment) => {
+                const rotation = rotationsById.get(assignment.rotationId);
+                const startDate = formatDate(toDate(assignment.startedAt), language);
+                const endDate = formatDate(toDate(assignment.endedAt), language);
+                return (
+                  <li
+                    key={`${assignment.rotationId}-${assignment.startedAt}`}
+                    className="rounded-2xl border border-white/20 bg-white/15 p-4 shadow-sm backdrop-blur-sm"
+                  >
+                    <div className="flex items-center justify-between gap-3 text-sm font-semibold">
+                      <span>
+                        {rotation?.name || t('ui.unknownRotation', { defaultValue: 'Rotation' })}
+                      </span>
+                      <span
+                        className={clsx(
+                          'rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide',
+                          assignment.status === 'active'
+                            ? 'bg-emerald-500/20 text-emerald-700'
+                            : assignment.status === 'finished'
+                              ? 'bg-sky-500/20 text-sky-700'
+                              : 'bg-amber-500/20 text-amber-700',
+                        )}
+                      >
+                        {assignment.status}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs opacity-70">
+                      {startDate} — {endDate}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="rounded-3xl border border-white/20 bg-white/10 p-6 text-center shadow-sm backdrop-blur">
+              <InboxArrowDownIcon className="mx-auto h-10 w-10 opacity-70" aria-hidden="true" />
+              <p className="mt-3 text-sm font-semibold">
+                {t('ui.noAssignments', { defaultValue: 'No assignments yet' })}
+              </p>
+              <p className="mt-1 text-xs opacity-70">
+                {t('ui.noAssignmentsDescription', {
+                  defaultValue: 'Assign rotations to begin tracking this resident’s progress.',
                 })}
-              </ul>
-            ) : (
-              <EmptyState
-                icon={<InboxArrowDownIcon className="h-10 w-10" aria-hidden="true" />}
-                title={t('ui.noAssignments', { defaultValue: 'No assignments yet' }) as string}
-                description={
-                  t('ui.noAssignmentsDescription', {
-                    defaultValue: 'Assign rotations to begin tracking this resident’s progress.',
-                  }) as string
-                }
-              />
-            )}
-          </div>
+              </p>
+            </div>
+          )}
         </Card>
 
-        <Card>
-          <div className="border-b border-muted/40 p-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t('ui.activityTimeline', { defaultValue: 'Recent activity' })}
-            </h3>
-          </div>
-          <div className="p-4">
-            {loading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Spinner className="h-4 w-4" />
-                {t('ui.loading', { defaultValue: 'Loading' })}
-              </div>
-            ) : timeline.length === 0 ? (
-              <EmptyState
-                icon={<InboxArrowDownIcon className="h-10 w-10" aria-hidden="true" />}
-                title={t('ui.noRecentActivity', { defaultValue: 'No recent activity' }) as string}
-                description={
-                  t('ui.noRecentActivityDescription', {
-                    defaultValue: 'New submissions, reflections, and tasks will appear here.',
-                  }) as string
-                }
-              />
-            ) : (
-              <ul className="space-y-3">
-                {timeline.map((task) => {
-                  const node = nodeById?.[task.itemId];
-                  return (
-                    <li key={task.id} className="rounded border border-muted/40 bg-bg p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm font-medium text-foreground">
-                          {node?.name || task.itemId || t('ui.task', { defaultValue: 'Task' })}
+        <Card
+          tone="amber"
+          variant="tinted"
+          title={t('ui.rotationPetitions', { defaultValue: 'Rotation petitions' })}
+        >
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div>
+              <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                <ExclamationCircleIcon className="h-5 w-5" aria-hidden="true" />
+                {t('ui.pendingPetitions', { defaultValue: 'Pending petitions' })}
+              </h4>
+              {petitionsByStatus.pendingList.length === 0 ? (
+                <div className="rounded-3xl border border-amber-400/30 bg-white/60 p-5 text-sm shadow-sm">
+                  <p className="font-semibold">
+                    {t('ui.noPendingPetitions', { defaultValue: 'No pending petitions' })}
+                  </p>
+                  <p className="mt-1 text-xs opacity-75">
+                    {t('ui.noPendingPetitionsDescription', {
+                      defaultValue: 'Pending activation/finish requests will appear here.',
+                    })}
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-3 text-sm">
+                  {petitionsByStatus.pendingList.map((petition) => (
+                    <li
+                      key={petition.id}
+                      className="rounded-2xl border border-amber-400/40 bg-white/70 p-4 shadow-sm backdrop-blur-sm"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="font-semibold">
+                          {rotationsById.get(petition.rotationId)?.name ||
+                            t('ui.unknownRotation', { defaultValue: 'Rotation' })}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDate(toDate(task.createdAt), language)}
-                        </div>
+                        <span className="rounded-full bg-amber-500/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                          {petition.type}
+                        </span>
                       </div>
-                      <div className="text-xs capitalize text-muted-foreground">{task.status}</div>
+                      <div className="mt-1 text-xs opacity-75">
+                        {t('ui.submittedOn', { defaultValue: 'Submitted' })}:{' '}
+                        {formatDate(toDate(petition.requestedAt), language)}
+                      </div>
+                      {petition.reason ? (
+                        <div className="mt-2 rounded-2xl bg-amber-500/10 p-3 text-xs opacity-80">
+                          {petition.reason}
+                        </div>
+                      ) : null}
                     </li>
-                  );
-                })}
-              </ul>
-            )}
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div>
+              <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                <InboxArrowDownIcon className="h-5 w-5" aria-hidden="true" />
+                {t('ui.pastPetitions', { defaultValue: 'History' })}
+              </h4>
+              {petitionsByStatus.history.length === 0 ? (
+                <div className="rounded-3xl border border-amber-400/30 bg-white/60 p-5 text-sm shadow-sm">
+                  <p className="font-semibold">
+                    {t('ui.noPastPetitions', { defaultValue: 'No past petitions' })}
+                  </p>
+                  <p className="mt-1 text-xs opacity-75">
+                    {t('ui.noPastPetitionsDescription', {
+                      defaultValue: 'Approved and rejected petitions will appear here.',
+                    })}
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-3 text-sm">
+                  {petitionsByStatus.history.map((petition) => (
+                    <li
+                      key={petition.id}
+                      className="rounded-2xl border border-amber-400/40 bg-white/70 p-4 shadow-sm backdrop-blur-sm"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="font-semibold">
+                          {rotationsById.get(petition.rotationId)?.name ||
+                            t('ui.unknownRotation', { defaultValue: 'Rotation' })}
+                        </div>
+                        <span className="rounded-full bg-white/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-900">
+                          {petition.status}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-xs opacity-75">
+                        {t('ui.submittedOn', { defaultValue: 'Submitted' })}:{' '}
+                        {formatDate(toDate(petition.requestedAt), language)}
+                      </div>
+                      {petition.reason ? (
+                        <div className="mt-2 rounded-2xl bg-amber-500/10 p-3 text-xs opacity-80">
+                          {petition.reason}
+                        </div>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </Card>
       </div>
 
-      <Card>
-        <div className="border-b border-muted/40 p-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {t('ui.rotationPetitions', { defaultValue: 'Rotation petitions' })}
-          </h3>
+      {error ? (
+        <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-900 dark:text-rose-200">
+          {error}
         </div>
-        <div className="grid gap-4 p-4 lg:grid-cols-2">
-          <div>
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-              <ExclamationCircleIcon className="h-4 w-4" />
-              {t('ui.pendingPetitions', { defaultValue: 'Pending petitions' })}
-            </h4>
-            {petitionsByStatus.pendingList.length === 0 ? (
-              <EmptyState
-                icon={<CheckCircleIcon className="h-10 w-10 text-emerald-500" aria-hidden="true" />}
-                title={
-                  t('ui.noPendingPetitions', { defaultValue: 'No pending petitions' }) as string
-                }
-                description={
-                  t('ui.noPendingPetitionsDescription', {
-                    defaultValue: 'Pending activation/finish requests will appear here.',
-                  }) as string
-                }
-              />
-            ) : (
-              <ul className="space-y-3 text-sm">
-                {petitionsByStatus.pendingList.map((petition) => (
-                  <li key={petition.id} className="rounded border border-muted/40 bg-bg p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-foreground">
-                        {rotationsById.get(petition.rotationId)?.name ||
-                          t('ui.unknownRotation', { defaultValue: 'Rotation' })}
-                      </div>
-                      <div className="text-xs uppercase tracking-wide text-amber-600">
-                        {petition.type}
-                      </div>
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {t('ui.submittedOn', { defaultValue: 'Submitted' })}:{' '}
-                      {formatDate(toDate(petition.requestedAt), language)}
-                    </div>
-                    {petition.reason ? (
-                      <div className="mt-2 rounded bg-muted/60 p-2 text-xs text-muted-foreground">
-                        {petition.reason}
-                      </div>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div>
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-              <InboxArrowDownIcon className="h-4 w-4" />
-              {t('ui.pastPetitions', { defaultValue: 'History' })}
-            </h4>
-            {petitionsByStatus.history.length === 0 ? (
-              <EmptyState
-                icon={<InboxArrowDownIcon className="h-10 w-10" aria-hidden="true" />}
-                title={t('ui.noPastPetitions', { defaultValue: 'No past petitions' }) as string}
-                description={
-                  t('ui.noPastPetitionsDescription', {
-                    defaultValue: 'Approved and rejected petitions will appear here.',
-                  }) as string
-                }
-              />
-            ) : (
-              <ul className="space-y-3 text-sm">
-                {petitionsByStatus.history.map((petition) => (
-                  <li key={petition.id} className="rounded border border-muted/40 bg-bg p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-foreground">
-                        {rotationsById.get(petition.rotationId)?.name ||
-                          t('ui.unknownRotation', { defaultValue: 'Rotation' })}
-                      </div>
-                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {petition.status}
-                      </div>
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {t('ui.submittedOn', { defaultValue: 'Submitted' })}:{' '}
-                      {formatDate(toDate(petition.requestedAt), language)}
-                    </div>
-                    {petition.reason ? (
-                      <div className="mt-2 rounded bg-muted/60 p-2 text-xs text-muted-foreground">
-                        {petition.reason}
-                      </div>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-        {error ? (
-          <div className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200">
-            {error}
-          </div>
-        ) : null}
-      </Card>
+      ) : null}
     </div>
   );
 }
