@@ -162,7 +162,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
     return (
       <Card className="p-6">
         <EmptyState
-          icon={UserGroupIcon}
+          icon={<UserGroupIcon className="h-12 w-12" aria-hidden="true" />}
           title={t('tutor.noResidentsSelected', { defaultValue: 'Select a resident' }) as string}
           description={
             t('tutor.selectResidentDescription', {
@@ -273,7 +273,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
             </div>
           ) : (
             <EmptyState
-              icon={ExclamationCircleIcon}
+              icon={<ExclamationCircleIcon className="h-12 w-12" aria-hidden="true" />}
               title={t('ui.noActiveRotation', { defaultValue: 'No active rotation' }) as string}
               description={
                 t('ui.noActiveRotationDescription', {
@@ -354,7 +354,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
             </div>
           ) : pendingTasks.length === 0 ? (
             <EmptyState
-              icon={CheckCircleIcon}
+              icon={<CheckCircleIcon className="h-12 w-12" aria-hidden="true" />}
               title={t('ui.noPendingTasks', { defaultValue: 'No pending tasks' }) as string}
               description={
                 t('ui.noPendingTasksDescription', {
@@ -421,7 +421,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
           </h3>
           {timeline.length === 0 ? (
             <EmptyState
-              icon={InboxArrowDownIcon}
+              icon={<InboxArrowDownIcon className="h-12 w-12" aria-hidden="true" />}
               title={t('ui.noRecentLogs', { defaultValue: 'No recent logs' }) as string}
               description={
                 t('ui.noRecentActivityDescription', {
@@ -484,7 +484,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
         </h3>
         {petitions.length === 0 ? (
           <EmptyState
-            icon={InboxArrowDownIcon}
+            icon={<InboxArrowDownIcon className="h-12 w-12" aria-hidden="true" />}
             title={t('ui.noPetitions', { defaultValue: 'No petitions' }) as string}
             description={
               t('ui.noPetitionsDescription', {
@@ -685,7 +685,7 @@ export default function ResidentDirectoryPage() {
   if (!allowAccess) {
     return (
       <EmptyState
-        icon={ExclamationCircleIcon}
+        icon={<ExclamationCircleIcon className="h-12 w-12" aria-hidden="true" />}
         title={t('ui.accessDenied', { defaultValue: 'Access denied' }) as string}
         description={
           t('ui.accessDeniedDescription', {
@@ -731,7 +731,7 @@ export default function ResidentDirectoryPage() {
           {ready ? (
             filteredEntries.length === 0 ? (
               <EmptyState
-                icon={UserGroupIcon}
+                icon={<UserGroupIcon className="h-12 w-12" aria-hidden="true" />}
                 title={t('ui.noResidents', { defaultValue: 'No residents found' }) as string}
                 description={
                   t('ui.noResidentsDescription', {
