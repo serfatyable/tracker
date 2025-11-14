@@ -307,7 +307,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
                       return (
                         <li
                           key={assignment.id}
-                          className="rounded border border-muted/40 bg-background/70 px-3 py-2"
+                          className="rounded border border-muted/40 bg-bg/70 px-3 py-2"
                         >
                           <div className="font-medium text-foreground dark:text-white">
                             {rotation?.name ||
@@ -369,10 +369,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
               {pendingTasks.map((task) => {
                 const rotation = rotationsById.get(task.rotationId);
                 return (
-                  <li
-                    key={task.id}
-                    className="rounded border border-muted/40 bg-background/70 p-3 text-sm"
-                  >
+                  <li key={task.id} className="rounded border border-muted/40 bg-bg/70 p-3 text-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <div className="font-medium text-foreground dark:text-white">
@@ -437,7 +434,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
                 const rotation = rotationsById.get(task.rotationId);
                 const submitted = formatDate(toDate(task.createdAt), language);
                 return (
-                  <li key={task.id} className="rounded border border-muted/40 bg-background/70 p-3">
+                  <li key={task.id} className="rounded border border-muted/40 bg-bg/70 p-3">
                     <div className="flex items-center justify-between gap-2">
                       <div>
                         <div className="font-medium text-foreground dark:text-white">
@@ -536,10 +533,7 @@ function ResidentDetailPanel({ entry, rotations, language }: ResidentDetailProps
                 </div>
                 <ul className="space-y-2">
                   {petitionsByStatus.history.map((petition) => (
-                    <li
-                      key={petition.id}
-                      className="rounded border border-muted/40 bg-background/70 p-3"
-                    >
+                    <li key={petition.id} className="rounded border border-muted/40 bg-bg/70 p-3">
                       <div className="flex items-center justify-between">
                         <div className="font-medium text-foreground dark:text-white">
                           {petition.type === 'activate'
@@ -802,7 +796,7 @@ export default function ResidentDirectoryPage() {
         </div>
         <div className="lg:hidden">
           {showMobileDetail ? (
-            <div className="fixed inset-0 z-50 flex flex-col bg-background">
+            <div className="fixed inset-0 z-50 flex flex-col bg-bg">
               <div className="flex items-center justify-between border-b border-muted/40 px-4 py-3">
                 <h2 className="text-base font-semibold">
                   {selectedEntry?.resident.fullName || selectedEntry?.resident.uid}
