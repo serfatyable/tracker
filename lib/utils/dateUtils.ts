@@ -17,7 +17,10 @@ export function toDateKey(date: Date): string {
  * @returns Date object
  */
 export function fromDateKey(dateKey: string): Date {
-  const [year, month, day] = dateKey.split('-').map((p) => parseInt(p, 10));
+  const parts = dateKey.split('-').map((p) => parseInt(p, 10));
+  const year = parts[0] ?? 1970;
+  const month = parts[1] ?? 1;
+  const day = parts[2] ?? 1;
   return new Date(year, month - 1, day);
 }
 
@@ -98,7 +101,10 @@ export function formatDateTimeLocale(
  * @param daysAhead - Number of days ahead
  * @returns Object with startKey and endKey
  */
-export function getDateRange(startDate: Date, daysAhead: number): { startKey: string; endKey: string } {
+export function getDateRange(
+  startDate: Date,
+  daysAhead: number,
+): { startKey: string; endKey: string } {
   const endDate = addDays(startDate, Math.max(0, daysAhead));
   return {
     startKey: toDateKey(startDate),
@@ -121,7 +127,11 @@ export function isToday(dateKey: string): boolean {
  * @param locale - The locale to use
  * @returns Relative date string (e.g., "Today", "Tomorrow", or the actual date)
  */
-export function getRelativeDateLabel(dateKey: string, locale: string, t: (key: string) => string): string {
+export function getRelativeDateLabel(
+  dateKey: string,
+  locale: string,
+  t: (key: string) => string,
+): string {
   const today = getTodayDateKey();
   const tomorrow = toDateKey(addDays(new Date(), 1));
 

@@ -11,7 +11,7 @@ import Button from '../ui/Button';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';
 
 export default function NextShiftCard({ userId }: { userId?: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { next, loading, error } = useOnCallUpcomingByUser(userId);
 
   if (!userId) return null;
@@ -65,7 +65,6 @@ export default function NextShiftCard({ userId }: { userId?: string }) {
   const start = new Date(
     (next.startAt as any).seconds ? (next.startAt as any).seconds * 1000 : (next as any).startAt,
   );
-  const { i18n } = useTranslation();
   const dateStr = formatDateLocale(start, i18n.language);
   const stationLabel = t(stationI18nKeys[next.stationKey as StationKey]);
 

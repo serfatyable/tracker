@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
-import type { StationAssignment } from '@/types/onCall';
 import { useOnCallToday } from '../../lib/hooks/useOnCallToday';
 import { getStationCardClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
@@ -10,6 +9,8 @@ import { Skeleton } from '../dashboard/Skeleton';
 import Avatar from '../ui/Avatar';
 import Button from '../ui/Button';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';
+
+import type { StationAssignment } from '@/types/onCall';
 
 export default function TodayPanel({ highlightUserId }: { highlightUserId?: string }) {
   const { t } = useTranslation();
@@ -76,7 +77,7 @@ export default function TodayPanel({ highlightUserId }: { highlightUserId?: stri
       {stationKeys.map((sk) => {
         const entry: StationAssignment | undefined = data.stations[sk];
         if (!entry) return null;
-        const isMe = highlightUserId && entry.userId === highlightUserId;
+        const isMe = !!(highlightUserId && entry.userId === highlightUserId);
         return (
           <div key={sk} className={getStationCardClasses(sk, isMe)}>
             <div className="text-xs opacity-70">{t(stationI18nKeys[sk])}</div>

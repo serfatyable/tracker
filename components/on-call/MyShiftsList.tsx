@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { StationKey } from '@/types/onCall';
 import { getFirebaseApp } from '../../lib/firebase/client';
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
+import {
+  getShiftsWithConflicts,
+  getConflictBadgeClasses,
+} from '../../lib/on-call/conflictDetection';
 import { DEFAULT_DAYS_AHEAD } from '../../lib/on-call/constants';
-import { getShiftsWithConflicts, getConflictBadgeClasses } from '../../lib/on-call/conflictDetection';
 import { getStationBadgeClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys } from '../../lib/on-call/stations';
 import { formatDateLocale } from '../../lib/utils/dateUtils';
@@ -18,6 +20,8 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';
 import Toast from '../ui/Toast';
+
+import type { StationKey } from '@/types/onCall';
 
 export default function MyShiftsList({
   userId,
@@ -183,7 +187,7 @@ export default function MyShiftsList({
             className="py-6"
             action={
               <Button
-                variant="primary"
+                variant="default"
                 size="md"
                 onClick={() => router.push('/on-call?tab=timeline')}
               >
@@ -203,7 +207,9 @@ export default function MyShiftsList({
                   title={conflict?.message}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs opacity-70">{formatDateLocale(new Date(g.date), i18n.language)}</div>
+                    <div className="text-xs opacity-70">
+                      {formatDateLocale(new Date(g.date), i18n.language)}
+                    </div>
                     {conflict && (
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full font-medium ${getConflictBadgeClasses(conflict.severity)}`}
@@ -214,7 +220,10 @@ export default function MyShiftsList({
                   </div>
                   <div className="mt-1 flex flex-wrap gap-2">
                     {g.items.map((it, idx) => (
-                      <span key={idx} className={getStationBadgeClasses(it.stationKey as StationKey)}>
+                      <span
+                        key={idx}
+                        className={getStationBadgeClasses(it.stationKey as StationKey)}
+                      >
                         {t(stationI18nKeys[it.stationKey as StationKey])}
                       </span>
                     ))}

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 /**
  * Hook for handling keyboard navigation on the on-call page
@@ -10,17 +10,16 @@ export function useKeyboardNavigation(options: {
 }) {
   const { onTabChange, currentTab, enabled = true } = options;
 
-  const tabs: Array<'my' | 'today' | 'team' | 'timeline'> = ['my', 'today', 'team', 'timeline'];
+  const tabs: Array<'my' | 'today' | 'team' | 'timeline'> = useMemo(
+    () => ['my', 'today', 'team', 'timeline'],
+    [],
+  );
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       // Don't handle keyboard shortcuts when user is typing in an input/textarea
       const target = event.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-      ) {
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return;
       }
 
@@ -30,23 +29,26 @@ export function useKeyboardNavigation(options: {
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
         const prevIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
-        onTabChange(tabs[prevIndex]);
+        const prevTab = tabs[prevIndex];
+        if (prevTab) onTabChange(prevTab);
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
         const nextIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
-        onTabChange(tabs[nextIndex]);
+        const nextTab = tabs[nextIndex];
+        if (nextTab) onTabChange(nextTab);
       }
 
       // Number key shortcuts (1-4)
       if (event.key >= '1' && event.key <= '4') {
         event.preventDefault();
         const tabIndex = parseInt(event.key, 10) - 1;
-        if (tabIndex < tabs.length) {
-          onTabChange(tabs[tabIndex]);
+        const tab = tabs[tabIndex];
+        if (tab) {
+          onTabChange(tab);
         }
       }
     },
-    [currentTab, onTabChange, tabs]
+    [currentTab, onTabChange, tabs],
   );
 
   useEffect(() => {
