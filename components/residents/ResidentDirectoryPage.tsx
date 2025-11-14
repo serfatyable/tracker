@@ -205,9 +205,12 @@ export default function ResidentDirectoryPage() {
                           email={entry.resident.email || undefined}
                           className="text-base"
                         />
-                        <div className="flex flex-1 flex-col gap-2">
+                        <div className="flex flex-1 min-w-0 flex-col gap-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-base font-semibold text-foreground dark:text-white">
+                            <span
+                              className="block truncate text-base font-semibold text-foreground dark:text-white"
+                              title={entry.resident.fullName || entry.resident.uid}
+                            >
                               {entry.resident.fullName || entry.resident.uid}
                             </span>
                             {isActive ? (
@@ -217,9 +220,19 @@ export default function ResidentDirectoryPage() {
                             ) : null}
                           </div>
                           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <span className="rounded-full bg-white/40 px-3 py-1 font-medium text-foreground/80 dark:bg-white/10 dark:text-white/80">
-                              {entry.activeRotation?.name ||
-                                t('ui.noActiveRotation', { defaultValue: 'No active rotation' })}
+                            <span className="inline-flex max-w-full rounded-full bg-white/40 px-3 py-1 font-medium text-foreground/80 dark:bg-white/10 dark:text-white/80">
+                              <span
+                                className="block max-w-[12rem] truncate"
+                                title={
+                                  entry.activeRotation?.name ||
+                                  (t('ui.noActiveRotation', {
+                                    defaultValue: 'No active rotation',
+                                  }) as string)
+                                }
+                              >
+                                {entry.activeRotation?.name ||
+                                  t('ui.noActiveRotation', { defaultValue: 'No active rotation' })}
+                              </span>
                             </span>
                             <span className="flex items-center gap-1 text-[11px] uppercase tracking-wide opacity-70">
                               {entry.assignments.length}{' '}
