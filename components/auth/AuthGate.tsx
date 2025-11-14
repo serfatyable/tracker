@@ -25,11 +25,11 @@ export default function AuthGate({
       router.replace('/auth');
       return;
     }
-    if (!profile || profile.status === 'pending') {
+    if (profile?.status === 'pending') {
       router.replace('/awaiting-approval');
       return;
     }
-    if (requiredRole && profile.role !== requiredRole) {
+    if (requiredRole && profile && profile.role !== requiredRole) {
       router.replace('/auth');
       return;
     }
