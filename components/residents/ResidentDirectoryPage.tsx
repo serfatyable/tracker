@@ -802,27 +802,25 @@ export default function ResidentDirectoryPage() {
         </div>
         <div className="lg:hidden">
           {showMobileDetail ? (
-            <div className="fixed inset-0 z-50 bg-black/40 p-3">
-              <div className="mx-auto flex h-full max-h-[90vh] w-full max-w-3xl flex-col rounded-lg bg-background p-4 shadow-xl">
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-base font-semibold">
-                    {selectedEntry?.resident.fullName || selectedEntry?.resident.uid}
-                  </h2>
-                  <button
-                    type="button"
-                    className="rounded p-2 text-muted-foreground hover:text-foreground"
-                    onClick={() => setShowMobileDetail(false)}
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto pr-1">
-                  <ResidentDetailPanel
-                    entry={selectedEntry}
-                    rotations={rotations}
-                    language={i18n.language}
-                  />
-                </div>
+            <div className="fixed inset-0 z-50 flex flex-col bg-background">
+              <div className="flex items-center justify-between border-b border-muted/40 px-4 py-3">
+                <h2 className="text-base font-semibold">
+                  {selectedEntry?.resident.fullName || selectedEntry?.resident.uid}
+                </h2>
+                <button
+                  type="button"
+                  className="rounded p-2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowMobileDetail(false)}
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 pb-6">
+                <ResidentDetailPanel
+                  entry={selectedEntry}
+                  rotations={rotations}
+                  language={i18n.language}
+                />
               </div>
             </div>
           ) : (
