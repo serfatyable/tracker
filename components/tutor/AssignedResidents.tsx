@@ -63,7 +63,7 @@ export default function AssignedResidents({
                   size="sm"
                   className="btn-levitate"
                   variant="outline"
-                  onClick={() => window.open(`/resident?uid=${resident.uid}`, '_self')}
+                  onClick={() => window.open(`/residents?selected=${resident.uid}`, '_self')}
                 >
                   Open profile
                 </Button>
