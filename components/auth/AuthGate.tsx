@@ -8,13 +8,24 @@ import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import type { Role } from '../../types/auth';
 import Skeleton from '../dashboard/Skeleton';
 
-export default function AuthGate({
-  requiredRole,
-  children,
-}: {
+type AuthGateProps = {
   requiredRole?: Role;
+  allowedRoles?: Role[];
   children: React.ReactNode;
-}) {
+};
+
+function isAuthorized(role: Role | undefined, requirement?: Role, allowed?: Role[]) {
+  if (!role) return false;
+  if (Array.isArray(allowed) && allowed.length > 0) {
+    return allowed.includes(role);
+  }
+  if (requirement) {
+    return role === requirement;
+  }
+  return true;
+}
+
+export default function AuthGate({ requiredRole, allowedRoles, children }: AuthGateProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const { status, firebaseUser, data: profile, error } = useCurrentUserProfile();
@@ -29,11 +40,11 @@ export default function AuthGate({
       router.replace('/awaiting-approval');
       return;
     }
-    if (requiredRole && profile && profile.role !== requiredRole) {
+    if (profile && !isAuthorized(profile.role, requiredRole, allowedRoles)) {
       router.replace('/auth');
       return;
     }
-  }, [status, firebaseUser, profile, requiredRole, router]);
+  }, [status, firebaseUser, profile, requiredRole, allowedRoles, router]);
 
   if (status === 'loading') {
     return (

@@ -91,6 +91,7 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
       : role === 'tutor'
         ? '/tutor/rotations'
         : '/resident/rotations';
+  const residentsHref = role === 'resident' ? '/resident' : '/residents';
 
   const isRTL = typeof window !== 'undefined' && document?.documentElement?.dir === 'rtl';
 
@@ -151,6 +152,12 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
         </div>
         <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
           <NavItem href={homeHref} label={t('ui.dashboard')} />
+          {(role === 'admin' || role === 'tutor') && (
+            <NavItem
+              href={residentsHref}
+              label={t('tutor.tabs.residents', { defaultValue: 'Residents' })}
+            />
+          )}
           <NavItem href={reflectionsHref} label={t('ui.reflections')} />
           <NavItem href={rotationsHref} label={t('ui.rotations', { defaultValue: 'Rotations' })} />
           <NavItem href="/exams" label={t('exams.title', { defaultValue: 'Exams' })} />
