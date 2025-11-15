@@ -11,6 +11,7 @@ export type UserSettings = {
     icsToken?: string;
     reminderOptIn?: boolean;
   };
+  quickAccessTabs?: string[]; // Tab IDs to show in RoleTabs navigation
 };
 
 export type BaseUserProfile = {

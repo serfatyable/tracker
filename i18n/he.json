@@ -312,6 +312,13 @@
     "preferences": {
       "title": "העדפות"
     },
+    "quickAccess": {
+      "title": "לשוניות גישה מהירה",
+      "description": "התאם אישית אילו עמודים יופיעו בלשוניות הניווט שלך.",
+      "selectAll": "בחר הכל",
+      "clearAll": "נקה הכל",
+      "reset": "אפס לברירת מחדל"
+    },
     "security": {
       "title": "אבטחה",
       "changePassword": "שנה סיסמה",
