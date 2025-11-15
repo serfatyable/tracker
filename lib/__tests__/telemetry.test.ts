@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 
-import { trackAdminEvent } from '../telemetry';
+import { trackAdminEvent, trackMorningMeetingEvent } from '../telemetry';
 
-describe('trackAdminEvent', () => {
+describe('telemetry dispatchers', () => {
   const listeners: Array<() => void> = [];
 
   beforeEach(() => {
@@ -15,7 +15,7 @@ describe('trackAdminEvent', () => {
     listeners.length = 0;
   });
 
-  it('dispatches browser event with payload', () => {
+  it('dispatches admin event with payload', () => {
     const handler = vi.fn();
     window.addEventListener('tracker:admin-event', handler);
     listeners.push(() => window.removeEventListener('tracker:admin-event', handler));
@@ -32,6 +32,26 @@ describe('trackAdminEvent', () => {
     }>;
     expect(event.detail.name).toBe('test_event');
     expect(event.detail.payload).toMatchObject({ foo: 'bar' });
+    expect(event.detail.timestamp).toBeGreaterThan(0);
+  });
+
+  it('dispatches morning meeting event with payload', () => {
+    const handler = vi.fn();
+    window.addEventListener('tracker:morning-meetings', handler);
+    listeners.push(() => window.removeEventListener('tracker:morning-meetings', handler));
+
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    trackMorningMeetingEvent('hero_cta', { action: 'jump_to_today' });
+    infoSpy.mockRestore();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    const event = handler.mock.calls[0]![0] as CustomEvent<{
+      name: string;
+      payload: Record<string, unknown>;
+      timestamp: number;
+    }>;
+    expect(event.detail.name).toBe('hero_cta');
+    expect(event.detail.payload).toMatchObject({ action: 'jump_to_today' });
     expect(event.detail.timestamp).toBeGreaterThan(0);
   });
 });
