@@ -1,8 +1,6 @@
 'use client';
-import Link from 'next/link';
-import { lazy, Suspense, useMemo as _useMemo, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-// Link import moved above per import order
 
 import AuthGate from '../../components/auth/AuthGate';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';

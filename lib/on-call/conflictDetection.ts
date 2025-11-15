@@ -1,5 +1,6 @@
-import type { OnCallShift } from '@/types/onCall';
 import { toDateKey } from '../utils/dateUtils';
+
+import type { OnCallShift } from '@/types/onCall';
 
 /**
  * Types of shift conflicts

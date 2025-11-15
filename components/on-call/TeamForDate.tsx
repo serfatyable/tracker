@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { StationAssignment, StationKey } from '@/types/onCall';
 import { useOnCallByDate } from '../../lib/hooks/useOnCallByDate';
 import { getStationCardClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
@@ -11,7 +10,10 @@ import { getLocalStorageItem, setLocalStorageItem, ONCALL_STORAGE_KEYS } from '.
 import { Skeleton } from '../dashboard/Skeleton';
 import Button from '../ui/Button';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';
+
 import QuickDateFilters from './QuickDateFilters';
+
+import type { StationAssignment } from '@/types/onCall';
 
 export default function TeamForDate({ initialDateKey }: { initialDateKey?: string }) {
   const { t } = useTranslation();
