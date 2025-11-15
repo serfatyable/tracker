@@ -6,9 +6,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AppShell from '../../components/layout/AppShell';
+import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 const MiniCalendar = dynamic(() => import('../../components/on-call/MiniCalendar'), { ssr: false });
 import ColorLegend from '../../components/on-call/ColorLegend';
-import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
 import MyShiftsList from '../../components/on-call/MyShiftsList';
 import NextShiftCard from '../../components/on-call/NextShiftCard';
 import ShiftStatsCard from '../../components/on-call/ShiftStatsCard';

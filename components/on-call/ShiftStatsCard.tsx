@@ -1,13 +1,14 @@
 'use client';
 import { useTranslation } from 'react-i18next';
 
-import type { StationKey } from '@/types/onCall';
 import { useOnCallFutureByUser } from '../../lib/hooks/useOnCallFutureByUser';
 import { useOnCallStats } from '../../lib/hooks/useOnCallStats';
 import { getStationColors } from '../../lib/on-call/stationColors';
 import { stationI18nKeys } from '../../lib/on-call/stations';
 import { Skeleton } from '../dashboard/Skeleton';
 import Card from '../ui/Card';
+
+import type { StationKey } from '@/types/onCall';
 
 export default function ShiftStatsCard({ userId }: { userId?: string }) {
   const { t } = useTranslation();

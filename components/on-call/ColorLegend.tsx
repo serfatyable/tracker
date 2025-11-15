@@ -3,7 +3,6 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { StationKey } from '@/types/onCall';
 import { getStationColors } from '../../lib/on-call/stationColors';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
 import { getLocalStorageItem, setLocalStorageItem, ONCALL_STORAGE_KEYS } from '../../lib/utils/localStorage';

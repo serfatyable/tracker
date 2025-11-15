@@ -2,7 +2,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { StationAssignment, StationKey } from '@/types/onCall';
 import { useOnCallByDate } from '../../lib/hooks/useOnCallByDate';
 import { TIMELINE_DAYS_COUNT } from '../../lib/on-call/constants';
 import { getStationColors } from '../../lib/on-call/stationColors';
@@ -11,6 +10,8 @@ import { createSynonymMatcher } from '../../lib/search/synonyms';
 import { addDays, toDateKey } from '../../lib/utils/dateUtils';
 import { getLocalStorageItem, setLocalStorageItem, ONCALL_STORAGE_KEYS } from '../../lib/utils/localStorage';
 import { Skeleton } from '../dashboard/Skeleton';
+
+import type { StationAssignment } from '@/types/onCall';
 
 function DayCard({
   dateKey,

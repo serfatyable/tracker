@@ -10,11 +10,12 @@ import {
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
-import type { OnCallAssignment, OnCallDay, StationAssignment, StationKey } from '@/types/onCall';
 import { getFirebaseApp } from '../firebase/client';
 import { MAX_QUERY_DAYS } from '../on-call/constants';
 import { toDateKey } from '../utils/dateUtils';
 import { getNetworkErrorMessage, withTimeoutAndRetry } from '../utils/networkUtils';
+
+import type { OnCallAssignment, OnCallDay, StationAssignment, StationKey } from '@/types/onCall';
 
 // Finds the next on-call shift for a user by scanning upcoming onCallDays for a matching uid
 export function useOnCallUpcomingByUser(userId?: string) {

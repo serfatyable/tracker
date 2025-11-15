@@ -2,11 +2,12 @@
 import { collection, getDocs, getFirestore, orderBy, query, where } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 
-import type { OnCallDay, OnCallShift, StationAssignment, StationKey } from '@/types/onCall';
 import { getFirebaseApp } from '../firebase/client';
 import { DEFAULT_DAYS_AHEAD } from '../on-call/constants';
 import { getDateRange } from '../utils/dateUtils';
 import { getNetworkErrorMessage, withTimeoutAndRetry } from '../utils/networkUtils';
+
+import type { OnCallDay, OnCallShift, StationAssignment, StationKey } from '@/types/onCall';
 
 export function useOnCallFutureByUser(userId?: string, daysAhead: number = DEFAULT_DAYS_AHEAD) {
   const [shifts, setShifts] = useState<OnCallShift[]>([]);
