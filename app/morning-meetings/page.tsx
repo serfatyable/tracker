@@ -477,6 +477,60 @@ export default function MorningMeetingsPage(): ReactElement {
     [t],
   );
 
+  const locale = useMemo(() => (i18n.language === 'he' ? 'he-IL' : 'en-US'), [i18n.language]);
+
+  const monthMeetings = useMemo(
+    () => meetingsByMonth.get(selectedMonth) ?? [],
+    [meetingsByMonth, selectedMonth],
+  );
+
+  const allMeetings = useMemo(() => Array.from(meetingsByMonth.values()).flat(), [meetingsByMonth]);
+
+  const weekBounds = useMemo(() => {
+    const start = startOfWeek(now);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return { start, end };
+  }, [now]);
+
+  const weeklyMeetings = useMemo(
+    () =>
+      allMeetings.filter((meeting) => {
+        const date = meeting.date.toDate();
+        return date >= weekBounds.start && date <= weekBounds.end;
+      }),
+    [allMeetings, weekBounds.end, weekBounds.start],
+  );
+
+  const weeklyCompletion = useMemo(() => {
+    const total = weeklyMeetings.length;
+    if (total === 0) {
+      return { total: 0, completed: 0, done: false } as const;
+    }
+    const completed = weeklyMeetings.filter(
+      (meeting) => completedMeetings[getMeetingKey(meeting)],
+    ).length;
+    return { total, completed, done: completed === total } as const;
+  }, [completedMeetings, weeklyMeetings]);
+
+  const roleOptions = useMemo(() => {
+    const lecturerSet = new Set<string>();
+    const moderatorSet = new Set<string>();
+    const organizerSet = new Set<string>();
+    monthMeetings.forEach((meeting) => {
+      if (meeting.lecturer) lecturerSet.add(meeting.lecturer.trim());
+      if (meeting.moderator) moderatorSet.add(meeting.moderator.trim());
+      if (meeting.organizer) organizerSet.add(meeting.organizer.trim());
+    });
+    const sortByLocale = (values: string[]) =>
+      values.sort((a, b) => a.localeCompare(b, locale, { sensitivity: 'base' }));
+    return {
+      lecturer: sortByLocale(Array.from(lecturerSet)),
+      moderator: sortByLocale(Array.from(moderatorSet)),
+      organizer: sortByLocale(Array.from(organizerSet)),
+    } as const;
+  }, [locale, monthMeetings]);
+
   const handleAdminCsvExport = useCallback(() => {
     if (!allMeetings.length) {
       setToast({
@@ -568,60 +622,6 @@ export default function MorningMeetingsPage(): ReactElement {
     trackMorningMeetingEvent('month_select', { monthKey });
     haptic('light');
   }, []);
-
-  const locale = useMemo(() => (i18n.language === 'he' ? 'he-IL' : 'en-US'), [i18n.language]);
-
-  const monthMeetings = useMemo(
-    () => meetingsByMonth.get(selectedMonth) ?? [],
-    [meetingsByMonth, selectedMonth],
-  );
-
-  const allMeetings = useMemo(() => Array.from(meetingsByMonth.values()).flat(), [meetingsByMonth]);
-
-  const weekBounds = useMemo(() => {
-    const start = startOfWeek(now);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    return { start, end };
-  }, [now]);
-
-  const weeklyMeetings = useMemo(
-    () =>
-      allMeetings.filter((meeting) => {
-        const date = meeting.date.toDate();
-        return date >= weekBounds.start && date <= weekBounds.end;
-      }),
-    [allMeetings, weekBounds.end, weekBounds.start],
-  );
-
-  const weeklyCompletion = useMemo(() => {
-    const total = weeklyMeetings.length;
-    if (total === 0) {
-      return { total: 0, completed: 0, done: false } as const;
-    }
-    const completed = weeklyMeetings.filter(
-      (meeting) => completedMeetings[getMeetingKey(meeting)],
-    ).length;
-    return { total, completed, done: completed === total } as const;
-  }, [completedMeetings, weeklyMeetings]);
-
-  const roleOptions = useMemo(() => {
-    const lecturerSet = new Set<string>();
-    const moderatorSet = new Set<string>();
-    const organizerSet = new Set<string>();
-    monthMeetings.forEach((meeting) => {
-      if (meeting.lecturer) lecturerSet.add(meeting.lecturer.trim());
-      if (meeting.moderator) moderatorSet.add(meeting.moderator.trim());
-      if (meeting.organizer) organizerSet.add(meeting.organizer.trim());
-    });
-    const sortByLocale = (values: string[]) =>
-      values.sort((a, b) => a.localeCompare(b, locale, { sensitivity: 'base' }));
-    return {
-      lecturer: sortByLocale(Array.from(lecturerSet)),
-      moderator: sortByLocale(Array.from(moderatorSet)),
-      organizer: sortByLocale(Array.from(organizerSet)),
-    } as const;
-  }, [locale, monthMeetings]);
 
   useEffect(() => {
     setRoleFilters((prev) => {
