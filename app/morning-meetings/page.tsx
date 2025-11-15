@@ -1,16 +1,22 @@
 'use client';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AppShell from '../../components/layout/AppShell';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import Toast from '../../components/ui/Toast';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
-import { useMorningMeetingsMultiMonth } from '../../lib/hooks/useMorningClasses';
+import {
+  useMorningMeetingsMultiMonth,
+  useMorningMeetingsUpcoming,
+} from '../../lib/hooks/useMorningClasses';
 import { createSynonymMatcher } from '../../lib/search/synonyms';
 import { haptic } from '../../lib/utils/haptics';
+import { getLocalStorageItem, setLocalStorageItem } from '../../lib/utils/localStorage';
+import type { UserProfile } from '../../types/auth';
 import type { MorningMeeting } from '../../types/morningMeetings';
 // Header composed inline for precise alignment
 
@@ -22,6 +28,190 @@ export default function MorningMeetingsPage(): React.ReactElement {
   const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
   const { meetingsByMonth, loading } = useMorningMeetingsMultiMonth(6);
+  const { today, tomorrow, next7, loading: upcomingLoading } = useMorningMeetingsUpcoming();
+  const [toast, setToast] = useState<{
+    message: string;
+    variant?: 'success' | 'error' | 'warning' | 'info';
+  } | null>(null);
+  const [completedMeetings, setCompletedMeetings] = useState<Record<string, number>>(() =>
+    getLocalStorageItem('morningMeetings:completed', {} as Record<string, number>),
+  );
+
+  useEffect(() => {
+    setLocalStorageItem('morningMeetings:completed', completedMeetings);
+  }, [completedMeetings]);
+
+  const upcomingMeetingEntry = useMemo(() => {
+    if (today && today.length > 0) return { meeting: today[0]!, bucket: 'today' as const };
+    if (tomorrow && tomorrow.length > 0)
+      return { meeting: tomorrow[0]!, bucket: 'tomorrow' as const };
+    if (next7 && next7.length > 0) return { meeting: next7[0]!, bucket: 'next7' as const };
+    return null;
+  }, [next7, today, tomorrow]);
+
+  const upcomingMeeting = upcomingMeetingEntry?.meeting ?? null;
+  const upcomingMeetingKey = upcomingMeeting
+    ? (upcomingMeeting.id ?? upcomingMeeting.dateKey)
+    : null;
+  const upcomingCompleted = upcomingMeetingKey
+    ? Boolean(completedMeetings[upcomingMeetingKey])
+    : false;
+
+  const isUpcomingMeetingLecturer = useMemo(
+    () => isUserLecturerForMeeting(currentUser, upcomingMeeting),
+    [currentUser, upcomingMeeting],
+  );
+
+  const heroCopy = useMemo(() => {
+    if (currentUser?.role === 'admin') {
+      return {
+        heading:
+          t('morningMeetings.hero.adminHeading', {
+            defaultValue: 'Coordinate the morning briefing schedule',
+          }) || 'Coordinate the morning briefing schedule',
+        subtitle:
+          t('morningMeetings.hero.adminSubtitle', {
+            defaultValue: 'Review presenters, share the agenda, and export the calendar feed.',
+          }) || 'Review presenters, share the agenda, and export the calendar feed.',
+      } as const;
+    }
+    if (isUpcomingMeetingLecturer) {
+      return {
+        heading:
+          t('morningMeetings.hero.lecturerHeading', {
+            defaultValue: "You're presenting soon",
+          }) || "You're presenting soon",
+        subtitle:
+          t('morningMeetings.hero.lecturerSubtitle', {
+            defaultValue: 'Double-check your slides, timing, and meeting link before you go live.',
+          }) || 'Double-check your slides, timing, and meeting link before you go live.',
+      } as const;
+    }
+    if (currentUser?.role === 'tutor') {
+      return {
+        heading:
+          t('morningMeetings.hero.tutorHeading', {
+            defaultValue: 'Support the upcoming sessions',
+          }) || 'Support the upcoming sessions',
+        subtitle:
+          t('morningMeetings.hero.tutorSubtitle', {
+            defaultValue: 'Share updates with residents and ensure every lecturer is ready to go.',
+          }) || 'Share updates with residents and ensure every lecturer is ready to go.',
+      } as const;
+    }
+    return {
+      heading:
+        t('morningMeetings.hero.defaultHeading', {
+          defaultValue: 'Stay current on the morning meetings schedule',
+        }) || 'Stay current on the morning meetings schedule',
+      subtitle:
+        t('morningMeetings.hero.defaultSubtitle', {
+          defaultValue: 'Track upcoming presenters and quickly access meeting details.',
+        }) || 'Track upcoming presenters and quickly access meeting details.',
+    } as const;
+  }, [currentUser?.role, isUpcomingMeetingLecturer, t]);
+
+  const upcomingLabel = useMemo(() => {
+    if (!upcomingMeetingEntry) return null;
+    const labelKey = {
+      today: 'morningMeetings.hero.todayLabel',
+      tomorrow: 'morningMeetings.hero.tomorrowLabel',
+      next7: 'morningMeetings.hero.soonLabel',
+    }[upcomingMeetingEntry.bucket];
+    return (
+      t(labelKey, {
+        defaultValue:
+          upcomingMeetingEntry.bucket === 'today'
+            ? 'Today'
+            : upcomingMeetingEntry.bucket === 'tomorrow'
+              ? 'Tomorrow'
+              : 'Coming up',
+      }) ||
+      (upcomingMeetingEntry.bucket === 'today'
+        ? 'Today'
+        : upcomingMeetingEntry.bucket === 'tomorrow'
+          ? 'Tomorrow'
+          : 'Coming up')
+    );
+  }, [t, upcomingMeetingEntry]);
+
+  const scrollToDay = useCallback(
+    (targetDate: Date) => {
+      const element = document.getElementById(`day-${targetDate.getDate()}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.classList.add('ring-2', 'ring-blue-500/80', 'rounded-lg');
+        setTimeout(() => {
+          element.classList.remove('ring-2', 'ring-blue-500/80', 'rounded-lg');
+        }, 2000);
+      } else {
+        setToast({
+          message:
+            t('morningMeetings.hero.noTodayAnchor', {
+              defaultValue: 'There is no session anchored for today yet.',
+            }) || 'There is no session anchored for today yet.',
+          variant: 'info',
+        });
+      }
+    },
+    [t],
+  );
+
+  const handleJumpToToday = useCallback(() => {
+    haptic('light');
+    scrollToDay(new Date());
+  }, [scrollToDay]);
+
+  const handleCopyLink = useCallback(async () => {
+    if (!upcomingMeeting?.link) {
+      setToast({
+        message:
+          t('morningMeetings.hero.noLink', {
+            defaultValue: 'No meeting link available yet.',
+          }) || 'No meeting link available yet.',
+        variant: 'warning',
+      });
+      haptic('error');
+      return;
+    }
+    try {
+      if (typeof navigator === 'undefined' || !navigator.clipboard) {
+        throw new Error('Clipboard not available');
+      }
+      await navigator.clipboard.writeText(upcomingMeeting.link);
+      setToast({
+        message:
+          t('morningMeetings.hero.copySuccess', {
+            defaultValue: 'Meeting link copied to clipboard.',
+          }) || 'Meeting link copied to clipboard.',
+        variant: 'success',
+      });
+      haptic('success');
+    } catch (error) {
+      console.error('Failed to copy meeting link', error);
+      setToast({
+        message:
+          t('morningMeetings.hero.copyError', {
+            defaultValue: 'Unable to copy the meeting link. Try again or copy manually.',
+          }) || 'Unable to copy the meeting link. Try again or copy manually.',
+        variant: 'error',
+      });
+      haptic('error');
+    }
+  }, [t, upcomingMeeting]);
+
+  const handleMarkComplete = useCallback(() => {
+    if (!upcomingMeetingKey || upcomingCompleted) return;
+    haptic('success');
+    setCompletedMeetings((prev) => ({ ...prev, [upcomingMeetingKey]: Date.now() }));
+    setToast({
+      message:
+        t('morningMeetings.hero.markedComplete', {
+          defaultValue: 'Marked complete. Great job!',
+        }) || 'Marked complete. Great job!',
+      variant: 'success',
+    });
+  }, [t, upcomingCompleted, upcomingMeetingKey]);
 
   const filteredMeetings = useMemo(() => {
     const monthMeetings = meetingsByMonth.get(selectedMonth) || [];
@@ -47,6 +237,11 @@ export default function MorningMeetingsPage(): React.ReactElement {
 
   return (
     <AppShell>
+      <Toast
+        message={toast?.message ?? null}
+        variant={toast?.variant}
+        onClear={() => setToast(null)}
+      />
       <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-2 backdrop-blur-md bg-bg/85 supports-[backdrop-filter]:bg-bg/75 border-b border-muted/20">
         <div className="app-container px-0">
           <div className="flex items-center justify-between gap-2">
@@ -68,6 +263,158 @@ export default function MorningMeetingsPage(): React.ReactElement {
         </div>
       </div>
       <div className="app-container p-4 space-y-6">
+        <section className="card-levitate overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white">
+          <div className="p-6 space-y-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-2">
+                <p className="text-sm uppercase tracking-wide text-white/80">
+                  {t('morningMeetings.hero.quickGlance', { defaultValue: 'Upcoming focus' })}
+                </p>
+                <h2 className="text-2xl font-semibold sm:text-3xl">{heroCopy.heading}</h2>
+                <p className="max-w-2xl text-sm text-white/85 sm:text-base">{heroCopy.subtitle}</p>
+              </div>
+              <div className="w-full rounded-lg border border-white/20 bg-white/10 p-4 text-white shadow-inner sm:w-auto">
+                {upcomingLoading ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="h-4 w-32 animate-pulse rounded bg-white/20" />
+                    <div className="h-5 w-48 animate-pulse rounded bg-white/20" />
+                    <div className="h-4 w-40 animate-pulse rounded bg-white/10" />
+                  </div>
+                ) : upcomingMeeting ? (
+                  <div className="space-y-2">
+                    {upcomingLabel ? (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-medium">
+                        <span>📅</span>
+                        {upcomingLabel}
+                      </span>
+                    ) : null}
+                    <h3 className="text-lg font-semibold leading-tight">{upcomingMeeting.title}</h3>
+                    <div className="text-sm text-white/85">
+                      <div>
+                        {upcomingMeeting.date
+                          .toDate()
+                          .toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
+                            weekday: 'long',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                      </div>
+                      <div>
+                        {upcomingMeeting.date
+                          .toDate()
+                          .toLocaleTimeString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                      </div>
+                      {upcomingMeeting.lecturer ? (
+                        <div>
+                          {t('morningMeetings.lecturer', { defaultValue: 'Lecturer' })}:{' '}
+                          <span className="font-medium">{upcomingMeeting.lecturer}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-sm text-white/85">
+                    <h3 className="text-lg font-semibold">
+                      {t('morningMeetings.hero.noUpcoming', {
+                        defaultValue: 'No upcoming meetings to highlight',
+                      })}
+                    </h3>
+                    <p>
+                      {t('morningMeetings.hero.noUpcomingSubtitle', {
+                        defaultValue: 'Meetings will appear here once they are scheduled.',
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleJumpToToday}
+                className="bg-white/15 text-white hover:bg-white/25"
+              >
+                {t('morningMeetings.hero.jumpToToday', { defaultValue: 'Jump to today' })}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleCopyLink}
+                disabled={!upcomingMeeting?.link}
+                className="bg-white/15 text-white hover:bg-white/25 disabled:bg-white/10 disabled:text-white/70"
+              >
+                {t('morningMeetings.hero.copyLink', { defaultValue: 'Copy meeting link' })}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleMarkComplete}
+                disabled={upcomingCompleted || !upcomingMeetingKey}
+                className="bg-white/15 text-white hover:bg-white/25 disabled:bg-white/10 disabled:text-white/70"
+              >
+                {upcomingCompleted
+                  ? t('morningMeetings.hero.completed', { defaultValue: 'Completed' })
+                  : t('morningMeetings.hero.markComplete', { defaultValue: 'Mark complete' })}
+              </Button>
+            </div>
+
+            <div className="rounded-lg border border-white/15 bg-white/10 p-4 text-white/90">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 text-lg">
+                    📥
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide">
+                      {t('morningMeetings.hero.calendarExport', {
+                        defaultValue: 'Calendar export',
+                      })}
+                    </h3>
+                    <p className="text-xs text-white/75">
+                      {t('morningMeetings.hero.calendarExportSubtitle', {
+                        defaultValue:
+                          'Use the authenticated feed to sync meetings to your calendar.',
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <a
+                    href="/api/ics/morning-meetings?personal=true"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => haptic('light')}
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-white/40 bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20"
+                  >
+                    <span>👤</span>
+                    {t('morningMeetings.myIcs', { defaultValue: 'My Meetings (ICS)' })}
+                  </a>
+                  <a
+                    href="/api/ics/morning-meetings"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => haptic('light')}
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                  >
+                    <span>🌐</span>
+                    {t('morningMeetings.allIcs', { defaultValue: 'All Morning Meetings (ICS)' })}
+                  </a>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-white/70">
+                {t('morningMeetings.exportHelp', {
+                  defaultValue:
+                    'Copy the link and add it as a calendar subscription in Google Calendar, Apple Calendar, or Outlook',
+                })}
+              </p>
+            </div>
+          </div>
+        </section>
         {/* Header search */}
         <div className="flex gap-2 items-center">
           <Input
@@ -377,4 +724,35 @@ function formatWeekLabel(date: Date, language: string): string {
     });
 
   return `${formatter(start)} - ${formatter(end)}`;
+}
+
+function isUserLecturerForMeeting(
+  user: UserProfile | null,
+  meeting: MorningMeeting | null,
+): boolean {
+  if (!user || !meeting) return false;
+
+  if (meeting.lecturerUserId && meeting.lecturerUserId === user.uid) {
+    return true;
+  }
+
+  if (user.email && meeting.lecturerEmailResolved && meeting.lecturerEmailResolved === user.email) {
+    return true;
+  }
+
+  if (user.fullName && typeof meeting.lecturer === 'string') {
+    const normalizedUser = user.fullName.trim().toLowerCase();
+    const normalizedLecturer = meeting.lecturer.trim().toLowerCase();
+    if (normalizedUser && normalizedLecturer) {
+      if (
+        normalizedUser === normalizedLecturer ||
+        normalizedLecturer.includes(normalizedUser) ||
+        normalizedUser.includes(normalizedLecturer)
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
