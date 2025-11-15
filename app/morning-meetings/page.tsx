@@ -1,12 +1,15 @@
 'use client';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AppShell from '../../components/layout/AppShell';
+import MorningMeetingFilters, {
+  type PresetFilterKey,
+  type RoleFilterKey,
+} from '../../components/morning-meetings/Filters';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { useMorningMeetingsMultiMonth } from '../../lib/hooks/useMorningClasses';
 import { createSynonymMatcher } from '../../lib/search/synonyms';
@@ -17,31 +20,207 @@ import type { MorningMeeting } from '../../types/morningMeetings';
 export default function MorningMeetingsPage(): React.ReactElement {
   const { t, i18n } = useTranslation();
   const { data: currentUser } = useCurrentUserProfile();
-  const [searchTerm, setSearchTerm] = useState('');
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
   const { meetingsByMonth, loading } = useMorningMeetingsMultiMonth(6);
+  const [filters, setFilters] = useState<{
+    searchTerm: string;
+    roles: RoleFilterKey[];
+    presets: PresetFilterKey[];
+  }>({
+    searchTerm: '',
+    roles: [],
+    presets: [],
+  });
+
+  const normalizeValue = useCallback((value?: string | null) => {
+    if (!value) return null;
+    return value.trim().toLowerCase();
+  }, []);
+
+  const userIdentifiers = useMemo(() => {
+    const identifiers = new Set<string>();
+    if (currentUser?.fullName) {
+      const normalized = normalizeValue(currentUser.fullName);
+      if (normalized) identifiers.add(normalized);
+    }
+    if (currentUser?.fullNameHe) {
+      const normalized = normalizeValue(currentUser.fullNameHe);
+      if (normalized) identifiers.add(normalized);
+    }
+    if (currentUser?.email) {
+      const normalized = normalizeValue(currentUser.email);
+      if (normalized) identifiers.add(normalized);
+    }
+    return Array.from(identifiers);
+  }, [currentUser?.email, currentUser?.fullName, currentUser?.fullNameHe, normalizeValue]);
+
+  const hasUserIdentifiers = userIdentifiers.length > 0;
+
+  const handleSearchChange = useCallback((value: string) => {
+    setFilters((prev) => ({ ...prev, searchTerm: value }));
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setFilters((prev) => ({ ...prev, searchTerm: '' }));
+  }, []);
+
+  const toggleRoleFilter = useCallback((role: RoleFilterKey) => {
+    setFilters((prev) => {
+      const exists = prev.roles.includes(role);
+      const roles = exists ? prev.roles.filter((item) => item !== role) : [...prev.roles, role];
+      return { ...prev, roles };
+    });
+  }, []);
+
+  const togglePresetFilter = useCallback((preset: PresetFilterKey) => {
+    setFilters((prev) => {
+      const exists = prev.presets.includes(preset);
+      const presets = exists
+        ? prev.presets.filter((item) => item !== preset)
+        : [...prev.presets, preset];
+      return { ...prev, presets };
+    });
+  }, []);
 
   const filteredMeetings = useMemo(() => {
     const monthMeetings = meetingsByMonth.get(selectedMonth) || [];
-    const matcher = createSynonymMatcher(searchTerm);
-    return monthMeetings.filter(
-      (m) =>
-        matcher(m.title) || matcher(m.lecturer) || matcher(m.moderator) || matcher(m.organizer),
-    );
-  }, [meetingsByMonth, selectedMonth, searchTerm]);
+    const matcher = createSynonymMatcher(filters.searchTerm);
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfUpcomingWeek = new Date(startOfToday);
+    endOfUpcomingWeek.setDate(endOfUpcomingWeek.getDate() + 7);
+
+    const checkRoles = (meeting: MorningMeeting, rolesToCheck: RoleFilterKey[]) => {
+      if (!hasUserIdentifiers) return false;
+      return rolesToCheck.some((role) => {
+        const fieldValue = normalizeValue(meeting[role]);
+        if (!fieldValue) return false;
+        return userIdentifiers.some((identifier) => fieldValue.includes(identifier));
+      });
+    };
+
+    return monthMeetings.filter((meeting) => {
+      if (
+        !(
+          matcher(meeting.title) ||
+          matcher(meeting.lecturer) ||
+          matcher(meeting.moderator) ||
+          matcher(meeting.organizer)
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        (filters.roles.length > 0 || filters.presets.includes('myMeetings')) &&
+        !hasUserIdentifiers
+      ) {
+        return false;
+      }
+
+      if (filters.roles.length > 0 && !checkRoles(meeting, filters.roles)) {
+        return false;
+      }
+
+      if (
+        filters.presets.includes('myMeetings') &&
+        !checkRoles(meeting, ['lecturer', 'moderator', 'organizer'])
+      ) {
+        return false;
+      }
+
+      if (filters.presets.includes('upcomingWeek')) {
+        const meetingDate = meeting.date.toDate();
+        if (meetingDate < startOfToday || meetingDate >= endOfUpcomingWeek) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [
+    filters,
+    hasUserIdentifiers,
+    meetingsByMonth,
+    normalizeValue,
+    selectedMonth,
+    userIdentifiers,
+  ]);
 
   const meetingsByWeek = useMemo(() => groupByWeek(filteredMeetings), [filteredMeetings]);
 
-  const formatMonthTab = (monthKey: string) => {
-    const [year, month] = monthKey.split('-').map(Number);
-    const date = new Date(year!, month!);
-    return date.toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
-      month: 'long',
-      year: 'numeric',
+  const formatMonthTab = useCallback(
+    (monthKey: string) => {
+      const [year, month] = monthKey.split('-').map(Number);
+      const date = new Date(year!, month!);
+      return date.toLocaleDateString(i18n.language === 'he' ? 'he-IL' : 'en-US', {
+        month: 'long',
+        year: 'numeric',
+      });
+    },
+    [i18n.language],
+  );
+
+  const monthEntries = useMemo(() => {
+    return Array.from(meetingsByMonth.keys()).map((monthKey) => {
+      const [year, month] = monthKey.split('-').map(Number);
+      return { key: monthKey, year: year!, month: month!, label: formatMonthTab(monthKey) };
     });
-  };
+  }, [formatMonthTab, meetingsByMonth]);
+
+  useEffect(() => {
+    if (monthEntries.length === 0) {
+      return;
+    }
+    if (!meetingsByMonth.has(selectedMonth)) {
+      setSelectedMonth(monthEntries[0]!.key);
+    }
+  }, [meetingsByMonth, monthEntries, selectedMonth]);
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    monthEntries.forEach((entry) => years.add(entry.year));
+    return Array.from(years).sort((a, b) => a - b);
+  }, [monthEntries]);
+
+  const [selectedYearRaw, selectedMonthIndexRaw] = selectedMonth.split('-').map(Number);
+  const selectedYear = Number.isFinite(selectedYearRaw) ? selectedYearRaw : undefined;
+  const selectedMonthIndex = Number.isFinite(selectedMonthIndexRaw)
+    ? selectedMonthIndexRaw
+    : undefined;
+
+  const monthsForSelectedYear = useMemo(() => {
+    const yearToUse = selectedYear ?? availableYears[0];
+    if (yearToUse === undefined) {
+      return [];
+    }
+    return monthEntries
+      .filter((entry) => entry.year === yearToUse)
+      .sort((a, b) => a.month - b.month);
+  }, [availableYears, monthEntries, selectedYear]);
+
+  const handleYearChange = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      const newYear = Number(event.target.value);
+      const monthsForYear = monthEntries
+        .filter((entry) => entry.year === newYear)
+        .sort((a, b) => a.month - b.month);
+      if (monthsForYear.length > 0) {
+        const existingForMonth =
+          selectedMonthIndex !== undefined
+            ? monthsForYear.find((entry) => entry.month === selectedMonthIndex)
+            : undefined;
+        setSelectedMonth((existingForMonth ?? monthsForYear[0])!.key);
+      }
+    },
+    [monthEntries, selectedMonthIndex],
+  );
+
+  const handleMonthChange = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedMonth(event.target.value);
+  }, []);
 
   // nextMeeting reserved for future enhancements
 
@@ -68,21 +247,17 @@ export default function MorningMeetingsPage(): React.ReactElement {
         </div>
       </div>
       <div className="app-container p-4 space-y-6">
-        {/* Header search */}
-        <div className="flex gap-2 items-center">
-          <Input
-            type="text"
-            placeholder={t('ui.search', { defaultValue: 'Search' }) + '...'}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-          />
-          {searchTerm ? (
-            <Button variant="ghost" onClick={() => setSearchTerm('')} className="px-2">
-              ✕
-            </Button>
-          ) : null}
-        </div>
+        <MorningMeetingFilters
+          searchTerm={filters.searchTerm}
+          onSearchChange={handleSearchChange}
+          onClearSearch={handleClearSearch}
+          activeRoleFilters={filters.roles}
+          onToggleRole={toggleRoleFilter}
+          activePresets={filters.presets}
+          onTogglePreset={togglePresetFilter}
+          roleFiltersAvailable={hasUserIdentifiers}
+          userScopedPresetsAvailable={hasUserIdentifiers}
+        />
 
         {loading ? (
           <div className="text-center py-12">
@@ -106,6 +281,52 @@ export default function MorningMeetingsPage(): React.ReactElement {
         ) : (
           <>
             {/* Month tabs */}
+            {monthEntries.length > 0 && (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label
+                      htmlFor="morning-meetings-year"
+                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                    >
+                      {t('morningMeetings.filters.year', { defaultValue: 'Year' })}
+                    </label>
+                    <select
+                      id="morning-meetings-year"
+                      value={selectedYear ?? availableYears[0] ?? ''}
+                      onChange={handleYearChange}
+                      className="rounded-md border border-muted bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface-elevated))]"
+                    >
+                      {availableYears.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label
+                      htmlFor="morning-meetings-month"
+                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                    >
+                      {t('morningMeetings.filters.month', { defaultValue: 'Month' })}
+                    </label>
+                    <select
+                      id="morning-meetings-month"
+                      value={selectedMonth}
+                      onChange={handleMonthChange}
+                      className="rounded-md border border-muted bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-[rgb(var(--border))] dark:bg-[rgb(var(--surface-elevated))]"
+                    >
+                      {monthsForSelectedYear.map((entry) => (
+                        <option key={entry.key} value={entry.key}>
+                          {entry.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="border-b border-gray-200 dark:border-[rgb(var(--border))] overflow-x-auto">
               <div className="flex space-x-2 pb-2">
                 {Array.from(meetingsByMonth.keys()).map((monthKey) => {
@@ -154,8 +375,8 @@ export default function MorningMeetingsPage(): React.ReactElement {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {t('ui.tryDifferentSearch', { defaultValue: 'Try adjusting your search terms' })}
                 </p>
-                {searchTerm && (
-                  <Button onClick={() => setSearchTerm('')} className="mt-4" variant="outline">
+                {filters.searchTerm && (
+                  <Button onClick={handleClearSearch} className="mt-4" variant="outline">
                     {t('ui.clearSearch', { defaultValue: 'Clear search' })}
                   </Button>
                 )}
