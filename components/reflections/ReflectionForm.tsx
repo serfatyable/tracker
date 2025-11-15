@@ -1,5 +1,6 @@
 'use client';
 import { useMemo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { haptic } from '../../lib/utils/haptics';
 import type { Audience, ReflectionTemplate } from '../../types/reflections';
@@ -20,6 +21,9 @@ export default function ReflectionForm({
   disabled,
   onSubmit,
 }: Props) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language === 'he' ? 'he' : 'en';
+
   const promptIds = useMemo(() => {
     const ids: string[] = [];
     for (const s of template.sections) {
@@ -68,7 +72,7 @@ export default function ReflectionForm({
     for (const section of template.sections.sort((a, b) => a.order - b.order)) {
       for (const prompt of section.prompts.sort((a, b) => a.order - b.order)) {
         if (prompt.required && !answers[prompt.id]?.trim()) {
-          return `Missing: ${prompt.label.en}`;
+          return `Missing: ${prompt.label[lang]}`;
         }
       }
     }
@@ -114,9 +118,9 @@ export default function ReflectionForm({
         .map((section) => (
           <div key={section.id} className="rounded border p-3">
             <div className="font-semibold mb-1">
-              {section.name.en} <span className="opacity-60 text-xs">({audience})</span>
+              {section.name[lang]} <span className="opacity-60 text-xs">({audience})</span>
             </div>
-            <div className="text-xs opacity-70 mb-2">{section.purpose.en}</div>
+            <div className="text-xs opacity-70 mb-2">{section.purpose[lang]}</div>
             <div className="space-y-2">
               {section.prompts
                 .slice()
@@ -124,7 +128,7 @@ export default function ReflectionForm({
                 .map((prompt) => (
                   <div key={prompt.id} className="space-y-1">
                     <label className="block text-sm font-medium text-gray-900 dark:text-white">
-                      {prompt.label.en}
+                      {prompt.label[lang]}
                       {prompt.required ? <span className="text-red-500"> *</span> : null}
                     </label>
                     <textarea
