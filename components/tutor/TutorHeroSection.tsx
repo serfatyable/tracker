@@ -47,7 +47,8 @@ const MOTIVATIONAL_QUOTES = {
 
 function getRandomQuote(language: string): string {
   const quotes = language === 'he' ? MOTIVATIONAL_QUOTES.he : MOTIVATIONAL_QUOTES.en;
-  return quotes[Math.floor(Math.random() * quotes.length)] ?? quotes[0];
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  return quotes[randomIndex] ?? quotes[0] ?? 'Welcome';
 }
 
 export default function TutorHeroSection({ user, pendingCount, residentsCount, completionRate }: Props) {
