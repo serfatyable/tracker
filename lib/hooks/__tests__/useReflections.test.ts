@@ -22,9 +22,12 @@ const authMocks = vi.hoisted(() => ({
 
 vi.mock('firebase/firestore', () => ({
   ...firestoreMocks,
-  doc: (...args: any[]) => firestoreMocks.doc(...args),
-  setDoc: (...args: any[]) => firestoreMocks.setDoc(...args),
-  getFirestore: (...args: any[]) => firestoreMocks.getFirestore(...args),
+  doc: (...args: unknown[]) =>
+    firestoreMocks.doc(...(args as Parameters<typeof firestoreMocks.doc>)),
+  setDoc: (...args: unknown[]) =>
+    firestoreMocks.setDoc(...(args as Parameters<typeof firestoreMocks.setDoc>)),
+  getFirestore: (...args: unknown[]) =>
+    firestoreMocks.getFirestore(...(args as Parameters<typeof firestoreMocks.getFirestore>)),
   serverTimestamp: () => 'server-ts',
 }));
 
