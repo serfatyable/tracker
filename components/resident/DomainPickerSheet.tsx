@@ -68,23 +68,12 @@ export default function DomainPickerSheet({
     return { recent, others };
   }, [filteredDomains, recentDomains, domains]);
 
-  // Handle Escape key to close dialog
+  // Lock body scroll when sheet is open and manage focus
   useEffect(() => {
     if (!open) return;
 
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [open, onClose]);
-
-  // Lock body scroll when sheet is open
-  useEffect(() => {
-    if (!open) return;
+    // Store the currently focused element to restore later
+    const previouslyFocused = document.activeElement as HTMLElement;
 
     // Save previous overflow values
     const prevBodyOverflow = document.body.style.overflow;
@@ -94,12 +83,37 @@ export default function DomainPickerSheet({
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
+    // Focus the sheet container for keyboard navigation
+    const sheetContainer = document.querySelector('[role="dialog"]') as HTMLElement;
+    if (sheetContainer) {
+      sheetContainer.focus();
+    }
+
     return () => {
       // Restore previous values
       document.body.style.overflow = prevBodyOverflow;
       document.documentElement.style.overflow = prevHtmlOverflow;
+
+      // Restore focus to previously focused element
+      if (previouslyFocused && previouslyFocused.focus) {
+        previouslyFocused.focus();
+      }
     };
   }, [open]);
+
+  // Handle Escape key to close dialog
+  useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -114,6 +128,7 @@ export default function DomainPickerSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="domain-picker-title"
+        tabIndex={-1}
       >
         {/* Row 1: Header */}
         <div className="px-4 pt-3 pb-2">

@@ -1,3 +1,5 @@
+import { logger } from './utils/logger';
+
 function dispatchBrowserEvent(
   channel: string,
   name: string,
@@ -11,7 +13,7 @@ function dispatchBrowserEvent(
   };
   window.dispatchEvent(new CustomEvent(channel, { detail }));
   if (process.env.NODE_ENV !== 'production') {
-    console.info(`[tracker:${channel}]`, detail);
+    logger.info(`[tracker:${channel}] ${name}`, 'telemetry', detail);
   }
 }
 

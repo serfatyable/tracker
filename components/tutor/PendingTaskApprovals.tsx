@@ -13,6 +13,7 @@ import { Dialog, DialogFooter, DialogHeader } from '@/components/ui/Dialog';
 import { updateTasksStatus } from '@/lib/firebase/admin';
 import { getFirebaseApp } from '@/lib/firebase/client';
 import type { TaskDoc } from '@/lib/firebase/db';
+import { logger } from '@/lib/utils/logger';
 import type { UserProfile } from '@/types/auth';
 import type { Rotation, RotationNode } from '@/types/rotations';
 
@@ -169,7 +170,7 @@ const PendingTaskApprovals = memo(function PendingTaskApprovals({
         );
         setRotationNodes(allNodes);
       } catch (error) {
-        console.error('Failed to load rotation nodes:', error);
+        logger.error('Failed to load rotation nodes', 'pending-task-approvals', error as Error);
       } finally {
         if (!cancelled) {
           setLoadingNodes(false);
@@ -491,7 +492,7 @@ const PendingTaskApprovals = memo(function PendingTaskApprovals({
         return next;
       });
     } catch (error) {
-      console.error('Failed to update task status', error);
+      logger.error('Failed to update task status', 'pending-task-approvals', error as Error);
       const message =
         confirmAction.action === 'approve'
           ? t('toasts.failedToApproveTasks', { defaultValue: 'Failed to approve tasks' })

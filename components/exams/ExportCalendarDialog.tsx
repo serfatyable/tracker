@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import Toast from '@/components/ui/Toast';
 import { getFirebaseApp } from '@/lib/firebase/client';
 import { haptic } from '@/lib/utils/haptics';
+import { logger } from '@/lib/utils/logger';
 
 interface ExportCalendarDialogProps {
   isOpen: boolean;
@@ -64,7 +65,11 @@ export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendar
               message = data.error;
             }
           } catch (jsonError) {
-            console.warn('Failed to parse error response for exams ICS download', jsonError);
+            logger.warn(
+              'Failed to parse error response for exams ICS download',
+              'export-calendar',
+              jsonError,
+            );
           }
 
           throw new Error(message);
@@ -82,7 +87,7 @@ export default function ExportCalendarDialog({ isOpen, onClose }: ExportCalendar
         haptic('success');
         handleDialogClose();
       } catch (err) {
-        console.error('Failed to download exams ICS', err);
+        logger.error('Failed to download exams ICS', 'export-calendar', err as Error);
         haptic('error');
         const fallback =
           (t('exams.export.error', {

@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 import { getAuth } from 'firebase/auth';
-import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import { memo, useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -27,7 +27,6 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { EmptyIcon } from '../ui/EmptyState';
 import ProgressRing from '../ui/ProgressRing';
-
 
 import { useUndoToast } from './UndoToastProvider';
 
@@ -114,7 +113,7 @@ const domainPaletteIcons: Record<RotationDomainPaletteKey, typeof BookOpenIcon> 
   general: SparklesIcon,
 };
 
-export default function RotationBrowser({
+const RotationBrowser = memo(function RotationBrowser({
   activeRotationId,
   searchTerm,
   domainFilter,
@@ -974,7 +973,9 @@ export default function RotationBrowser({
       </div>
     </>
   );
-}
+});
+
+export default RotationBrowser;
 
 function buildTree(nodes: RotationNode[]): TreeNode[] {
   const map: Record<string, TreeNode> = {};
