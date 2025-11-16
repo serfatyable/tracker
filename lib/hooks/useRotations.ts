@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type { Rotation } from '../../types/rotations';
 import { listRotations } from '../firebase/admin';
 import { getFirebaseApp } from '../firebase/client';
+import { rotationConverter } from '../firebase/converters';
 
 export function useRotations() {
   const [rotations, setRotations] = useState<Rotation[]>([]);
@@ -20,8 +21,8 @@ export function useRotations() {
       } catch (e: any) {
         try {
           const db = getFirestore(getFirebaseApp());
-          const snap = await getDocs(collection(db, 'rotations'));
-          const items = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Rotation[];
+          const snap = await getDocs(collection(db, 'rotations').withConverter(rotationConverter));
+          const items = snap.docs.map((d) => d.data());
           setRotations(items);
         } catch (e2: any) {
           setError(e2?.message || e?.message || 'Failed to load rotations');
