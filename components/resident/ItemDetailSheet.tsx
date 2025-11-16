@@ -19,6 +19,20 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith('he') ? 'he' : 'en';
 
+  // Handle Escape key to close dialog
+  useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, onClose]);
+
   // Lock body scroll when sheet is open
   useEffect(() => {
     if (!open) return;
@@ -73,12 +87,16 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
         className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h grid grid-rows-[auto,1fr] pointer-events-auto"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="item-detail-title"
       >
         {/* Row 1: Header */}
         <div className="px-4 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 break-words">
+              <h2
+                id="item-detail-title"
+                className="text-lg font-semibold text-gray-900 dark:text-gray-100 break-words"
+              >
                 {item.name}
               </h2>
               <div className="mt-1 flex items-center gap-2">
@@ -153,7 +171,9 @@ export default function ItemDetailSheet({ open, onClose, item, onLog }: Props) {
                       className="block p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                       <div className="font-medium">{label}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{link.href}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {link.href}
+                      </div>
                     </a>
                   );
                 })}

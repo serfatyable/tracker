@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -49,7 +49,7 @@ function buildTree(nodes: RotationNode[]): TreeNode[] {
     }));
 }
 
-export default function RotationTree({ rotationId }: Props) {
+const RotationTree = memo(function RotationTree({ rotationId }: Props) {
   const { t } = useTranslation();
   const [nodes, setNodes] = useState<RotationNode[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -739,7 +739,9 @@ export default function RotationTree({ rotationId }: Props) {
       />
     </div>
   );
-}
+});
+
+export default RotationTree;
 
 /* Moved editor panels to ./tree/NodePanels.tsx
 type NodeEditorProps = {

@@ -2,7 +2,7 @@
 
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { collection, getDocs, getFirestore, query, where } from 'firebase/firestore';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Avatar from '@/components/ui/Avatar';
@@ -116,7 +116,11 @@ function formatDateWithTime(date: Date | null, language: string) {
   }
 }
 
-export default function PendingTaskApprovals({ tasks, residents, rotations }: Props) {
+const PendingTaskApprovals = memo(function PendingTaskApprovals({
+  tasks,
+  residents,
+  rotations,
+}: Props) {
   const { t, i18n } = useTranslation();
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -805,4 +809,6 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
       </Dialog>
     </Card>
   );
-}
+});
+
+export default PendingTaskApprovals;

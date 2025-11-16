@@ -24,6 +24,7 @@ import Toast from '../../ui/Toast';
 
 import MaintenanceDialog from './MaintenanceDialog';
 import RotationOwnersEditor from './RotationOwnersEditor';
+import { getRotationName, toDate, formatDateLabel } from './rotationUtils';
 import TemplateImportDialog from './TemplateImportDialog';
 
 type Props = {
@@ -1079,24 +1080,4 @@ export default function RotationsPanel({ onOpenEditor }: Props) {
       />
     </div>
   );
-}
-
-function getRotationName(rotation: Rotation, language: string): string {
-  if (language === 'he') {
-    return (rotation as any).name_he || rotation.name_en || rotation.name;
-  }
-  return rotation.name_en || rotation.name;
-}
-
-function toDate(value: unknown): Date | null {
-  if (!value) return null;
-  if (value instanceof Date) return value;
-  if (typeof (value as any).toDate === 'function') return (value as any).toDate();
-  const parsed = new Date(value as any);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function formatDateLabel(date: Date | null, locale: string): string {
-  if (!date) return '';
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(date);
 }
