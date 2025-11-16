@@ -5,11 +5,15 @@ import { useTranslation } from 'react-i18next';
 import AuthGate from '../../components/auth/AuthGate';
 import AppShell from '../../components/layout/AppShell';
 import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
+import AchievementsInsights from '../../components/resident/AchievementsInsights';
+import ActivityTimeline from '../../components/resident/ActivityTimeline';
 import AnnouncementsCard from '../../components/resident/AnnouncementsCard';
-import KPICardsResident from '../../components/resident/KPICardsResident';
-import PendingTasksList from '../../components/resident/PendingTasksList';
-import QuickActions from '../../components/resident/QuickActions';
-import RecentLogs from '../../components/resident/RecentLogs';
+import EnhancedKPICards from '../../components/resident/EnhancedKPICards';
+import EnhancedPendingTasks from '../../components/resident/EnhancedPendingTasks';
+import EnhancedQuickActions from '../../components/resident/EnhancedQuickActions';
+import SmartRecommendations from '../../components/resident/SmartRecommendations';
+import UpcomingSchedule from '../../components/resident/UpcomingSchedule';
+import WelcomeHero from '../../components/resident/WelcomeHero';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
@@ -36,9 +40,15 @@ export default function ResidentDashboard() {
     <AuthGate requiredRole="resident">
       <AppShell>
         <LargeTitleHeader title={t('ui.home', { defaultValue: 'Home' }) as string} />
-        <div className="app-container p-3 sm:p-4 md:p-6 space-y-3">
-          <KPICardsResident />
-          <QuickActions
+        <div className="app-container p-4 sm:p-6 md:p-8 space-y-6">
+          {/* Welcome Hero Section */}
+          <WelcomeHero />
+
+          {/* Enhanced KPI Cards */}
+          <EnhancedKPICards />
+
+          {/* Quick Actions */}
+          <EnhancedQuickActions
             onGoRotations={() => router.push('/resident/rotations')}
             onFocusSearch={() => {
               if (typeof window !== 'undefined') {
@@ -56,15 +66,26 @@ export default function ResidentDashboard() {
               router.push(`/resident/rotations?selected=${id}`),
             )}
           />
-          <PendingTasksList
+
+          {/* Smart Recommendations */}
+          <SmartRecommendations />
+
+          {/* Upcoming Schedule and Activity Timeline in Grid */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <UpcomingSchedule />
+            <ActivityTimeline />
+          </div>
+
+          {/* Achievements and Weekly Insights */}
+          <AchievementsInsights />
+
+          {/* Enhanced Pending Tasks */}
+          <EnhancedPendingTasks
             activeRotationId={activeRotationId || null}
             nodesById={Object.fromEntries((activeNodes || []).map((n: any) => [n.id, n])) as any}
           />
-          <RecentLogs
-            itemIdsToNames={
-              Object.fromEntries((activeNodes || []).map((n: any) => [n.id, n.name])) as any
-            }
-          />
+
+          {/* Announcements */}
           <AnnouncementsCard />
         </div>
       </AppShell>
