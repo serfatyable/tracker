@@ -1,14 +1,19 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import RotationsPanel from '../../../components/admin/rotations/RotationsPanel';
 import AuthGate from '../../../components/auth/AuthGate';
 import { CardSkeleton } from '../../../components/dashboard/Skeleton';
 import AppShell from '../../../components/layout/AppShell';
 import LargeTitleHeader from '../../../components/layout/LargeTitleHeader';
+
+const RotationsPanel = dynamic(() => import('../../../components/admin/rotations/RotationsPanel'), {
+  loading: () => <CardSkeleton />,
+  ssr: false,
+});
 
 export default function AdminRotationsPage() {
   const { t } = useTranslation();

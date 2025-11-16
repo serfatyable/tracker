@@ -1,17 +1,24 @@
 'use client';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import ImportPreviewDialog, {
-  type PreviewRow,
-  type ValidationError,
+import type {
+  PreviewRow,
+  ValidationError,
 } from '../../../components/admin/morning-meetings/ImportPreviewDialog';
 import TopBar from '../../../components/TopBar';
 import Button from '../../../components/ui/Button';
 import Toast from '../../../components/ui/Toast';
 import { getCurrentUserWithProfile } from '../../../lib/firebase/auth';
 import { parseMorningMeetingsExcel } from '../../../lib/morning-meetings/excel';
+import { logger } from '../../../lib/utils/logger';
+
+const ImportPreviewDialog = dynamic(
+  () => import('../../../components/admin/morning-meetings/ImportPreviewDialog'),
+  { ssr: false },
+);
 
 export default function AdminMorningMeetingsImportPage() {
   const { t } = useTranslation();
@@ -32,7 +39,11 @@ export default function AdminMorningMeetingsImportPage() {
         if (profile?.status === 'pending') return router.replace('/awaiting-approval');
         if (profile && profile.role !== 'admin') return router.replace('/auth');
       } catch (error) {
-        console.error('Failed to check user profile:', error);
+        logger.error(
+          'Failed to check user profile',
+          'admin/morning-meetings',
+          error instanceof Error ? error : new Error(String(error)),
+        );
         router.replace('/auth');
       }
     })();
@@ -277,7 +288,9 @@ export default function AdminMorningMeetingsImportPage() {
                   />
                 </label>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('morningMeetings.import.fileTypes')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('morningMeetings.import.fileTypes')}
+              </p>
               {selectedFile && (
                 <p className="text-sm text-gray-700 font-medium">
                   {t('morningMeetings.import.selectedFile')}: {selectedFile.name}

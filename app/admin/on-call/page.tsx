@@ -1,16 +1,23 @@
 'use client';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import ImportPreviewDialog, {
-  type PreviewRow,
-  type ValidationError,
+import type {
+  PreviewRow,
+  ValidationError,
 } from '../../../components/admin/on-call/ImportPreviewDialog';
 import TopBar from '../../../components/TopBar';
 import Button from '../../../components/ui/Button';
 import Toast from '../../../components/ui/Toast';
 import { getCurrentUserWithProfile } from '../../../lib/firebase/auth';
+import { logger } from '../../../lib/utils/logger';
+
+const ImportPreviewDialog = dynamic(
+  () => import('../../../components/admin/on-call/ImportPreviewDialog'),
+  { ssr: false },
+);
 
 export default function AdminOnCallImportPage() {
   const { t } = useTranslation();
@@ -31,7 +38,11 @@ export default function AdminOnCallImportPage() {
         if (profile?.status === 'pending') return router.replace('/awaiting-approval');
         if (profile && profile.role !== 'admin') return router.replace('/auth');
       } catch (error) {
-        console.error('Failed to check user profile:', error);
+        logger.error(
+          'Failed to check user profile',
+          'admin/on-call',
+          error instanceof Error ? error : new Error(String(error)),
+        );
         router.replace('/auth');
       }
     })();
@@ -62,7 +73,11 @@ export default function AdminOnCallImportPage() {
       setValidationErrors(errors);
       setShowPreview(true);
     } catch (error) {
-      console.error('Parse error:', error);
+      logger.error(
+        'Parse error',
+        'admin/on-call',
+        error instanceof Error ? error : new Error(String(error)),
+      );
       setToast(t('onCall.import.parseError', { defaultValue: 'Failed to parse Excel file' }));
       setSelectedFile(null);
     }
