@@ -21,7 +21,6 @@ import {
 import type { UserProfile } from '@/types/auth';
 import type { MorningMeeting } from '@/types/morningMeetings';
 
-
 describe('morningMeetingsUtils', () => {
   describe('sanitizeCsvValue', () => {
     it('should escape double quotes', () => {
@@ -453,9 +452,9 @@ describe('morningMeetingsUtils', () => {
         createMeeting('2025-11-18'), // Tuesday
       ];
       const result = groupByWeek(meetings);
-      expect(result[0][0].dateKey).toBe('2025-11-17');
-      expect(result[0][1].dateKey).toBe('2025-11-18');
-      expect(result[0][2].dateKey).toBe('2025-11-19');
+      expect(result[0]?.[0]?.dateKey).toBe('2025-11-17');
+      expect(result[0]?.[1]?.dateKey).toBe('2025-11-18');
+      expect(result[0]?.[2]?.dateKey).toBe('2025-11-19');
     });
 
     it('should handle empty array', () => {
