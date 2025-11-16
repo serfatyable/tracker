@@ -20,14 +20,11 @@ export default function TutorWriteReflectionPage() {
   const taskType = search?.get('taskType') || 'Task';
   const residentId = search?.get('residentId');
 
-  const { data: me } = useCurrentUserProfile();
+  const { data: me, firebaseUser } = useCurrentUserProfile();
+  const uid = firebaseUser?.uid || null;
   const { template } = useLatestPublishedTemplate('tutor', taskType);
   const { template: residentTemplate } = useLatestPublishedTemplate('resident', taskType);
-  const { reflection } = useReflection(
-    taskOccurrenceId || null,
-    me?.uid || null,
-    residentId || undefined,
-  );
+  const { reflection } = useReflection(taskOccurrenceId || null, uid, residentId || undefined);
 
   // Load resident reflection read-only
   const [residentReflection, setResidentReflection] = useState<Reflection | null>(null);
@@ -46,7 +43,7 @@ export default function TutorWriteReflectionPage() {
     };
   }, [residentId, taskOccurrenceId]);
 
-  if (!me) return <div className="p-4">{t('common.signInRequired')}</div>;
+  if (!me || !uid) return <div className="p-4">{t('common.signInRequired')}</div>;
   if (!template) return <div className="p-4">{t('common.loadingTemplate')}</div>;
   if (!residentId)
     return (
@@ -87,16 +84,16 @@ export default function TutorWriteReflectionPage() {
           initialAnswers={reflection?.answers || null}
           disabled={submitted}
           onSubmit={async (answers) => {
-            if (!me) return;
+            if (!uid) return;
             await submitReflection({
               taskOccurrenceId,
               taskType,
               templateKey: template.templateKey,
               templateVersion: template.version,
-              authorId: me.uid,
+              authorId: uid,
               authorRole: 'tutor',
               residentId,
-              tutorId: me.uid,
+              tutorId: uid,
               answers,
             });
           }}

@@ -1,4 +1,5 @@
 'use client';
+import { getAuth } from 'firebase/auth';
 import {
   collection,
   doc,
@@ -156,10 +157,22 @@ export async function submitReflection(params: {
   tutorId?: string | null;
   answers: Record<string, string>;
 }): Promise<{ id: string }> {
-  const db = getFirestore(getFirebaseApp());
+  const app = getFirebaseApp();
+  const auth = getAuth(app);
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('auth/missing-current-user');
+  }
+  const effectiveAuthorId = currentUser.uid;
+  if (params.authorId && params.authorId !== effectiveAuthorId) {
+    console.warn(
+      'submitReflection authorId mismatch – using authenticated user instead of provided value',
+    );
+  }
+  const db = getFirestore(app);
   const rid = makeReflectionId(
     params.taskOccurrenceId,
-    params.authorId,
+    effectiveAuthorId,
     params.authorRole === 'tutor' ? params.residentId : undefined,
   );
   const ref = doc(db, 'reflections', rid);
@@ -170,10 +183,10 @@ export async function submitReflection(params: {
       taskType: params.taskType,
       templateKey: params.templateKey,
       templateVersion: params.templateVersion,
-      authorId: params.authorId,
+      authorId: effectiveAuthorId,
       authorRole: params.authorRole,
       residentId: params.residentId,
-      tutorId: params.tutorId || null,
+      tutorId: params.authorRole === 'tutor' ? effectiveAuthorId : params.tutorId || null,
       answers: params.answers,
       submittedAt: serverTimestamp(),
     } as any,

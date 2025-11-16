@@ -16,6 +16,10 @@ const firestoreMocks = vi.hoisted(() => {
   };
 });
 
+const authMocks = vi.hoisted(() => ({
+  currentUser: { uid: 'default-user' } as { uid: string } | null,
+}));
+
 vi.mock('firebase/firestore', () => ({
   ...firestoreMocks,
   doc: (...args: any[]) => firestoreMocks.doc(...args),
@@ -28,14 +32,20 @@ vi.mock('../../firebase/client', () => ({
   getFirebaseApp: () => ({ app: 'test' }),
 }));
 
+vi.mock('firebase/auth', () => ({
+  getAuth: () => authMocks,
+}));
+
 describe('submitReflection', () => {
   beforeEach(() => {
     firestoreMocks.setDoc.mockClear();
     firestoreMocks.doc.mockClear();
     firestoreMocks.getFirestore.mockClear();
+    authMocks.currentUser = { uid: 'default-user' };
   });
 
   it('creates resident reflections using the legacy id format', async () => {
+    authMocks.currentUser = { uid: 'resident-123' };
     await submitReflection({
       taskOccurrenceId: 'task-1',
       taskType: 'Task',
@@ -57,6 +67,7 @@ describe('submitReflection', () => {
   });
 
   it('includes the resident id in tutor reflection ids to keep them unique', async () => {
+    authMocks.currentUser = { uid: 'tutor-456' };
     await submitReflection({
       taskOccurrenceId: 'task-1',
       taskType: 'Task',
@@ -75,5 +86,22 @@ describe('submitReflection', () => {
       'task-1_tutor-456_resident-789',
     );
     expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws when no authenticated user is available', async () => {
+    authMocks.currentUser = null;
+    await expect(
+      submitReflection({
+        taskOccurrenceId: 'task-1',
+        taskType: 'Task',
+        templateKey: 'resident-default',
+        templateVersion: 1,
+        authorId: 'resident-123',
+        authorRole: 'resident',
+        residentId: 'resident-123',
+        tutorId: 'tutor-456',
+        answers: { p1: 'Answer' },
+      }),
+    ).rejects.toThrow('auth/missing-current-user');
   });
 });
