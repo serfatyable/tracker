@@ -28,11 +28,19 @@ export function useTutorDashboardMetrics() {
     const pendingCount = (data.petitions?.length || 0) + (data.tasks?.length || 0);
     const residentsCount = data.supervisedResidents?.length || 0;
 
-    // Calculate completion rate (mock for now - should be based on actual task completion data)
-    const completionRate = residentsCount > 0 ? Math.floor(Math.random() * 30 + 70) : 0;
+    // TODO: Calculate actual completion rate from historical task data
+    // This would require:
+    // 1. Fetching approved/rejected tasks for supervised residents
+    // 2. Calculating: (approved tasks / total required tasks) * 100
+    // For now, showing 0 to indicate data not yet available
+    const completionRate = 0;
 
-    // Calculate average response time (mock for now - should be based on actual approval timestamps)
-    const avgResponseTime = '2.3h';
+    // TODO: Calculate actual average response time from task timestamps
+    // This would require:
+    // 1. Fetching completed tasks (approved/rejected) with timestamps
+    // 2. Calculating: avg(approvalTimestamp - submissionTimestamp)
+    // For now, showing "--" to indicate data not yet available
+    const avgResponseTime = '--';
 
     // Teaching load is the number of assigned residents
     const teachingLoad = residentsCount;

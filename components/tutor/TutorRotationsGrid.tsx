@@ -86,12 +86,22 @@ export default function TutorRotationsGrid({
       const residentsCount = assigns.length;
       const pendingPetitions = petitionsByRotation.get(rotation.id) || 0;
 
-      // Mock completion rate - replace with actual calculation
-      const completionRate = Math.floor(Math.random() * 40 + 60); // 60-100%
+      // TODO: Calculate actual completion rate from rotation progress
+      // This would require:
+      // 1. Fetching all tasks for this rotation across all assigned residents
+      // 2. Calculating: (completed tasks / total required tasks) * 100
+      // For now, showing 0 to indicate data not yet available
+      const completionRate = 0;
 
-      let health: 'excellent' | 'good' | 'needs-attention' = 'excellent';
-      if (completionRate < 70) health = 'needs-attention';
-      else if (completionRate < 85) health = 'good';
+      // Health status based on completion rate
+      // When real data is available, this will provide meaningful status
+      let health: 'excellent' | 'good' | 'needs-attention' = 'needs-attention';
+      if (completionRate >= 85) health = 'excellent';
+      else if (completionRate >= 70) health = 'good';
+
+      // TODO: Calculate actual recent activity timestamp
+      // This would require fetching the most recent task submission for this rotation
+      const recentActivity = '--';
 
       return {
         rotation,
@@ -99,7 +109,7 @@ export default function TutorRotationsGrid({
         pendingPetitions,
         completionRate,
         health,
-        recentActivity: '2h ago', // Replace with actual data
+        recentActivity,
       };
     });
   }, [ownedRotations, assignmentsByRotation, petitionsByRotation]);
