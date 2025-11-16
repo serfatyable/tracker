@@ -216,7 +216,17 @@
     "noAssignmentsFound": "לא נמצאו הקצאות",
     "noAssignmentsYet": "עדיין לא נוצרו הקצאות",
     "unassignConfirmMessage": "האם אתה בטוח שברצונך להסיר את {{tutorName}} מ-{{residentName}}?",
-    "assignmentDetails": "פרטי הקצאה"
+    "assignmentDetails": "פרטי הקצאה",
+    "from": "מתאריך",
+    "to": "עד תאריך",
+    "allTaskTypes": "כל סוגי המשימות",
+    "newest": "החדשים ביותר",
+    "oldest": "הישנים ביותר",
+    "searchReflections": "חפש רפלקציות...",
+    "results": "תוצאות",
+    "noResultsFound": "לא נמצאו תוצאות",
+    "resident": "מתמחה",
+    "tutor": "מדריך"
   },
   "morningMeetings": {
     "title": "ישיבת בוקר",
@@ -601,7 +611,10 @@
     "tutorReflection": "רפלקציה של מדריך",
     "residentReflection": "רפלקציה של מתמחה",
     "writeReflection": "כתוב רפלקציה",
-    "taskType": "סוג משימה:"
+    "taskType": "סוג משימה:",
+    "taskId": "מזהה משימה",
+    "untitledReflection": "רפלקציה ללא כותרת",
+    "yourReflection": "הרפלקציה שלך"
   },
   "common": {
     "signInRequired": "נדרשת התחברות",

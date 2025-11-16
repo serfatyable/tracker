@@ -5,10 +5,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ReflectionForm from '../../../../components/reflections/ReflectionForm';
+import ReflectionDisplay from '../../../../components/reflections/ReflectionDisplay';
 import { getFirebaseApp } from '../../../../lib/firebase/client';
 import { useCurrentUserProfile } from '../../../../lib/hooks/useCurrentUserProfile';
 import { submitReflection, useReflection } from '../../../../lib/hooks/useReflections';
 import { useLatestPublishedTemplate } from '../../../../lib/hooks/useReflectionTemplates';
+import type { Reflection } from '../../../../types/reflections';
 
 export default function TutorWriteReflectionPage() {
   const { t } = useTranslation();
@@ -20,10 +22,11 @@ export default function TutorWriteReflectionPage() {
 
   const { data: me } = useCurrentUserProfile();
   const { template } = useLatestPublishedTemplate('tutor', taskType);
+  const { template: residentTemplate } = useLatestPublishedTemplate('resident', taskType);
   const { reflection } = useReflection(taskOccurrenceId || null, me?.uid || null);
 
   // Load resident reflection read-only
-  const [residentReflection, setResidentReflection] = useState<any | null>(null);
+  const [residentReflection, setResidentReflection] = useState<Reflection | null>(null);
   useEffect(() => {
     let cancelled = false;
     async function run() {
@@ -31,7 +34,7 @@ export default function TutorWriteReflectionPage() {
       const db = getFirestore(getFirebaseApp());
       const rid = `${taskOccurrenceId}_${residentId}`;
       const snap = await getDoc(doc(db, 'reflections', rid));
-      if (!cancelled) setResidentReflection(snap.exists() ? snap.data() : null);
+      if (!cancelled) setResidentReflection(snap.exists() ? (snap.data() as Reflection) : null);
     }
     run();
     return () => {
@@ -47,34 +50,45 @@ export default function TutorWriteReflectionPage() {
   return (
     <div className="p-4 space-y-4">
       <h1 className="text-xl font-semibold">{t('reflections.tutorReflection')}</h1>
-      {residentReflection ? (
-        <div className="rounded border p-3">
-          <div className="font-semibold mb-2">{t('reflections.residentReflection')}</div>
-          <pre className="text-xs whitespace-pre-wrap">
-            {JSON.stringify(residentReflection.answers, null, 2)}
-          </pre>
+      <div className="text-sm opacity-70">
+        {t('reflections.taskType')} {taskType}
+      </div>
+
+      {/* Resident Reflection (if exists) */}
+      {residentReflection && residentTemplate ? (
+        <div className="rounded-lg border p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <div className="font-semibold mb-3 text-blue-900 dark:text-blue-100">
+            {t('reflections.residentReflection')}
+          </div>
+          <ReflectionDisplay reflection={residentReflection} template={residentTemplate} />
         </div>
       ) : null}
-      <ReflectionForm
-        audience="tutor"
-        template={template}
-        initialAnswers={reflection?.answers || null}
-        disabled={submitted}
-        onSubmit={async (answers) => {
-          if (!me) return;
-          await submitReflection({
-            taskOccurrenceId,
-            taskType,
-            templateKey: template.templateKey,
-            templateVersion: template.version,
-            authorId: me.uid,
-            authorRole: 'tutor',
-            residentId: residentId || '',
-            tutorId: me.uid,
-            answers,
-          });
-        }}
-      />
+
+      {/* Tutor Reflection Form */}
+      <div>
+        <h2 className="font-semibold mb-3">{t('reflections.yourReflection', { defaultValue: 'Your Reflection' })}</h2>
+        <ReflectionForm
+          audience="tutor"
+          template={template}
+          initialAnswers={reflection?.answers || null}
+          disabled={submitted}
+          onSubmit={async (answers) => {
+            if (!me) return;
+            await submitReflection({
+              taskOccurrenceId,
+              taskType,
+              templateKey: template.templateKey,
+              templateVersion: template.version,
+              authorId: me.uid,
+              authorRole: 'tutor',
+              residentId: residentId || '',
+              tutorId: me.uid,
+              answers,
+            });
+          }}
+        />
+      </div>
+
       {submitted ? <div className="text-sm text-green-700">{t('common.submitted')}</div> : null}
     </div>
   );

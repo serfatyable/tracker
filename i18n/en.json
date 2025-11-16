@@ -220,7 +220,17 @@
     "noAssignmentsFound": "No assignments found",
     "noAssignmentsYet": "No assignments have been created yet",
     "unassignConfirmMessage": "Are you sure you want to unassign {{tutorName}} from {{residentName}}?",
-    "assignmentDetails": "Assignment Details"
+    "assignmentDetails": "Assignment Details",
+    "from": "From",
+    "to": "To",
+    "allTaskTypes": "All task types",
+    "newest": "Newest first",
+    "oldest": "Oldest first",
+    "searchReflections": "Search reflections...",
+    "results": "results",
+    "noResultsFound": "No results found",
+    "resident": "Resident",
+    "tutor": "Tutor"
   },
   "morningMeetings": {
     "title": "Morning Meetings",
@@ -607,7 +617,10 @@
     "tutorReflection": "Tutor reflection",
     "residentReflection": "Resident reflection",
     "writeReflection": "Write reflection",
-    "taskType": "Task type:"
+    "taskType": "Task type:",
+    "taskId": "Task ID",
+    "untitledReflection": "Untitled Reflection",
+    "yourReflection": "Your Reflection"
   },
   "common": {
     "signInRequired": "Sign in required",
