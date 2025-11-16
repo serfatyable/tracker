@@ -141,7 +141,9 @@ export default function WelcomeHero() {
               </div>
               <div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white">
-                  {i18n.language === 'he' ? currentRotation.nameHe : currentRotation.name}
+                  {i18n.language === 'he' && currentRotation.name_he
+                    ? currentRotation.name_he
+                    : currentRotation.name}
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">
                   {t('ui.home.rotationProgress', { defaultValue: 'Rotation Progress' })}
