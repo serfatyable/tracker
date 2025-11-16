@@ -1,6 +1,17 @@
 'use client';
-import { collection, getDocs, getFirestore, query, where } from 'firebase/firestore';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  getFirestore,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { Audience, ReflectionTemplate } from '../../types/reflections';
 import { getFirebaseApp } from '../firebase/client';
@@ -23,7 +34,7 @@ export function useLatestPublishedTemplate(audience: Audience, taskType?: string
         if (cancelled) return;
         const all = snap.docs.map((d) => ({
           id: d.id,
-          ...(d.data() as any),
+          ...d.data(),
         })) as ReflectionTemplate[];
         setTemplates(all);
       } catch (e) {
@@ -50,4 +61,126 @@ export function useLatestPublishedTemplate(audience: Audience, taskType?: string
   }, [templates, taskType]);
 
   return { template: latest, loading, error };
+}
+
+type UseReflectionTemplatesResult = {
+  templates: ReflectionTemplate[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+  saveTemplate: (template: ReflectionTemplate) => Promise<void>;
+  publishTemplate: (templateId: string) => Promise<void>;
+  deleteTemplate: (templateId: string) => Promise<void>;
+  duplicateTemplate: (template: ReflectionTemplate) => Promise<void>;
+};
+
+export function useReflectionTemplates(
+  audience: Audience | '',
+): UseReflectionTemplatesResult {
+  const [templates, setTemplates] = useState<ReflectionTemplate[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchTemplates = useCallback(async () => {
+    if (!audience) {
+      setTemplates([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const db = getFirestore(getFirebaseApp());
+      const qRef = query(
+        collection(db, 'reflectionTemplates'),
+        where('audience', '==', audience as Audience),
+      );
+      const snap = await getDocs(qRef);
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as ReflectionTemplate[];
+      setTemplates(data);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to load templates';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [audience]);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  const saveTemplate = useCallback(
+    async (template: ReflectionTemplate) => {
+      const db = getFirestore(getFirebaseApp());
+
+      if (template.id) {
+        await updateDoc(doc(db, 'reflectionTemplates', template.id), {
+          ...template,
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        await addDoc(collection(db, 'reflectionTemplates'), {
+          ...template,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      await fetchTemplates();
+    },
+    [fetchTemplates],
+  );
+
+  const publishTemplate = useCallback(
+    async (templateId: string) => {
+      const db = getFirestore(getFirebaseApp());
+      await updateDoc(doc(db, 'reflectionTemplates', templateId), {
+        status: 'published',
+        publishedAt: serverTimestamp(),
+      });
+
+      await fetchTemplates();
+    },
+    [fetchTemplates],
+  );
+
+  const deleteTemplate = useCallback(
+    async (templateId: string) => {
+      const db = getFirestore(getFirebaseApp());
+      await deleteDoc(doc(db, 'reflectionTemplates', templateId));
+      await fetchTemplates();
+    },
+    [fetchTemplates],
+  );
+
+  const duplicateTemplate = useCallback(
+    async (template: ReflectionTemplate) => {
+      const db = getFirestore(getFirebaseApp());
+      const newTemplate = {
+        ...template,
+        id: undefined,
+        status: 'draft' as const,
+        version: (template.version || 0) + 1,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      await addDoc(collection(db, 'reflectionTemplates'), newTemplate);
+      await fetchTemplates();
+    },
+    [fetchTemplates],
+  );
+
+  return {
+    templates,
+    loading,
+    error,
+    refetch: fetchTemplates,
+    saveTemplate,
+    publishTemplate,
+    deleteTemplate,
+    duplicateTemplate,
+  };
 }
