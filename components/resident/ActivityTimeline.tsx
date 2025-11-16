@@ -24,7 +24,8 @@ export default function ActivityTimeline() {
       if (!taskTime) return;
 
       const taskDate = new Date(taskTime);
-      const dateKey = taskDate.toISOString().split('T')[0];
+      const dateKey = taskDate.toISOString().split('T')[0] as string;
+      if (!dateKey) return;
 
       if (!activityMap.has(dateKey)) {
         activityMap.set(dateKey, { count: 0, categories: new Set() });
@@ -44,7 +45,7 @@ export default function ActivityTimeline() {
       date.setDate(now.getDate() - i);
       date.setHours(0, 0, 0, 0);
 
-      const dateKey = date.toISOString().split('T')[0];
+      const dateKey = date.toISOString().split('T')[0] as string;
       const count = activityMap.get(dateKey)?.count || 0;
 
       // Determine intensity level (0-4)
