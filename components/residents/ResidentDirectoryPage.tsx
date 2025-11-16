@@ -8,7 +8,7 @@ import {
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Avatar from '../ui/Avatar';
@@ -40,7 +40,7 @@ type DirectoryEntry = {
   tutorNames: string[];
 };
 
-export default function ResidentDirectoryPage() {
+const ResidentDirectoryPage = memo(function ResidentDirectoryPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { data: me } = useCurrentUserProfile();
@@ -293,4 +293,6 @@ export default function ResidentDirectoryPage() {
       </Card>
     </div>
   );
-}
+});
+
+export default ResidentDirectoryPage;

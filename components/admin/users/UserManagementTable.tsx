@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -61,7 +61,9 @@ function UserCard({
             className="mt-0.5 flex-shrink-0 w-4 h-4"
           />
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-base text-gray-900 dark:text-gray-50 truncate">{user.fullName || userId}</div>
+            <div className="font-semibold text-base text-gray-900 dark:text-gray-50 truncate">
+              {user.fullName || userId}
+            </div>
             <div className="text-sm text-muted truncate">{user.email}</div>
           </div>
         </div>
@@ -216,7 +218,7 @@ function ManageRotationsDialog({
   );
 }
 
-export default function UserManagementTable() {
+const UserManagementTable = memo(function UserManagementTable() {
   const { t } = useTranslation();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
@@ -530,7 +532,9 @@ export default function UserManagementTable() {
                     }}
                     className="w-4 h-4"
                   />
-                  <span className="text-gray-900 dark:text-gray-50">Select all ({users.length})</span>
+                  <span className="text-gray-900 dark:text-gray-50">
+                    Select all ({users.length})
+                  </span>
                 </label>
               </div>
 
@@ -745,4 +749,6 @@ export default function UserManagementTable() {
       />
     </>
   );
-}
+});
+
+export default UserManagementTable;

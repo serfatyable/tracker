@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
@@ -109,7 +109,9 @@ const getShiftConfig = (shiftType: string) => {
   };
 };
 
-export default function OnCallScheduleView({ showUploadButton = false }: OnCallScheduleViewProps) {
+const OnCallScheduleView = memo(function OnCallScheduleView({
+  showUploadButton = false,
+}: OnCallScheduleViewProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { data: currentUser } = useCurrentUserProfile();
@@ -1026,7 +1028,9 @@ export default function OnCallScheduleView({ showUploadButton = false }: OnCallS
       )}
     </div>
   );
-}
+});
+
+export default OnCallScheduleView;
 
 // Admin Analytics Component
 function AdminAnalytics({ stats }: { stats: any }) {
