@@ -377,10 +377,10 @@ function TemplateEditor({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-lg">
+            <h3 className="font-semibold text-lg text-indigo-900 dark:text-indigo-50">
               {t('reflections.editingTemplate', { version: working.version, status: working.status })}
             </h3>
-            <div className="text-xs opacity-70 mt-1">{working.audience}</div>
+            <div className="text-xs mt-1 text-indigo-800 dark:text-indigo-200">{working.audience}</div>
           </div>
           <Button variant="outline" size="sm" onClick={onClose}>
             {t('reflections.close')}
@@ -536,7 +536,7 @@ function TemplateEditor({
                         />
                       </div>
                       <div className="col-span-full flex items-center gap-4">
-                        <label className="flex items-center gap-2 text-sm">
+                        <label className="flex items-center gap-2 text-sm text-gray-900 dark:text-gray-50">
                           <input
                             type="checkbox"
                             checked={!!prompt.required}
