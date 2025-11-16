@@ -1,165 +1,145 @@
 'use client';
-import { lazy, Suspense, useState } from 'react';
+
+import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import AuthGate from '../../components/auth/AuthGate';
-import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
-import AppShell from '../../components/layout/AppShell';
-import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
-import Card from '../../components/ui/Card';
-// Tabs removed per mobile-first stacked sections
-import Toast from '../../components/ui/Toast';
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
-import { useReflectionsForTutor } from '../../lib/hooks/useReflections';
-import { useTutorDashboardData } from '../../lib/hooks/useTutorDashboardData';
-
-// Lazy load heavy components
-const AssignedResidents = lazy(() => import('../../components/tutor/AssignedResidents'));
-const PendingApprovals = lazy(() => import('../../components/tutor/PendingApprovals'));
-const PendingTaskApprovals = lazy(() => import('../../components/tutor/PendingTaskApprovals'));
-const RotationsTab = lazy(() => import('../../components/tutor/tabs/RotationsTab'));
+import AuthGate from '@/components/auth/AuthGate';
+import { SpinnerSkeleton, CardSkeleton } from '@/components/dashboard/Skeleton';
+import AppShell from '@/components/layout/AppShell';
+import PendingTaskApprovals from '@/components/tutor/PendingTaskApprovals';
+import TutorActivityTimeline from '@/components/tutor/TutorActivityTimeline';
+import TutorHeroSection from '@/components/tutor/TutorHeroSection';
+import TutorInsightsPanel from '@/components/tutor/TutorInsightsPanel';
+import TutorKPICards from '@/components/tutor/TutorKPICards';
+import TutorPriorityQueue from '@/components/tutor/TutorPriorityQueue';
+import TutorQuickActions from '@/components/tutor/TutorQuickActions';
+import TutorResidentsCards from '@/components/tutor/TutorResidentsCards';
+import TutorRotationsGrid from '@/components/tutor/TutorRotationsGrid';
+import { useTutorDashboardMetrics } from '@/lib/hooks/useTutorDashboardMetrics';
 
 export default function TutorDashboard() {
   const { t } = useTranslation();
-  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(
-    null,
-  );
-
-  const _handleToast = (message: string, variant: 'success' | 'error') => {
-    setToast({ message, variant });
-  };
 
   return (
     <AuthGate requiredRole="tutor">
-      <Toast
-        message={toast?.message || null}
-        variant={toast?.variant}
-        onClear={() => setToast(null)}
-      />
       <AppShell>
-        <LargeTitleHeader title={t('ui.home', { defaultValue: 'Home' }) as string} />
-        <div className="app-container p-6">
-          <div className="w-full space-y-6">
-            {/* 1) Overview (personal KPIs/sections) */}
-            <Suspense
-              fallback={
-                <div className="space-y-3">
-                  <CardSkeleton />
-                  <CardSkeleton />
-                </div>
-              }
-            >
-              <div className="space-y-3">
-                <TutorDashboardSections />
-              </div>
-            </Suspense>
-
-            {/* 2) Rotations progress */}
-            <Suspense fallback={<SpinnerSkeleton />}>
-              <TutorRotationsTab />
-            </Suspense>
-
-            {/* 3) Reflections queue */}
-            <TutorReflectionsInline />
-          </div>
+        <div className="app-container min-h-screen bg-gradient-to-b from-gray-50/50 to-white p-6 dark:from-slate-950/50 dark:to-slate-900">
+          <Suspense fallback={<SpinnerSkeleton />}>
+            <TutorDashboardContent />
+          </Suspense>
         </div>
       </AppShell>
     </AuthGate>
   );
 }
 
-function TutorDashboardSections() {
-  const { me, assignments, rotations, residents, tutors, ownedRotationIds, petitions, tasks } =
-    useTutorDashboardData();
-  const residentIdToName = (id: string) => residents.find((r) => r.uid === id)?.fullName || id;
+function TutorDashboardContent() {
+  const data = useTutorDashboardMetrics();
+  const { metrics } = data;
+
   return (
-    <Suspense
-      fallback={
-        <div className="space-y-3">
-          <CardSkeleton />
-          <CardSkeleton />
-        </div>
-      }
-    >
-      <PendingApprovals petitions={petitions} residentIdToName={residentIdToName} />
-      {me ? (
-        <AssignedResidents
-          meUid={me.uid}
-          assignments={assignments}
-          rotations={rotations}
-          residents={residents}
-          tutors={tutors}
-          ownedRotationIds={ownedRotationIds}
+    <div className="mx-auto max-w-7xl space-y-8">
+      {/* Hero Section */}
+      <Suspense
+        fallback={
+          <div className="h-64 animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800" />
+        }
+      >
+        <TutorHeroSection
+          user={data.me}
+          pendingCount={metrics.pendingCount}
+          residentsCount={metrics.residentsCount}
+          completionRate={metrics.completionRate}
         />
-      ) : null}
-      <PendingTaskApprovals tasks={tasks} residents={residents} rotations={rotations} />
-    </Suspense>
-  );
-}
+      </Suspense>
 
-function useTabsData() {
-  const data = useTutorDashboardData();
-  return { data } as const;
-}
+      {/* Quick Actions Toolbar */}
+      <Suspense fallback={<CardSkeleton />}>
+        <TutorQuickActions pendingCount={metrics.pendingCount} />
+      </Suspense>
 
-// Removed tab-era inline helpers
+      {/* KPI Cards */}
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="h-32 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800"
+              />
+            ))}
+          </div>
+        }
+      >
+        <TutorKPICards
+          pendingApprovals={metrics.pendingCount}
+          assignedResidents={metrics.residentsCount}
+          avgResponseTime={metrics.avgResponseTime}
+          completionRate={metrics.completionRate}
+          teachingLoad={metrics.teachingLoad}
+        />
+      </Suspense>
 
-function TutorRotationsTab() {
-  const { data } = useTabsData();
-  if (!data.me) return null;
-  return (
-    <div className="space-y-3">
-      <RotationsTab
-        meUid={data.me.uid}
-        rotations={data.rotations}
-        assignments={data.assignments}
-        residents={data.residents}
-        petitions={data.petitions as any}
-        tutors={data.tutors}
-      />
-    </div>
-  );
-}
+      {/* Priority Queue - Pending Approvals */}
+      {data.petitions && data.petitions.length > 0 && (
+        <Suspense fallback={<CardSkeleton />}>
+          <TutorPriorityQueue
+            petitions={data.petitions}
+            residentIdToName={metrics.residentIdToName}
+            residentIdToEmail={metrics.residentIdToEmail}
+          />
+        </Suspense>
+      )}
 
-function TutorReflectionsInline() {
-  const { t } = useTranslation();
-  const { data: me } = useCurrentUserProfile();
-  const { list, loading } = useReflectionsForTutor(me?.uid || null);
-  return (
-    <div className="space-y-3">
-      <Card>
-        <div className="font-semibold mb-2 text-gray-900 dark:text-gray-50">
-          {t('tutor.reflectionsIWrote')}
-        </div>
-        {loading ? (
-          <div className="text-sm opacity-70 text-gray-600 dark:text-gray-300">Loading…</div>
-        ) : null}
-        <div className="space-y-2">
-          {(list || []).map((r) => (
-            <div
-              key={r.id}
-              className="border rounded p-2 text-sm flex items-center justify-between border-gray-200 dark:border-[rgb(var(--border))]"
-            >
-              <div>
-                <div className="font-medium text-gray-900 dark:text-gray-50">{r.taskType}</div>
-                <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">
-                  {r.taskOccurrenceId}
-                </div>
-              </div>
-              <div className="text-xs opacity-70 text-gray-600 dark:text-gray-300">
-                {(r as any).submittedAt?.toDate?.()?.toLocaleString?.() || ''}
-              </div>
-            </div>
-          ))}
-          {!loading && !list?.length ? (
-            <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-[rgb(var(--border))] bg-gray-50 dark:bg-[rgb(var(--surface-elevated))] p-6 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {t('tutor.noReflectionsYet')}
-              </p>
-            </div>
-          ) : null}
-        </div>
-      </Card>
+      {/* Pending Task Approvals */}
+      {data.tasks && data.tasks.length > 0 && (
+        <Suspense fallback={<CardSkeleton />}>
+          <PendingTaskApprovals
+            tasks={data.tasks}
+            residents={data.residents}
+            rotations={data.rotations}
+          />
+        </Suspense>
+      )}
+
+      {/* Two-column layout for Residents and Activity */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        {/* Assigned Residents Cards */}
+        <Suspense fallback={<CardSkeleton />}>
+          <TutorResidentsCards
+            meUid={data.me?.uid || ''}
+            assignments={data.assignments}
+            rotations={data.rotations}
+            residents={data.residents}
+            ownedRotationIds={data.ownedRotationIds}
+          />
+        </Suspense>
+
+        {/* Activity Timeline */}
+        <Suspense fallback={<CardSkeleton />}>
+          <TutorActivityTimeline />
+        </Suspense>
+      </div>
+
+      {/* Rotations Grid */}
+      <Suspense fallback={<CardSkeleton />}>
+        <TutorRotationsGrid
+          meUid={data.me?.uid || ''}
+          rotations={data.rotations}
+          assignments={data.assignments}
+          residents={data.residents}
+          petitions={data.petitions || []}
+          tutors={data.tutors}
+        />
+      </Suspense>
+
+      {/* Insights Panel */}
+      <Suspense fallback={<CardSkeleton />}>
+        <TutorInsightsPanel />
+      </Suspense>
+
+      {/* Bottom spacing for better scrolling */}
+      <div className="h-8" />
     </div>
   );
 }

@@ -716,6 +716,84 @@
     "noReflectionsYet": "No reflections yet. Your submitted reflections will appear here.",
     "assign": "Assign",
     "featureNotUsed": "Feature not used in v1",
+    "hero": {
+      "pendingItems": "Pending Items",
+      "needsAttention": "Needs Attention",
+      "assignedResidents": "Assigned Residents",
+      "residents": "Residents",
+      "completionRate": "Completion Rate",
+      "average": "Average"
+    },
+    "kpi": {
+      "pendingApprovals": "Pending Approvals",
+      "assignedResidents": "Assigned Residents",
+      "avgResponseTime": "Avg Response Time",
+      "completionRate": "Completion Rate",
+      "teachingLoad": "Teaching Load",
+      "excellent": "Excellent"
+    },
+    "priorityQueue": {
+      "title": "Priority Queue",
+      "subtitle": "Pending approvals sorted by urgency",
+      "noApprovals": "All caught up! No pending approvals.",
+      "urgent": "Urgent",
+      "needsAttention": "Needs Attention",
+      "activateRotation": "Activate rotation",
+      "finishRotation": "Finish rotation",
+      "confirmApprove": "Approve petition?",
+      "confirmDeny": "Deny petition?"
+    },
+    "residentsCards": {
+      "title": "Assigned Residents",
+      "subtitle": "Your supervised residents and their progress",
+      "noResidents": "No residents assigned yet.",
+      "progress": "Progress",
+      "lastActivity": "Last activity",
+      "viewProfile": "View Profile"
+    },
+    "timeline": {
+      "title": "Recent Activity",
+      "subtitle": "Your recent teaching activities",
+      "noActivity": "No recent activity to display.",
+      "approvedTask": "Approved task",
+      "rejectedTask": "Rejected task",
+      "submittedReflection": "Submitted reflection",
+      "newAssignment": "New assignment"
+    },
+    "rotations": {
+      "title": "My Rotations",
+      "subtitle": "Rotations you oversee",
+      "noRotations": "No rotations assigned.",
+      "excellent": "Excellent",
+      "good": "Good",
+      "needsAttention": "Needs Attention",
+      "residents": "Residents",
+      "pendingPetitions": "Pending Petitions",
+      "recentActivity": "Recent Activity",
+      "owners": "Owners",
+      "openCurriculum": "Open Curriculum"
+    },
+    "insights": {
+      "title": "Insights & Analytics",
+      "subtitle": "Click to expand detailed analytics",
+      "fairnessScore": "Fairness Score",
+      "weeklyApprovals": "Weekly Approvals",
+      "peakActivity": "Peak Activity",
+      "improving": "Improving",
+      "mostActive": "Most Active Residents This Week",
+      "tasks": "tasks",
+      "popularItems": "Most Logged Rotation Items",
+      "weeklyTrend": "Weekly Approval Trend"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "reviewPending": "Review Pending",
+      "messageResidents": "Message Residents",
+      "exportReports": "Export Reports",
+      "scheduleOfficeHours": "Schedule Office Hours",
+      "teachingResources": "Teaching Resources",
+      "comingSoon": "Coming soon!"
+    },
     "tabs": {
       "residents": "Residents",
       "tasks": "Tasks",

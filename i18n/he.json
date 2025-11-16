@@ -629,6 +629,84 @@
     "noReflectionsYet": "עדיין אין רפלקציות. הרפלקציות שהגשת יופיעו כאן.",
     "assign": "שייך",
     "featureNotUsed": "תכונה לא בשימוש בגרסה 1",
+    "hero": {
+      "pendingItems": "פריטים ממתינים",
+      "needsAttention": "דורש תשומת לב",
+      "assignedResidents": "מתמחים משובצים",
+      "residents": "מתמחים",
+      "completionRate": "אחוז השלמה",
+      "average": "ממוצע"
+    },
+    "kpi": {
+      "pendingApprovals": "אישורים ממתינים",
+      "assignedResidents": "מתמחים משובצים",
+      "avgResponseTime": "זמן תגובה ממוצע",
+      "completionRate": "אחוז השלמה",
+      "teachingLoad": "עומס הדרכה",
+      "excellent": "מצוין"
+    },
+    "priorityQueue": {
+      "title": "תור עדיפויות",
+      "subtitle": "אישורים ממתינים ממוינים לפי דחיפות",
+      "noApprovals": "הכל מעודכן! אין אישורים ממתינים.",
+      "urgent": "דחוף",
+      "needsAttention": "דורש תשומת לב",
+      "activateRotation": "הפעלת סבב",
+      "finishRotation": "סיום סבב",
+      "confirmApprove": "לאשר את הבקשה?",
+      "confirmDeny": "לדחות את הבקשה?"
+    },
+    "residentsCards": {
+      "title": "מתמחים משובצים",
+      "subtitle": "המתמחים שלך והתקדמותם",
+      "noResidents": "עדיין אין מתמחים משובצים.",
+      "progress": "התקדמות",
+      "lastActivity": "פעילות אחרונה",
+      "viewProfile": "צפה בפרופיל"
+    },
+    "timeline": {
+      "title": "פעילות אחרונה",
+      "subtitle": "פעילויות ההדרכה האחרונות שלך",
+      "noActivity": "אין פעילות אחרונה להציג.",
+      "approvedTask": "אישור משימה",
+      "rejectedTask": "דחיית משימה",
+      "submittedReflection": "הגשת רפלקציה",
+      "newAssignment": "שיבוץ חדש"
+    },
+    "rotations": {
+      "title": "הסבבים שלי",
+      "subtitle": "סבבים בפיקוחך",
+      "noRotations": "אין סבבים משובצים.",
+      "excellent": "מצוין",
+      "good": "טוב",
+      "needsAttention": "דורש תשומת לב",
+      "residents": "מתמחים",
+      "pendingPetitions": "בקשות ממתינות",
+      "recentActivity": "פעילות אחרונה",
+      "owners": "אחראים",
+      "openCurriculum": "פתח תכנית לימודים"
+    },
+    "insights": {
+      "title": "תובנות וניתוח",
+      "subtitle": "לחץ להרחבת ניתוח מפורט",
+      "fairnessScore": "ציון הגינות",
+      "weeklyApprovals": "אישורים שבועיים",
+      "peakActivity": "שיא פעילות",
+      "improving": "משתפר",
+      "mostActive": "המתמחים הפעילים ביותר השבוע",
+      "tasks": "משימות",
+      "popularItems": "פריטי סבב נפוצים",
+      "weeklyTrend": "מגמה שבועית של אישורים"
+    },
+    "quickActions": {
+      "title": "פעולות מהירות",
+      "reviewPending": "בדוק ממתינים",
+      "messageResidents": "שלח הודעה למתמחים",
+      "exportReports": "ייצא דוחות",
+      "scheduleOfficeHours": "תזמן שעות קבלה",
+      "teachingResources": "משאבי הוראה",
+      "comingSoon": "בקרוב!"
+    },
     "tabs": {
       "residents": "מתמחים",
       "tasks": "משימות",
