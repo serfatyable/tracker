@@ -8,7 +8,7 @@ import { useReflectionTemplates } from '../../../lib/hooks/useReflectionTemplate
 import type { Audience, Reflection, ReflectionTemplate } from '../../../types/reflections';
 import Button from '../../ui/Button';
 import Card from '../../ui/Card';
-import Dialog from '../../ui/Dialog';
+import { Dialog } from '../../ui/Dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/Tabs';
 
 // ============================================================================
