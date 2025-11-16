@@ -110,15 +110,15 @@ export default function ActivityTimeline() {
   }
 
   function getIntensityColor(level: number): string {
-    const colors = [
+    const colors: readonly string[] = [
       'bg-gray-100 dark:bg-gray-800', // 0: no activity
       'bg-teal-200 dark:bg-teal-900/40', // 1: low
       'bg-teal-400 dark:bg-teal-700/60', // 2: medium
       'bg-teal-600 dark:bg-teal-600/80', // 3: high
       'bg-teal-800 dark:bg-teal-500', // 4: very high
-    ] as const;
+    ];
     const clampedLevel = Math.max(0, Math.min(level, colors.length - 1));
-    return colors[clampedLevel];
+    return colors[clampedLevel] as string;
   }
 
   if (loading) {
