@@ -116,8 +116,9 @@ export default function ActivityTimeline() {
       'bg-teal-400 dark:bg-teal-700/60', // 2: medium
       'bg-teal-600 dark:bg-teal-600/80', // 3: high
       'bg-teal-800 dark:bg-teal-500', // 4: very high
-    ];
-    return colors[level] || colors[0];
+    ] as const;
+    const clampedLevel = Math.max(0, Math.min(level, colors.length - 1));
+    return colors[clampedLevel];
   }
 
   if (loading) {
