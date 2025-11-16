@@ -230,7 +230,88 @@
     "results": "results",
     "noResultsFound": "No results found",
     "resident": "Resident",
-    "tutor": "Tutor"
+    "tutor": "Tutor",
+    "home": {
+      "greeting": {
+        "morning": "Good morning",
+        "afternoon": "Good afternoon",
+        "evening": "Good evening"
+      },
+      "quote1": "Excellence is a continuous process, not an accident.",
+      "quote2": "Every expert was once a beginner.",
+      "quote3": "Learning is a journey, not a destination.",
+      "quote4": "Progress, not perfection.",
+      "quote5": "Small steps lead to great achievements.",
+      "rotationProgress": "Rotation Progress",
+      "dayStreak": "day streak",
+      "keepGoing": "Keep going!",
+      "noActiveRotation": "No active rotation",
+      "totalRequiredTasks": "Total required tasks",
+      "avgReviewTime": "Avg: {{days}}d review",
+      "thisWeek": "This week",
+      "activityTimeline": "Activity Timeline",
+      "less": "Less",
+      "more": "More",
+      "totalActivities": "Total",
+      "mostActive": "Most Active",
+      "last12Weeks": "Last 12 weeks",
+      "suggestedNextSteps": "Suggested Next Steps",
+      "noRecommendations": "All caught up!",
+      "noRecommendationsDesc": "You're doing great. Keep up the good work!",
+      "recommendation": {
+        "almostComplete": "{{current}}/{{required}} completed - Almost there!",
+        "logMore": "Log More",
+        "rejectedTask": "Review feedback and resubmit",
+        "reflect": "Reflect",
+        "newFeedback": "New tutor feedback available",
+        "viewFeedback": "View Feedback",
+        "notStarted": "{{required}} required - Get started!",
+        "startNow": "Start Now"
+      },
+      "upcomingWeek": "This Week",
+      "noUpcomingEvents": "No upcoming events",
+      "noUpcomingEventsDesc": "Your schedule for the next 7 days is clear.",
+      "schedule": {
+        "onCall": "On-Call Duty",
+        "morningMeeting": "Morning Meeting",
+        "lecturer": "Lecturer: {{name}}",
+        "today": "Today",
+        "tomorrow": "Tomorrow"
+      },
+      "weeklySummary": "This Week",
+      "tasksCompleted": "Tasks Completed",
+      "activitiesLogged": "Activities Logged",
+      "strengthAreas": "Strength Areas",
+      "recentAchievements": "Recent Achievements",
+      "noAchievementsYet": "Complete tasks to unlock achievements!",
+      "achievements": {
+        "firstTask": "First Steps",
+        "firstTaskDesc": "Completed your first task",
+        "weekStreak": "Week Warrior",
+        "weekStreakDesc": "7-day activity streak",
+        "tenApproved": "Making Progress",
+        "tenApprovedDesc": "10 tasks approved",
+        "fiftyApproved": "Expert Learner",
+        "fiftyApprovedDesc": "50 tasks approved",
+        "rotationComplete": "Rotation Master",
+        "rotationCompleteDesc": "Completed all required tasks in a rotation"
+      },
+      "favorites": "Quick Access",
+      "actions": {
+        "logActivityDesc": "Record your work",
+        "searchDesc": "Find tasks quickly",
+        "activeRotationDesc": "View current rotation"
+      },
+      "priority": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "tasksAwaitingReview": "Tasks Awaiting Review",
+      "needsAttention": "Needs attention",
+      "review": "Review",
+      "reflect": "Reflect"
+    }
   },
   "morningMeetings": {
     "title": "Morning Meetings",
