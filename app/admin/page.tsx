@@ -20,7 +20,9 @@ import { getFirebaseStatus } from '../../lib/firebase/client';
 import { useActiveAssignments } from '../../lib/hooks/useActiveAssignments';
 import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
 import { useAllAssignments } from '../../lib/hooks/useAllAssignments';
+import { usePendingPetitionsCount } from '../../lib/hooks/usePendingPetitionsCount';
 import { usePendingTasksCount } from '../../lib/hooks/usePendingTasksCount';
+import { usePendingUsers } from '../../lib/hooks/usePendingUsers';
 import { useRecentActivity } from '../../lib/hooks/useRecentActivity';
 import { useRotationCoverage } from '../../lib/hooks/useRotationCoverage';
 import { useTodayOnCall } from '../../lib/hooks/useTodayOnCall';
@@ -97,22 +99,24 @@ function DashboardContent({
   const { assignments: allAssignments } = useAllAssignments();
   const { residents, tutors } = useUsersByRole();
   const { rotations } = useActiveRotations();
+  const { count: pendingPetitionsCount } = usePendingPetitionsCount();
   const { count: pendingTasksCount } = usePendingTasksCount();
+  const { users: pendingUsers } = usePendingUsers();
   const { count: upcomingMeetingsCount } = useUpcomingMeetings(7);
   const { schedule: todayOnCall } = useTodayOnCall();
   const { activities } = useRecentActivity(10, 24);
   const { coverage: rotationCoverage } = useRotationCoverage();
 
-  // All users (residents + tutors for now - can be extended)
-  const allUsers = useMemo(() => [...residents, ...tutors], [residents, tutors]);
+  // All users (active residents + tutors + pending users)
+  const allUsers = useMemo(
+    () => [...residents, ...tutors, ...pendingUsers],
+    [residents, tutors, pendingUsers],
+  );
 
   // Calculations
   const stats = useMemo(() => {
-    // Pending petitions count (placeholder for now)
-    const pendingPetitionsCount = 0;
-
-    // Pending users
-    const pendingUsersCount = allUsers.filter((u: UserProfile) => u.status === 'pending').length;
+    // Pending users count
+    const pendingUsersCount = pendingUsers.length;
 
     // Unassigned residents
     const assignedResidentIds = new Set(allAssignments.map((a) => a.residentId));
@@ -140,27 +144,26 @@ function DashboardContent({
         : undefined;
 
     return {
-      pendingPetitionsCount,
       pendingUsersCount,
       unassignedResidentsCount,
       tutorLoadBalance,
       onCallToday,
     };
-  }, [allUsers, allAssignments, residents, tutors, activeAssignments, todayOnCall]);
+  }, [pendingUsers, allAssignments, residents, tutors, activeAssignments, todayOnCall]);
 
   return (
     <div className="w-full space-y-8">
       {/* 1. Welcome Header */}
       <WelcomeHeader
         userName={userName}
-        pendingActions={stats.pendingPetitionsCount + stats.pendingUsersCount + pendingTasksCount}
+        pendingActions={pendingPetitionsCount + stats.pendingUsersCount + pendingTasksCount}
         activeResidents={residents.length}
         totalRotations={rotations.length}
       />
 
       {/* 2. Priority Dashboard */}
       <PriorityDashboard
-        pendingPetitionsCount={stats.pendingPetitionsCount}
+        pendingPetitionsCount={pendingPetitionsCount}
         pendingUsersCount={stats.pendingUsersCount}
         unassignedResidentsCount={stats.unassignedResidentsCount}
         activeAssignmentsCount={activeAssignments.length}
