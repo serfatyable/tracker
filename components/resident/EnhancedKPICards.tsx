@@ -44,25 +44,10 @@ export default function EnhancedKPICards() {
     const completionPercentage =
       requiredTotal > 0 ? Math.min(100, Math.round((approvedTotal / requiredTotal) * 100)) : 0;
 
-    // Calculate average approval time
-    const approvedWithTimes = approvedTasks.filter(
-      (t) => t.createdAt && t.approvedAt,
-    ) as Array<any>;
-    const avgApprovalDays =
-      approvedWithTimes.length > 0
-        ? Math.round(
-            approvedWithTimes.reduce((acc, t) => {
-              const created = t.createdAt?.toMillis?.() || 0;
-              const approved = t.approvedAt?.toMillis?.() || 0;
-              return acc + (approved - created) / (1000 * 60 * 60 * 24);
-            }, 0) / approvedWithTimes.length,
-          )
-        : 0;
-
     return {
       required: { value: requiredTotal, trend: 0 },
       approved: { value: approvedTotal, trend: approvedThisWeek, percentage: completionPercentage },
-      pending: { value: pendingTotal, trend: pendingThisWeek, avgDays: avgApprovalDays },
+      pending: { value: pendingTotal, trend: pendingThisWeek },
     };
   }, [rotationId, nodes, tasks]);
 
@@ -165,14 +150,7 @@ export default function EnhancedKPICards() {
       <Card
         title={t('ui.pending') as string}
         value={kpiData.pending.value}
-        subtitle={
-          kpiData.pending.avgDays > 0
-            ? t('ui.home.avgReviewTime', {
-                days: kpiData.pending.avgDays,
-                defaultValue: 'Avg: {{days}}d review',
-              })
-            : (t('ui.awaitingApproval', { defaultValue: 'Awaiting approval' }) as string)
-        }
+        subtitle={t('ui.awaitingApproval', { defaultValue: 'Awaiting approval' }) as string}
         trend={kpiData.pending.trend}
         icon="⏳"
         gradient="from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20"
