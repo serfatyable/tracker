@@ -67,6 +67,7 @@ export default function EnhancedKPICards() {
     icon,
     gradient,
     iconBg,
+    percentage,
   }: {
     title: string;
     value: number;
@@ -75,6 +76,7 @@ export default function EnhancedKPICards() {
     icon: string;
     gradient: string;
     iconBg: string;
+    percentage?: number;
   }) {
     return (
       <div
@@ -113,12 +115,12 @@ export default function EnhancedKPICards() {
           </div>
 
           {/* Progress bar for approved card */}
-          {title.toLowerCase().includes('approved') && kpiData.approved.percentage > 0 && (
+          {percentage !== undefined && percentage > 0 && (
             <div className="mt-3">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/40 dark:bg-gray-800/40">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500"
-                  style={{ width: `${kpiData.approved.percentage}%` }}
+                  style={{ width: `${percentage}%` }}
                 />
               </div>
             </div>
@@ -143,6 +145,7 @@ export default function EnhancedKPICards() {
         value={kpiData.approved.value}
         subtitle={`${kpiData.approved.percentage}% ${t('ui.complete', { defaultValue: 'complete' })}`}
         trend={kpiData.approved.trend}
+        percentage={kpiData.approved.percentage}
         icon="✅"
         gradient="from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20"
         iconBg="bg-teal-100 dark:bg-teal-900/50"
