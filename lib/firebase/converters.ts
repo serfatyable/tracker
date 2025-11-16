@@ -11,10 +11,9 @@
 import type {
   FirestoreDataConverter,
   QueryDocumentSnapshot,
-  SnapshotOptions} from 'firebase/firestore';
-import {
-  Timestamp,
+  SnapshotOptions,
 } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 
 import type { UserProfile } from '@/types/auth';
 import type { RotationPetition } from '@/types/rotationPetitions';
@@ -146,18 +145,15 @@ export const rotationPetitionConverter: FirestoreDataConverter<RotationPetition>
 
     return {
       id: snapshot.id,
-      userId: data.userId,
-      userFullName: data.userFullName,
+      residentId: data.residentId,
       rotationId: data.rotationId,
-      rotationName: data.rotationName,
       type: data.type,
-      reason: data.reason,
       status: data.status ?? 'pending',
-      createdAt: timestampToDate(data.createdAt),
-      resolvedAt: timestampToDate(data.resolvedAt),
+      requestedAt: data.requestedAt,
+      resolvedAt: data.resolvedAt,
       resolvedBy: data.resolvedBy,
-      adminNotes: data.adminNotes,
-    } as RotationPetition;
+      reason: data.reason,
+    };
   },
 };
 
@@ -210,29 +206,3 @@ export const taskConverter: FirestoreDataConverter<TaskDoc> = {
     };
   },
 };
-
-/**
- * Generic helper function to query Firestore with a converter
- * Eliminates repetitive code and 'as any' casts
- */
-export async function queryToArray<T>(
-  querySnapshot: Awaited<ReturnType<typeof import('firebase/firestore').getDocs>>,
-): Promise<(T & { id: string })[]> {
-  return querySnapshot.docs.map(
-    (doc) =>
-      ({
-        id: doc.id,
-        ...doc.data(),
-      }) as T & { id: string },
-  );
-}
-
-/**
- * Helper to get a single document with proper typing
- */
-export function docToData<T>(snapshot: QueryDocumentSnapshot): T & { id: string } {
-  return {
-    id: snapshot.id,
-    ...snapshot.data(),
-  } as T & { id: string };
-}
