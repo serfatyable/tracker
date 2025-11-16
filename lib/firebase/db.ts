@@ -18,14 +18,20 @@ import type { UserProfile } from '../../types/auth';
 import type { RotationPetition } from '../../types/rotationPetitions';
 
 import { getFirebaseApp } from './client';
+import {
+  userProfileConverter,
+  taskConverter,
+  rotationPetitionConverter,
+  type TaskDoc,
+} from './converters';
 
 export async function fetchUserProfile(uid: string): Promise<UserProfile | null> {
   const db = getFirestore(getFirebaseApp());
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const snap = await getDoc(doc(db, 'users', uid));
-      return snap.exists() ? (snap.data() as UserProfile) : null;
+      const snap = await getDoc(doc(db, 'users', uid).withConverter(userProfileConverter));
+      return snap.exists() ? snap.data() : null;
     } catch (err) {
       lastErr = err;
       await new Promise((r) => setTimeout(r, 150 * Math.pow(2, attempt)));
@@ -34,27 +40,20 @@ export async function fetchUserProfile(uid: string): Promise<UserProfile | null>
   throw lastErr instanceof Error ? lastErr : new Error('Failed to load user profile');
 }
 
-export type TaskDoc = {
-  id: string;
-  userId: string;
-  rotationId: string;
-  itemId: string;
-  count: number;
-  requiredCount: number;
-  status: 'pending' | 'approved' | 'rejected';
-  feedback?: Array<{ by: string; text: string }>;
-  note?: string;
-  createdAt?: any;
-};
+// Re-export TaskDoc type from converters for backward compatibility
+export type { TaskDoc };
 
 export async function fetchUserTasks(uid: string): Promise<TaskDoc[]> {
   const db = getFirestore(getFirebaseApp());
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const qRef = query(collection(db, 'tasks'), where('userId', '==', uid));
+      const qRef = query(
+        collection(db, 'tasks').withConverter(taskConverter),
+        where('userId', '==', uid),
+      );
       const snap = await getDocs(qRef);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      return snap.docs.map((d) => d.data());
     } catch (err) {
       lastErr = err;
       await new Promise((r) => setTimeout(r, 150 * Math.pow(2, attempt)));
@@ -82,11 +81,11 @@ export async function createTask(params: {
     itemId: params.itemId,
     count: params.count,
     requiredCount: params.requiredCount,
-    status: 'pending',
+    status: 'pending' as const,
     note: params.note || null,
     tutorIds: tutorIds, // ✅ AUTHORIZATION: Include for Firestore rules
     createdAt: serverTimestamp(),
-  } as any);
+  });
   return { id: ref.id };
 }
 
@@ -114,8 +113,8 @@ async function getCurrentTutorIdsForResident(residentId: string): Promise<string
     return [];
   }
 
-  const assignment = assignmentsSnap.docs[0]?.data() as any;
-  return assignment.tutorIds || [];
+  const assignmentData = assignmentsSnap.docs[0]?.data();
+  return (assignmentData?.tutorIds as string[] | undefined) ?? [];
 }
 
 /**
@@ -135,14 +134,14 @@ export async function listRecentTasksByLeaf(params: {
   const db = getFirestore(getFirebaseApp());
   const pageSize = params.limit ?? 5;
   const qRef = query(
-    collection(db, 'tasks'),
+    collection(db, 'tasks').withConverter(taskConverter),
     where('userId', '==', params.userId),
     where('itemId', '==', params.itemId),
     orderBy('createdAt', 'desc'),
     qLimit(pageSize),
   );
   const snap = await getDocs(qRef);
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+  return snap.docs.map((d) => d.data());
 }
 
 export async function listRecentTasksForUser(params: {
@@ -153,19 +152,28 @@ export async function listRecentTasksForUser(params: {
   const pageSize = params.limit ?? 5;
   try {
     const qRef = query(
-      collection(db, 'tasks'),
+      collection(db, 'tasks').withConverter(taskConverter),
       where('userId', '==', params.userId),
       orderBy('createdAt', 'desc'),
       qLimit(pageSize),
     );
     const snap = await getDocs(qRef);
-    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+    return snap.docs.map((d) => d.data());
   } catch {
-    const qRef = query(collection(db, 'tasks'), where('userId', '==', params.userId), qLimit(50));
+    // Fallback if index is missing: fetch without orderBy and sort client-side
+    const qRef = query(
+      collection(db, 'tasks').withConverter(taskConverter),
+      where('userId', '==', params.userId),
+      qLimit(50),
+    );
     const snap = await getDocs(qRef);
     return snap.docs
-      .map((d) => ({ id: d.id, ...(d.data() as any) }))
-      .sort((a: any, b: any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+      .map((d) => d.data())
+      .sort((a, b) => {
+        const aTime = a.createdAt?.getTime() ?? 0;
+        const bTime = b.createdAt?.getTime() ?? 0;
+        return bTime - aTime;
+      })
       .slice(0, pageSize);
   }
 }
@@ -217,23 +225,23 @@ export async function createRotationPetition(params: {
 export async function getResidentPetitions(residentId: string): Promise<RotationPetition[]> {
   const db = getFirestore(getFirebaseApp());
   const qRef = query(
-    collection(db, 'rotationPetitions'),
+    collection(db, 'rotationPetitions').withConverter(rotationPetitionConverter),
     where('residentId', '==', residentId),
     orderBy('createdAt', 'desc'),
     qLimit(100),
   );
   const snap = await getDocs(qRef);
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+  return snap.docs.map((d) => d.data());
 }
 
 export async function getPetitionsForApprover(approverId: string): Promise<RotationPetition[]> {
   const db = getFirestore(getFirebaseApp());
   const qRef = query(
-    collection(db, 'rotationPetitions'),
+    collection(db, 'rotationPetitions').withConverter(rotationPetitionConverter),
     where('approverId', '==', approverId),
     orderBy('createdAt', 'desc'),
     qLimit(100),
   );
   const snap = await getDocs(qRef);
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+  return snap.docs.map((d) => d.data());
 }

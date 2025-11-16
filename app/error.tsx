@@ -4,14 +4,16 @@ import * as Sentry from '@sentry/nextjs';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { logger } from '../lib/utils/logger';
+
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   const { t } = useTranslation();
   const [eventId, setEventId] = useState<string | null>(null);
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@tracker.app';
 
   useEffect(() => {
-    // Log the error to console for development
-    console.error('Route error caught by error boundary:', error);
+    // Log the error using centralized logger
+    logger.error('Route error caught by error boundary', 'error-boundary', error);
 
     // Send error to Sentry in production
     if (process.env.NODE_ENV === 'production') {

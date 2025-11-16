@@ -1,13 +1,13 @@
 'use client';
-import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AppShell from '../../../components/layout/AppShell';
 import LargeTitleHeader from '../../../components/layout/LargeTitleHeader';
+import ReflectionCard from '../../../components/reflections/ReflectionCard';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
-import ReflectionCard from '../../../components/reflections/ReflectionCard';
 import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
 import { useReflectionsForResident } from '../../../lib/hooks/useReflections';
 
@@ -52,9 +52,10 @@ export default function ResidentReflectionsIndexPage() {
     // Search term filter
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      result = result.filter((r: any) =>
-        r.taskType?.toLowerCase().includes(term) ||
-        r.taskOccurrenceId?.toLowerCase().includes(term)
+      result = result.filter(
+        (r: any) =>
+          r.taskType?.toLowerCase().includes(term) ||
+          r.taskOccurrenceId?.toLowerCase().includes(term),
       );
     }
 
@@ -120,7 +121,9 @@ export default function ResidentReflectionsIndexPage() {
             <Input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t('ui.searchReflections', { defaultValue: 'Search reflections...' }) as string}
+              placeholder={
+                t('ui.searchReflections', { defaultValue: 'Search reflections...' }) as string
+              }
               aria-label="Search reflections"
             />
           </div>

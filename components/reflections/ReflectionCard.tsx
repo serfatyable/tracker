@@ -1,8 +1,8 @@
 'use client';
 import { useTranslation } from 'react-i18next';
 
-import type { ReflectionListItem } from '@/types/reflections';
 import { formatDateTimeLocale } from '@/lib/utils/dateUtils';
+import type { ReflectionListItem } from '@/types/reflections';
 
 type Props = {
   reflection: ReflectionListItem;
@@ -13,8 +13,8 @@ type Props = {
 
 export default function ReflectionCard({
   reflection,
-  showResidentInfo = false,
-  showTutorInfo = false,
+  showResidentInfo: _showResidentInfo = false,
+  showTutorInfo: _showTutorInfo = false,
   onClick,
 }: Props) {
   const { t, i18n } = useTranslation();
@@ -36,7 +36,8 @@ export default function ReflectionCard({
         <div className="flex-1 min-w-0">
           {/* Task Type as Title */}
           <div className="font-semibold text-base mb-1 text-gray-900 dark:text-white truncate">
-            {reflection.taskType || t('reflections.untitledReflection', { defaultValue: 'Untitled Reflection' })}
+            {reflection.taskType ||
+              t('reflections.untitledReflection', { defaultValue: 'Untitled Reflection' })}
           </div>
 
           {/* Author Role Badge */}
@@ -61,9 +62,7 @@ export default function ReflectionCard({
         </div>
 
         {/* Date */}
-        <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-          {dateStr}
-        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{dateStr}</div>
       </div>
     </div>
   );
