@@ -1,58 +1,39 @@
 'use client';
-// import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useMemo as _useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
-// Full modules omitted on dashboard; snapshots only
-import KPICards from '../../components/admin/overview/KPICards';
-import PetitionsTable from '../../components/admin/overview/PetitionsTable';
-import UnassignedQueues from '../../components/admin/overview/UnassignedQueues';
+import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+
+import type { UserProfile } from '../../types/auth';
+import ActivityHeatmap from '../../components/admin/overview/ActivityHeatmap';
+import CollapsiblePetitions from '../../components/admin/overview/CollapsiblePetitions';
+import PeopleInsights from '../../components/admin/overview/PeopleInsights';
+import PriorityDashboard from '../../components/admin/overview/PriorityDashboard';
+import QuickAccessGrid from '../../components/admin/overview/QuickAccessGrid';
+import RecentActivityFeed from '../../components/admin/overview/RecentActivityFeed';
+import RotationPopularity from '../../components/admin/overview/RotationPopularity';
+import TutorLoadChart from '../../components/admin/overview/TutorLoadChart';
+import WelcomeHeader from '../../components/admin/overview/WelcomeHeader';
 import { SpinnerSkeleton, CardSkeleton } from '../../components/dashboard/Skeleton';
 import AppShell from '../../components/layout/AppShell';
-import LargeTitleHeader from '../../components/layout/LargeTitleHeader';
-// Tabs removed per mobile-first stacked sections
-import { listUsers, listTasks } from '../../lib/firebase/admin';
 import { getCurrentUserWithProfile } from '../../lib/firebase/auth';
 import { getFirebaseStatus } from '../../lib/firebase/client';
 import { useActiveAssignments } from '../../lib/hooks/useActiveAssignments';
 import { useActiveRotations } from '../../lib/hooks/useActiveRotations';
 import { useAllAssignments } from '../../lib/hooks/useAllAssignments';
+import { usePendingPetitionsCount } from '../../lib/hooks/usePendingPetitionsCount';
+import { usePendingTasksCount } from '../../lib/hooks/usePendingTasksCount';
+import { usePendingUsers } from '../../lib/hooks/usePendingUsers';
+import { useRecentActivity } from '../../lib/hooks/useRecentActivity';
+import { useRotationCoverage } from '../../lib/hooks/useRotationCoverage';
+import { useTodayOnCall } from '../../lib/hooks/useTodayOnCall';
+import { useUpcomingMeetings } from '../../lib/hooks/useUpcomingMeetings';
 import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
-import type { UserProfile } from '../../types/auth';
-
-// Fallback component for failed dynamic imports
-const _ComponentError = ({ componentName }: { componentName: string }) => (
-  <div className="card-levitate p-4 text-center">
-    <p className="text-red-600 dark:text-red-400">
-      Failed to load {componentName}. Please refresh the page.
-    </p>
-  </div>
-);
-
-// Temporarily use regular imports to avoid chunk loading issues
-// Reflections/Rotations/Settings are standalone pages (not on dashboard)
 
 export default function AdminDashboard(): React.ReactElement {
-  const { t } = useTranslation();
   const router = useRouter();
   const firebaseOk = getFirebaseStatus().ok;
-  // Render stacked dashboard; remove tab-era state
-
-  // Badge helpers removed (not used on dashboard)
-  const [, setLoading] = useState(false);
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Lightweight prefetch for possible snapshot metrics (optional)
-      await listUsers({ limit: 1 });
-      await listTasks({ limit: 1 });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [currentUserName, setCurrentUserName] = useState<string>('');
+  const [petitionsExpanded, setPetitionsExpanded] = useState(false);
 
   useEffect(() => {
     if (!firebaseOk) return;
@@ -61,6 +42,9 @@ export default function AdminDashboard(): React.ReactElement {
       if (!firebaseUser) return router.replace('/auth');
       if (profile?.status === 'pending') return router.replace('/awaiting-approval');
       if (profile && profile.role !== 'admin') return router.replace('/auth');
+
+      setCurrentUserName(profile?.fullName || '');
+
       // Ensure core rotations exist each time an admin enters
       try {
         const mod = await import('../../lib/firebase/admin');
@@ -73,19 +57,8 @@ export default function AdminDashboard(): React.ReactElement {
       } catch {
         // Seeding failed - continue anyway
       }
-      await refresh();
     })();
-  }, [router, firebaseOk, refresh]);
-
-  // Rotation editor removed from dashboard
-
-  // Users/tasks tables removed from dashboard
-
-  // Removed unused idsFrom function
-
-  // User/task actions removed from dashboard
-
-  // Tab-era functions removed
+  }, [router, firebaseOk]);
 
   if (!firebaseOk) {
     return (
@@ -99,139 +72,156 @@ export default function AdminDashboard(): React.ReactElement {
 
   return (
     <AppShell>
-      <LargeTitleHeader title={t('ui.dashboard', { defaultValue: 'Dashboard' }) as string} />
       <div className="app-container flex min-h-dvh pad-safe-t pad-safe-b flex-col items-stretch justify-start p-6">
-        <div className="w-full space-y-6">
-          {/* 1) Overview */}
-          <div className="space-y-4">
-            <div className="card-levitate p-4">
-              <Suspense fallback={<SpinnerSkeleton />}>
-                <PetitionsTable />
-              </Suspense>
-            </div>
-            <OverviewTab />
-          </div>
-
-          {/* 4) Morning Meetings snapshot (CTA to main page) */}
-          <div className="card-levitate p-4">
-            <div className="flex items-center justify-between">
-              <div className="font-semibold">
-                {t('ui.morningMeetings', { defaultValue: 'Morning Meetings' })}
-              </div>
-              <Link
-                href="/morning-meetings"
-                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-              >
-                {t('ui.open')}
-              </Link>
-            </div>
-            <div className="mt-2 text-sm opacity-80">
-              {t('overview.next7', { defaultValue: 'Snapshot of today and this month' })}
-            </div>
-          </div>
-
-          {/* 5) On-Call snapshot (CTA to main page) */}
-          <div className="card-levitate p-4">
-            <div className="flex items-center justify-between">
-              <div className="font-semibold">{t('ui.onCall', { defaultValue: 'On Call' })}</div>
-              <Link
-                href="/on-call"
-                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-              >
-                {t('ui.open')}
-              </Link>
-            </div>
-            <div className="mt-2 text-sm opacity-80">
-              {t('overview.todaysTeam', { defaultValue: "Today's team snapshot" })}
-            </div>
-          </div>
-        </div>
+        <Suspense fallback={<SpinnerSkeleton />}>
+          <DashboardContent
+            userName={currentUserName}
+            petitionsExpanded={petitionsExpanded}
+            onTogglePetitions={() => setPetitionsExpanded(!petitionsExpanded)}
+          />
+        </Suspense>
       </div>
     </AppShell>
   );
 }
 
-function OverviewTab() {
+function DashboardContent({
+  userName,
+  petitionsExpanded,
+  onTogglePetitions,
+}: {
+  userName: string;
+  petitionsExpanded: boolean;
+  onTogglePetitions: () => void;
+}): React.ReactElement {
+  // Hooks for data
   const { assignments: activeAssignments } = useActiveAssignments();
   const { assignments: allAssignments } = useAllAssignments();
   const { residents, tutors } = useUsersByRole();
   const { rotations } = useActiveRotations();
+  const { count: pendingPetitionsCount } = usePendingPetitionsCount();
+  const { count: pendingTasksCount } = usePendingTasksCount();
+  const { users: pendingUsers } = usePendingUsers();
+  const { count: upcomingMeetingsCount } = useUpcomingMeetings(7);
+  const { schedule: todayOnCall } = useTodayOnCall();
+  const { activities } = useRecentActivity(10, 24);
+  const { coverage: rotationCoverage } = useRotationCoverage();
 
-  return (
-    <Suspense
-      fallback={
-        <div className="space-y-4">
-          <CardSkeleton />
-          <CardSkeleton />
-        </div>
-      }
-    >
-      <div className="space-y-4">
-        <KPICards
-          activeAssignments={activeAssignments}
-          allAssignments={allAssignments}
-          residents={residents}
-          tutors={tutors}
-        />
-        {/* Users snapshot: unassigned residents */}
-        <UnassignedQueues
-          assignments={allAssignments}
-          residents={residents}
-          rotations={rotations}
-        />
-        {/* Tutors with zero load */}
-        <ZeroLoadTutors assignments={activeAssignments} tutors={tutors} />
-        {/* Tasks snapshot */}
-        <TasksSnapshot />
-        {/* Tasks snapshot placeholder (pending approvals/upcoming) can be added here when data is ready */}
-      </div>
-    </Suspense>
+  // All users (active residents + tutors + pending users)
+  const allUsers = useMemo(
+    () => [...residents, ...tutors, ...pendingUsers],
+    [residents, tutors, pendingUsers],
   );
-}
 
-function ZeroLoadTutors({ assignments, tutors }: { assignments: any[]; tutors: UserProfile[] }) {
-  const { t } = useTranslation();
-  const zero = (() => {
+  // Calculations
+  const stats = useMemo(() => {
+    // Pending users count
+    const pendingUsersCount = pendingUsers.length;
+
+    // Unassigned residents
+    const assignedResidentIds = new Set(allAssignments.map((a) => a.residentId));
+    const unassignedResidentsCount = residents.filter(
+      (r) => !assignedResidentIds.has(r.uid),
+    ).length;
+
+    // Tutor load balance (std dev)
     const load = new Map<string, number>();
     for (const t of tutors) load.set(t.uid, 0);
-    for (const a of assignments)
+    for (const a of activeAssignments)
       for (const tid of a.tutorIds || []) load.set(tid, (load.get(tid) || 0) + 1);
-    return tutors.filter((t) => (load.get(t.uid) || 0) === 0);
-  })();
-  return (
-    <div className="card-levitate p-3">
-      <div className="font-semibold mb-2">
-        {t('overview.tutorsWithZeroLoad', { defaultValue: 'Tutors with zero load' })}
-      </div>
-      {zero.length === 0 ? (
-        <div className="text-sm opacity-70">{t('overview.none', { defaultValue: 'None' })}</div>
-      ) : (
-        <ul className="text-sm list-disc pl-5">
-          {zero.map((u) => (
-            <li key={u.uid}>{u.fullName || u.uid}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
+    const counts = Array.from(load.values());
+    const mean = counts.reduce((s, n) => s + n, 0) / (counts.length || 1);
+    const variance =
+      counts.reduce((s, n) => s + Math.pow(n - mean, 2), 0) / (counts.length || 1);
+    const tutorLoadBalance = Number.isFinite(Math.sqrt(variance))
+      ? Number(Math.sqrt(variance).toFixed(1))
+      : 0;
 
-function TasksSnapshot(): React.ReactElement {
-  const { t } = useTranslation();
+    // On-call today summary
+    const onCallToday =
+      todayOnCall?.residents && todayOnCall.residents.length > 0
+        ? `${todayOnCall.residents.length} residents`
+        : undefined;
+
+    return {
+      pendingUsersCount,
+      unassignedResidentsCount,
+      tutorLoadBalance,
+      onCallToday,
+    };
+  }, [pendingUsers, allAssignments, residents, tutors, activeAssignments, todayOnCall]);
+
   return (
-    <div className="card-levitate p-3">
-      <div className="flex items-center justify-between">
-        <div className="font-semibold">{t('ui.tasks')}</div>
-        <Link
-          href="/admin/tasks"
-          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-        >
-          {t('ui.open')}
-        </Link>
+    <div className="w-full space-y-8">
+      {/* 1. Welcome Header */}
+      <WelcomeHeader
+        userName={userName}
+        pendingActions={pendingPetitionsCount + stats.pendingUsersCount + pendingTasksCount}
+        activeResidents={residents.length}
+        totalRotations={rotations.length}
+      />
+
+      {/* 2. Priority Dashboard */}
+      <PriorityDashboard
+        pendingPetitionsCount={pendingPetitionsCount}
+        pendingUsersCount={stats.pendingUsersCount}
+        unassignedResidentsCount={stats.unassignedResidentsCount}
+        activeAssignmentsCount={activeAssignments.length}
+        tutorLoadBalance={stats.tutorLoadBalance}
+        rotationCoverage={rotationCoverage}
+        upcomingMeetingsCount={upcomingMeetingsCount}
+        recentActivityCount={activities.length}
+        onExpandPetitions={onTogglePetitions}
+      />
+
+      {/* 3. Collapsible Petitions Section */}
+      <CollapsiblePetitions initialExpanded={petitionsExpanded} />
+
+      {/* 4. Quick Access Grid */}
+      <QuickAccessGrid
+        usersCount={allUsers.length}
+        rotationsCount={rotations.length}
+        pendingTasksCount={pendingTasksCount}
+        upcomingMeetingsCount={upcomingMeetingsCount}
+        onCallToday={stats.onCallToday}
+      />
+
+      {/* 5. Visual Insights Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-foreground">Visual Insights</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Tutor Load Chart */}
+          <Suspense fallback={<CardSkeleton />}>
+            <TutorLoadChart assignments={activeAssignments} tutors={tutors} />
+          </Suspense>
+
+          {/* Rotation Popularity */}
+          <Suspense fallback={<CardSkeleton />}>
+            <RotationPopularity assignments={activeAssignments} rotations={rotations} />
+          </Suspense>
+
+          {/* Activity Heatmap */}
+          <Suspense fallback={<CardSkeleton />}>
+            <ActivityHeatmap activities={activities} />
+          </Suspense>
+
+          {/* Recent Activity Feed */}
+          <Suspense fallback={<CardSkeleton />}>
+            <RecentActivityFeed activities={activities} />
+          </Suspense>
+        </div>
       </div>
-      <div className="mt-2 text-sm opacity-80">
-        {t('overview.tasksSnapshot', { defaultValue: 'Pending approvals and upcoming items' })}
-      </div>
+
+      {/* 6. People Insights */}
+      <Suspense fallback={<CardSkeleton />}>
+        <PeopleInsights
+          assignments={allAssignments}
+          residents={residents}
+          tutors={tutors}
+          rotations={rotations}
+          allUsers={allUsers}
+        />
+      </Suspense>
     </div>
   );
 }

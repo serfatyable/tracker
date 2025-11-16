@@ -94,33 +94,71 @@ export default function KPICards({
     },
   ];
 
+  const getCardStyle = (key: string) => {
+    switch (key) {
+      case 'pending':
+        return 'border-l-4 border-amber-500 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/10 dark:to-orange-950/10';
+      case 'unassigned':
+        return 'border-l-4 border-blue-500 bg-gradient-to-br from-blue-50/50 to-sky-50/50 dark:from-blue-950/10 dark:to-sky-950/10';
+      case 'load':
+        return 'border-l-4 border-indigo-500 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/10 dark:to-purple-950/10';
+      case 'upcoming':
+        return 'border-l-4 border-green-500 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/10 dark:to-emerald-950/10';
+      default:
+        return 'border-l-4 border-gray-500';
+    }
+  };
+
+  const getIconBgColor = (key: string) => {
+    switch (key) {
+      case 'pending':
+        return 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400';
+      case 'unassigned':
+        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400';
+      case 'load':
+        return 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400';
+      case 'upcoming':
+        return 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400';
+      default:
+        return 'bg-gray-100 dark:bg-gray-900/40 text-gray-600 dark:text-gray-400';
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {kpis.map((k) => (
-        <div key={k.key} className="rounded-2xl border p-4">
-          <div className="flex items-center gap-2 mb-2 rtl:flex-row-reverse rtl:justify-end">
-            <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <k.Icon className="h-4 w-4" stroke="currentColor" aria-hidden />
+        <div
+          key={k.key}
+          className={`card-levitate rounded-2xl p-5 transition-all duration-200 ${getCardStyle(k.key)}`}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${getIconBgColor(k.key)}`}>
+              <k.Icon className="h-6 w-6" strokeWidth={2} aria-hidden />
             </div>
-            <div className="text-xs font-medium text-foreground/80 dark:text-white/80">
-              {k.label}
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <div className="text-3xl font-semibold tracking-tight text-foreground dark:text-white">
-              {k.value}
-            </div>
-            {k.trend == null ? null : k.trend >= 0 ? (
-              <div className="inline-flex items-center text-xs text-green-600">
-                <ArrowTrendingUpIcon className="h-3.5 w-3.5" stroke="currentColor" />
-                <span className="ml-0.5">+{k.trend}</span>
-              </div>
-            ) : (
-              <div className="inline-flex items-center text-xs text-red-600">
-                <ArrowTrendingDownIcon className="h-3.5 w-3.5" stroke="currentColor" />
-                <span className="ml-0.5">{k.trend}</span>
+            {k.trend != null && (
+              <div
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  k.trend >= 0
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                }`}
+              >
+                {k.trend >= 0 ? (
+                  <ArrowTrendingUpIcon className="h-3.5 w-3.5" />
+                ) : (
+                  <ArrowTrendingDownIcon className="h-3.5 w-3.5" />
+                )}
+                <span>{k.trend >= 0 ? `+${k.trend}` : k.trend}</span>
               </div>
             )}
+          </div>
+          <div className="space-y-1">
+            <div className="text-3xl font-bold tracking-tight text-foreground dark:text-white">
+              {k.value}
+            </div>
+            <div className="text-sm font-medium text-foreground/70 dark:text-white/70">
+              {k.label}
+            </div>
           </div>
         </div>
       ))}
