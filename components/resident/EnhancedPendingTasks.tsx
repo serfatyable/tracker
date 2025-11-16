@@ -32,7 +32,7 @@ export default function EnhancedPendingTasks({
         ? base.filter((item) => item.rotationId === activeRotationId)
         : base;
     const filtered =
-      categoryFilter === 'all'
+      categoryFilter === 'all' || categoryFilter === ''
         ? byRotation
         : byRotation.filter((item) => {
             const node = nodesById[item.itemId];
