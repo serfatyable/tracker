@@ -60,15 +60,23 @@ export default function TutorResidentsCards({
         const rotation = rotById.get(assignment.rotationId);
         if (!resident || !rotation) return null;
 
-        // Calculate progress (this is a placeholder - you'd need real task data)
-        const progressPercentage = Math.floor(Math.random() * 100); // Replace with actual calculation
+        // TODO: Calculate actual progress from resident's task completion
+        // This would require:
+        // 1. Fetching all tasks for this resident in this rotation
+        // 2. Calculating: (completed tasks / total required tasks) * 100
+        // For now, showing 0 to indicate data not yet available
+        const progressPercentage = 0;
+
+        // TODO: Calculate actual recent activity timestamp
+        // This would require fetching the most recent task submission for this resident
+        const recentActivity = '--';
 
         return {
           resident,
           assignment,
           rotation,
           progressPercentage,
-          recentActivity: '2h ago', // Replace with actual recent activity
+          recentActivity,
           isOwned: ownedRotationIds.has(rotation.id),
           hasMe: (assignment.tutorIds || []).includes(meUid),
         };
