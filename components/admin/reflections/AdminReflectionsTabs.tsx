@@ -405,7 +405,7 @@ function TemplateEditor({
                     <div>
                       <label
                         htmlFor={`section-name-en-${section.id}`}
-                        className="block text-xs font-medium mb-1"
+                        className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50"
                       >
                         {t('reflections.sectionName')} (EN)
                       </label>
@@ -428,7 +428,7 @@ function TemplateEditor({
                     <div dir="rtl">
                       <label
                         htmlFor={`section-name-he-${section.id}`}
-                        className="block text-xs font-medium mb-1"
+                        className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50"
                       >
                         {t('reflections.sectionNameHe')}
                       </label>
@@ -478,7 +478,7 @@ function TemplateEditor({
                       <div>
                         <label
                           htmlFor={`prompt-label-en-${prompt.id}`}
-                          className="block text-xs font-medium mb-1"
+                          className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50"
                         >
                           {t('reflections.promptLabel')} (EN)
                         </label>
@@ -508,7 +508,7 @@ function TemplateEditor({
                       <div dir="rtl">
                         <label
                           htmlFor={`prompt-label-he-${prompt.id}`}
-                          className="block text-xs font-medium mb-1"
+                          className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50"
                         >
                           {t('reflections.promptLabelHe')}
                         </label>
@@ -629,7 +629,7 @@ function SubmissionsTab() {
       <Card>
         <div className="flex flex-wrap gap-3">
           <div>
-            <label htmlFor="role-filter" className="block text-xs font-medium mb-1">
+            <label htmlFor="role-filter" className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50">
               {t('reflections.filterByRole')}
             </label>
             <select
@@ -647,7 +647,7 @@ function SubmissionsTab() {
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label htmlFor="search-filter" className="block text-xs font-medium mb-1">
+            <label htmlFor="search-filter" className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50">
               {t('reflections.searchSubmissions')}
             </label>
             <input
@@ -745,7 +745,7 @@ function SubmissionsTab() {
             </div>
 
             <div className="space-y-3">
-              <label htmlFor="admin-comment" className="block text-sm font-medium">
+              <label htmlFor="admin-comment" className="block text-sm font-medium text-gray-900 dark:text-gray-50">
                 {t('reflections.adminComment')}
               </label>
               <input
