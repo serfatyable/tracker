@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
@@ -129,7 +129,7 @@ function analyzeProgress(roots: NodeProgress[], tasks: any[]): ProgressAnalytics
   };
 }
 
-export default function EnhancedProgress() {
+const EnhancedProgress = memo(function EnhancedProgress() {
   const { t, i18n } = useTranslation();
   const { rotationId } = useResidentActiveRotation();
   const { nodes } = useRotationNodes(rotationId);
@@ -346,7 +346,9 @@ export default function EnhancedProgress() {
       )}
     </div>
   );
-}
+});
+
+export default EnhancedProgress;
 
 // Overview Mode Component
 function OverviewMode({
@@ -793,7 +795,9 @@ function ProgressNode({
         style={{ paddingLeft: `${level * 1.5 + 0.5}rem` }}
         onClick={() => hasChildren && toggleNode(node.id)}
       >
-        {hasChildren && <span className="text-gray-500 dark:text-gray-400">{isExpanded ? '▼' : '▶'}</span>}
+        {hasChildren && (
+          <span className="text-gray-500 dark:text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+        )}
         {!hasChildren && <span className="w-4" />}
 
         <span className="flex-1 text-sm text-gray-900 dark:text-gray-100">{node.name}</span>

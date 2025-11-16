@@ -2,6 +2,8 @@
  * Safe localStorage utilities with SSR support
  */
 
+import { logger } from './logger';
+
 /**
  * Check if localStorage is available (handles SSR)
  */
@@ -24,7 +26,7 @@ export function getLocalStorageItem<T>(key: string, defaultValue: T): T {
     if (item === null) return defaultValue;
     return JSON.parse(item) as T;
   } catch (error) {
-    console.warn(`Failed to get localStorage item "${key}":`, error);
+    logger.warn(`Failed to get localStorage item "${key}"`, 'local-storage', error);
     return defaultValue;
   }
 }
@@ -39,7 +41,7 @@ export function setLocalStorageItem<T>(key: string, value: T): boolean {
     window.localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (error) {
-    console.warn(`Failed to set localStorage item "${key}":`, error);
+    logger.warn(`Failed to set localStorage item "${key}"`, 'local-storage', error);
     return false;
   }
 }
@@ -54,7 +56,7 @@ export function removeLocalStorageItem(key: string): boolean {
     window.localStorage.removeItem(key);
     return true;
   } catch (error) {
-    console.warn(`Failed to remove localStorage item "${key}":`, error);
+    logger.warn(`Failed to remove localStorage item "${key}"`, 'local-storage', error);
     return false;
   }
 }
@@ -74,7 +76,7 @@ export function clearLocalStorageByPrefix(prefix: string): boolean {
     });
     return true;
   } catch (error) {
-    console.warn(`Failed to clear localStorage with prefix "${prefix}":`, error);
+    logger.warn(`Failed to clear localStorage with prefix "${prefix}"`, 'local-storage', error);
     return false;
   }
 }
