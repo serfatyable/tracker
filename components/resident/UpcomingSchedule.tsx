@@ -26,6 +26,7 @@ export default function UpcomingSchedule() {
   useEffect(() => {
     if (!userProfile?.uid) return;
 
+    const userId = userProfile.uid; // Capture uid to avoid null checks inside async function
     let mounted = true;
 
     async function loadSchedule() {
@@ -50,7 +51,7 @@ export default function UpcomingSchedule() {
 
             if (eventDate >= now && eventDate <= sevenDaysFromNow) {
               const residents = data.residents || [];
-              if (residents.includes(userProfile.uid)) {
+              if (residents.includes(userId)) {
                 onCallEvents.push({
                   id: `oncall-${dateStr}`,
                   date: dateStr,
