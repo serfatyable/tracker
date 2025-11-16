@@ -33,7 +33,10 @@ export default function WelcomeHero() {
     currentDate.setHours(0, 0, 0, 0);
 
     for (let i = 0; i < sortedTasks.length; i++) {
-      const taskTime = (sortedTasks[i].createdAt as any)?.toMillis?.() || 0;
+      const task = sortedTasks[i];
+      if (!task) continue;
+
+      const taskTime = (task.createdAt as any)?.toMillis?.() || 0;
       const taskDate = new Date(taskTime);
       taskDate.setHours(0, 0, 0, 0);
 
