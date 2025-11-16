@@ -100,7 +100,9 @@ export default function SmartRecommendations() {
         t.rotationId === rotationId &&
         t.status === 'approved' &&
         t.feedback &&
-        t.feedback.trim().length > 0,
+        Array.isArray(t.feedback) &&
+        t.feedback.length > 0 &&
+        t.feedback.some((f) => f.text && f.text.trim().length > 0),
     );
 
     tasksWithFeedback.slice(0, 1).forEach((task) => {
