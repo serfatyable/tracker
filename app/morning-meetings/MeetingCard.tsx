@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { memo } from 'react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,7 +8,6 @@ import { renderHighlightedText, startOfDay } from './utils';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import type { MorningMeeting } from '@/types/morningMeetings';
-
 
 export interface MeetingCardProps {
   meeting: MorningMeeting;
@@ -21,7 +21,7 @@ export interface MeetingCardProps {
   isMine: boolean;
 }
 
-export default function MeetingCard({
+const MeetingCard = memo(function MeetingCard({
   meeting,
   language,
   highlightTerms,
@@ -209,4 +209,6 @@ export default function MeetingCard({
       ) : null}
     </div>
   );
-}
+});
+
+export default MeetingCard;

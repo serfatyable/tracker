@@ -3,14 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { logger } from '../lib/utils/logger';
+
 export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
   const { t } = useTranslation();
   const [eventId, setEventId] = useState<string | null>(null);
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@tracker.app';
 
   useEffect(() => {
-    // Log the error to console for development
-    console.error('Global error caught by error boundary:', error);
+    // Log the error using centralized logger
+    logger.error('Global error caught by error boundary', 'global-error-boundary', error);
 
     // Send error to Sentry in production (dynamic import to avoid SSR issues)
     if (process.env.NODE_ENV === 'production') {
@@ -25,7 +27,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
           setEventId(id);
         })
         .catch((err) => {
-          console.warn('Failed to load Sentry:', err);
+          logger.warn('Failed to load Sentry', 'global-error-boundary', err);
         });
     } else {
       setEventId('dev-mode');

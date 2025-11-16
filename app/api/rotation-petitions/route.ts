@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { createAuthErrorResponse, verifyAuthToken } from '@/lib/api/auth';
 import { getAdminApp } from '@/lib/firebase/admin-sdk';
+import { logger } from '@/lib/utils/logger';
 
 type Body = {
   rotationId?: unknown;
@@ -94,7 +95,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id: docRef.id }, { status: 201 });
   } catch (error) {
-    console.error('Failed to create rotation petition', error);
+    logger.error(
+      'Failed to create rotation petition',
+      'api/rotation-petitions',
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return NextResponse.json(
       { error: 'An unexpected error occurred while creating the petition.' },
       { status: 500 },

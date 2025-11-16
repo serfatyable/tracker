@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { createAuthErrorResponse, verifyAuthToken } from '@/lib/api/auth';
 import type { AuthResult } from '@/lib/api/auth';
 import { getAdminApp } from '@/lib/firebase/admin-sdk';
+import { logger } from '@/lib/utils/logger';
 
 const DELETE_BATCH_SIZE = 250;
 
@@ -79,7 +80,11 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Account deletion failed', error);
+    logger.error(
+      'Account deletion failed',
+      'api/account/delete',
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return NextResponse.json(
       { error: 'Failed to delete account. Please try again later.' },
       { status: 500 },
