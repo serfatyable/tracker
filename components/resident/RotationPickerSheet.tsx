@@ -31,19 +31,31 @@ export default function RotationPickerSheet({ open, onClose, activeId, onSelect,
     return { mine, allFiltered: all };
   }, [index.mine, index.all, searchTerm]);
 
-  // Lock body scroll when sheet is open
+  // Lock body scroll when sheet is open and manage focus
   useEffect(() => {
     if (!open) return;
 
-    // Temporarily disabled to test if sheet can scroll at all
-    // const prevBodyOverflow = document.body.style.overflow;
-    // const prevHtmlOverflow = document.documentElement.style.overflow;
-    // document.body.style.overflow = 'hidden';
-    // document.documentElement.style.overflow = 'hidden';
+    // Store the currently focused element to restore later
+    const previouslyFocused = document.activeElement as HTMLElement;
+
+    // Lock body scroll (but allow sheet content to scroll)
+    const prevBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // Focus the sheet container for keyboard navigation
+    const sheetContainer = document.querySelector('[role="dialog"]') as HTMLElement;
+    if (sheetContainer) {
+      sheetContainer.focus();
+    }
 
     return () => {
-      // document.body.style.overflow = prevBodyOverflow;
-      // document.documentElement.style.overflow = prevHtmlOverflow;
+      // Restore body scroll
+      document.body.style.overflow = prevBodyOverflow;
+
+      // Restore focus to previously focused element
+      if (previouslyFocused && previouslyFocused.focus) {
+        previouslyFocused.focus();
+      }
     };
   }, [open]);
 
@@ -61,6 +73,20 @@ export default function RotationPickerSheet({ open, onClose, activeId, onSelect,
     }
   };
 
+  // Handle Escape key to close dialog
+  useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
@@ -73,10 +99,15 @@ export default function RotationPickerSheet({ open, onClose, activeId, onSelect,
         className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h flex flex-col overflow-hidden pointer-events-auto"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="rotation-picker-title"
+        tabIndex={-1}
       >
         {/* Row 1: Header */}
         <div className="px-4 pt-3 pb-2">
-          <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          <div
+            id="rotation-picker-title"
+            className="text-base font-semibold text-gray-900 dark:text-gray-100"
+          >
             {t('ui.selectRotation', { defaultValue: 'Select rotation' })}
           </div>
         </div>
