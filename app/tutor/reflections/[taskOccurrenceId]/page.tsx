@@ -134,8 +134,8 @@ export default function TutorWriteReflectionPage() {
                   </div>
                 </Card>
               ) : residentReflection && residentTemplate ? (
-                <Card tone="blue" variant="tinted">
-                  <div className="font-semibold mb-3 text-blue-900 dark:text-blue-100">
+                <Card tone="sky" variant="tinted">
+                  <div className="font-semibold mb-3 text-sky-900 dark:text-sky-100">
                     {t('reflections.residentReflection', { defaultValue: 'Resident Reflection' })}
                   </div>
                   <ReflectionDisplay reflection={residentReflection} template={residentTemplate} />
