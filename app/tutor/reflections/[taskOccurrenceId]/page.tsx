@@ -23,7 +23,11 @@ export default function TutorWriteReflectionPage() {
   const { data: me } = useCurrentUserProfile();
   const { template } = useLatestPublishedTemplate('tutor', taskType);
   const { template: residentTemplate } = useLatestPublishedTemplate('resident', taskType);
-  const { reflection } = useReflection(taskOccurrenceId || null, me?.uid || null);
+  const { reflection } = useReflection(
+    taskOccurrenceId || null,
+    me?.uid || null,
+    residentId || undefined,
+  );
 
   // Load resident reflection read-only
   const [residentReflection, setResidentReflection] = useState<Reflection | null>(null);
@@ -44,6 +48,14 @@ export default function TutorWriteReflectionPage() {
 
   if (!me) return <div className="p-4">{t('common.signInRequired')}</div>;
   if (!template) return <div className="p-4">{t('common.loadingTemplate')}</div>;
+  if (!residentId)
+    return (
+      <div className="p-4 text-red-600">
+        {t('reflections.missingResidentContext', {
+          defaultValue: 'Missing resident context for this reflection.',
+        })}
+      </div>
+    );
 
   const submitted = !!reflection?.submittedAt;
 
@@ -83,7 +95,7 @@ export default function TutorWriteReflectionPage() {
               templateVersion: template.version,
               authorId: me.uid,
               authorRole: 'tutor',
-              residentId: residentId || '',
+              residentId,
               tutorId: me.uid,
               answers,
             });
