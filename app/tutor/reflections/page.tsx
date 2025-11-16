@@ -7,8 +7,10 @@ import AuthGate from '../../../components/auth/AuthGate';
 import AppShell from '../../../components/layout/AppShell';
 import LargeTitleHeader from '../../../components/layout/LargeTitleHeader';
 import ReflectionCard from '../../../components/reflections/ReflectionCard';
+import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
+import Select from '../../../components/ui/Select';
 import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
 import { useReflectionsForTutor } from '../../../lib/hooks/useReflections';
 import { createSynonymMatcher } from '../../../lib/search/synonyms';
@@ -72,6 +74,15 @@ export default function TutorReflectionsPage() {
     );
   };
 
+  const hasActiveFilters = from || to || taskTypeFilter || residentFilter;
+
+  const handleClearFilters = () => {
+    setFrom('');
+    setTo('');
+    setTaskTypeFilter('');
+    setResidentFilter('');
+  };
+
   return (
     <AuthGate requiredRole="tutor">
       <AppShell>
@@ -79,6 +90,14 @@ export default function TutorReflectionsPage() {
         <div className="app-container p-4 space-y-3">
           {/* Filters */}
           <Card>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm">{t('ui.filters', { defaultValue: 'Filters' })}</h3>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+                  {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
+                </Button>
+              )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <Input
                 type="date"
@@ -94,10 +113,9 @@ export default function TutorReflectionsPage() {
                 placeholder={t('ui.to', { defaultValue: 'To' }) as string}
                 aria-label="To date"
               />
-              <select
+              <Select
                 value={taskTypeFilter}
                 onChange={(e) => setTaskTypeFilter(e.target.value)}
-                className="w-full rounded border px-3 py-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                 aria-label="Task type filter"
               >
                 <option value="">{t('ui.allTaskTypes', { defaultValue: 'All task types' })}</option>
@@ -106,16 +124,15 @@ export default function TutorReflectionsPage() {
                     {type}
                   </option>
                 ))}
-              </select>
-              <select
+              </Select>
+              <Select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
-                className="w-full rounded border px-3 py-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                 aria-label="Sort order"
               >
                 <option value="newest">{t('ui.newest', { defaultValue: 'Newest first' })}</option>
                 <option value="oldest">{t('ui.oldest', { defaultValue: 'Oldest first' })}</option>
-              </select>
+              </Select>
             </div>
             <div className="mt-3">
               <Input
@@ -131,12 +148,21 @@ export default function TutorReflectionsPage() {
           <Card>
             <div className="flex items-center justify-between mb-3">
               <div className="font-semibold">{t('tutor.reflectionsIWrote')}</div>
-              <div className="text-sm text-gray-500">
-                {filtered.length} {t('ui.results', { defaultValue: 'results' })}
-              </div>
+              {!loading && (
+                <div className="text-sm text-gray-500">
+                  {filtered.length} {t('ui.results', { defaultValue: 'results' })}
+                </div>
+              )}
             </div>
             {loading ? (
-              <div className="text-sm opacity-70">{t('common.loading')}</div>
+              <div className="space-y-2" role="status" aria-live="polite">
+                <p className="sr-only">{t('common.loading')}</p>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded" />
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="space-y-3">
                 {filtered.map((r) => (
@@ -147,13 +173,53 @@ export default function TutorReflectionsPage() {
                   />
                 ))}
                 {!loading && filtered.length === 0 && list && list.length > 0 ? (
-                  <div className="text-sm opacity-70 text-center py-8">
-                    {t('ui.noResultsFound', { defaultValue: 'No results found' })}
+                  <div className="text-center py-12">
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
+                      {t('ui.noResultsFound', { defaultValue: 'No results found' })}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      {t('ui.tryAdjustingFilters', { defaultValue: 'Try adjusting your filters' })}
+                    </p>
                   </div>
                 ) : null}
                 {!loading && !list?.length ? (
-                  <div className="text-sm opacity-70 text-center py-8">
-                    {t('reflections.noSubmissionsYet')}
+                  <div className="text-center py-12">
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
+                      {t('reflections.noSubmissionsYet', { defaultValue: 'No reflections yet' })}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      {t('reflections.noSubmissionsMessage', {
+                        defaultValue: 'Your reflections will appear here once submitted',
+                      })}
+                    </p>
                   </div>
                 ) : null}
               </div>
