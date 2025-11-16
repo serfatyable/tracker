@@ -68,6 +68,20 @@ export default function DomainPickerSheet({
     return { recent, others };
   }, [filteredDomains, recentDomains, domains]);
 
+  // Handle Escape key to close dialog
+  useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, onClose]);
+
   // Lock body scroll when sheet is open
   useEffect(() => {
     if (!open) return;
@@ -99,10 +113,14 @@ export default function DomainPickerSheet({
         className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 sheet-max-h flex flex-col overflow-hidden pointer-events-auto"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="domain-picker-title"
       >
         {/* Row 1: Header */}
         <div className="px-4 pt-3 pb-2">
-          <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          <div
+            id="domain-picker-title"
+            className="text-base font-semibold text-gray-900 dark:text-gray-100"
+          >
             {t('ui.allDomains', { defaultValue: 'All domains' })}
           </div>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Button from '../../ui/Button';
@@ -31,6 +32,20 @@ export default function UnassignConfirmDialog({
 }: UnassignConfirmDialogProps) {
   const { t } = useTranslation();
 
+  // Handle Escape key to close dialog
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !loading) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, loading, onClose]);
+
   const handleConfirm = async () => {
     try {
       await onConfirm();
@@ -46,19 +61,29 @@ export default function UnassignConfirmDialog({
     <>
       {error && <Toast message={error} variant="error" onClear={() => {}} />}
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-        <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
+        <div
+          className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="unassign-dialog-title"
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3
+              id="unassign-dialog-title"
+              className="text-lg font-semibold text-gray-900 dark:text-white"
+            >
               {t('ui.confirmUnassign', { defaultValue: 'Confirm Unassignment' })}
             </h3>
             <button
+              type="button"
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               disabled={loading}
+              aria-label={t('ui.close', { defaultValue: 'Close' })}
             >
-              <XMarkIcon className="w-6 h-6" />
+              <XMarkIcon className="w-6 h-6" aria-hidden="true" />
             </button>
           </div>
 
