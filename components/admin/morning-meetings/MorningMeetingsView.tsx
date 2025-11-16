@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useMorningMeetingsMultiMonth } from '../../../lib/hooks/useMorningClasses';
 import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import type { MorningMeeting } from '../../../types/morningMeetings';
+import { ListSkeleton } from '../../dashboard/Skeleton';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -187,11 +188,8 @@ export default function MorningMeetingsView({
       </div>
 
       {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
-          <p className="mt-4 text-gray-500 dark:text-gray-400">
-            {t('common.loading', { defaultValue: 'Loading...' })}
-          </p>
+        <div className="space-y-4">
+          <ListSkeleton items={8} />
         </div>
       ) : meetingsByMonth.size === 0 ? (
         <div className="card-levitate p-12 text-center">

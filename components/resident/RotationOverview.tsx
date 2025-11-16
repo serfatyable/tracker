@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useResidentPendingPetition } from '../../lib/hooks/useResidentPendingPetition';
 import { useResidentRotationStatus } from '../../lib/hooks/useResidentRotationStatus';
 import { useRotationDetails } from '../../lib/hooks/useRotationDetails';
+import { KPICardSkeleton } from '../dashboard/Skeleton';
 import Button from '../ui/Button';
 
 import RotationPetitionDialog from './RotationPetitionDialog';
@@ -110,8 +111,8 @@ export default function RotationOverview({ rotationId }: Props) {
 
   if (!rotation || statusLoading || petitionLoading) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        {t('ui.loading', { defaultValue: 'Loading...' })}
+      <div className="space-y-4">
+        <KPICardSkeleton />
       </div>
     );
   }

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
 import { createSynonymMatcher } from '../../../lib/search/synonyms';
+import { CardSkeleton } from '../../dashboard/Skeleton';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -405,8 +406,10 @@ const OnCallScheduleView = memo(function OnCallScheduleView({
 
   if (loading) {
     return (
-      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-        {t('common.loading', { defaultValue: 'Loading...' })}
+      <div className="space-y-4">
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
       </div>
     );
   }
