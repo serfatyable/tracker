@@ -4,8 +4,8 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import ReflectionForm from '../../../../components/reflections/ReflectionForm';
 import ReflectionDisplay from '../../../../components/reflections/ReflectionDisplay';
+import ReflectionForm from '../../../../components/reflections/ReflectionForm';
 import { getFirebaseApp } from '../../../../lib/firebase/client';
 import { useCurrentUserProfile } from '../../../../lib/hooks/useCurrentUserProfile';
 import { submitReflection, useReflection } from '../../../../lib/hooks/useReflections';
@@ -66,7 +66,9 @@ export default function TutorWriteReflectionPage() {
 
       {/* Tutor Reflection Form */}
       <div>
-        <h2 className="font-semibold mb-3">{t('reflections.yourReflection', { defaultValue: 'Your Reflection' })}</h2>
+        <h2 className="font-semibold mb-3">
+          {t('reflections.yourReflection', { defaultValue: 'Your Reflection' })}
+        </h2>
         <ReflectionForm
           audience="tutor"
           template={template}

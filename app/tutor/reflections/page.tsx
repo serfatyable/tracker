@@ -1,14 +1,14 @@
 'use client';
-import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AuthGate from '../../../components/auth/AuthGate';
 import AppShell from '../../../components/layout/AppShell';
 import LargeTitleHeader from '../../../components/layout/LargeTitleHeader';
+import ReflectionCard from '../../../components/reflections/ReflectionCard';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
-import ReflectionCard from '../../../components/reflections/ReflectionCard';
 import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
 import { useReflectionsForTutor } from '../../../lib/hooks/useReflections';
 import { createSynonymMatcher } from '../../../lib/search/synonyms';
@@ -67,7 +67,9 @@ export default function TutorReflectionsPage() {
   }, [list, from, to, hasResidentFilter, residentMatcher, taskTypeFilter, sortOrder]);
 
   const handleReflectionClick = (reflection: any) => {
-    router.push(`/tutor/reflections/${reflection.taskOccurrenceId}?residentId=${reflection.residentId}&taskType=${encodeURIComponent(reflection.taskType)}`);
+    router.push(
+      `/tutor/reflections/${reflection.taskOccurrenceId}?residentId=${reflection.residentId}&taskType=${encodeURIComponent(reflection.taskType)}`,
+    );
   };
 
   return (
