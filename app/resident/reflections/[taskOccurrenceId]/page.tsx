@@ -15,11 +15,12 @@ export default function ResidentWriteReflectionPage() {
   const taskType = search?.get('taskType') || 'Task';
   const tutorId = search?.get('tutorId');
 
-  const { data: me } = useCurrentUserProfile();
+  const { data: me, firebaseUser } = useCurrentUserProfile();
+  const uid = firebaseUser?.uid || null;
   const { template } = useLatestPublishedTemplate('resident', taskType);
-  const { reflection } = useReflection(taskOccurrenceId || null, me?.uid || null);
+  const { reflection } = useReflection(taskOccurrenceId || null, uid);
 
-  if (!me) return <div className="p-4">{t('common.signInRequired')}</div>;
+  if (!me || !uid) return <div className="p-4">{t('common.signInRequired')}</div>;
   if (!template) return <div className="p-4">{t('common.loadingTemplate')}</div>;
 
   const submitted = !!reflection?.submittedAt;
@@ -36,15 +37,15 @@ export default function ResidentWriteReflectionPage() {
         initialAnswers={reflection?.answers || null}
         disabled={submitted}
         onSubmit={async (answers) => {
-          if (!me) return;
+          if (!uid) return;
           await submitReflection({
             taskOccurrenceId,
             taskType,
             templateKey: template.templateKey,
             templateVersion: template.version,
-            authorId: me.uid,
+            authorId: uid,
             authorRole: 'resident',
-            residentId: me.uid,
+            residentId: uid,
             tutorId: tutorId || null,
             answers,
           });

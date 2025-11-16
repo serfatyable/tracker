@@ -45,7 +45,7 @@ export type AdminComment = {
 };
 
 export type Reflection = {
-  id?: string; // Firestore document id (taskOccurrenceId_authorId)
+  id?: string; // Firestore document id (taskOccurrenceId_authorId[_residentId])
   taskOccurrenceId: string;
   taskType: string;
   templateKey: string;

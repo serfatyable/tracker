@@ -20,10 +20,11 @@ export default function TutorWriteReflectionPage() {
   const taskType = search?.get('taskType') || 'Task';
   const residentId = search?.get('residentId');
 
-  const { data: me } = useCurrentUserProfile();
+  const { data: me, firebaseUser } = useCurrentUserProfile();
+  const uid = firebaseUser?.uid || null;
   const { template } = useLatestPublishedTemplate('tutor', taskType);
   const { template: residentTemplate } = useLatestPublishedTemplate('resident', taskType);
-  const { reflection } = useReflection(taskOccurrenceId || null, me?.uid || null);
+  const { reflection } = useReflection(taskOccurrenceId || null, uid, residentId || undefined);
 
   // Load resident reflection read-only
   const [residentReflection, setResidentReflection] = useState<Reflection | null>(null);
@@ -42,8 +43,16 @@ export default function TutorWriteReflectionPage() {
     };
   }, [residentId, taskOccurrenceId]);
 
-  if (!me) return <div className="p-4">{t('common.signInRequired')}</div>;
+  if (!me || !uid) return <div className="p-4">{t('common.signInRequired')}</div>;
   if (!template) return <div className="p-4">{t('common.loadingTemplate')}</div>;
+  if (!residentId)
+    return (
+      <div className="p-4 text-red-600">
+        {t('reflections.missingResidentContext', {
+          defaultValue: 'Missing resident context for this reflection.',
+        })}
+      </div>
+    );
 
   const submitted = !!reflection?.submittedAt;
 
@@ -75,16 +84,16 @@ export default function TutorWriteReflectionPage() {
           initialAnswers={reflection?.answers || null}
           disabled={submitted}
           onSubmit={async (answers) => {
-            if (!me) return;
+            if (!uid) return;
             await submitReflection({
               taskOccurrenceId,
               taskType,
               templateKey: template.templateKey,
               templateVersion: template.version,
-              authorId: me.uid,
+              authorId: uid,
               authorRole: 'tutor',
-              residentId: residentId || '',
-              tutorId: me.uid,
+              residentId,
+              tutorId: uid,
               answers,
             });
           }}

@@ -1,4 +1,5 @@
 'use client';
+import { getAuth } from 'firebase/auth';
 import {
   collection,
   doc,
@@ -16,11 +17,18 @@ import { useEffect, useState } from 'react';
 import type { AuthorRole, Reflection, ReflectionListItem } from '../../types/reflections';
 import { getFirebaseApp } from '../firebase/client';
 
-function makeReflectionId(taskOccurrenceId: string, authorId: string) {
+function makeReflectionId(taskOccurrenceId: string, authorId: string, subjectId?: string | null) {
+  if (subjectId) {
+    return `${taskOccurrenceId}_${authorId}_${subjectId}`;
+  }
   return `${taskOccurrenceId}_${authorId}`;
 }
 
-export function useReflection(taskOccurrenceId: string | null, authorId: string | null) {
+export function useReflection(
+  taskOccurrenceId: string | null,
+  authorId: string | null,
+  subjectId?: string | null,
+) {
   const [data, setData] = useState<Reflection | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
@@ -33,10 +41,24 @@ export function useReflection(taskOccurrenceId: string | null, authorId: string 
       setError(null);
       try {
         const db = getFirestore(getFirebaseApp());
-        const rid = makeReflectionId(taskOccurrenceId as string, authorId as string);
-        const snap = await getDoc(doc(db, 'reflections', rid));
-        if (!cancelled)
-          setData(snap.exists() ? ({ id: snap.id, ...(snap.data() as any) } as Reflection) : null);
+        const primaryId = makeReflectionId(
+          taskOccurrenceId as string,
+          authorId as string,
+          subjectId || undefined,
+        );
+        const legacyId = subjectId
+          ? makeReflectionId(taskOccurrenceId as string, authorId as string)
+          : null;
+        const candidates = legacyId && legacyId !== primaryId ? [primaryId, legacyId] : [primaryId];
+        let next: Reflection | null = null;
+        for (const rid of candidates) {
+          const snap = await getDoc(doc(db, 'reflections', rid));
+          if (snap.exists()) {
+            next = { id: snap.id, ...(snap.data() as any) } as Reflection;
+            break;
+          }
+        }
+        if (!cancelled) setData(next);
       } catch (e) {
         if (!cancelled) setError(e as Error);
       } finally {
@@ -47,7 +69,7 @@ export function useReflection(taskOccurrenceId: string | null, authorId: string 
     return () => {
       cancelled = true;
     };
-  }, [taskOccurrenceId, authorId]);
+  }, [taskOccurrenceId, authorId, subjectId]);
 
   return { reflection: data, loading, error };
 }
@@ -135,8 +157,24 @@ export async function submitReflection(params: {
   tutorId?: string | null;
   answers: Record<string, string>;
 }): Promise<{ id: string }> {
-  const db = getFirestore(getFirebaseApp());
-  const rid = makeReflectionId(params.taskOccurrenceId, params.authorId);
+  const app = getFirebaseApp();
+  const auth = getAuth(app);
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('auth/missing-current-user');
+  }
+  const effectiveAuthorId = currentUser.uid;
+  if (params.authorId && params.authorId !== effectiveAuthorId) {
+    console.warn(
+      'submitReflection authorId mismatch – using authenticated user instead of provided value',
+    );
+  }
+  const db = getFirestore(app);
+  const rid = makeReflectionId(
+    params.taskOccurrenceId,
+    effectiveAuthorId,
+    params.authorRole === 'tutor' ? params.residentId : undefined,
+  );
   const ref = doc(db, 'reflections', rid);
   await setDoc(
     ref,
@@ -145,10 +183,10 @@ export async function submitReflection(params: {
       taskType: params.taskType,
       templateKey: params.templateKey,
       templateVersion: params.templateVersion,
-      authorId: params.authorId,
+      authorId: effectiveAuthorId,
       authorRole: params.authorRole,
       residentId: params.residentId,
-      tutorId: params.tutorId || null,
+      tutorId: params.authorRole === 'tutor' ? effectiveAuthorId : params.tutorId || null,
       answers: params.answers,
       submittedAt: serverTimestamp(),
     } as any,
