@@ -12,6 +12,7 @@ import {
 
 import type { MorningMeeting } from '../../types/morningMeetings';
 import { getFirebaseApp } from '../firebase/client';
+import { logger } from '../utils/logger';
 import { withTimeoutAndRetry } from '../utils/networkUtils';
 
 export async function listMorningMeetingsByDateRange(
@@ -125,8 +126,9 @@ export async function replaceMultipleMonthsMeetings(records: MorningMeeting[]): 
       }
 
       await batch.commit();
-      console.log(
+      logger.info(
         `Replaced ${allExisting.length} existing meetings with ${records.length} new meetings across ${monthKeys.size} month(s)`,
+        'morning-meetings-store',
       );
     },
     {

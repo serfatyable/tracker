@@ -13,6 +13,7 @@ import { Dialog, DialogFooter, DialogHeader } from '@/components/ui/Dialog';
 import { updateTasksStatus } from '@/lib/firebase/admin';
 import { getFirebaseApp } from '@/lib/firebase/client';
 import type { TaskDoc } from '@/lib/firebase/db';
+import { logger } from '@/lib/utils/logger';
 import type { UserProfile } from '@/types/auth';
 import type { Rotation, RotationNode } from '@/types/rotations';
 
@@ -165,7 +166,7 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
         );
         setRotationNodes(allNodes);
       } catch (error) {
-        console.error('Failed to load rotation nodes:', error);
+        logger.error('Failed to load rotation nodes', 'pending-task-approvals', error as Error);
       } finally {
         if (!cancelled) {
           setLoadingNodes(false);
@@ -203,7 +204,12 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
   const residentGroups = useMemo<ResidentGroup[]>(() => {
     const grouped = new Map<
       string,
-      { residentId: string; residentName: string; residentEmail?: string | null; tasks: ResidentTaskRow[] }
+      {
+        residentId: string;
+        residentName: string;
+        residentEmail?: string | null;
+        tasks: ResidentTaskRow[];
+      }
     >();
 
     visibleTasks.forEach((task) => {
@@ -214,7 +220,9 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
 
       const rotationName = getLocalizedRotationName(rotation, language) || task.rotationId;
       const taskName = getLocalizedNodeName(node, language) || task.itemId;
-      const categoryName = categoryNode ? getLocalizedNodeName(categoryNode, language) : rotationName;
+      const categoryName = categoryNode
+        ? getLocalizedNodeName(categoryNode, language)
+        : rotationName;
       const categoryId = categoryNode ? categoryNode.id : `rotation:${task.rotationId}`;
       const categoryOrder = categoryNode?.order ?? 9999;
       const submittedAt = getSubmittedAt(task);
@@ -372,8 +380,7 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
           next.add(id);
         }
       });
-      const unchanged =
-        next.size === prev.size && Array.from(next).every((id) => prev.has(id));
+      const unchanged = next.size === prev.size && Array.from(next).every((id) => prev.has(id));
       return unchanged ? prev : next;
     });
   }, [residentGroups]);
@@ -481,7 +488,7 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
         return next;
       });
     } catch (error) {
-      console.error('Failed to update task status', error);
+      logger.error('Failed to update task status', 'pending-task-approvals', error as Error);
       const message =
         confirmAction.action === 'approve'
           ? t('toasts.failedToApproveTasks', { defaultValue: 'Failed to approve tasks' })
@@ -517,19 +524,23 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
           const groupSelectedIds = groupTaskIds.filter((id) => selectedTaskIds.has(id));
           const earliestLabel = formatDateWithTime(group.earliestSubmittedAt, language);
 
-            return (
-              <div
-                key={group.residentId}
-                className="overflow-hidden rounded-xl border border-transparent"
+          return (
+            <div
+              key={group.residentId}
+              className="overflow-hidden rounded-xl border border-transparent"
+            >
+              <button
+                type="button"
+                onClick={() => toggleResident(group.residentId)}
+                className="flex w-full items-center justify-between gap-5 rounded-xl px-4 py-4 text-left transition-colors hover:bg-[rgb(var(--surface-elevated))] dark:hover:bg-[rgb(var(--surface-elevated))]"
+                aria-expanded={isExpanded}
               >
-                <button
-                  type="button"
-                  onClick={() => toggleResident(group.residentId)}
-                  className="flex w-full items-center justify-between gap-5 rounded-xl px-4 py-4 text-left transition-colors hover:bg-[rgb(var(--surface-elevated))] dark:hover:bg-[rgb(var(--surface-elevated))]"
-                  aria-expanded={isExpanded}
-                >
                 <div className="flex items-center gap-3">
-                  <Avatar name={group.residentName} email={group.residentEmail ?? undefined} size={36} />
+                  <Avatar
+                    name={group.residentName}
+                    email={group.residentEmail ?? undefined}
+                    size={36}
+                  />
                   <div>
                     <div className="text-base font-semibold text-gray-900 dark:text-gray-50">
                       {group.residentName}
@@ -574,8 +585,8 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                 </div>
               </button>
 
-                {isExpanded ? (
-                  <div className="space-y-3 border-t border-gray-200/60 px-4 py-4 dark:border-[rgb(var(--border))]">
+              {isExpanded ? (
+                <div className="space-y-3 border-t border-gray-200/60 px-4 py-4 dark:border-[rgb(var(--border))]">
                   {group.categories.map((category) => {
                     const categoryTaskIds = category.tasks.map((task) => task.id);
                     const categorySelectedCount = categoryTaskIds.filter((id) =>
@@ -587,21 +598,26 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                       expandedCategories.get(group.residentId)?.has(category.categoryId) ?? false;
 
                     return (
-                        <div
-                          key={category.categoryId}
-                          className="rounded-lg bg-transparent"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50/70 dark:hover:bg-[rgb(var(--surface-elevated))]">
+                      <div key={category.categoryId} className="rounded-lg bg-transparent">
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50/70 dark:hover:bg-[rgb(var(--surface-elevated))]">
                           <button
                             type="button"
-                            onClick={() => toggleCategoryExpansion(group.residentId, category.categoryId)}
+                            onClick={() =>
+                              toggleCategoryExpansion(group.residentId, category.categoryId)
+                            }
                             className="flex flex-1 items-center gap-2 text-left text-sm font-semibold text-gray-900 transition hover:text-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:text-gray-50 dark:hover:text-teal-200"
                             aria-expanded={isCategoryExpanded}
                           >
                             {isCategoryExpanded ? (
-                              <ChevronDownIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                              <ChevronDownIcon
+                                className="h-4 w-4 text-gray-400"
+                                aria-hidden="true"
+                              />
                             ) : (
-                              <ChevronRightIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                              <ChevronRightIcon
+                                className="h-4 w-4 text-gray-400"
+                                aria-hidden="true"
+                              />
                             )}
                             <span>{category.name}</span>
                             <Badge variant="outline">
@@ -627,17 +643,17 @@ export default function PendingTaskApprovals({ tasks, residents, rotations }: Pr
                             </button>
                           ) : null}
                         </div>
-                          {isCategoryExpanded ? (
-                            <div className="mt-2 divide-y divide-gray-200/60 pl-2 dark:divide-[rgb(var(--border))]">
+                        {isCategoryExpanded ? (
+                          <div className="mt-2 divide-y divide-gray-200/60 pl-2 dark:divide-[rgb(var(--border))]">
                             {category.tasks.map((task) => {
                               const isSelected = selectedTaskIds.has(task.id);
                               const submittedLabel = formatDateWithTime(task.submittedAt, language);
 
                               return (
-                                  <div
-                                    key={task.id}
-                                    className="flex flex-col gap-4 px-3 py-3 md:flex-row md:items-center md:justify-between"
-                                  >
+                                <div
+                                  key={task.id}
+                                  className="flex flex-col gap-4 px-3 py-3 md:flex-row md:items-center md:justify-between"
+                                >
                                   <div className="flex flex-1 items-start gap-3">
                                     <input
                                       type="checkbox"
