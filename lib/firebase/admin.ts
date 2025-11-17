@@ -157,6 +157,7 @@ export async function approveRotationSelectionRequest(params: {
     const data = snap.data() as Record<string, any>;
     const request = data.rotationSelectionRequest || {};
 
+    // Update user document with approved rotation selection
     tx.update(ref, {
       completedRotationIds: sanitizedCompleted,
       currentRotationId: normalizedCurrent,
@@ -169,6 +170,36 @@ export async function approveRotationSelectionRequest(params: {
         resolvedAt: serverTimestamp(),
       },
     });
+
+    // Create or update assignment to 'active' status for the current rotation
+    const assignmentsSnap = await getDocs(
+      query(
+        collection(db, 'assignments'),
+        where('residentId', '==', params.residentId),
+        where('rotationId', '==', normalizedCurrent),
+      ),
+    );
+
+    if (assignmentsSnap.empty) {
+      // Create new assignment with 'active' status
+      const newRef = doc(collection(db, 'assignments'));
+      tx.set(newRef, {
+        residentId: params.residentId,
+        rotationId: normalizedCurrent,
+        tutorIds: [],
+        startedAt: serverTimestamp(),
+        endedAt: null,
+        status: 'active',
+      } as any);
+    } else {
+      // Update existing assignment to 'active'
+      const assignmentRef = assignmentsSnap.docs[0]!.ref;
+      tx.update(assignmentRef, {
+        status: 'active',
+        startedAt: serverTimestamp(),
+        endedAt: null,
+      } as any);
+    }
   });
 }
 
@@ -502,13 +533,44 @@ export async function updateUsersStatus(params: {
               resolvedAt: serverTimestamp(),
             },
           });
+
+          // Create or update assignment to 'active' status for the current rotation
+          const assignmentsSnap = await getDocs(
+            query(
+              collection(db, 'assignments'),
+              where('residentId', '==', uid),
+              where('rotationId', '==', currentRotationId),
+            ),
+          );
+
+          if (assignmentsSnap.empty) {
+            // Create new assignment with 'active' status
+            const newRef = doc(collection(db, 'assignments'));
+            tx.set(newRef, {
+              residentId: uid,
+              rotationId: currentRotationId,
+              tutorIds: [],
+              startedAt: serverTimestamp(),
+              endedAt: null,
+              status: 'active',
+            } as any);
+          } else {
+            // Update existing assignment to 'active'
+            const assignmentRef = assignmentsSnap.docs[0]!.ref;
+            tx.update(assignmentRef, {
+              status: 'active',
+              startedAt: serverTimestamp(),
+              endedAt: null,
+            } as any);
+          }
         }
       });
     }
   } else {
     // Simple batch update for other status changes
     const batch = writeBatch(db);
-    for (const uid of params.userIds) batch.update(doc(db, 'users', uid), { status: params.status });
+    for (const uid of params.userIds)
+      batch.update(doc(db, 'users', uid), { status: params.status });
     await batch.commit();
   }
 }
