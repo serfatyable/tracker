@@ -55,7 +55,7 @@ textarea {
   --surface: 249 250 251;
   --primary: 59 130 246;
   --primary-ink: 255 255 255;
-  --muted: 107 114 128;
+  --muted: 75 85 99; /* Improved from gray-500 to gray-600 for better contrast */
   --surface-elevated: 255 255 255;
   --surface-depressed: 241 245 249;
   --border: 203 213 225;
@@ -64,6 +64,11 @@ textarea {
   --accent-tutor: 124 58 237;
   --accent-admin: 236 72 153;
   --accent-search: 16 185 129;
+  /* Semantic status colors */
+  --status-success: 34 197 94; /* green-500 */
+  --status-warning: 245 158 11; /* amber-500 */
+  --status-error: 220 38 38; /* red-600 for better contrast */
+  --status-info: 59 130 246; /* blue-500, same as primary */
   /* Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -109,7 +114,7 @@ textarea {
     --surface: 15 18 25; /* Elevated surfaces #0F1219 */
     --primary: 99 179 237; /* Brighter blue for dark mode */
     --primary-ink: 8 10 15; /* Dark text on primary */
-    --muted: 148 163 184; /* Muted text */
+    --muted: 156 163 175; /* Improved from 148 163 184 for better dark mode contrast */
     --accent-resident: 96 165 250;
     --accent-tutor: 192 132 252;
     --accent-admin: 244 114 182;
@@ -120,6 +125,12 @@ textarea {
     --surface-depressed: 5 7 12; /* For input fields */
     --border: 30 35 45; /* Subtle borders */
     --border-strong: 50 55 65; /* Visible borders */
+
+    /* Semantic status colors (brighter for dark mode) */
+    --status-success: 74 222 128; /* green-400 */
+    --status-warning: 251 191 36; /* amber-400 */
+    --status-error: 248 113 113; /* red-400 */
+    --status-info: 96 165 250; /* blue-400 */
 
     /* Enhanced elevation shadows */
     --elev-1: 0 1px 3px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(255, 255, 255, 0.02);
@@ -179,6 +190,22 @@ textarea {
     background-color: rgb(var(--primary-ink));
     color: rgb(var(--primary));
   }
+}
+
+/* Global focus visibility for accessibility */
+*:focus-visible {
+  outline: 3px solid rgb(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Ensure buttons, links, and interactive elements have clear focus */
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible,
+[role='tab']:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid rgb(var(--primary));
+  outline-offset: 2px;
 }
 
 /* Motion accessibility */
@@ -414,7 +441,7 @@ textarea {
   }
 
   .icon-button:focus-visible {
-    outline: 2px solid rgb(var(--primary) / 0.5);
+    outline: 3px solid rgb(var(--primary));
     outline-offset: 2px;
   }
 
