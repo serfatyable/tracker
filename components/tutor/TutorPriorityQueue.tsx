@@ -19,16 +19,16 @@ type Props = {
   residentIdToEmail: (id: string) => string | undefined;
 };
 
-function getUrgencyLevel(createdAt: any): 'high' | 'medium' | 'low' {
-  if (!createdAt) return 'low';
+function getUrgencyLevel(requestedAt: any): 'high' | 'medium' | 'low' {
+  if (!requestedAt) return 'low';
 
   const now = new Date();
   let submittedDate: Date;
 
-  if (typeof createdAt.toDate === 'function') {
-    submittedDate = createdAt.toDate();
-  } else if (createdAt instanceof Date) {
-    submittedDate = createdAt;
+  if (typeof requestedAt.toDate === 'function') {
+    submittedDate = requestedAt.toDate();
+  } else if (requestedAt instanceof Date) {
+    submittedDate = requestedAt;
   } else {
     return 'low';
   }
@@ -40,15 +40,15 @@ function getUrgencyLevel(createdAt: any): 'high' | 'medium' | 'low' {
   return 'low';
 }
 
-function formatTimeAgo(createdAt: any, language: string): string {
-  if (!createdAt) return '';
+function formatTimeAgo(requestedAt: any, language: string): string {
+  if (!requestedAt) return '';
 
   let submittedDate: Date;
 
-  if (typeof createdAt.toDate === 'function') {
-    submittedDate = createdAt.toDate();
-  } else if (createdAt instanceof Date) {
-    submittedDate = createdAt;
+  if (typeof requestedAt.toDate === 'function') {
+    submittedDate = requestedAt.toDate();
+  } else if (requestedAt instanceof Date) {
+    submittedDate = requestedAt;
   } else {
     return '';
   }
@@ -95,8 +95,8 @@ export default function TutorPriorityQueue({ petitions, residentIdToName, reside
 
   // Sort by urgency and date
   const sortedPetitions = [...petitions].sort((a, b) => {
-    const urgencyA = getUrgencyLevel(a.createdAt);
-    const urgencyB = getUrgencyLevel(b.createdAt);
+    const urgencyA = getUrgencyLevel(a.requestedAt);
+    const urgencyB = getUrgencyLevel(b.requestedAt);
 
     const urgencyOrder = { high: 0, medium: 1, low: 2 };
     if (urgencyOrder[urgencyA] !== urgencyOrder[urgencyB]) {
@@ -104,8 +104,8 @@ export default function TutorPriorityQueue({ petitions, residentIdToName, reside
     }
 
     // If same urgency, sort by date (oldest first)
-    const dateA = a.createdAt?.toDate?.() || new Date(0);
-    const dateB = b.createdAt?.toDate?.() || new Date(0);
+    const dateA = a.requestedAt?.toDate?.() || new Date(0);
+    const dateB = b.requestedAt?.toDate?.() || new Date(0);
     return dateA.getTime() - dateB.getTime();
   });
 
@@ -138,8 +138,8 @@ export default function TutorPriorityQueue({ petitions, residentIdToName, reside
     >
       <div className="space-y-3">
         {sortedPetitions.map((p) => {
-          const urgency = getUrgencyLevel(p.createdAt);
-          const timeAgo = formatTimeAgo(p.createdAt, i18n.language);
+          const urgency = getUrgencyLevel(p.requestedAt);
+          const timeAgo = formatTimeAgo(p.requestedAt, i18n.language);
           const residentName = residentIdToName(p.residentId);
           const residentEmail = residentIdToEmail(p.residentId);
 
