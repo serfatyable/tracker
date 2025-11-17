@@ -1,9 +1,7 @@
-import { collection, getDocs, getFirestore } from 'firebase/firestore';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getFirebaseApp } from '@/lib/firebase/client';
-import { getAllUsers } from '@/lib/firebase/db';
-import { verifyAuthToken } from '@/lib/firebase/serverAuth';
+import { requireAdminAuth, createAuthErrorResponse } from '@/lib/api/auth';
+import { getAdminApp } from '@/lib/firebase/admin-sdk';
 import { logger } from '@/lib/utils/logger';
 
 /**
@@ -14,29 +12,15 @@ import { logger } from '@/lib/utils/logger';
  */
 export async function GET(req: NextRequest) {
   try {
-    // Verify authentication
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Verify admin authentication
+    await requireAdminAuth(req);
 
-    const token = authHeader.substring(7);
-    const decodedToken = await verifyAuthToken(token);
-
-    if (!decodedToken) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    // Verify admin role
-    if (decodedToken.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
-
-    const db = getFirestore(getFirebaseApp());
+    const { getFirestore } = await import('firebase-admin/firestore');
+    const app = getAdminApp();
+    const db = getFirestore(app);
 
     // Fetch all morning meetings to extract unique names
-    const meetingsCol = collection(db, 'morningMeetings');
-    const meetingsSnap = await getDocs(meetingsCol);
+    const meetingsSnap = await db.collection('morningMeetings').get();
 
     const lecturersSet = new Set<string>();
     const moderatorsSet = new Set<string>();
@@ -50,12 +34,17 @@ export async function GET(req: NextRequest) {
     });
 
     // Fetch all users for autocomplete
-    const users = await getAllUsers();
-    const userSuggestions = users.map((user) => ({
-      uid: user.uid,
-      fullName: user.fullName,
-      email: user.email,
-    }));
+    const usersSnap = await db.collection('users').get();
+    const userSuggestions = usersSnap.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          uid: doc.id,
+          fullName: data.fullName || '',
+          email: data.email || '',
+        };
+      })
+      .filter((user) => user.fullName); // Only include users with names
 
     return NextResponse.json(
       {
@@ -67,6 +56,16 @@ export async function GET(req: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
+    // Handle authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes('Missing') ||
+        error.message.includes('Invalid') ||
+        error.message.includes('Forbidden'))
+    ) {
+      return createAuthErrorResponse(error);
+    }
+
     logger.error(
       'Failed to fetch meeting suggestions',
       'api/morning-meetings/suggestions',

@@ -1,8 +1,7 @@
-import { doc, getFirestore, setDoc, Timestamp } from 'firebase/firestore';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getFirebaseApp } from '@/lib/firebase/client';
-import { verifyAuthToken } from '@/lib/firebase/serverAuth';
+import { requireAdminAuth, createAuthErrorResponse } from '@/lib/api/auth';
+import { getAdminApp } from '@/lib/firebase/admin-sdk';
 import { logger } from '@/lib/utils/logger';
 import type { MorningMeeting } from '@/types/morningMeetings';
 
@@ -13,23 +12,8 @@ import type { MorningMeeting } from '@/types/morningMeetings';
  */
 export async function POST(req: NextRequest) {
   try {
-    // Verify authentication
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await verifyAuthToken(token);
-
-    if (!decodedToken) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    // Verify admin role
-    if (decodedToken.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+    // Verify admin authentication
+    await requireAdminAuth(req);
 
     // Parse request body
     const body = await req.json();
@@ -54,8 +38,11 @@ export async function POST(req: NextRequest) {
     const hebrewDays = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
     const calculatedDayOfWeek = hebrewDays[meetingDate.getDay()];
 
+    // Import Timestamp from admin SDK
+    const { Timestamp } = await import('firebase-admin/firestore');
+
     // Create meeting object
-    const meeting: Omit<MorningMeeting, 'id'> = {
+    const meeting = {
       title,
       date: Timestamp.fromDate(meetingDate),
       endDate: Timestamp.fromDate(meetingEndDate),
@@ -66,8 +53,6 @@ export async function POST(req: NextRequest) {
       organizer: organizer || undefined,
       link: link || undefined,
       notes: notes || undefined,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
     };
 
     // Generate document ID
@@ -80,14 +65,31 @@ export async function POST(req: NextRequest) {
       .replace(/_+/g, '_');
     const docId = `${dateKey}-${slug}`;
 
-    // Save to Firestore
-    const db = getFirestore(getFirebaseApp());
-    await setDoc(doc(db, 'morningMeetings', docId), meeting);
+    // Save to Firestore using Admin SDK
+    const { getFirestore, FieldValue } = await import('firebase-admin/firestore');
+    const app = getAdminApp();
+    const db = getFirestore(app);
+
+    await db.collection('morningMeetings').doc(docId).set({
+      ...meeting,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
 
     logger.info(`Created morning meeting: ${docId}`, 'api/morning-meetings');
 
     return NextResponse.json({ success: true, id: docId, meeting }, { status: 201 });
   } catch (error) {
+    // Handle authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes('Missing') ||
+        error.message.includes('Invalid') ||
+        error.message.includes('Forbidden'))
+    ) {
+      return createAuthErrorResponse(error);
+    }
+
     logger.error(
       'Failed to create morning meeting',
       'api/morning-meetings',

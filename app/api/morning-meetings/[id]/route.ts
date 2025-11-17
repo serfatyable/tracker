@@ -1,8 +1,7 @@
-import { deleteDoc, doc, getDoc, getFirestore, setDoc, Timestamp } from 'firebase/firestore';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getFirebaseApp } from '@/lib/firebase/client';
-import { verifyAuthToken } from '@/lib/firebase/serverAuth';
+import { requireAdminAuth, createAuthErrorResponse } from '@/lib/api/auth';
+import { getAdminApp } from '@/lib/firebase/admin-sdk';
 import { logger } from '@/lib/utils/logger';
 import type { MorningMeeting } from '@/types/morningMeetings';
 
@@ -13,37 +12,27 @@ import type { MorningMeeting } from '@/types/morningMeetings';
  */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // Verify authentication
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await verifyAuthToken(token);
-
-    if (!decodedToken) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    // Verify admin role
-    if (decodedToken.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+    // Verify admin authentication
+    await requireAdminAuth(req);
 
     const { id } = params;
-    const db = getFirestore(getFirebaseApp());
-    const meetingRef = doc(db, 'morningMeetings', id);
+    const { getFirestore } = await import('firebase-admin/firestore');
+    const app = getAdminApp();
+    const db = getFirestore(app);
+    const meetingRef = db.collection('morningMeetings').doc(id);
 
     // Check if meeting exists
-    const meetingSnap = await getDoc(meetingRef);
-    if (!meetingSnap.exists()) {
+    const meetingSnap = await meetingRef.get();
+    if (!meetingSnap.exists) {
       return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
     }
 
     // Parse request body
     const body = await req.json();
     const { title, date, endDate, dayOfWeek, lecturer, moderator, organizer, link, notes } = body;
+
+    // Import Timestamp and FieldValue from admin SDK
+    const { Timestamp, FieldValue } = await import('firebase-admin/firestore');
 
     // Get existing meeting data
     const existingMeeting = meetingSnap.data() as MorningMeeting;
@@ -75,8 +64,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     // Create updated meeting object (only update provided fields)
-    const updatedMeeting: Partial<MorningMeeting> = {
-      updatedAt: Timestamp.now(),
+    const updatedMeeting: any = {
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     if (title !== undefined) updatedMeeting.title = title;
@@ -100,13 +89,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ...updatedMeeting,
     };
 
-    // Save to Firestore
-    await setDoc(meetingRef, finalMeeting);
+    // Save to Firestore using Admin SDK
+    await meetingRef.set(finalMeeting);
 
     logger.info(`Updated morning meeting: ${id}`, 'api/morning-meetings/[id]');
 
     return NextResponse.json({ success: true, id, meeting: finalMeeting }, { status: 200 });
   } catch (error) {
+    // Handle authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes('Missing') ||
+        error.message.includes('Invalid') ||
+        error.message.includes('Forbidden'))
+    ) {
+      return createAuthErrorResponse(error);
+    }
+
     logger.error(
       'Failed to update morning meeting',
       'api/morning-meetings/[id]',
@@ -126,41 +125,38 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
  */
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // Verify authentication
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await verifyAuthToken(token);
-
-    if (!decodedToken) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    // Verify admin role
-    if (decodedToken.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+    // Verify admin authentication
+    await requireAdminAuth(req);
 
     const { id } = params;
-    const db = getFirestore(getFirebaseApp());
-    const meetingRef = doc(db, 'morningMeetings', id);
+    const { getFirestore } = await import('firebase-admin/firestore');
+    const app = getAdminApp();
+    const db = getFirestore(app);
+    const meetingRef = db.collection('morningMeetings').doc(id);
 
     // Check if meeting exists
-    const meetingSnap = await getDoc(meetingRef);
-    if (!meetingSnap.exists()) {
+    const meetingSnap = await meetingRef.get();
+    if (!meetingSnap.exists) {
       return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
     }
 
     // Delete from Firestore
-    await deleteDoc(meetingRef);
+    await meetingRef.delete();
 
     logger.info(`Deleted morning meeting: ${id}`, 'api/morning-meetings/[id]');
 
     return NextResponse.json({ success: true, id }, { status: 200 });
   } catch (error) {
+    // Handle authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes('Missing') ||
+        error.message.includes('Invalid') ||
+        error.message.includes('Forbidden'))
+    ) {
+      return createAuthErrorResponse(error);
+    }
+
     logger.error(
       'Failed to delete morning meeting',
       'api/morning-meetings/[id]',
