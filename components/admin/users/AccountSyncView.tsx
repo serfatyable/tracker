@@ -30,7 +30,7 @@ export default function AccountSyncView() {
   const [deleteType, setDeleteType] = useState<'auth' | 'firestore' | null>(null);
   const [deleteUids, setDeleteUids] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null);
 
   const fetchSyncData = useCallback(async () => {
     try {
@@ -111,7 +111,7 @@ export default function AccountSyncView() {
             defaultValue: `Successfully deleted ${result.deleted.length} orphaned account(s)`,
             count: result.deleted.length,
           }),
-          type: 'success',
+          variant: 'success',
         });
       } else {
         setToast({
@@ -120,7 +120,7 @@ export default function AccountSyncView() {
             deleted: result.deleted.length,
             errors: result.errors.length,
           }),
-          type: 'error',
+          variant: 'error',
         });
       }
 
@@ -129,7 +129,7 @@ export default function AccountSyncView() {
     } catch (err) {
       setToast({
         message: err instanceof Error ? err.message : 'Failed to delete orphaned accounts',
-        type: 'error',
+        variant: 'error',
       });
     } finally {
       setDeleting(false);
@@ -443,8 +443,8 @@ export default function AccountSyncView() {
       {toast && (
         <Toast
           message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
+          variant={toast.variant}
+          onClear={() => setToast(null)}
         />
       )}
     </div>
