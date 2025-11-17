@@ -1719,3 +1719,13 @@ export async function denyRotationPetition(petitionId: string, adminUid: string)
     })
     .catch(console.error);
 }
+
+/**
+ * List all Firestore user documents (for account sync purposes).
+ * WARNING: This loads all users into memory. Use with caution for large user bases.
+ */
+export async function listAllFirestoreUsers(): Promise<UserProfile[]> {
+  const db = getFirestore(getFirebaseApp());
+  const snap = await getDocs(collection(db, 'users'));
+  return snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) }) as UserProfile);
+}
