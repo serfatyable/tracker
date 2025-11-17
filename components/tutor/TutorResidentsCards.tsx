@@ -138,7 +138,7 @@ export default function TutorResidentsCards({
             <div className="mb-4 flex items-start gap-3">
               <Avatar
                 name={getResidentName(resident)}
-                email={resident.email}
+                email={resident.email ?? undefined}
                 size={48}
               />
               <div className="flex-1 min-w-0">
