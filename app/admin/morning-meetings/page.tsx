@@ -8,6 +8,7 @@ import type {
   PreviewRow,
   ValidationError,
 } from '../../../components/admin/morning-meetings/ImportPreviewDialog';
+import MorningMeetingsView from '../../../components/admin/morning-meetings/MorningMeetingsView';
 import TopBar from '../../../components/TopBar';
 import Button from '../../../components/ui/Button';
 import Toast from '../../../components/ui/Toast';
@@ -157,86 +158,121 @@ export default function AdminMorningMeetingsImportPage() {
     if (fileInput) fileInput.value = '';
   };
 
+  const [view, setView] = useState<'schedule' | 'import'>('schedule');
+
   return (
     <div>
       <TopBar />
       <div className="app-container p-4 space-y-4">
         <Toast message={toast} onClear={() => setToast(null)} />
 
-        {/* Header with Back Button */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            onClick={() => router.push('/admin?tab=morning')}
-            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            {t('ui.back', { defaultValue: 'Back' })}
-          </Button>
-          <div className="h-6 w-px bg-gray-300 dark:bg-gray-700" />
-          <h1 className="text-xl font-semibold">{t('morningMeetings.title')}</h1>
-        </div>
+        {/* Header with Back Button and View Tabs */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => router.push('/admin?tab=morning')}
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              {t('ui.back', { defaultValue: 'Back' })}
+            </Button>
+            <div className="h-6 w-px bg-gray-300 dark:bg-gray-700" />
+            <h1 className="text-xl font-semibold">{t('morningMeetings.title')}</h1>
+          </div>
 
-        {/* Success Card */}
-        {importSuccess && (
-          <div className="card-levitate p-6 bg-green-50 dark:bg-green-950/30 border-2 border-green-200 dark:border-green-800 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">
-                    {t('morningMeetings.import.successTitle', {
-                      defaultValue: 'Import Successful!',
-                    })}
-                  </h3>
-                  <p className="text-sm text-green-700 dark:text-green-300">
-                    {t('morningMeetings.import.successMessage', {
-                      defaultValue: 'Your meetings have been imported successfully.',
-                    })}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setImportSuccess(false)}
-                  variant="outline"
-                  className="border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-950"
-                >
-                  {t('morningMeetings.import.importMore', { defaultValue: 'Import More' })}
-                </Button>
-                <Button
-                  onClick={() => router.push('/admin?tab=morning')}
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium"
-                >
-                  {t('morningMeetings.import.viewSchedule', { defaultValue: 'View Schedule' })} →
-                </Button>
-              </div>
+          {/* View Tabs */}
+          <div className="border-b border-gray-200 dark:border-[rgb(var(--border))]">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setView('schedule')}
+                className={`px-4 py-2 border-b-2 transition-colors ${
+                  view === 'schedule'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 font-medium'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                📅 {t('morningMeetings.edit.viewSchedule', { defaultValue: 'View & Edit Schedule' })}
+              </button>
+              <button
+                onClick={() => setView('import')}
+                className={`px-4 py-2 border-b-2 transition-colors ${
+                  view === 'import'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 font-medium'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                📤 {t('morningMeetings.edit.bulkImport', { defaultValue: 'Bulk Import (Excel)' })}
+              </button>
             </div>
           </div>
-        )}
+        </div>
 
-        <div className="card-levitate p-6 space-y-4">
+        {/* View Content */}
+        {view === 'schedule' ? (
+          <MorningMeetingsView showEditButtons={true} />
+        ) : (
+          <>
+            {/* Success Card */}
+            {importSuccess && (
+              <div className="card-levitate p-6 bg-green-50 dark:bg-green-950/30 border-2 border-green-200 dark:border-green-800 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">
+                        {t('morningMeetings.import.successTitle', {
+                          defaultValue: 'Import Successful!',
+                        })}
+                      </h3>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        {t('morningMeetings.import.successMessage', {
+                          defaultValue: 'Your meetings have been imported successfully.',
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setImportSuccess(false)}
+                      variant="outline"
+                      className="border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-950"
+                    >
+                      {t('morningMeetings.import.importMore', { defaultValue: 'Import More' })}
+                    </Button>
+                    <Button
+                      onClick={() => setView('schedule')}
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium"
+                    >
+                      {t('morningMeetings.edit.viewSchedule', { defaultValue: 'View & Edit Schedule' })} →
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="card-levitate p-6 space-y-4">
           {/* Instructions */}
           <div className="space-y-2">
             <h2 className="text-lg font-medium text-gray-900">
@@ -312,15 +348,17 @@ export default function AdminMorningMeetingsImportPage() {
           </div>
         </div>
 
-        {/* Preview Dialog */}
-        <ImportPreviewDialog
-          isOpen={showPreview}
-          onClose={handleClosePreview}
-          onConfirm={handleImport}
-          rows={previewRows}
-          errors={validationErrors}
-          isLoading={importing}
-        />
+            {/* Preview Dialog */}
+            <ImportPreviewDialog
+              isOpen={showPreview}
+              onClose={handleClosePreview}
+              onConfirm={handleImport}
+              rows={previewRows}
+              errors={validationErrors}
+              isLoading={importing}
+            />
+          </>
+        )}
       </div>
     </div>
   );
