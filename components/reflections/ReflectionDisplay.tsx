@@ -1,6 +1,7 @@
 'use client';
 import { useTranslation } from 'react-i18next';
 
+import { sanitizeContent } from '@/lib/utils/sanitize';
 import type { Reflection, ReflectionTemplate } from '@/types/reflections';
 
 type Props = {
@@ -44,7 +45,11 @@ export default function ReflectionDisplay({ reflection, template }: Props) {
                         {prompt.required ? <span className="text-red-500 ml-1">*</span> : null}
                       </div>
                       <div className="text-sm p-3 rounded bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 whitespace-pre-wrap">
-                        {answer || <span className="text-gray-400 italic">No response</span>}
+                        {answer ? (
+                          sanitizeContent(answer)
+                        ) : (
+                          <span className="text-gray-400 italic">No response</span>
+                        )}
                       </div>
                     </div>
                   );

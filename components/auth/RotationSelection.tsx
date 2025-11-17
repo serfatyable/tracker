@@ -1,6 +1,7 @@
 'use client';
 
 import { getLocalized } from '@/lib/i18n/getLocalized';
+import { sanitizeContentStrict } from '@/lib/utils/sanitize';
 import type { Rotation } from '@/types/rotations';
 
 type Props = {
@@ -64,12 +65,14 @@ export default function RotationSelection({
           <option value="">-- {currentLabel} --</option>
           {rotations.map((rotation) => (
             <option key={rotation.id} value={rotation.id}>
-              {getLocalized({
-                en: rotation.name_en || rotation.name,
-                he: rotation.name_he || rotation.name,
-                fallback: rotation.name,
-                lang: language,
-              })}
+              {sanitizeContentStrict(
+                getLocalized({
+                  en: rotation.name_en || rotation.name,
+                  he: rotation.name_he || rotation.name,
+                  fallback: rotation.name,
+                  lang: language,
+                })
+              )}
             </option>
           ))}
         </select>
@@ -96,12 +99,14 @@ export default function RotationSelection({
                   className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-900 dark:text-gray-100">
-                  {getLocalized({
-                    en: rotation.name_en || rotation.name,
-                    he: rotation.name_he || rotation.name,
-                    fallback: rotation.name,
-                    lang: language,
-                  })}
+                  {sanitizeContentStrict(
+                    getLocalized({
+                      en: rotation.name_en || rotation.name,
+                      he: rotation.name_he || rotation.name,
+                      fallback: rotation.name,
+                      lang: language,
+                    })
+                  )}
                   {rotation.id === currentRotationId && (
                     <span className="ms-2 text-xs text-blue-600 dark:text-blue-400">(Current)</span>
                   )}

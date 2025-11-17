@@ -2,6 +2,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { formatDateTimeLocale } from '@/lib/utils/dateUtils';
+import { sanitizeContentStrict } from '@/lib/utils/sanitize';
 import type { ReflectionListItem } from '@/types/reflections';
 
 type Props = {
@@ -44,8 +45,9 @@ export default function ReflectionCard({
         <div className="flex-1 min-w-0">
           {/* Task Type as Title */}
           <div className="font-semibold text-base mb-2 text-gray-900 dark:text-white truncate group-hover:text-primary transition-colors">
-            {reflection.taskType ||
-              t('reflections.untitledReflection', { defaultValue: 'Untitled Reflection' })}
+            {reflection.taskType
+              ? sanitizeContentStrict(reflection.taskType)
+              : t('reflections.untitledReflection', { defaultValue: 'Untitled Reflection' })}
           </div>
 
           {/* Author Role Badge */}
