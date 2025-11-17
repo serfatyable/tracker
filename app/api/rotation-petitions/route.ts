@@ -2,13 +2,68 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { createAuthErrorResponse, verifyAuthToken } from '@/lib/api/auth';
 import { getAdminApp } from '@/lib/firebase/admin-sdk';
+import { listRotationPetitionsWithDetails, approveRotationPetition, denyRotationPetition } from '@/lib/firebase/admin';
 import { logger } from '@/lib/utils/logger';
 
-type Body = {
+type PostBody = {
   rotationId?: unknown;
   type?: unknown;
   reason?: unknown;
 };
+
+type PatchBody = {
+  petitionId?: unknown;
+  action?: unknown;
+};
+
+export async function GET(req: NextRequest) {
+  let uid: string;
+
+  try {
+    const authResult = await verifyAuthToken(req);
+    uid = authResult.uid;
+  } catch (error) {
+    return createAuthErrorResponse(error);
+  }
+
+  // Check if user is admin
+  try {
+    const app = getAdminApp();
+    const { getFirestore } = await import('firebase-admin/firestore');
+    const db = getFirestore(app);
+    const userDoc = await db.collection('users').doc(uid).get();
+    const userData = userDoc.data();
+
+    if (!userData || userData.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden: Admin access required.' }, { status: 403 });
+    }
+
+    // Get query parameters
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get('status') as 'pending' | 'approved' | 'denied' | null;
+    const residentId = searchParams.get('residentId');
+    const limit = searchParams.get('limit');
+
+    const params: any = {};
+    if (status) params.status = status;
+    if (residentId) params.residentQuery = residentId;
+    if (limit) params.limit = parseInt(limit, 10);
+
+    const result = await listRotationPetitionsWithDetails(params);
+
+    return NextResponse.json({ petitions: result.items }, { status: 200 });
+  } catch (error) {
+    logger.error(
+      'Failed to list rotation petitions',
+      'api/rotation-petitions',
+      error instanceof Error ? error : new Error(String(error)),
+    );
+    return NextResponse.json(
+      { error: 'An unexpected error occurred while fetching petitions.' },
+      { status: 500 },
+    );
+  }
+}
 
 export async function POST(req: NextRequest) {
   let uid: string;
@@ -20,9 +75,9 @@ export async function POST(req: NextRequest) {
     return createAuthErrorResponse(error);
   }
 
-  let body: Body;
+  let body: PostBody;
   try {
-    body = (await req.json()) as Body;
+    body = (await req.json()) as PostBody;
   } catch {
     return NextResponse.json({ error: 'Invalid JSON payload.' }, { status: 400 });
   }
@@ -102,6 +157,69 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json(
       { error: 'An unexpected error occurred while creating the petition.' },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  let uid: string;
+
+  try {
+    const authResult = await verifyAuthToken(req);
+    uid = authResult.uid;
+  } catch (error) {
+    return createAuthErrorResponse(error);
+  }
+
+  // Check if user is admin
+  try {
+    const app = getAdminApp();
+    const { getFirestore } = await import('firebase-admin/firestore');
+    const db = getFirestore(app);
+    const userDoc = await db.collection('users').doc(uid).get();
+    const userData = userDoc.data();
+
+    if (!userData || userData.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden: Admin access required.' }, { status: 403 });
+    }
+
+    let body: PatchBody;
+    try {
+      body = (await req.json()) as PatchBody;
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON payload.' }, { status: 400 });
+    }
+
+    const petitionId = typeof body.petitionId === 'string' ? body.petitionId.trim() : '';
+    const action = body.action === 'approve' || body.action === 'deny' ? body.action : null;
+
+    if (!petitionId) {
+      return NextResponse.json({ error: 'Petition ID is required.' }, { status: 400 });
+    }
+
+    if (!action) {
+      return NextResponse.json(
+        { error: 'Action must be either "approve" or "deny".' },
+        { status: 400 },
+      );
+    }
+
+    if (action === 'approve') {
+      await approveRotationPetition(petitionId, uid);
+    } else {
+      await denyRotationPetition(petitionId, uid);
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    logger.error(
+      'Failed to update rotation petition',
+      'api/rotation-petitions',
+      error instanceof Error ? error : new Error(String(error)),
+    );
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'An unexpected error occurred.' },
       { status: 500 },
     );
   }

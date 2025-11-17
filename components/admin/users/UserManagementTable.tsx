@@ -9,6 +9,8 @@ import {
   updateUsersRole,
   listAssignmentsWithDetails,
   unassignResidentFromRotation,
+  assignTutorToResidentGlobal,
+  assignTutorToResidentForRotation,
 } from '../../../lib/firebase/admin';
 import type { AssignmentWithDetails } from '../../../types/assignments';
 import type { UserProfile, Role } from '../../../types/auth';
@@ -22,6 +24,7 @@ import { Table, THead, TBody, TR, TH, TD, TableWrapper } from '../../ui/Table';
 import Toast from '../../ui/Toast';
 
 import AssignmentBadges from './AssignmentBadges';
+import AssignTutorDialog from './AssignTutorDialog';
 
 // Mobile Card Component
 function UserCard({
@@ -36,6 +39,7 @@ function UserCard({
   assignments,
   t,
   onManageRotations,
+  onAssignTutor,
 }: {
   user: UserProfile;
   userId: string;
@@ -48,6 +52,7 @@ function UserCard({
   assignments: AssignmentWithDetails[];
   t: any;
   onManageRotations: () => void;
+  onAssignTutor: () => void;
 }) {
   return (
     <div className="card-levitate p-4 space-y-3">
@@ -130,6 +135,28 @@ function UserCard({
             onClick={onDeny}
           >
             {t('ui.disable')}
+          </Button>
+        </div>
+      )}
+
+      {/* Additional Actions for Active Residents */}
+      {user.role === 'resident' && user.status !== 'pending' && (
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            className="btn-levitate"
+            onClick={onAssignTutor}
+          >
+            {t('admin.users.assignTutor', { defaultValue: 'Assign Tutor' })}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="btn-levitate"
+            onClick={onManageRotations}
+          >
+            {t('admin.users.manageRotations', { defaultValue: 'Manage rotations' })}
           </Button>
         </div>
       )}
@@ -233,6 +260,10 @@ const UserManagementTable = memo(function UserManagementTable() {
     residentId: string;
     residentName: string;
   } | null>(null);
+  const [assignTutorDialog, setAssignTutorDialog] = useState<{
+    residentId: string;
+    residentName: string;
+  } | null>(null);
   const [unassigningRotationId, setUnassigningRotationId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'pending' | 'active' | 'disabled' | ''>('');
   const [roleFilter, setRoleFilter] = useState<Role | ''>('');
@@ -283,6 +314,43 @@ const UserManagementTable = memo(function UserManagementTable() {
   const handleCloseManageDialog = () => {
     setManageDialog(null);
     setUnassigningRotationId(null);
+  };
+
+  const openAssignTutor = (residentId: string, residentName: string) => {
+    setAssignTutorDialog({ residentId, residentName });
+  };
+
+  const handleCloseAssignTutorDialog = () => {
+    setAssignTutorDialog(null);
+  };
+
+  const handleAssignTutor = async (tutorId: string, rotationId: string | null) => {
+    if (!assignTutorDialog) return;
+
+    try {
+      if (rotationId) {
+        await assignTutorToResidentForRotation(assignTutorDialog.residentId, tutorId, rotationId);
+        setToast({
+          message: t('admin.users.tutorAssignedToRotation', {
+            defaultValue: 'Tutor assigned to rotation successfully.',
+          }),
+          variant: 'success',
+        });
+      } else {
+        await assignTutorToResidentGlobal(assignTutorDialog.residentId, tutorId);
+        setToast({
+          message: t('admin.users.tutorAssignedGlobally', {
+            defaultValue: 'Tutor assigned globally to resident.',
+          }),
+          variant: 'success',
+        });
+      }
+      await refresh();
+      handleCloseAssignTutorDialog();
+    } catch (error) {
+      console.error('Failed to assign tutor:', error);
+      throw error; // Let AssignTutorDialog handle the error
+    }
   };
 
   const manageAssignments = manageDialog
@@ -554,6 +622,7 @@ const UserManagementTable = memo(function UserManagementTable() {
                     assignments={getAssignmentsForResident(userId)}
                     t={t}
                     onManageRotations={() => openManageRotations(userId, user.fullName || userId)}
+                    onAssignTutor={() => openAssignTutor(userId, user.fullName || userId)}
                   />
                 );
               })}
@@ -686,18 +755,30 @@ const UserManagementTable = memo(function UserManagementTable() {
                                   <option value="admin">Admin</option>
                                 </Select>
                                 {user.role === 'resident' && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="btn-levitate"
-                                    onClick={() =>
-                                      openManageRotations(userId, user.fullName || userId)
-                                    }
-                                  >
-                                    {t('admin.users.manageRotations', {
-                                      defaultValue: 'Manage rotations',
-                                    })}
-                                  </Button>
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="btn-levitate"
+                                      onClick={() => openAssignTutor(userId, user.fullName || userId)}
+                                    >
+                                      {t('admin.users.assignTutor', {
+                                        defaultValue: 'Assign Tutor',
+                                      })}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="btn-levitate"
+                                      onClick={() =>
+                                        openManageRotations(userId, user.fullName || userId)
+                                      }
+                                    >
+                                      {t('admin.users.manageRotations', {
+                                        defaultValue: 'Manage rotations',
+                                      })}
+                                    </Button>
+                                  </>
                                 )}
                               </div>
                             </TD>
@@ -746,6 +827,24 @@ const UserManagementTable = memo(function UserManagementTable() {
         onClose={handleCloseManageDialog}
         onUnassign={handleUnassignRotation}
         unassigningRotationId={unassigningRotationId}
+      />
+      <AssignTutorDialog
+        isOpen={!!assignTutorDialog}
+        onClose={handleCloseAssignTutorDialog}
+        onConfirm={handleAssignTutor}
+        residentId={assignTutorDialog?.residentId || ''}
+        residentName={assignTutorDialog?.residentName || ''}
+        existingTutorIds={
+          assignTutorDialog
+            ? Array.from(
+                new Set(
+                  getAssignmentsForResident(assignTutorDialog.residentId).flatMap(
+                    (a) => a.tutorIds || [],
+                  ),
+                ),
+              )
+            : []
+        }
       />
     </>
   );

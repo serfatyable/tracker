@@ -450,11 +450,67 @@ export async function listAssignmentsByResident(
 export async function updateUsersStatus(params: {
   userIds: string[];
   status: 'active' | 'disabled' | 'pending';
+  autoApproveRotations?: boolean;
 }) {
   const db = getFirestore(getFirebaseApp());
-  const batch = writeBatch(db);
-  for (const uid of params.userIds) batch.update(doc(db, 'users', uid), { status: params.status });
-  await batch.commit();
+
+  // If approving users and autoApproveRotations is enabled, check for pending rotation requests
+  if (params.status === 'active' && params.autoApproveRotations !== false) {
+    // Process each user individually to handle rotation approvals
+    for (const uid of params.userIds) {
+      await runTransaction(db, async (tx) => {
+        const userRef = doc(db, 'users', uid);
+        const userSnap = await tx.get(userRef);
+
+        if (!userSnap.exists()) return;
+
+        const userData = userSnap.data() as any;
+        const rotationRequest = userData.rotationSelectionRequest;
+
+        // Update user status
+        tx.update(userRef, { status: params.status });
+
+        // If user has pending rotation request, approve it
+        if (
+          rotationRequest &&
+          rotationRequest.status === 'pending' &&
+          rotationRequest.requestedCurrentRotationId
+        ) {
+          const currentRotationId = rotationRequest.requestedCurrentRotationId.trim();
+          const completedRotationIds = Array.from(
+            new Set(
+              (rotationRequest.requestedCompletedRotationIds || []).filter(
+                (id: string) => typeof id === 'string' && id.trim() !== '',
+              ),
+            ),
+          );
+
+          // Ensure current rotation is in completed list
+          if (!completedRotationIds.includes(currentRotationId)) {
+            completedRotationIds.push(currentRotationId);
+          }
+
+          tx.update(userRef, {
+            completedRotationIds,
+            currentRotationId,
+            rotationSelectionRequest: {
+              ...rotationRequest,
+              status: 'approved',
+              requestedCompletedRotationIds: completedRotationIds,
+              requestedCurrentRotationId: currentRotationId,
+              submittedAt: rotationRequest.submittedAt || serverTimestamp(),
+              resolvedAt: serverTimestamp(),
+            },
+          });
+        }
+      });
+    }
+  } else {
+    // Simple batch update for other status changes
+    const batch = writeBatch(db);
+    for (const uid of params.userIds) batch.update(doc(db, 'users', uid), { status: params.status });
+    await batch.commit();
+  }
 }
 
 export async function updateUsersRole(params: { userIds: string[]; role: Role }) {

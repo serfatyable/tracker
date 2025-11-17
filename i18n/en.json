@@ -649,7 +649,20 @@
       "rotationApprovalRejected": "Rotation selections marked as rejected.",
       "noPendingRotationRequests": "No pending rotation approvals",
       "noPendingRotationRequestsDescription": "New resident rotation selections will appear here once submitted.",
-      "rotationRequestSubmittedAt": "Submitted {{time}}"
+      "rotationRequestSubmittedAt": "Submitted {{time}}",
+      "assignTutor": "Assign Tutor",
+      "tutorAssignedToRotation": "Tutor assigned to rotation successfully.",
+      "tutorAssignedGlobally": "Tutor assigned globally to resident.",
+      "noPendingPetitions": "No pending rotation petitions",
+      "noPendingPetitionsDescription": "Resident rotation activation/completion requests will appear here.",
+      "petitionApproved": "Petition approved successfully.",
+      "petitionDenied": "Petition denied.",
+      "petitionTypeActivate": "Activate",
+      "petitionTypeFinish": "Finish",
+      "petitionRotation": "Rotation:",
+      "petitionReason": "Reason:",
+      "petitionRequestedAt": "Requested {{time}}",
+      "manageRotations": "Manage rotations"
     },
     "kpi": {
       "residents": "Residents",
