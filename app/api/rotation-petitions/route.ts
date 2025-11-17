@@ -1,20 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { createAuthErrorResponse, verifyAuthToken } from '@/lib/api/auth';
-import { getAdminApp } from '@/lib/firebase/admin-sdk';
 import { listRotationPetitionsWithDetails, approveRotationPetition, denyRotationPetition } from '@/lib/firebase/admin';
+import { getAdminApp } from '@/lib/firebase/admin-sdk';
+import {
+  validateApiRequest,
+  createRotationPetitionRequestSchema,
+  updateRotationPetitionRequestSchema,
+  listRotationPetitionsQuerySchema,
+} from '@/lib/schemas';
 import { logger } from '@/lib/utils/logger';
-
-type PostBody = {
-  rotationId?: unknown;
-  type?: unknown;
-  reason?: unknown;
-};
-
-type PatchBody = {
-  petitionId?: unknown;
-  action?: unknown;
-};
 
 export async function GET(req: NextRequest) {
   let uid: string;
@@ -38,16 +33,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden: Admin access required.' }, { status: 403 });
     }
 
-    // Get query parameters
+    // Get and validate query parameters
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get('status') as 'pending' | 'approved' | 'denied' | null;
-    const residentId = searchParams.get('residentId');
-    const limit = searchParams.get('limit');
+    const queryData = {
+      status: searchParams.get('status') || undefined,
+      residentId: searchParams.get('residentId') || undefined,
+      limit: searchParams.get('limit') || undefined,
+    };
+
+    const validationResult = validateApiRequest(listRotationPetitionsQuerySchema, queryData);
+    if (!validationResult.success) {
+      return NextResponse.json({ error: validationResult.error }, { status: validationResult.status });
+    }
 
     const params: any = {};
-    if (status) params.status = status;
-    if (residentId) params.residentQuery = residentId;
-    if (limit) params.limit = parseInt(limit, 10);
+    if (validationResult.data.status) params.status = validationResult.data.status;
+    if (validationResult.data.residentId) params.residentQuery = validationResult.data.residentId;
+    if (validationResult.data.limit) params.limit = validationResult.data.limit;
 
     const result = await listRotationPetitionsWithDetails(params);
 
@@ -75,27 +77,20 @@ export async function POST(req: NextRequest) {
     return createAuthErrorResponse(error);
   }
 
-  let body: PostBody;
+  let body: unknown;
   try {
-    body = (await req.json()) as PostBody;
+    body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON payload.' }, { status: 400 });
   }
 
-  const rotationId = typeof body.rotationId === 'string' ? body.rotationId.trim() : '';
-  const type = body.type === 'activate' || body.type === 'finish' ? body.type : null;
-  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
-
-  if (!rotationId) {
-    return NextResponse.json({ error: 'Rotation ID is required.' }, { status: 400 });
+  // Validate request body with Zod
+  const validationResult = validateApiRequest(createRotationPetitionRequestSchema, body);
+  if (!validationResult.success) {
+    return NextResponse.json({ error: validationResult.error }, { status: validationResult.status });
   }
 
-  if (!type) {
-    return NextResponse.json(
-      { error: 'Petition type must be either "activate" or "finish".' },
-      { status: 400 },
-    );
-  }
+  const { rotationId, type, reason } = validationResult.data;
 
   try {
     const app = getAdminApp();
@@ -184,26 +179,20 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden: Admin access required.' }, { status: 403 });
     }
 
-    let body: PatchBody;
+    let body: unknown;
     try {
-      body = (await req.json()) as PatchBody;
+      body = await req.json();
     } catch {
       return NextResponse.json({ error: 'Invalid JSON payload.' }, { status: 400 });
     }
 
-    const petitionId = typeof body.petitionId === 'string' ? body.petitionId.trim() : '';
-    const action = body.action === 'approve' || body.action === 'deny' ? body.action : null;
-
-    if (!petitionId) {
-      return NextResponse.json({ error: 'Petition ID is required.' }, { status: 400 });
+    // Validate request body with Zod
+    const validationResult = validateApiRequest(updateRotationPetitionRequestSchema, body);
+    if (!validationResult.success) {
+      return NextResponse.json({ error: validationResult.error }, { status: validationResult.status });
     }
 
-    if (!action) {
-      return NextResponse.json(
-        { error: 'Action must be either "approve" or "deny".' },
-        { status: 400 },
-      );
-    }
+    const { petitionId, action } = validationResult.data;
 
     if (action === 'approve') {
       await approveRotationPetition(petitionId, uid);

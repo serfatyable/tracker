@@ -4,14 +4,14 @@ import { ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/out
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { approveRotationPetition, denyRotationPetition } from '@/lib/firebase/admin';
-import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
-import type { RotationPetition } from '@/types/rotationPetitions';
 import Avatar from '@/components/ui/Avatar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Dialog, DialogHeader, DialogFooter } from '@/components/ui/Dialog';
+import { approveRotationPetition, denyRotationPetition } from '@/lib/firebase/admin';
+import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
+import type { RotationPetition } from '@/types/rotationPetitions';
 
 type Props = {
   petitions: RotationPetition[];

@@ -24,6 +24,7 @@ import { getFirebaseStatus } from '../../lib/firebase/client';
 import { mapFirebaseAuthErrorToI18nKey } from '../../lib/firebase/errors';
 import { useRotations } from '../../lib/hooks/useRotations';
 import { applyLanguageToDocument } from '../../lib/i18n/applyLanguage';
+import { validateWithSchema, signInSchema, passwordResetSchema, signUpSchema } from '../../lib/schemas';
 import type { Role } from '../../types/auth';
 
 function classNames(...classes: (string | boolean | undefined)[]) {
@@ -109,27 +110,24 @@ export default function AuthPage() {
     }
   }, [role]);
 
-  function validateEmail(value: string) {
-    return /.+@.+\..+/.test(value);
-  }
-  function isPastDateYYYYMMDD(value: string) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-    const d = new Date(value + 'T00:00:00');
-    const today = new Date();
-    return (
-      d.getTime() <= new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
-    );
-  }
-
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setFormMessage(null);
-    const newErrors: Record<string, string | null> = {};
-    if (!siEmail) newErrors.siEmail = t('errors.required');
-    else if (!validateEmail(siEmail)) newErrors.siEmail = t('errors.email');
-    if (!siPassword) newErrors.siPassword = t('errors.required');
-    setErrors(newErrors);
-    if (Object.values(newErrors).some(Boolean)) return;
+
+    // Validate with Zod schema
+    const validationErrors = validateWithSchema(signInSchema, {
+      email: siEmail,
+      password: siPassword,
+    });
+
+    if (validationErrors) {
+      // Map errors to form fields
+      const mappedErrors: Record<string, string> = {};
+      if (validationErrors.email) mappedErrors.siEmail = t(validationErrors.email);
+      if (validationErrors.password) mappedErrors.siPassword = t(validationErrors.password);
+      setErrors(mappedErrors);
+      return;
+    }
     try {
       setLoading(true);
       await signIn(siEmail, siPassword);
@@ -166,14 +164,19 @@ export default function AuthPage() {
   async function handleForgotPassword(e: React.FormEvent) {
     e.preventDefault();
     setFormMessage(null);
-    const email = siEmail;
-    if (!email || !validateEmail(email)) {
-      setErrors((prev) => ({ ...prev, siEmail: t('errors.email') }));
+
+    // Validate with Zod schema
+    const validationErrors = validateWithSchema(passwordResetSchema, { email: siEmail });
+
+    if (validationErrors) {
+      const mappedErrors: Record<string, string> = {};
+      if (validationErrors.email) mappedErrors.siEmail = t(validationErrors.email);
+      setErrors(mappedErrors);
       return;
     }
     try {
       setLoading(true);
-      await requestPasswordReset(email);
+      await requestPasswordReset(siEmail);
       setResetSent(true);
     } catch {
       setFormMessage(t('errors.firebaseGeneric'));
@@ -185,21 +188,43 @@ export default function AuthPage() {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setFormMessage(null);
-    const newErrors: Record<string, string | null> = {};
-    if (!fullName) newErrors.fullName = t('errors.required');
-    if (!suEmail) newErrors.suEmail = t('errors.required');
-    else if (!validateEmail(suEmail)) newErrors.suEmail = t('errors.email');
-    if (!suPassword) newErrors.suPassword = t('errors.required');
-    else if (suPassword.length < 8) newErrors.suPassword = t('errors.passwordLength');
+
+    // Build sign-up data object
+    const signUpData: any = {
+      fullName,
+      fullNameHe: fullNameHe || undefined,
+      email: suEmail,
+      password: suPassword,
+      role,
+      language,
+    };
+
+    // Add role-specific fields
     if (role === 'resident') {
-      if (!residencyStartDate) newErrors.residencyStartDate = t('errors.required');
-      else if (!isPastDateYYYYMMDD(residencyStartDate))
-        newErrors.residencyStartDate = t('errors.dateInFuture');
-      if (!studyProgramType) newErrors.studyProgramType = t('errors.required');
-      if (!currentRotationId) newErrors.rotationSelection = t('auth.atLeastOneRotationRequired');
+      signUpData.residencyStartDate = residencyStartDate;
+      signUpData.studyprogramtype = studyProgramType;
+      signUpData.completedRotationIds = completedRotationIds;
+      signUpData.currentRotationId = currentRotationId;
     }
-    setErrors(newErrors);
-    if (Object.values(newErrors).some(Boolean)) return;
+
+    // Validate with Zod schema
+    const validationErrors = validateWithSchema(signUpSchema, signUpData);
+
+    if (validationErrors) {
+      // Map errors to form fields
+      const mappedErrors: Record<string, string> = {};
+      if (validationErrors.fullName) mappedErrors.fullName = t(validationErrors.fullName);
+      if (validationErrors.email) mappedErrors.suEmail = t(validationErrors.email);
+      if (validationErrors.password) mappedErrors.suPassword = t(validationErrors.password);
+      if (validationErrors.residencyStartDate)
+        mappedErrors.residencyStartDate = t(validationErrors.residencyStartDate);
+      if (validationErrors.studyprogramtype)
+        mappedErrors.studyProgramType = t(validationErrors.studyprogramtype);
+      if (validationErrors.currentRotationId)
+        mappedErrors.rotationSelection = t(validationErrors.currentRotationId);
+      setErrors(mappedErrors);
+      return;
+    }
     try {
       setLoading(true);
       await signUp({

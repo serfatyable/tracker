@@ -2,8 +2,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useUserTasks } from '@/lib/hooks/useUserTasks';
 import { ListSkeleton } from '@/components/dashboard/Skeleton';
+import { useUserTasks } from '@/lib/hooks/useUserTasks';
 
 export default function ActivityTimeline() {
   const { t } = useTranslation();
