@@ -6,6 +6,7 @@ import {
   TrashIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
+import { getAuth } from 'firebase/auth';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,7 +15,6 @@ import type {
   OrphanedFirestoreDoc,
   SyncResponse,
 } from '../../../app/api/admin/users/sync/route';
-import { getAuth } from '../../../lib/firebase/client';
 import { TableSkeleton } from '../../dashboard/Skeleton';
 import Button from '../../ui/Button';
 import { Dialog, DialogHeader, DialogFooter } from '../../ui/Dialog';
