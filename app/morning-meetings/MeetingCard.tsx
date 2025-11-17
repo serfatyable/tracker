@@ -7,6 +7,7 @@ import { renderHighlightedText, startOfDay } from './utils';
 
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import { sanitizeContentStrict } from '@/lib/utils/sanitize';
 import type { MorningMeeting } from '@/types/morningMeetings';
 
 export interface MeetingCardProps {
@@ -113,7 +114,7 @@ const MeetingCard = memo(function MeetingCard({
             </div>
           ) : null}
           <h3 className="text-lg font-semibold leading-snug text-gray-900 dark:text-gray-100">
-            {renderHighlightedText(meeting.title, highlightTerms)}
+            {renderHighlightedText(sanitizeContentStrict(meeting.title), highlightTerms)}
           </h3>
           <div className="grid gap-2 text-sm text-gray-600 dark:text-gray-300 sm:grid-cols-2">
             <div className="flex items-center gap-2">
@@ -132,7 +133,9 @@ const MeetingCard = memo(function MeetingCard({
                 <span className="font-medium text-gray-700 dark:text-gray-200">
                   {t('morningMeetings.lecturer', { defaultValue: 'Lecturer' })}:
                 </span>
-                <span>{renderHighlightedText(meeting.lecturer, highlightTerms)}</span>
+                <span>
+                  {renderHighlightedText(sanitizeContentStrict(meeting.lecturer), highlightTerms)}
+                </span>
               </div>
             ) : null}
             {meeting.moderator ? (
@@ -141,7 +144,9 @@ const MeetingCard = memo(function MeetingCard({
                 <span className="font-medium text-gray-700 dark:text-gray-200">
                   {t('morningMeetings.moderator', { defaultValue: 'Moderator' })}:
                 </span>
-                <span>{renderHighlightedText(meeting.moderator, highlightTerms)}</span>
+                <span>
+                  {renderHighlightedText(sanitizeContentStrict(meeting.moderator), highlightTerms)}
+                </span>
               </div>
             ) : null}
             {meeting.organizer ? (
@@ -150,13 +155,15 @@ const MeetingCard = memo(function MeetingCard({
                 <span className="font-medium text-gray-700 dark:text-gray-200">
                   {t('morningMeetings.organizer', { defaultValue: 'Organizer' })}:
                 </span>
-                <span>{renderHighlightedText(meeting.organizer, highlightTerms)}</span>
+                <span>
+                  {renderHighlightedText(sanitizeContentStrict(meeting.organizer), highlightTerms)}
+                </span>
               </div>
             ) : null}
           </div>
           {meeting.notes ? (
             <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700 dark:border-gray-700/60 dark:bg-gray-900/40 dark:text-gray-200">
-              {renderHighlightedText(meeting.notes, highlightTerms)}
+              {renderHighlightedText(sanitizeContentStrict(meeting.notes), highlightTerms)}
             </div>
           ) : null}
         </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getFirebaseApp } from '../../lib/firebase/client';
+import { sanitizeContentStrict } from '../../lib/utils/sanitize';
 import { ListSkeleton } from '../dashboard/Skeleton';
 import EmptyState, { EmptyIcon } from '../ui/EmptyState';
 
@@ -75,8 +76,10 @@ export default function AnnouncementsCard() {
               key={a.id}
               className="rounded border border-gray-200 px-2 py-1 dark:border-[rgb(var(--border))]"
             >
-              <div className="font-medium">{a.title}</div>
-              <div className="text-gray-600 dark:text-[rgb(var(--fg))]">{a.body}</div>
+              <div className="font-medium">{sanitizeContentStrict(a.title)}</div>
+              <div className="text-gray-600 dark:text-[rgb(var(--fg))]">
+                {sanitizeContentStrict(a.body)}
+              </div>
             </li>
           ))}
         </ul>

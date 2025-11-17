@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import PasswordConfirmDialog from './PasswordConfirmDialog';
 
 import { updateUserEmail, updateUserProfile } from '@/lib/firebase/auth';
+import { sanitizeContentStrict } from '@/lib/utils/sanitize';
 import type { UserProfile } from '@/types/auth';
 
 interface ProfileSectionProps {
@@ -188,14 +189,16 @@ export default function ProfileSection({ profile, onUpdate, onToast }: ProfileSe
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {t('settings.profile.fullNameEnglish')}:
               </span>
-              <span className="text-gray-900 dark:text-gray-50">{profile.fullName || '—'}</span>
+              <span className="text-gray-900 dark:text-gray-50">
+                {profile.fullName ? sanitizeContentStrict(profile.fullName) : '—'}
+              </span>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {t('settings.profile.fullNameHebrew')}:
               </span>
               <span className="text-gray-900 dark:text-gray-50" dir="rtl">
-                {profile.fullNameHe || '—'}
+                {profile.fullNameHe ? sanitizeContentStrict(profile.fullNameHe) : '—'}
               </span>
             </div>
             <button

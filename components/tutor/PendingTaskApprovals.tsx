@@ -14,6 +14,7 @@ import { updateTasksStatus } from '@/lib/firebase/admin';
 import { getFirebaseApp } from '@/lib/firebase/client';
 import type { TaskDoc } from '@/lib/firebase/db';
 import { logger } from '@/lib/utils/logger';
+import { sanitizeContent } from '@/lib/utils/sanitize';
 import type { UserProfile } from '@/types/auth';
 import type { Rotation, RotationNode } from '@/types/rotations';
 
@@ -680,7 +681,7 @@ const PendingTaskApprovals = memo(function PendingTaskApprovals({
                                       </div>
                                       {task.note ? (
                                         <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
-                                          {task.note}
+                                          {sanitizeContent(task.note)}
                                         </p>
                                       ) : null}
                                       {submittedLabel ? (

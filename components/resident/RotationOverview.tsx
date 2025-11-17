@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useResidentPendingPetition } from '../../lib/hooks/useResidentPendingPetition';
 import { useResidentRotationStatus } from '../../lib/hooks/useResidentRotationStatus';
 import { useRotationDetails } from '../../lib/hooks/useRotationDetails';
+import { sanitizeContentStrict } from '../../lib/utils/sanitize';
 import { KPICardSkeleton } from '../dashboard/Skeleton';
 import Button from '../ui/Button';
 
@@ -265,7 +266,7 @@ export default function RotationOverview({ rotationId }: Props) {
           open={petitionDialogOpen}
           onClose={() => setPetitionDialogOpen(false)}
           rotationId={rotation.id}
-          rotationName={rotation.name}
+          rotationName={sanitizeContentStrict(rotation.name)}
           type={petitionType}
           onSuccess={handlePetitionSuccess}
         />
