@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Dialog, DialogHeader, DialogFooter } from '@/components/ui/Dialog';
 import { approveRotationPetition, denyRotationPetition } from '@/lib/firebase/admin';
-import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import type { RotationPetition } from '@/types/rotationPetitions';
 
 type Props = {

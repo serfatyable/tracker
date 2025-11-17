@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useResidentProgress } from '../../lib/hooks/useResidentProgress';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
-import { useUserTasks } from '../../lib/hooks/useUserTasks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 import Badge from '../ui/Badge';
 import EmptyState, { ChecklistIcon } from '../ui/EmptyState';
 

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import type { Role } from '../../types/auth';
 import Skeleton from '../dashboard/Skeleton';
 

@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile } from '../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useTomorrowLecturerReminder } from '../lib/hooks/useTomorrowLecturerReminder';
 
 import Avatar from './ui/Avatar';

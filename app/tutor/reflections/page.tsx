@@ -11,7 +11,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
-import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useReflectionsForTutor } from '../../../lib/hooks/useReflections';
 import { createSynonymMatcher } from '../../../lib/search/synonyms';
 

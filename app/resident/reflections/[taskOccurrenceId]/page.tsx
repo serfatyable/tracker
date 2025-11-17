@@ -7,7 +7,7 @@ import LargeTitleHeader from '../../../../components/layout/LargeTitleHeader';
 import ReflectionForm from '../../../../components/reflections/ReflectionForm';
 import Button from '../../../../components/ui/Button';
 import Card from '../../../../components/ui/Card';
-import { useCurrentUserProfile } from '../../../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { submitReflection, useReflection } from '../../../../lib/hooks/useReflections';
 import { useLatestPublishedTemplate } from '../../../../lib/hooks/useReflectionTemplates';
 

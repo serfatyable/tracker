@@ -2,10 +2,10 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useResidentActiveRotation } from '@/lib/hooks/useResidentActiveRotation';
-import { useRotations } from '@/lib/hooks/useRotations';
-import { useUserTasks } from '@/lib/hooks/useUserTasks';
+import { useRotations } from '@/lib/react-query/hooks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 
 export default function WelcomeHero() {
   const { t, i18n } = useTranslation();

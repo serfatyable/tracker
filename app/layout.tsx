@@ -3,6 +3,7 @@ import './globals.css';
 import { cookies } from 'next/headers';
 
 import { I18nProvider } from '../lib/i18n/Provider';
+import { ReactQueryProvider } from '../lib/react-query/provider';
 import { SentryInit } from '../lib/sentry/SentryInit';
 
 export const metadata: Metadata = {
@@ -49,13 +50,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={lang} dir={dir} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <SentryInit />
-        <I18nProvider>
-          {children}
-          {/* Dev diagnostics are gated and default-off */}
-          {process.env.NEXT_PUBLIC_SHOW_DEV === 'true'
-            ? (await import('../components/DevDiagnosticsBar')).default()
-            : null}
-        </I18nProvider>
+        <ReactQueryProvider>
+          <I18nProvider>
+            {children}
+            {/* Dev diagnostics are gated and default-off */}
+            {process.env.NEXT_PUBLIC_SHOW_DEV === 'true'
+              ? (await import('../components/DevDiagnosticsBar')).default()
+              : null}
+          </I18nProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );

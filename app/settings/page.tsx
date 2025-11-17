@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import AppShell from '../../components/layout/AppShell';
 import SettingsPanel from '../../components/settings/SettingsPanel';
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
 export default function SettingsPage() {
   const router = useRouter();

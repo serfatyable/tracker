@@ -12,7 +12,7 @@ import StudyMaterialsTab from '@/components/exams/StudyMaterialsTab';
 import AppShell from '@/components/layout/AppShell';
 import LargeTitleHeader from '@/components/layout/LargeTitleHeader';
 import Card from '@/components/ui/Card';
-import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useExam } from '@/lib/hooks/useExams';
 import { getLocalized } from '@/lib/i18n/getLocalized';
 import { haptic } from '@/lib/utils/haptics';

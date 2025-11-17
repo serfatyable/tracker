@@ -22,7 +22,7 @@ import {
 } from '../../lib/firebase/auth';
 import { getFirebaseStatus } from '../../lib/firebase/client';
 import { mapFirebaseAuthErrorToI18nKey } from '../../lib/firebase/errors';
-import { useRotations } from '../../lib/hooks/useRotations';
+import { useRotations } from '../../lib/react-query/hooks';
 import { applyLanguageToDocument } from '../../lib/i18n/applyLanguage';
 import {
   validateWithSchema,

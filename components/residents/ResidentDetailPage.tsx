@@ -13,7 +13,7 @@ import ResidentDetailContent, { type ResidentDirectoryEntry } from './ResidentDe
 
 import { useActiveRotations } from '@/lib/hooks/useActiveRotations';
 import { useAllAssignments } from '@/lib/hooks/useAllAssignments';
-import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useUsersByRole } from '@/lib/hooks/useUsersByRole';
 import type { UserProfile } from '@/types/auth';
 

@@ -14,7 +14,7 @@ import EnhancedQuickActions from '../../components/resident/EnhancedQuickActions
 import SmartRecommendations from '../../components/resident/SmartRecommendations';
 import UpcomingSchedule from '../../components/resident/UpcomingSchedule';
 import WelcomeHero from '../../components/resident/WelcomeHero';
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
 

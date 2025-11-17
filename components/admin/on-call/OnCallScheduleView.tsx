@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import { CardSkeleton } from '../../dashboard/Skeleton';
 import Badge from '../../ui/Badge';

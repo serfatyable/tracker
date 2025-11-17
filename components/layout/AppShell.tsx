@@ -1,7 +1,7 @@
 'use client';
 import type { CSSProperties } from 'react';
 
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import TopBar from '../TopBar';
 import CommandPalette from '../ui/CommandPalette';
 import NetworkStatusIndicator from '../ui/NetworkStatusIndicator';
