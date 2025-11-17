@@ -83,15 +83,6 @@ function useResidentTabs(): Tab[] {
       match: (pathname) => pathname.startsWith('/morning-meetings'),
     },
     {
-      id: 'resident-progress',
-      label: t('resident.progress', { defaultValue: 'Progress' }) as string,
-      href: '/resident?tab=progress',
-      icon: AcademicCapIcon,
-      match: (pathname, params) =>
-        pathname.startsWith('/resident') && params?.get('tab') === 'progress',
-      badge: pendingTasks > 0 ? pendingTasks : null,
-    },
-    {
       id: 'resident-settings',
       label: t('ui.settings', { defaultValue: 'Settings' }) as string,
       href: '/settings',

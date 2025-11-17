@@ -13,11 +13,6 @@ export function middleware(request: NextRequest) {
   const tab = url.searchParams.get('tab');
 
   // 90-day redirects for old ?tab= links → new routes (bridge period)
-  if (pathname === '/resident' && tab === 'progress') {
-    url.searchParams.delete('tab');
-    url.pathname = '/progress';
-    return NextResponse.redirect(url);
-  }
   if (pathname === '/tutor' && tab === 'residents') {
     url.searchParams.delete('tab');
     url.pathname = '/tutor/residents';
