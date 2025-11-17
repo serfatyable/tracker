@@ -197,6 +197,148 @@ export async function rejectRotationSelectionRequest(residentId: string): Promis
   });
 }
 
+// Rotation Petitions
+export async function listRotationPetitions(params?: {
+  status?: 'pending' | 'approved' | 'denied';
+  residentId?: string;
+  limit?: number;
+}): Promise<RotationPetitionWithDetails[]> {
+  const db = getFirestore(getFirebaseApp());
+  const parts: any[] = [];
+
+  if (params?.status) parts.push(where('status', '==', params.status));
+  if (params?.residentId) parts.push(where('residentId', '==', params.residentId));
+  parts.push(orderBy('requestedAt', 'desc'));
+  if (params?.limit) parts.push(qLimit(params.limit));
+
+  const snap = await getDocs(query(collection(db, 'rotationPetitions'), ...(parts as any)));
+  const petitions = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as RotationPetition[];
+
+  // Fetch related user and rotation data
+  const residentIds = Array.from(new Set(petitions.map((p) => p.residentId)));
+  const rotationIds = Array.from(new Set(petitions.map((p) => p.rotationId)));
+
+  const [residents, rotations] = await Promise.all([
+    Promise.all(
+      residentIds.map(async (uid) => {
+        const userSnap = await getDoc(doc(db, 'users', uid));
+        return userSnap.exists() ? ({ uid, ...userSnap.data() } as UserProfile) : null;
+      }),
+    ),
+    Promise.all(
+      rotationIds.map(async (rotId) => {
+        const rotSnap = await getDoc(doc(db, 'rotations', rotId));
+        return rotSnap.exists() ? ({ id: rotId, ...rotSnap.data() } as Rotation) : null;
+      }),
+    ),
+  ]);
+
+  const residentMap = new Map(residents.filter((r) => r !== null).map((r) => [r!.uid, r!]));
+  const rotationMap = new Map(rotations.filter((r) => r !== null).map((r) => [r!.id, r!]));
+
+  return petitions.map((petition) => ({
+    ...petition,
+    resident: residentMap.get(petition.residentId) || null,
+    rotation: rotationMap.get(petition.rotationId) || null,
+  }));
+}
+
+export async function approveRotationPetition(petitionId: string, approvedBy: string): Promise<void> {
+  const db = getFirestore(getFirebaseApp());
+  const petitionRef = doc(db, 'rotationPetitions', petitionId);
+
+  await runTransaction(db, async (tx) => {
+    const petitionSnap = await tx.get(petitionRef);
+    if (!petitionSnap.exists()) throw new Error('Petition not found');
+
+    const petition = petitionSnap.data() as RotationPetition;
+    if (petition.status !== 'pending') {
+      throw new Error('Petition has already been resolved');
+    }
+
+    // Update petition status
+    tx.update(petitionRef, {
+      status: 'approved',
+      resolvedAt: serverTimestamp(),
+      resolvedBy: approvedBy,
+    });
+
+    // Find or create assignment
+    const assignmentsSnap = await getDocs(
+      query(
+        collection(db, 'assignments'),
+        where('residentId', '==', petition.residentId),
+        where('rotationId', '==', petition.rotationId),
+      ),
+    );
+
+    if (petition.type === 'activate') {
+      if (assignmentsSnap.empty) {
+        // Create new assignment
+        const newAssignmentRef = doc(collection(db, 'assignments'));
+        tx.set(newAssignmentRef, {
+          residentId: petition.residentId,
+          rotationId: petition.rotationId,
+          tutorIds: [],
+          status: 'active',
+          startedAt: serverTimestamp(),
+          endedAt: null,
+        } as any);
+      } else {
+        // Update existing assignment to active
+        const assignmentRef = assignmentsSnap.docs[0]!.ref;
+        tx.update(assignmentRef, {
+          status: 'active',
+          startedAt: serverTimestamp(),
+        });
+      }
+
+      // Update user's currentRotationId
+      const userRef = doc(db, 'users', petition.residentId);
+      tx.update(userRef, {
+        currentRotationId: petition.rotationId,
+      });
+    } else if (petition.type === 'finish') {
+      if (!assignmentsSnap.empty) {
+        // Update assignment to finished
+        const assignmentRef = assignmentsSnap.docs[0]!.ref;
+        tx.update(assignmentRef, {
+          status: 'finished',
+          endedAt: serverTimestamp(),
+        });
+      }
+
+      // Add to completed rotations and clear current
+      const userRef = doc(db, 'users', petition.residentId);
+      tx.update(userRef, {
+        completedRotationIds: arrayUnion(petition.rotationId),
+        currentRotationId: null,
+      });
+    }
+  });
+}
+
+export async function denyRotationPetition(petitionId: string, deniedBy: string): Promise<void> {
+  const db = getFirestore(getFirebaseApp());
+  const petitionRef = doc(db, 'rotationPetitions', petitionId);
+
+  await runTransaction(db, async (tx) => {
+    const petitionSnap = await tx.get(petitionRef);
+    if (!petitionSnap.exists()) throw new Error('Petition not found');
+
+    const petition = petitionSnap.data() as RotationPetition;
+    if (petition.status !== 'pending') {
+      throw new Error('Petition has already been resolved');
+    }
+
+    tx.update(petitionRef, {
+      status: 'denied',
+      resolvedAt: serverTimestamp(),
+      resolvedBy: deniedBy,
+    });
+  });
+}
+
 // Assignments
 export async function listActiveAssignments(): Promise<Assignment[]> {
   const db = getFirestore(getFirebaseApp());
@@ -450,11 +592,67 @@ export async function listAssignmentsByResident(
 export async function updateUsersStatus(params: {
   userIds: string[];
   status: 'active' | 'disabled' | 'pending';
+  autoApproveRotations?: boolean;
 }) {
   const db = getFirestore(getFirebaseApp());
-  const batch = writeBatch(db);
-  for (const uid of params.userIds) batch.update(doc(db, 'users', uid), { status: params.status });
-  await batch.commit();
+
+  // If approving users and autoApproveRotations is enabled, check for pending rotation requests
+  if (params.status === 'active' && params.autoApproveRotations !== false) {
+    // Process each user individually to handle rotation approvals
+    for (const uid of params.userIds) {
+      await runTransaction(db, async (tx) => {
+        const userRef = doc(db, 'users', uid);
+        const userSnap = await tx.get(userRef);
+
+        if (!userSnap.exists()) return;
+
+        const userData = userSnap.data() as any;
+        const rotationRequest = userData.rotationSelectionRequest;
+
+        // Update user status
+        tx.update(userRef, { status: params.status });
+
+        // If user has pending rotation request, approve it
+        if (
+          rotationRequest &&
+          rotationRequest.status === 'pending' &&
+          rotationRequest.requestedCurrentRotationId
+        ) {
+          const currentRotationId = rotationRequest.requestedCurrentRotationId.trim();
+          const completedRotationIds = Array.from(
+            new Set(
+              (rotationRequest.requestedCompletedRotationIds || []).filter(
+                (id: string) => typeof id === 'string' && id.trim() !== '',
+              ),
+            ),
+          );
+
+          // Ensure current rotation is in completed list
+          if (!completedRotationIds.includes(currentRotationId)) {
+            completedRotationIds.push(currentRotationId);
+          }
+
+          tx.update(userRef, {
+            completedRotationIds,
+            currentRotationId,
+            rotationSelectionRequest: {
+              ...rotationRequest,
+              status: 'approved',
+              requestedCompletedRotationIds: completedRotationIds,
+              requestedCurrentRotationId: currentRotationId,
+              submittedAt: rotationRequest.submittedAt || serverTimestamp(),
+              resolvedAt: serverTimestamp(),
+            },
+          });
+        }
+      });
+    }
+  } else {
+    // Simple batch update for other status changes
+    const batch = writeBatch(db);
+    for (const uid of params.userIds) batch.update(doc(db, 'users', uid), { status: params.status });
+    await batch.commit();
+  }
 }
 
 export async function updateUsersRole(params: { userIds: string[]; role: Role }) {

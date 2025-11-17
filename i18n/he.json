@@ -564,7 +564,20 @@
       "rotationApprovalRejected": "בחירת הסבבים סומנה כנדחתה.",
       "noPendingRotationRequests": "אין בקשות סבב ממתינות לאישור",
       "noPendingRotationRequestsDescription": "בחירות סבב חדשות של מתמחים יופיעו כאן לאחר השליחה.",
-      "rotationRequestSubmittedAt": "נשלח {{time}}"
+      "rotationRequestSubmittedAt": "נשלח {{time}}",
+      "assignTutor": "שיבוץ טיוטור",
+      "tutorAssignedToRotation": "טיוטור שובץ לסבב בהצלחה.",
+      "tutorAssignedGlobally": "טיוטור שובץ באופן כללי למתמחה.",
+      "noPendingPetitions": "אין בקשות סבב ממתינות",
+      "noPendingPetitionsDescription": "בקשות מתמחים להפעלה/סיום סבב יופיעו כאן.",
+      "petitionApproved": "הבקשה אושרה בהצלחה.",
+      "petitionDenied": "הבקשה נדחתה.",
+      "petitionTypeActivate": "הפעלה",
+      "petitionTypeFinish": "סיום",
+      "petitionRotation": "סבב:",
+      "petitionReason": "סיבה:",
+      "petitionRequestedAt": "התבקש {{time}}",
+      "manageRotations": "ניהול סבבים"
     },
     "kpi": {
       "residents": "מתמחים",
