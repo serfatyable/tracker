@@ -256,6 +256,7 @@
     "noResultsFound": "No results found",
     "resident": "Resident",
     "tutor": "Tutor",
+    "homeTitle": "Home",
     "home": {
       "greeting": {
         "morning": "Good morning",
