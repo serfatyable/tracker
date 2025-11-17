@@ -2,9 +2,10 @@
 
 import { useMemo } from 'react';
 
+import { useTutorDashboardData } from './useTutorDashboardData';
+
 import type { UserProfile } from '@/types/auth';
 
-import { useTutorDashboardData } from './useTutorDashboardData';
 
 export type TutorDashboardMetrics = {
   // Hero section metrics

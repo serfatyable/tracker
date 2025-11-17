@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { Assignment } from '../../../types/assignments';
 import type { UserProfile } from '../../../types/auth';
+
 import UnassignedQueues from './UnassignedQueues';
 
 type Props = {

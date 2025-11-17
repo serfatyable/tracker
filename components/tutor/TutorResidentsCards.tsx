@@ -10,14 +10,14 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { assignTutorToResident, unassignTutorFromResident } from '@/lib/firebase/admin';
-import type { Assignment } from '@/types/assignments';
-import type { UserProfile } from '@/types/auth';
-import type { Rotation } from '@/types/rotations';
 import Avatar from '@/components/ui/Avatar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import { assignTutorToResident, unassignTutorFromResident } from '@/lib/firebase/admin';
+import type { Assignment } from '@/types/assignments';
+import type { UserProfile } from '@/types/auth';
+import type { Rotation } from '@/types/rotations';
 
 type Props = {
   meUid: string;

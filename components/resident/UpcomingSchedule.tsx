@@ -3,10 +3,10 @@ import { getFirestore, collection, query, where, getDocs } from 'firebase/firest
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getFirebaseApp } from '@/lib/firebase/client';
-import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
 import { ListSkeleton } from '@/components/dashboard/Skeleton';
 import EmptyState, { CalendarIcon } from '@/components/ui/EmptyState';
+import { getFirebaseApp } from '@/lib/firebase/client';
+import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
 
 type ScheduleEvent = {
   id: string;

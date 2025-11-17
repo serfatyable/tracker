@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 
-import type { UserProfile } from '../../types/auth';
 import ActivityHeatmap from '../../components/admin/overview/ActivityHeatmap';
 import CollapsiblePetitions from '../../components/admin/overview/CollapsiblePetitions';
 import PeopleInsights from '../../components/admin/overview/PeopleInsights';
@@ -28,6 +27,7 @@ import { useRotationCoverage } from '../../lib/hooks/useRotationCoverage';
 import { useTodayOnCall } from '../../lib/hooks/useTodayOnCall';
 import { useUpcomingMeetings } from '../../lib/hooks/useUpcomingMeetings';
 import { useUsersByRole } from '../../lib/hooks/useUsersByRole';
+import type { UserProfile } from '../../types/auth';
 
 export default function AdminDashboard(): React.ReactElement {
   const router = useRouter();

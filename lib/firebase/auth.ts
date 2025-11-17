@@ -35,6 +35,7 @@ import type {
   TutorProfile,
   AdminProfile,
 } from '../../types/auth';
+import { validateOrThrow, signInSchema, signUpSchema, emailSchema } from '../schemas';
 
 import { getFirebaseApp } from './client';
 
@@ -46,8 +47,11 @@ function getAuthDb() {
 const CLIENT_DELETE_BATCH_SIZE = 250;
 
 export async function signIn(email: string, password: string) {
+  // Validate inputs
+  const validatedData = validateOrThrow(signInSchema, { email, password });
+
   const { auth } = getAuthDb();
-  const cred = await signInWithEmailAndPassword(auth, email, password);
+  const cred = await signInWithEmailAndPassword(auth, validatedData.email, validatedData.password);
   await ensureUserProfileExists(cred.user);
   return cred.user;
 }
@@ -64,6 +68,9 @@ export async function signUp(params: {
   completedRotationIds?: string[]; // IDs of completed rotations
   currentRotationId?: string; // ID of current rotation
 }) {
+  // Validate inputs with Zod schema
+  const validatedData = validateOrThrow(signUpSchema, params);
+
   const { auth, db } = getAuthDb();
   const {
     email,
@@ -72,11 +79,14 @@ export async function signUp(params: {
     fullNameHe,
     role,
     language,
-    residencyStartDate,
-    studyprogramtype,
-    completedRotationIds,
-    currentRotationId,
-  } = params;
+  } = validatedData;
+
+  // Extract role-specific fields
+  const residencyStartDate = 'residencyStartDate' in validatedData ? validatedData.residencyStartDate : undefined;
+  const studyprogramtype = 'studyprogramtype' in validatedData ? validatedData.studyprogramtype : undefined;
+  const completedRotationIds = 'completedRotationIds' in validatedData ? validatedData.completedRotationIds : undefined;
+  const currentRotationId = 'currentRotationId' in validatedData ? validatedData.currentRotationId : undefined;
+
   const cred = await createUserWithEmailAndPassword(auth, email, password);
 
   let userDoc: UserProfile;
@@ -253,8 +263,11 @@ export async function updateUserQuickAccessTabs(quickAccessTabs: string[]) {
 }
 
 export async function requestPasswordReset(email: string) {
+  // Validate email
+  const validatedEmail = validateOrThrow(emailSchema, email);
+
   const { auth } = getAuthDb();
-  await sendPasswordResetEmail(auth, email);
+  await sendPasswordResetEmail(auth, validatedEmail);
 }
 
 /**
