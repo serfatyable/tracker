@@ -139,7 +139,9 @@ export default function QuickAccessGrid({
             className="group card-levitate p-5 transition-all duration-200 hover:shadow-lg"
           >
             <div className="flex items-start justify-between mb-3">
-              <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${item.bgColor}`}>
+              <div
+                className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${item.bgColor}`}
+              >
                 <item.icon className={`h-6 w-6 ${item.color}`} aria-hidden />
               </div>
               {item.badge != null && item.badge > 0 && (

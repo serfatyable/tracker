@@ -229,9 +229,7 @@ export default function EnhancedPendingTasks({
                 className={`group relative overflow-hidden rounded-lg border ${priorityConfig.border} ${priorityConfig.bg} p-3 transition-all hover:shadow-md`}
               >
                 {/* Priority indicator bar */}
-                <div
-                  className={`absolute left-0 top-0 h-full w-1 ${priorityConfig.indicator}`}
-                />
+                <div className={`absolute left-0 top-0 h-full w-1 ${priorityConfig.indicator}`} />
 
                 <div className="flex items-center justify-between gap-3 pl-2">
                   <div className="flex min-w-0 flex-1 items-center gap-3">

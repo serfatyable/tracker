@@ -57,25 +57,23 @@ function formatTimeAgo(requestedAt: any, language: string): string {
   const diffInMinutes = Math.floor((now.getTime() - submittedDate.getTime()) / (1000 * 60));
 
   if (diffInMinutes < 60) {
-    return language === 'he'
-      ? `לפני ${diffInMinutes} דקות`
-      : `${diffInMinutes}m ago`;
+    return language === 'he' ? `לפני ${diffInMinutes} דקות` : `${diffInMinutes}m ago`;
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return language === 'he'
-      ? `לפני ${diffInHours} שעות`
-      : `${diffInHours}h ago`;
+    return language === 'he' ? `לפני ${diffInHours} שעות` : `${diffInHours}h ago`;
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
-  return language === 'he'
-    ? `לפני ${diffInDays} ימים`
-    : `${diffInDays}d ago`;
+  return language === 'he' ? `לפני ${diffInDays} ימים` : `${diffInDays}d ago`;
 }
 
-export default function TutorPriorityQueue({ petitions, residentIdToName, residentIdToEmail }: Props) {
+export default function TutorPriorityQueue({
+  petitions,
+  residentIdToName,
+  residentIdToEmail,
+}: Props) {
   const { t, i18n } = useTranslation();
   const { data: me } = useCurrentUserProfile();
   const [confirm, setConfirm] = useState<{ id: string; action: 'approve' | 'deny' } | null>(null);
@@ -228,9 +226,7 @@ export default function TutorPriorityQueue({ petitions, residentIdToName, reside
               ? t('tutor.priorityQueue.confirmApprove')
               : t('tutor.priorityQueue.confirmDeny')}
           </DialogHeader>
-          <div className="text-sm text-gray-600 dark:text-gray-300">
-            {t('ui.areYouSure')}
-          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-300">{t('ui.areYouSure')}</div>
           <DialogFooter>
             <Button variant="secondary" onClick={() => setConfirm(null)}>
               {t('ui.cancel')}

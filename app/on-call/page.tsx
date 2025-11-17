@@ -18,7 +18,11 @@ import Card from '../../components/ui/Card';
 import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
 import { useKeyboardNavigation } from '../../lib/hooks/useKeyboardNavigation';
 import { haptic } from '../../lib/utils/haptics';
-import { getLocalStorageItem, setLocalStorageItem, ONCALL_STORAGE_KEYS } from '../../lib/utils/localStorage';
+import {
+  getLocalStorageItem,
+  setLocalStorageItem,
+  ONCALL_STORAGE_KEYS,
+} from '../../lib/utils/localStorage';
 
 export default function OnCallPage() {
   const { data: me } = useCurrentUserProfile();
@@ -90,7 +94,8 @@ export default function OnCallPage() {
       <div className="app-container p-3 sm:p-4 space-y-4">
         {/* Screen reader announcement for tab changes */}
         <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-          {t(`onCall.${tab}`, { defaultValue: tab })} {t('common.tabSelected', { defaultValue: 'tab selected' })}
+          {t(`onCall.${tab}`, { defaultValue: tab })}{' '}
+          {t('common.tabSelected', { defaultValue: 'tab selected' })}
         </div>
         <div className="sticky top-[52px] z-20 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 bg-bg/80 backdrop-blur supports-[backdrop-filter]:bg-bg/70 py-2 border-b border-muted/20">
           <div

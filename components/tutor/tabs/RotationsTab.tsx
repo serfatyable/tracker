@@ -81,9 +81,8 @@ export default function RotationsTab({
             </div>
             <div className="mt-2 text-xs opacity-70">
               Owners:{' '}
-              {(r.ownerTutorIds || [])
-                .map((id) => tutorById.get(id)?.fullName || id)
-                .join(', ') || '-'}
+              {(r.ownerTutorIds || []).map((id) => tutorById.get(id)?.fullName || id).join(', ') ||
+                '-'}
             </div>
           </div>
         );

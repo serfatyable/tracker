@@ -41,9 +41,7 @@ function TutorDashboardContent() {
     <div className="mx-auto max-w-7xl space-y-8">
       {/* Hero Section */}
       <Suspense
-        fallback={
-          <div className="h-64 animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800" />
-        }
+        fallback={<div className="h-64 animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800" />}
       >
         <TutorHeroSection
           user={data.me}
@@ -63,10 +61,7 @@ function TutorDashboardContent() {
         fallback={
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="h-32 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800"
-              />
+              <div key={i} className="h-32 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800" />
             ))}
           </div>
         }

@@ -128,7 +128,9 @@ export default function TutorKPICards({
             className={`group relative overflow-hidden rounded-xl ${colors.bg} p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_2px_8px_rgba(0,0,0,0.05)] ring-1 ${colors.ring} transition-all duration-300 hover:scale-105 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_12px_24px_-8px_rgba(0,0,0,0.15)]`}
           >
             {/* Icon */}
-            <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${colors.iconBg} shadow-lg`}>
+            <div
+              className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${colors.iconBg} shadow-lg`}
+            >
               <Icon className="h-5 w-5 text-white" />
             </div>
 

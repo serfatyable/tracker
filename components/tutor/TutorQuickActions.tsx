@@ -36,7 +36,8 @@ export default function TutorQuickActions({ pendingCount }: Props) {
       icon: CheckCircleIcon,
       onClick: () => router.push('/tutor/tasks'),
       color: 'text-teal-700 dark:text-teal-300',
-      bgColor: 'bg-gradient-to-br from-teal-500/10 to-cyan-500/10 hover:from-teal-500/20 hover:to-cyan-500/20',
+      bgColor:
+        'bg-gradient-to-br from-teal-500/10 to-cyan-500/10 hover:from-teal-500/20 hover:to-cyan-500/20',
     },
     {
       id: 'message',
@@ -47,7 +48,8 @@ export default function TutorQuickActions({ pendingCount }: Props) {
         alert(t('tutor.quickActions.comingSoon'));
       },
       color: 'text-sky-700 dark:text-sky-300',
-      bgColor: 'bg-gradient-to-br from-sky-500/10 to-indigo-500/10 hover:from-sky-500/20 hover:to-indigo-500/20',
+      bgColor:
+        'bg-gradient-to-br from-sky-500/10 to-indigo-500/10 hover:from-sky-500/20 hover:to-indigo-500/20',
     },
     {
       id: 'reports',
@@ -58,7 +60,8 @@ export default function TutorQuickActions({ pendingCount }: Props) {
         alert(t('tutor.quickActions.comingSoon'));
       },
       color: 'text-violet-700 dark:text-violet-300',
-      bgColor: 'bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 hover:from-violet-500/20 hover:to-fuchsia-500/20',
+      bgColor:
+        'bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 hover:from-violet-500/20 hover:to-fuchsia-500/20',
     },
     {
       id: 'schedule',
@@ -69,7 +72,8 @@ export default function TutorQuickActions({ pendingCount }: Props) {
         alert(t('tutor.quickActions.comingSoon'));
       },
       color: 'text-emerald-700 dark:text-emerald-300',
-      bgColor: 'bg-gradient-to-br from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20',
+      bgColor:
+        'bg-gradient-to-br from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20',
     },
     {
       id: 'resources',
@@ -80,7 +84,8 @@ export default function TutorQuickActions({ pendingCount }: Props) {
         alert(t('tutor.quickActions.comingSoon'));
       },
       color: 'text-amber-700 dark:text-amber-300',
-      bgColor: 'bg-gradient-to-br from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20',
+      bgColor:
+        'bg-gradient-to-br from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20',
     },
   ];
 
@@ -107,7 +112,9 @@ export default function TutorQuickActions({ pendingCount }: Props) {
                 onClick={action.onClick}
                 className={`group relative overflow-hidden rounded-xl ${action.bgColor} p-4 text-left shadow-sm ring-1 ring-gray-200/40 transition-all hover:scale-105 hover:shadow-md dark:ring-gray-700/40`}
               >
-                <div className={`mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 shadow-sm dark:bg-slate-800/80`}>
+                <div
+                  className={`mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 shadow-sm dark:bg-slate-800/80`}
+                >
                   <Icon className={`h-5 w-5 ${action.color}`} />
                 </div>
                 <div className="text-xs font-semibold text-gray-900 dark:text-gray-50">

@@ -129,121 +129,135 @@ export default function TutorResidentsCards({
       subtitle={t('tutor.residentsCards.subtitle')}
     >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {residentsWithProgress.map(({ resident, assignment, rotation, progressPercentage, recentActivity, isOwned, hasMe }) => (
-          <div
-            key={assignment.id}
-            className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:scale-[1.02] hover:shadow-md dark:border-gray-700 dark:bg-slate-800/60"
-          >
-            {/* Header with avatar and name */}
-            <div className="mb-4 flex items-start gap-3">
-              <Avatar
-                name={getResidentName(resident)}
-                email={resident.email ?? undefined}
-                size={48}
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="truncate font-semibold text-gray-900 dark:text-gray-50">
-                  {getResidentName(resident)}
-                </h3>
-                <Badge variant="outline" className="mt-1 text-xs">
-                  {getRotationName(rotation)}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div className="mb-4">
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-gray-600 dark:text-gray-300">
-                  {t('tutor.residentsCards.progress')}
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-gray-50">
-                  {progressPercentage}%
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                <div
-                  className={`h-full transition-all duration-500 ${getProgressColor(progressPercentage)}`}
-                  style={{ width: `${progressPercentage}%` }}
+        {residentsWithProgress.map(
+          ({
+            resident,
+            assignment,
+            rotation,
+            progressPercentage,
+            recentActivity,
+            isOwned,
+            hasMe,
+          }) => (
+            <div
+              key={assignment.id}
+              className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:scale-[1.02] hover:shadow-md dark:border-gray-700 dark:bg-slate-800/60"
+            >
+              {/* Header with avatar and name */}
+              <div className="mb-4 flex items-start gap-3">
+                <Avatar
+                  name={getResidentName(resident)}
+                  email={resident.email ?? undefined}
+                  size={48}
                 />
+                <div className="flex-1 min-w-0">
+                  <h3 className="truncate font-semibold text-gray-900 dark:text-gray-50">
+                    {getResidentName(resident)}
+                  </h3>
+                  <Badge variant="outline" className="mt-1 text-xs">
+                    {getRotationName(rotation)}
+                  </Badge>
+                </div>
               </div>
-            </div>
 
-            {/* Recent activity */}
-            <div className="mb-4 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-              <CheckCircleIcon className="h-4 w-4" />
-              <span>{t('tutor.residentsCards.lastActivity')}: {recentActivity}</span>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1"
-                onClick={() => router.push(`/residents/${resident.uid}`)}
-              >
-                <UserCircleIcon className="h-4 w-4" />
-                {t('tutor.residentsCards.viewProfile')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => router.push(`/tutor/tasks?resident=${resident.uid}`)}
-              >
-                <ChartBarIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {/* Message functionality */}}
-              >
-                <ChatBubbleLeftIcon className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Self-assign/unassign for owned rotations */}
-            {isOwned && (
-              <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
-                {!hasMe ? (
-                  <Button
-                    size="sm"
-                    className="w-full border-emerald-500 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
-                    variant="outline"
-                    disabled={busy === assignment.id}
-                    onClick={async () => {
-                      setBusy(assignment.id);
-                      try {
-                        await assignTutorToResident(resident.uid, meUid);
-                      } finally {
-                        setBusy(null);
-                      }
-                    }}
-                  >
-                    {t('tutor.selfAssign')}
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    className="w-full border-amber-500 text-amber-700 hover:bg-amber-50 dark:border-amber-500 dark:text-amber-300 dark:hover:bg-amber-900/30"
-                    variant="outline"
-                    disabled={busy === assignment.id}
-                    onClick={async () => {
-                      setBusy(assignment.id);
-                      try {
-                        await unassignTutorFromResident(resident.uid, meUid);
-                      } finally {
-                        setBusy(null);
-                      }
-                    }}
-                  >
-                    {t('tutor.unassign')}
-                  </Button>
-                )}
+              {/* Progress bar */}
+              <div className="mb-4">
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-300">
+                    {t('tutor.residentsCards.progress')}
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-50">
+                    {progressPercentage}%
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div
+                    className={`h-full transition-all duration-500 ${getProgressColor(progressPercentage)}`}
+                    style={{ width: `${progressPercentage}%` }}
+                  />
+                </div>
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* Recent activity */}
+              <div className="mb-4 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                <CheckCircleIcon className="h-4 w-4" />
+                <span>
+                  {t('tutor.residentsCards.lastActivity')}: {recentActivity}
+                </span>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => router.push(`/residents/${resident.uid}`)}
+                >
+                  <UserCircleIcon className="h-4 w-4" />
+                  {t('tutor.residentsCards.viewProfile')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => router.push(`/tutor/tasks?resident=${resident.uid}`)}
+                >
+                  <ChartBarIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    /* Message functionality */
+                  }}
+                >
+                  <ChatBubbleLeftIcon className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Self-assign/unassign for owned rotations */}
+              {isOwned && (
+                <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+                  {!hasMe ? (
+                    <Button
+                      size="sm"
+                      className="w-full border-emerald-500 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+                      variant="outline"
+                      disabled={busy === assignment.id}
+                      onClick={async () => {
+                        setBusy(assignment.id);
+                        try {
+                          await assignTutorToResident(resident.uid, meUid);
+                        } finally {
+                          setBusy(null);
+                        }
+                      }}
+                    >
+                      {t('tutor.selfAssign')}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="w-full border-amber-500 text-amber-700 hover:bg-amber-50 dark:border-amber-500 dark:text-amber-300 dark:hover:bg-amber-900/30"
+                      variant="outline"
+                      disabled={busy === assignment.id}
+                      onClick={async () => {
+                        setBusy(assignment.id);
+                        try {
+                          await unassignTutorFromResident(resident.uid, meUid);
+                        } finally {
+                          setBusy(null);
+                        }
+                      }}
+                    >
+                      {t('tutor.unassign')}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          ),
+        )}
       </div>
     </Card>
   );

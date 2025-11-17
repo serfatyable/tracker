@@ -72,20 +72,17 @@ export async function signUp(params: {
   const validatedData = validateOrThrow(signUpSchema, params);
 
   const { auth, db } = getAuthDb();
-  const {
-    email,
-    password,
-    fullName,
-    fullNameHe,
-    role,
-    language,
-  } = validatedData;
+  const { email, password, fullName, fullNameHe, role, language } = validatedData;
 
   // Extract role-specific fields
-  const residencyStartDate = 'residencyStartDate' in validatedData ? validatedData.residencyStartDate : undefined;
-  const studyprogramtype = 'studyprogramtype' in validatedData ? validatedData.studyprogramtype : undefined;
-  const completedRotationIds = 'completedRotationIds' in validatedData ? validatedData.completedRotationIds : undefined;
-  const currentRotationId = 'currentRotationId' in validatedData ? validatedData.currentRotationId : undefined;
+  const residencyStartDate =
+    'residencyStartDate' in validatedData ? validatedData.residencyStartDate : undefined;
+  const studyprogramtype =
+    'studyprogramtype' in validatedData ? validatedData.studyprogramtype : undefined;
+  const completedRotationIds =
+    'completedRotationIds' in validatedData ? validatedData.completedRotationIds : undefined;
+  const currentRotationId =
+    'currentRotationId' in validatedData ? validatedData.currentRotationId : undefined;
 
   const cred = await createUserWithEmailAndPassword(auth, email, password);
 

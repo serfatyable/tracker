@@ -221,7 +221,9 @@ export default function ExamDetailPage() {
                         <h3 className="font-semibold text-base">{subjectTitle}</h3>
                       )}
                       {subjectDescription && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{subjectDescription}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {subjectDescription}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -229,7 +231,9 @@ export default function ExamDetailPage() {
                   {/* Subject Topics */}
                   {subject.topics.length > 0 && (
                     <div className="ml-6">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('exams.topics')}:</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                        {t('exams.topics')}:
+                      </div>
                       <div className="flex flex-wrap gap-1.5">
                         {subject.topics.map((topic, topicIdx) => (
                           <span
@@ -246,7 +250,9 @@ export default function ExamDetailPage() {
                   {/* Subject Chapters */}
                   {subject.bookChapters.length > 0 && (
                     <div className="ml-6">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('exams.bookChapters')}:</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                        {t('exams.bookChapters')}:
+                      </div>
                       <div className="flex flex-wrap gap-1.5">
                         {subject.bookChapters.map((chapter, chapterIdx) => (
                           <span

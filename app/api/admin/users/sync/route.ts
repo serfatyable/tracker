@@ -139,7 +139,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     if (type !== 'auth' && type !== 'firestore') {
-      return NextResponse.json({ error: 'Invalid type. Must be "auth" or "firestore"' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid type. Must be "auth" or "firestore"' },
+        { status: 400 },
+      );
     }
 
     const deleted: string[] = [];
@@ -177,7 +180,10 @@ export async function DELETE(req: NextRequest) {
 
       if (deleted.length > 0) {
         await batch.commit();
-        logger.info(`Deleted ${deleted.length} orphaned Firestore documents`, 'api/admin/users/sync');
+        logger.info(
+          `Deleted ${deleted.length} orphaned Firestore documents`,
+          'api/admin/users/sync',
+        );
       }
     }
 

@@ -47,7 +47,10 @@ export function useOnCallFutureByUser(userId?: string, daysAhead: number = DEFAU
             for (const d of snap.docs) {
               const rec = d.data() as OnCallDay;
               const stations = rec.stations;
-              for (const [stationKey, entry] of Object.entries(stations) as [StationKey, StationAssignment][]) {
+              for (const [stationKey, entry] of Object.entries(stations) as [
+                StationKey,
+                StationAssignment,
+              ][]) {
                 if (entry && entry.userId === userId) {
                   shifts.push({
                     date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date as any),

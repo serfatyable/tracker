@@ -90,7 +90,9 @@ export default function AddPastExamDialog({
                 required
                 disabled={loading}
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('exams.admin.pastExamDate')}</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {t('exams.admin.pastExamDate')}
+              </p>
             </div>
 
             {/* File Upload */}

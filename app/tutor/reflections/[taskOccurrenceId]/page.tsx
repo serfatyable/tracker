@@ -63,7 +63,9 @@ export default function TutorWriteReflectionPage() {
   return (
     <AuthGate requiredRole="tutor">
       <AppShell>
-        <LargeTitleHeader title={t('reflections.tutorReflection', { defaultValue: 'Tutor Reflection' }) as string} />
+        <LargeTitleHeader
+          title={t('reflections.tutorReflection', { defaultValue: 'Tutor Reflection' }) as string}
+        />
         <div className="app-container p-4 space-y-4">
           {/* Breadcrumb navigation */}
           <div className="flex items-center gap-2 text-sm">
@@ -83,7 +85,9 @@ export default function TutorWriteReflectionPage() {
           {!me || !uid ? (
             <Card tone="rose" variant="tinted">
               <div className="text-center py-8">
-                <h3 className="font-semibold mb-2">{t('common.error', { defaultValue: 'Error' })}</h3>
+                <h3 className="font-semibold mb-2">
+                  {t('common.error', { defaultValue: 'Error' })}
+                </h3>
                 <p className="text-sm opacity-70">{t('common.signInRequired')}</p>
               </div>
             </Card>
@@ -97,7 +101,9 @@ export default function TutorWriteReflectionPage() {
           ) : !residentId ? (
             <Card tone="rose" variant="tinted">
               <div className="text-center py-8">
-                <h3 className="font-semibold mb-2">{t('common.error', { defaultValue: 'Error' })}</h3>
+                <h3 className="font-semibold mb-2">
+                  {t('common.error', { defaultValue: 'Error' })}
+                </h3>
                 <p className="text-sm opacity-70">
                   {t('reflections.missingResidentContext', {
                     defaultValue: 'Missing resident context for this reflection.',
@@ -111,13 +117,19 @@ export default function TutorWriteReflectionPage() {
               <Card>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm opacity-70">{t('reflections.taskType', { defaultValue: 'Task Type' })}</div>
+                    <div className="text-sm opacity-70">
+                      {t('reflections.taskType', { defaultValue: 'Task Type' })}
+                    </div>
                     <div className="font-semibold">{taskType}</div>
                   </div>
                   {submitted && (
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-sm font-medium">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                       {t('common.submitted', { defaultValue: 'Submitted' })}
                     </div>

@@ -132,7 +132,9 @@ export default function KPICards({
           className={`card-levitate rounded-2xl p-5 transition-all duration-200 ${getCardStyle(k.key)}`}
         >
           <div className="flex items-start justify-between mb-4">
-            <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${getIconBgColor(k.key)}`}>
+            <div
+              className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${getIconBgColor(k.key)}`}
+            >
               <k.Icon className="h-6 w-6" strokeWidth={2} aria-hidden />
             </div>
             {k.trend != null && (

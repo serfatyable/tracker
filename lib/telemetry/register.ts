@@ -8,7 +8,6 @@
 import * as Sentry from '@sentry/nextjs';
 
 declare global {
-   
   var __TRACKER_TELEMETRY__:
     | {
         bootstrappedAt: number;
@@ -35,6 +34,5 @@ Sentry.setContext('telemetry', {
 });
 
 if (process.env.NODE_ENV !== 'production') {
-   
   console.info(`[tracker][telemetry] Instrumentation register executed on ${runtime}`);
 }

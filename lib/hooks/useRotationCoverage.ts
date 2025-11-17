@@ -14,9 +14,7 @@ export function useRotationCoverage() {
     if (rotations.length === 0) return 0;
 
     // Get unique rotation IDs from active assignments
-    const rotationIdsWithAssignments = new Set(
-      assignments.map((a: Assignment) => a.rotationId),
-    );
+    const rotationIdsWithAssignments = new Set(assignments.map((a: Assignment) => a.rotationId));
 
     // Calculate percentage
     const coveredCount = rotations.filter((r) => rotationIdsWithAssignments.has(r.id)).length;

@@ -46,7 +46,11 @@ export function detectShiftConflicts(
   const hasNextDayShift = allShifts.some((s) => s.dateKey === nextDayKey);
 
   if (hasPrevDayShift || hasNextDayShift) {
-    const consecutiveDays = [hasPrevDayShift && prevDayKey, shiftDateKey, hasNextDayShift && nextDayKey]
+    const consecutiveDays = [
+      hasPrevDayShift && prevDayKey,
+      shiftDateKey,
+      hasNextDayShift && nextDayKey,
+    ]
       .filter(Boolean)
       .join(', ');
 

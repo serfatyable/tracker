@@ -95,7 +95,10 @@ export default function PendingPetitionsView() {
       } catch (error) {
         console.error('Failed to approve petition', error);
         setToast({
-          message: error instanceof Error ? error.message : t('ui.operationFailed', { defaultValue: 'Operation failed. Please try again.' }),
+          message:
+            error instanceof Error
+              ? error.message
+              : t('ui.operationFailed', { defaultValue: 'Operation failed. Please try again.' }),
           variant: 'error',
         });
       } finally {
@@ -133,7 +136,10 @@ export default function PendingPetitionsView() {
       } catch (error) {
         console.error('Failed to deny petition', error);
         setToast({
-          message: error instanceof Error ? error.message : t('ui.operationFailed', { defaultValue: 'Operation failed. Please try again.' }),
+          message:
+            error instanceof Error
+              ? error.message
+              : t('ui.operationFailed', { defaultValue: 'Operation failed. Please try again.' }),
           variant: 'error',
         });
       } finally {

@@ -23,6 +23,8 @@
     "test:light": "vitest run --pool=threads --poolOptions.threads.maxThreads=1",
     "test:mem": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run --pool=threads --poolOptions.threads.maxThreads=1",
     "test:ci": "vitest run --pool=threads --poolOptions.threads.maxThreads=1",
+    "test:rules": "vitest run __tests__/firestore-security-rules.test.ts",
+    "test:rules:emulators": "concurrently --kill-others --success first \"firebase emulators:start --only firestore,auth\" \"wait-on tcp:8080 && vitest run __tests__/firestore-security-rules.test.ts\"",
     "check": "pnpm typecheck && pnpm lint",
     "clean": "rm -rf .next .turbo node_modules && pnpm i",
     "analyze": "ANALYZE=true next build",
@@ -74,6 +76,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "3.1.0",
     "@eslint/js": "9.14.0",
+    "@firebase/rules-unit-testing": "^3.0.4",
     "@next/eslint-plugin-next": "15.0.0",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.0",

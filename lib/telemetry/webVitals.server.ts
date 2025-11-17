@@ -41,7 +41,6 @@ type Aggregate = {
 type Aggregates = Record<MetricName, Aggregate>;
 
 declare global {
-   
   var __TRACKER_WEB_VITALS__: Aggregates | undefined;
 }
 

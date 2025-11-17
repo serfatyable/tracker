@@ -30,18 +30,18 @@ function getTimeBasedGreeting(language: string): string {
 
 const MOTIVATIONAL_QUOTES = {
   en: [
-    "Great teachers inspire growth in others.",
-    "Your guidance shapes future physicians.",
-    "Every task reviewed is a lesson shared.",
-    "Teaching is the art of awakening curiosity.",
-    "Your feedback lights the path forward.",
+    'Great teachers inspire growth in others.',
+    'Your guidance shapes future physicians.',
+    'Every task reviewed is a lesson shared.',
+    'Teaching is the art of awakening curiosity.',
+    'Your feedback lights the path forward.',
   ],
   he: [
-    "מורים נהדרים מעוררים צמיחה באחרים.",
-    "ההדרכה שלך מעצבת רופאים עתידיים.",
-    "כל משימה שנבדקה היא שיעור משותף.",
-    "הוראה היא אמנות העוררת סקרנות.",
-    "המשוב שלך מאיר את הדרך קדימה.",
+    'מורים נהדרים מעוררים צמיחה באחרים.',
+    'ההדרכה שלך מעצבת רופאים עתידיים.',
+    'כל משימה שנבדקה היא שיעור משותף.',
+    'הוראה היא אמנות העוררת סקרנות.',
+    'המשוב שלך מאיר את הדרך קדימה.',
   ],
 };
 
@@ -51,11 +51,17 @@ function getRandomQuote(language: string): string {
   return quotes[randomIndex] ?? quotes[0] ?? 'Welcome';
 }
 
-export default function TutorHeroSection({ user, pendingCount, residentsCount, completionRate }: Props) {
+export default function TutorHeroSection({
+  user,
+  pendingCount,
+  residentsCount,
+  completionRate,
+}: Props) {
   const { t, i18n } = useTranslation();
   const greeting = getTimeBasedGreeting(i18n.language);
   const quote = getRandomQuote(i18n.language);
-  const displayName = i18n.language === 'he' && user?.fullNameHe ? user.fullNameHe : user?.fullName || '';
+  const displayName =
+    i18n.language === 'he' && user?.fullNameHe ? user.fullNameHe : user?.fullName || '';
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-500/12 via-cyan-500/8 to-sky-500/15 p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_20px_50px_-20px_rgba(13,148,136,0.5)] ring-1 ring-teal-400/20 dark:from-teal-500/20 dark:via-cyan-500/15 dark:to-sky-500/25 dark:ring-teal-400/30">
@@ -71,7 +77,8 @@ export default function TutorHeroSection({ user, pendingCount, residentsCount, c
           </div>
           <div>
             <h1 className="text-3xl font-bold text-teal-900 dark:text-teal-50">
-              {greeting}{displayName ? `, ${displayName}` : ''}
+              {greeting}
+              {displayName ? `, ${displayName}` : ''}
             </h1>
             <p className="mt-1 flex items-center gap-2 text-sm text-teal-700/90 dark:text-teal-200/80">
               <SparklesIcon className="h-4 w-4" />
@@ -87,7 +94,9 @@ export default function TutorHeroSection({ user, pendingCount, residentsCount, c
               {t('tutor.hero.pendingItems')}
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <div className="text-3xl font-bold text-teal-900 dark:text-teal-50">{pendingCount}</div>
+              <div className="text-3xl font-bold text-teal-900 dark:text-teal-50">
+                {pendingCount}
+              </div>
               {pendingCount > 0 && (
                 <div className="text-xs font-medium text-amber-600 dark:text-amber-400">
                   {t('tutor.hero.needsAttention')}
@@ -101,7 +110,9 @@ export default function TutorHeroSection({ user, pendingCount, residentsCount, c
               {t('tutor.hero.assignedResidents')}
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <div className="text-3xl font-bold text-sky-900 dark:text-sky-50">{residentsCount}</div>
+              <div className="text-3xl font-bold text-sky-900 dark:text-sky-50">
+                {residentsCount}
+              </div>
               <div className="text-xs font-medium text-sky-600 dark:text-sky-400">
                 {t('tutor.hero.residents')}
               </div>

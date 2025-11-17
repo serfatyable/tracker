@@ -26,11 +26,14 @@ export default function RotationPopularity({ assignments, rotations }: Props): R
     const data = rotations
       .map((rotation) => ({
         id: rotation.id,
-        name: getLocalized({
-          en: rotation.name,
-          he: rotation.nameHe,
-          lang,
-        }) || rotation.name || '',
+        name:
+          getLocalized({
+            en: rotation.name,
+            he: rotation.nameHe,
+            lang,
+          }) ||
+          rotation.name ||
+          '',
         count: counts.get(rotation.id) || 0,
       }))
       .filter((r) => r.count > 0) // Only show rotations with active assignments

@@ -87,12 +87,12 @@ export function sanitizeContentStrict(content: string | null | undefined): strin
  */
 export function sanitizeArray(
   items: (string | null | undefined)[] | null | undefined,
-  strict = false
+  strict = false,
 ): string[] {
   if (!items) return [];
 
   const sanitizeFn = strict ? sanitizeContentStrict : sanitizeContent;
-  return items.map(item => sanitizeFn(item));
+  return items.map((item) => sanitizeFn(item));
 }
 
 /**
@@ -117,14 +117,14 @@ export function sanitizeArray(
 export function sanitizeObject<T extends Record<string, any>>(
   obj: T | null | undefined,
   fields: (keyof T)[],
-  strict = false
+  strict = false,
 ): T {
   if (!obj) return {} as T;
 
   const sanitizeFn = strict ? sanitizeContentStrict : sanitizeContent;
   const result = { ...obj };
 
-  fields.forEach(field => {
+  fields.forEach((field) => {
     if (typeof result[field] === 'string') {
       result[field] = sanitizeFn(result[field]) as T[keyof T];
     }
@@ -154,10 +154,7 @@ export function createSafeHtml(content: string | null | undefined): { __html: st
  * @param strict - Use strict sanitization (default: false)
  * @returns Sanitized content
  */
-export function useSanitizedContent(
-  content: string | null | undefined,
-  strict = false
-): string {
+export function useSanitizedContent(content: string | null | undefined, strict = false): string {
   // Note: React hooks would be imported here if needed
   // For now, just return the sanitized content
   const sanitizeFn = strict ? sanitizeContentStrict : sanitizeContent;

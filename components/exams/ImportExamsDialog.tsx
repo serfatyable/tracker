@@ -215,7 +215,9 @@ export default function ImportExamsDialog({ isOpen, onClose, onSuccess }: Import
                     <span className="text-sm font-medium text-gray-700">
                       {t('exams.import.selectFile')}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('exams.import.fileTypes')}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('exams.import.fileTypes')}
+                    </span>
                   </label>
                 </div>
               </div>
@@ -226,19 +228,25 @@ export default function ImportExamsDialog({ isOpen, onClose, onSuccess }: Import
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{t('exams.import.totalExams')}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {t('exams.import.totalExams')}
+                    </div>
                     <div className="text-2xl font-bold text-blue-600">
                       {parseResult.exams?.length || 0}
                     </div>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{t('exams.import.totalSubjects')}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {t('exams.import.totalSubjects')}
+                    </div>
                     <div className="text-2xl font-bold text-green-600">
                       {parseResult.exams?.reduce((sum, exam) => sum + exam.subjects.length, 0) || 0}
                     </div>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{t('exams.import.errors')}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {t('exams.import.errors')}
+                    </div>
                     <div className="text-2xl font-bold text-red-600">
                       {parseResult.errors?.length || 0}
                     </div>
@@ -318,16 +326,24 @@ export default function ImportExamsDialog({ isOpen, onClose, onSuccess }: Import
 
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{t('exams.import.created')}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {t('exams.import.created')}
+                    </div>
                     <div className="text-2xl font-bold text-green-600">{importResult.created}</div>
                   </div>
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{t('exams.import.updated')}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {t('exams.import.updated')}
+                    </div>
                     <div className="text-2xl font-bold text-blue-600">{importResult.updated}</div>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{t('exams.import.skipped')}</div>
-                    <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{importResult.skipped}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {t('exams.import.skipped')}
+                    </div>
+                    <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                      {importResult.skipped}
+                    </div>
                   </div>
                 </div>
 

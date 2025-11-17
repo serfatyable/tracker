@@ -137,7 +137,9 @@ export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardPr
         {/* Topics */}
         {allTopics.length > 0 && (
           <div className="text-sm">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('exams.topics')}:</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              {t('exams.topics')}:
+            </div>
             <div className="flex flex-wrap gap-1">
               {allTopics.slice(0, 3).map((topic, idx) => (
                 <span
@@ -159,10 +161,14 @@ export default function ExamCard({ exam, isAdmin, userId, onDelete }: ExamCardPr
         {/* Book Chapters */}
         {allChapters.length > 0 && (
           <div className="text-sm">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('exams.bookChapters')}:</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              {t('exams.bookChapters')}:
+            </div>
             <div className="flex items-center gap-1">
               <DocumentTextIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
-              <span className="text-xs text-gray-700 dark:text-gray-300">{allChapters.join(', ')}</span>
+              <span className="text-xs text-gray-700 dark:text-gray-300">
+                {allChapters.join(', ')}
+              </span>
             </div>
           </div>
         )}

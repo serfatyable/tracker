@@ -26,7 +26,10 @@ export const rotationSchema = z.object({
   endDate: z.date(),
   isCore: z.boolean().optional(),
   ownerTutorIds: z.array(z.string()).optional(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(), // Hex color
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(), // Hex color
   description: z.string().optional(),
   status: rotationStatusSchema.optional(),
   source: rotationSourceSchema.optional(),

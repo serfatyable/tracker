@@ -80,7 +80,9 @@ export default function UpcomingSchedule() {
                 id: `meeting-${dateStr}`,
                 date: dateStr,
                 type: 'meeting',
-                title: data.topic || t('ui.home.schedule.morningMeeting', { defaultValue: 'Morning Meeting' }),
+                title:
+                  data.topic ||
+                  t('ui.home.schedule.morningMeeting', { defaultValue: 'Morning Meeting' }),
                 subtitle: data.lecturer
                   ? t('ui.home.schedule.lecturer', {
                       name: data.lecturer,
