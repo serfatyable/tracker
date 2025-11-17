@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { createAuthErrorResponse, verifyAuthToken } from '@/lib/api/auth';
 import { getAdminApp } from '@/lib/firebase/admin-sdk';
-import { listRotationPetitions, approveRotationPetition, denyRotationPetition } from '@/lib/firebase/admin';
+import { listRotationPetitionsWithDetails, approveRotationPetition, denyRotationPetition } from '@/lib/firebase/admin';
 import { logger } from '@/lib/utils/logger';
 
 type PostBody = {
@@ -46,12 +46,12 @@ export async function GET(req: NextRequest) {
 
     const params: any = {};
     if (status) params.status = status;
-    if (residentId) params.residentId = residentId;
+    if (residentId) params.residentQuery = residentId;
     if (limit) params.limit = parseInt(limit, 10);
 
-    const petitions = await listRotationPetitions(params);
+    const result = await listRotationPetitionsWithDetails(params);
 
-    return NextResponse.json({ petitions }, { status: 200 });
+    return NextResponse.json({ petitions: result.items }, { status: 200 });
   } catch (error) {
     logger.error(
       'Failed to list rotation petitions',

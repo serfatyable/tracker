@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { RotationPetitionWithDetails } from '../../../types/rotationPetitions';
-import { getLocalized } from '../../../lib/i18n/getLocalized';
 import { CardSkeleton } from '../../dashboard/Skeleton';
 import Button from '../../ui/Button';
 import EmptyState, { ChecklistIcon } from '../../ui/EmptyState';
@@ -182,10 +181,8 @@ export default function PendingPetitionsView() {
             const isApproving = actionLoading[petition.id] === 'approve';
             const isDenying = actionLoading[petition.id] === 'deny';
             const requestedLabel = formatTimestamp(petition.requestedAt, locale);
-            const residentName = petition.resident?.fullName || petition.resident?.email || petition.residentId;
-            const rotationName = petition.rotation
-              ? getLocalized(petition.rotation, 'name', i18n.language)
-              : petition.rotationId;
+            const residentName = petition.residentName || petition.residentId;
+            const rotationName = petition.rotationName || petition.rotationId;
 
             return (
               <div key={petition.id} className="card-levitate space-y-3 p-4">
