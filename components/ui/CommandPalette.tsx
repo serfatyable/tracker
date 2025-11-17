@@ -44,7 +44,6 @@ export default function CommandPalette() {
           label: t('ui.morningMeetings', { defaultValue: 'Morning Meetings' }) as string,
           href: '/morning-meetings',
         },
-        { label: (t('resident.progress') as any) || 'Progress', href: '/resident?tab=progress' },
         { label: t('ui.search') as string, href: '/search' },
         { label: t('ui.settings') as string, href: '/settings' },
       ];
