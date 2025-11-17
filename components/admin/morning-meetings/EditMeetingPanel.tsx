@@ -53,7 +53,16 @@ export default function EditMeetingPanel({
     if (meeting) {
       setTitle(meeting.title || '');
 
-      const meetingDate = meeting.date?.toDate();
+      // Handle date - could be Timestamp (from Firestore) or string (from calendar click)
+      let meetingDate: Date | null = null;
+      if (typeof meeting.date === 'string') {
+        // Date string from calendar click (YYYY-MM-DD)
+        meetingDate = new Date(meeting.date + 'T07:10:00'); // Default to 07:10
+      } else if (meeting.date?.toDate) {
+        // Firestore Timestamp
+        meetingDate = meeting.date.toDate();
+      }
+
       if (meetingDate) {
         // Format date as YYYY-MM-DD
         const year = meetingDate.getFullYear();
@@ -68,9 +77,11 @@ export default function EditMeetingPanel({
       }
 
       // Calculate duration from endDate
-      if (meeting.endDate && meeting.date) {
+      if (meeting.endDate && meeting.date && typeof meeting.date !== 'string') {
         const durationMs = meeting.endDate.toMillis() - meeting.date.toMillis();
         setDuration(Math.round(durationMs / (60 * 1000)));
+      } else {
+        setDuration(40); // Default duration for new meetings
       }
 
       setLecturer(meeting.lecturer || '');

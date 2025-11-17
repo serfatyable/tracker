@@ -70,6 +70,13 @@ export default function MorningMeetingsView({
     setEditPanelOpen(true);
   }, []);
 
+  const handleCreateMeetingForDate = useCallback((dateString: string) => {
+    setEditingMeeting({
+      date: dateString,
+    } as any);
+    setEditPanelOpen(true);
+  }, []);
+
   const handleEditMeeting = useCallback((meeting: MorningMeeting) => {
     setEditingMeeting(meeting);
     setEditPanelOpen(true);
@@ -418,22 +425,37 @@ export default function MorningMeetingsView({
                   return (
                     <div
                       key={d}
-                      onClick={() => dayMeetings.length > 0 && scrollToDay(d)}
+                      onClick={() => {
+                        if (dayMeetings.length > 0) {
+                          scrollToDay(d);
+                        } else if (showEditButtons) {
+                          // Create meeting for this date
+                          const [year, month] = selectedMonth.split('-').map(Number);
+                          const dateObj = new Date(year!, month!, d);
+                          const dateString = dateObj.toISOString().split('T')[0];
+                          handleCreateMeetingForDate(dateString!);
+                        }
+                      }}
                       className={`
                         rounded-lg border p-2 min-h-[80px] transition-all hover:shadow-md hover:scale-105
-                        ${dayMeetings.length > 0 ? 'cursor-pointer' : 'cursor-default'}
+                        ${dayMeetings.length > 0 || showEditButtons ? 'cursor-pointer' : 'cursor-default'}
                         ${
                           isToday
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 ring-2 ring-blue-500 ring-opacity-50'
                             : 'border-gray-200 dark:border-[rgb(var(--border))] hover:border-gray-300 dark:hover:border-[rgb(var(--border-strong))]'
                         }
+                        ${showEditButtons && dayMeetings.length === 0 ? 'hover:border-green-400 hover:bg-green-50/50 dark:hover:bg-green-950/20' : ''}
                       `}
                       title={
                         dayMeetings.length > 0
                           ? t('morningMeetings.clickToView', {
                               defaultValue: 'Click to view details',
                             })
-                          : ''
+                          : showEditButtons
+                            ? t('morningMeetings.edit.clickToAdd', {
+                                defaultValue: 'Click to add meeting',
+                              })
+                            : ''
                       }
                     >
                       <div
