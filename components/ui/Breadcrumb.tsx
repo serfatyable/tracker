@@ -2,14 +2,14 @@ import { ChevronRightIcon, HomeIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-type BreadcrumbItem = {
+type BreadcrumbItemType = {
   label: string;
   href?: string;
   current?: boolean;
 };
 
 type BreadcrumbProps = {
-  items: BreadcrumbItem[];
+  items: BreadcrumbItemType[];
   showHome?: boolean;
   homeHref?: string;
   className?: string;
@@ -72,7 +72,7 @@ export default function Breadcrumb({
   );
 }
 
-// Convenience component for single breadcrumb item
+// Convenience component for individual breadcrumb items
 export function BreadcrumbItem({
   href,
   current,
