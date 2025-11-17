@@ -37,7 +37,8 @@ export default function AdminUsersPage() {
       />
       <div className="app-container p-4">
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="overflow-x-auto scrollbar-thin mb-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 min-w-max">
           <button
             onClick={() => setActiveTab('users')}
             className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all border-b-2 rounded-none min-h-[44px] ${
@@ -82,6 +83,7 @@ export default function AdminUsersPage() {
             <ArrowPathIcon className="w-4 h-4" />
             {t('ui.accountSync', { defaultValue: 'Account Sync' })}
           </button>
+          </div>
         </div>
 
         {/* Tab Content */}
