@@ -39,7 +39,7 @@ export default function ResidentDashboard() {
   return (
     <AuthGate requiredRole="resident">
       <AppShell>
-        <LargeTitleHeader title={t('ui.home', { defaultValue: 'Home' }) as string} />
+        <LargeTitleHeader title={t('ui.homeTitle', { defaultValue: 'Home' }) as string} />
         <div className="app-container p-4 sm:p-6 md:p-8 space-y-6">
           {/* Welcome Hero Section */}
           <WelcomeHero />
