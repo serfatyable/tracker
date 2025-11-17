@@ -663,7 +663,17 @@
       "petitionRotation": "Rotation:",
       "petitionReason": "Reason:",
       "petitionRequestedAt": "Requested {{time}}",
-      "manageRotations": "Manage rotations"
+      "manageRotations": "Manage rotations",
+      "assignRotation": "Assign",
+      "assignSuccess": "Rotation assigned successfully.",
+      "confirmAssignRotation": "Assign {{rotation}} to {{resident}}?",
+      "hasActiveRotation": "Resident already has an active rotation. Please unassign it first.",
+      "noRotationsAvailable": "No rotations available.",
+      "manageRotationsFor": "Manage rotations for {{name}}",
+      "noActiveRotations": "No active rotations for this resident.",
+      "unknownRotation": "Unknown rotation",
+      "confirmUnassignRotation": "Are you sure you want to unassign {{resident}} from {{rotation}}?",
+      "unassignSuccess": "Rotation unassigned successfully."
     },
     "kpi": {
       "residents": "Residents",
