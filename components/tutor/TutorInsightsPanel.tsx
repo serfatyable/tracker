@@ -74,12 +74,15 @@ export default function TutorInsightsPanel({
     <Card
       tone="slate"
       variant="tinted"
-      title={
+      title={t('tutor.insights.title')}
+      subtitle={!isExpanded ? t('tutor.insights.subtitle') : undefined}
+      actions={
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex w-full items-center justify-between text-left"
+          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+          aria-expanded={isExpanded}
+          aria-label={isExpanded ? 'Collapse analytics' : 'Expand analytics'}
         >
-          <span>{t('tutor.insights.title')}</span>
           {isExpanded ? (
             <ChevronUpIcon className="h-5 w-5" />
           ) : (
@@ -87,7 +90,6 @@ export default function TutorInsightsPanel({
           )}
         </button>
       }
-      subtitle={!isExpanded ? t('tutor.insights.subtitle') : undefined}
     >
       {!isExpanded && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
