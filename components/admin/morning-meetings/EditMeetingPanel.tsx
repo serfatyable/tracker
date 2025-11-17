@@ -2,9 +2,10 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { MorningMeeting } from '../../../types/morningMeetings';
+
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import type { MorningMeeting } from '../../../types/morningMeetings';
 
 interface EditMeetingPanelProps {
   isOpen: boolean;

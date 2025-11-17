@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { MorningMeeting } from '../../../types/morningMeetings';
+
 import { useMorningMeetingsMultiMonth } from '../../../lib/hooks/useMorningClasses';
 import { createSynonymMatcher } from '../../../lib/search/synonyms';
-import type { MorningMeeting } from '../../../types/morningMeetings';
 import { ListSkeleton } from '../../dashboard/Skeleton';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
@@ -101,7 +102,7 @@ export default function MorningMeetingsView({
       } else {
         throw new Error('Failed to delete meeting');
       }
-    } catch (error) {
+    } catch (_error) {
       setToast({
         message: t('morningMeetings.edit.deleteError', { defaultValue: 'Failed to delete meeting' }),
         variant: 'error',
@@ -110,36 +111,32 @@ export default function MorningMeetingsView({
   }, [t]);
 
   const handleSaveMeeting = useCallback(async (meeting: Partial<MorningMeeting> & { id?: string }) => {
-    try {
-      const { fetchWithAuth } = await import('../../../lib/api/client');
+    const { fetchWithAuth } = await import('../../../lib/api/client');
 
-      const isUpdate = Boolean(meeting.id);
-      const url = isUpdate ? `/api/morning-meetings/${meeting.id}` : '/api/morning-meetings';
-      const method = isUpdate ? 'PATCH' : 'POST';
+    const isUpdate = Boolean(meeting.id);
+    const url = isUpdate ? `/api/morning-meetings/${meeting.id}` : '/api/morning-meetings';
+    const method = isUpdate ? 'PATCH' : 'POST';
 
-      const res = await fetchWithAuth(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(meeting),
+    const res = await fetchWithAuth(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(meeting),
+    });
+
+    if (res.ok) {
+      setToast({
+        message: isUpdate
+          ? t('morningMeetings.edit.updateSuccess', { defaultValue: 'Meeting updated successfully' })
+          : t('morningMeetings.edit.createSuccess', { defaultValue: 'Meeting created successfully' }),
+        variant: 'success',
       });
-
-      if (res.ok) {
-        setToast({
-          message: isUpdate
-            ? t('morningMeetings.edit.updateSuccess', { defaultValue: 'Meeting updated successfully' })
-            : t('morningMeetings.edit.createSuccess', { defaultValue: 'Meeting created successfully' }),
-          variant: 'success',
-        });
-        setEditPanelOpen(false);
-        setEditingMeeting(null);
-        // Refresh the page to show updated data
-        window.location.reload();
-      } else {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to save meeting');
-      }
-    } catch (error) {
-      throw error; // Let the panel handle the error
+      setEditPanelOpen(false);
+      setEditingMeeting(null);
+      // Refresh the page to show updated data
+      window.location.reload();
+    } else {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to save meeting');
     }
   }, [t]);
 

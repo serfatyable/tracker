@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { requireAdminAuth, createAuthErrorResponse } from '@/lib/api/auth';
 import { getAdminApp } from '@/lib/firebase/admin-sdk';

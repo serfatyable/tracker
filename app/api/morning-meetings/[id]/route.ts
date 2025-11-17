@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import type { MorningMeeting } from '@/types/morningMeetings';
 
 import { requireAdminAuth, createAuthErrorResponse } from '@/lib/api/auth';
 import { getAdminApp } from '@/lib/firebase/admin-sdk';
 import { logger } from '@/lib/utils/logger';
-import type { MorningMeeting } from '@/types/morningMeetings';
 
 /**
  * PATCH /api/morning-meetings/[id]
