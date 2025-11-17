@@ -1847,3 +1847,180 @@ export async function listAllFirestoreUsers(): Promise<UserProfile[]> {
   const snap = await getDocs(collection(db, 'users'));
   return snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Record<string, any>) }) as UserProfile);
 }
+
+/**
+ * Fix residents with approved rotation selections but missing active assignments.
+ * This is a recovery function for users affected by the previous bug where
+ * rotation approval didn't create the necessary assignment.
+ *
+ * @returns Statistics about fixed users
+ */
+export async function fixOrphanedRotationApprovals(): Promise<{
+  usersScanned: number;
+  usersFixed: number;
+  details: Array<{ uid: string; fullName: string; rotationId: string }>;
+}> {
+  const db = getFirestore(getFirebaseApp());
+
+  // Find all residents with approved rotation selections
+  const residentsSnap = await getDocs(
+    query(
+      collection(db, 'users'),
+      where('role', '==', 'resident'),
+      where('rotationSelectionRequest.status', '==', 'approved'),
+    ),
+  );
+
+  const details: Array<{ uid: string; fullName: string; rotationId: string }> = [];
+  let usersFixed = 0;
+
+  for (const residentDoc of residentsSnap.docs) {
+    const resident = residentDoc.data() as any;
+    const uid = residentDoc.id;
+    const currentRotationId = resident.currentRotationId;
+
+    if (!currentRotationId) continue;
+
+    // Check if active assignment exists for this rotation
+    const assignmentsSnap = await getDocs(
+      query(
+        collection(db, 'assignments'),
+        where('residentId', '==', uid),
+        where('rotationId', '==', currentRotationId),
+        where('status', '==', 'active'),
+      ),
+    );
+
+    // If no active assignment exists, create one
+    if (assignmentsSnap.empty) {
+      await runTransaction(db, async (tx) => {
+        // Double-check if any assignment exists (active or not)
+        const allAssignmentsSnap = await getDocs(
+          query(
+            collection(db, 'assignments'),
+            where('residentId', '==', uid),
+            where('rotationId', '==', currentRotationId),
+          ),
+        );
+
+        if (allAssignmentsSnap.empty) {
+          // Create new assignment with 'active' status
+          const newRef = doc(collection(db, 'assignments'));
+          tx.set(newRef, {
+            residentId: uid,
+            rotationId: currentRotationId,
+            tutorIds: [],
+            startedAt: serverTimestamp(),
+            endedAt: null,
+            status: 'active',
+          } as any);
+        } else {
+          // Update existing assignment to 'active'
+          const assignmentRef = allAssignmentsSnap.docs[0]!.ref;
+          tx.update(assignmentRef, {
+            status: 'active',
+            startedAt: serverTimestamp(),
+            endedAt: null,
+          } as any);
+        }
+      });
+
+      details.push({
+        uid,
+        fullName: resident.fullName || resident.email || uid,
+        rotationId: currentRotationId,
+      });
+      usersFixed++;
+    }
+  }
+
+  return {
+    usersScanned: residentsSnap.size,
+    usersFixed,
+    details,
+  };
+}
+
+/**
+ * Fix a single resident's rotation activation by creating the missing active assignment.
+ * Useful for fixing individual users via admin UI.
+ *
+ * @param residentId - The resident's UID
+ * @returns Whether a fix was needed and applied
+ */
+export async function fixResidentRotationActivation(residentId: string): Promise<{
+  fixed: boolean;
+  message: string;
+}> {
+  const db = getFirestore(getFirebaseApp());
+
+  const userRef = doc(db, 'users', residentId);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    return { fixed: false, message: 'User not found' };
+  }
+
+  const userData = userSnap.data() as any;
+
+  if (userData.role !== 'resident') {
+    return { fixed: false, message: 'User is not a resident' };
+  }
+
+  const currentRotationId = userData.currentRotationId;
+  const rotationRequest = userData.rotationSelectionRequest;
+
+  if (!currentRotationId) {
+    return { fixed: false, message: 'No current rotation set' };
+  }
+
+  if (!rotationRequest || rotationRequest.status !== 'approved') {
+    return { fixed: false, message: 'Rotation selection not approved' };
+  }
+
+  // Check if active assignment exists
+  const assignmentsSnap = await getDocs(
+    query(
+      collection(db, 'assignments'),
+      where('residentId', '==', residentId),
+      where('rotationId', '==', currentRotationId),
+      where('status', '==', 'active'),
+    ),
+  );
+
+  if (!assignmentsSnap.empty) {
+    return { fixed: false, message: 'Active assignment already exists' };
+  }
+
+  // Create or update assignment
+  await runTransaction(db, async (tx) => {
+    const allAssignmentsSnap = await getDocs(
+      query(
+        collection(db, 'assignments'),
+        where('residentId', '==', residentId),
+        where('rotationId', '==', currentRotationId),
+      ),
+    );
+
+    if (allAssignmentsSnap.empty) {
+      const newRef = doc(collection(db, 'assignments'));
+      tx.set(newRef, {
+        residentId,
+        rotationId: currentRotationId,
+        tutorIds: [],
+        startedAt: serverTimestamp(),
+        endedAt: null,
+        status: 'active',
+      } as any);
+    } else {
+      const assignmentRef = allAssignmentsSnap.docs[0]!.ref;
+      tx.update(assignmentRef, {
+        status: 'active',
+        startedAt: serverTimestamp(),
+        endedAt: null,
+      } as any);
+    }
+  });
+
+  return { fixed: true, message: 'Active assignment created successfully' };
+}
