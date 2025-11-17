@@ -10,12 +10,15 @@ import type { MorningMeeting } from '@/types/morningMeetings';
  * Update an existing morning meeting
  * Admin only
  */
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // Verify admin authentication
     await requireAdminAuth(req);
 
-    const { id } = params;
+    const { id } = await params;
     const { getFirestore } = await import('firebase-admin/firestore');
     const app = getAdminApp();
     const db = getFirestore(app);
@@ -123,12 +126,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
  * Delete a morning meeting
  * Admin only
  */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // Verify admin authentication
     await requireAdminAuth(req);
 
-    const { id } = params;
+    const { id } = await params;
     const { getFirestore } = await import('firebase-admin/firestore');
     const app = getAdminApp();
     const db = getFirestore(app);
