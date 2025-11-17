@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ListSkeleton } from '@/components/dashboard/Skeleton';
 import { useResidentActiveRotation } from '@/lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '@/lib/hooks/useRotationNodes';
-import { useUserTasks } from '@/lib/hooks/useUserTasks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 
 type Achievement = {
   id: string;

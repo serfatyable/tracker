@@ -7,7 +7,7 @@ import ReactFlow, { Background, Controls, MiniMap, Position, Panel } from 'react
 import 'reactflow/dist/style.css';
 import { useResidentProgress, type NodeProgress } from '../../../lib/hooks/useResidentProgress';
 import { useRotationNodes } from '../../../lib/hooks/useRotationNodes';
-import { useUserTasks } from '../../../lib/hooks/useUserTasks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 import { getLocalized } from '../../../lib/i18n/getLocalized';
 import { createSynonymMatcher } from '../../../lib/search/synonyms';
 import TextField from '../../ui/TextField';

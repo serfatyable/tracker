@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { TaskDoc } from '../../lib/firebase/db';
-import { useUserTasks } from '../../lib/hooks/useUserTasks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 import { ListSkeleton } from '../dashboard/Skeleton';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';

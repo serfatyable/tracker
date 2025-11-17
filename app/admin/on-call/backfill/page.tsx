@@ -5,7 +5,7 @@ import { useState } from 'react';
 import AppShell from '../../../../components/layout/AppShell';
 import Card from '../../../../components/ui/Card';
 import { fetchWithAuth } from '../../../../lib/api/client';
-import { useCurrentUserProfile } from '../../../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
 export default function AdminOnCallBackfillPage() {
   const { data: me } = useCurrentUserProfile();

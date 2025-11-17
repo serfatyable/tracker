@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { approveRotationPetition, denyRotationPetition } from '../../lib/firebase/admin';
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import type { RotationPetition } from '../../types/rotationPetitions';
 import Button from '../ui/Button';
 import { Dialog, DialogHeader, DialogFooter } from '../ui/Dialog';

@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import EmptyState, { ChecklistIcon } from '@/components/ui/EmptyState';
 import Select from '@/components/ui/Select';
 import type { TaskDoc } from '@/lib/firebase/db';
-import { useUserTasks } from '@/lib/hooks/useUserTasks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 
 export default function EnhancedPendingTasks({
   activeRotationId,

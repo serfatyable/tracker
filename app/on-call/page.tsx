@@ -15,7 +15,7 @@ import ShiftStatsCard from '../../components/on-call/ShiftStatsCard';
 import TeamForDate from '../../components/on-call/TeamForDate';
 import TodayPanel from '../../components/on-call/TodayPanel';
 import Card from '../../components/ui/Card';
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useKeyboardNavigation } from '../../lib/hooks/useKeyboardNavigation';
 import { haptic } from '../../lib/utils/haptics';
 import {

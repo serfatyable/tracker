@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ListSkeleton } from '@/components/dashboard/Skeleton';
 import EmptyState, { CalendarIcon } from '@/components/ui/EmptyState';
 import { getFirebaseApp } from '@/lib/firebase/client';
-import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
 type ScheduleEvent = {
   id: string;

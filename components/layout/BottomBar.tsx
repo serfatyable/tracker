@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { haptic } from '../../lib/utils/haptics';
 
 export default function BottomBar() {

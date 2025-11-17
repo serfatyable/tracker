@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ListSkeleton } from '@/components/dashboard/Skeleton';
-import { useUserTasks } from '@/lib/hooks/useUserTasks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 
 export default function ActivityTimeline() {
   const { t } = useTranslation();

@@ -19,7 +19,7 @@ import AppShell from '@/components/layout/AppShell';
 import LargeTitleHeader from '@/components/layout/LargeTitleHeader';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useCategorizedExams } from '@/lib/hooks/useExams';
 import { createSynonymMatcher } from '@/lib/search/synonyms';
 import { haptic } from '@/lib/utils/haptics';

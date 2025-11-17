@@ -19,7 +19,7 @@ import { getFirebaseApp } from '../../lib/firebase/client';
 import { createTask, deleteTask } from '../../lib/firebase/db';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
-import { useUserTasks } from '../../lib/hooks/useUserTasks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 import { getLocalized } from '../../lib/i18n/getLocalized';
 import { createSynonymMatcher } from '../../lib/search/synonyms';
 import type { RotationNode } from '../../types/rotations';

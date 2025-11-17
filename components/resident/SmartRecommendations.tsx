@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import EmptyState, { SparklesIcon } from '@/components/ui/EmptyState';
 import { useResidentActiveRotation } from '@/lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '@/lib/hooks/useRotationNodes';
-import { useUserTasks } from '@/lib/hooks/useUserTasks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 
 type Recommendation = {
   id: string;

@@ -9,7 +9,7 @@ import QuickAccessSection from './QuickAccessSection';
 import SecuritySection from './SecuritySection';
 
 import Toast from '@/components/ui/Toast';
-import { useCurrentUserProfile } from '@/lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
 export default function SettingsPanel() {
   const { status, firebaseUser, data: profile, refetch } = useCurrentUserProfile();

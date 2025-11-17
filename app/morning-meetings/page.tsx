@@ -10,7 +10,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Toast from '../../components/ui/Toast';
-import { useCurrentUserProfile } from '../../lib/hooks/useCurrentUserProfile';
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import {
   useMorningMeetingsMultiMonth,
   useMorningMeetingsUpcoming,

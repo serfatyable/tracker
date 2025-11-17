@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useResidentProgress, type NodeProgress } from '../../../lib/hooks/useResidentProgress';
 import { useRotationNodes } from '../../../lib/hooks/useRotationNodes';
-import { useUserTasks } from '../../../lib/hooks/useUserTasks';
+import { useUserTasks } from '@/lib/react-query/hooks';
 import { getLocalized } from '../../../lib/i18n/getLocalized';
 import Badge from '../../ui/Badge';
 // Unused import removed: Button
