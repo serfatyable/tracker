@@ -578,7 +578,17 @@
       "petitionRotation": "סבב:",
       "petitionReason": "סיבה:",
       "petitionRequestedAt": "התבקש {{time}}",
-      "manageRotations": "ניהול סבבים"
+      "manageRotations": "ניהול סבבים",
+      "assignRotation": "שיבוץ",
+      "assignSuccess": "הסבב שובץ בהצלחה.",
+      "confirmAssignRotation": "לשבץ את {{rotation}} ל-{{resident}}?",
+      "hasActiveRotation": "למתמחה כבר יש סבב פעיל. אנא בטל את השיבוץ תחילה.",
+      "noRotationsAvailable": "אין סבבים זמינים.",
+      "manageRotationsFor": "ניהול סבבים עבור {{name}}",
+      "noActiveRotations": "אין סבבים פעילים למתמחה זה.",
+      "unknownRotation": "סבב לא ידוע",
+      "confirmUnassignRotation": "האם אתה בטוח שברצונך לבטל את שיבוץ {{resident}} מ-{{rotation}}?",
+      "unassignSuccess": "השיבוץ לסבב בוטל בהצלחה."
     },
     "kpi": {
       "residents": "מתמחים",

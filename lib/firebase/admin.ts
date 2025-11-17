@@ -300,13 +300,64 @@ export async function unassignTutorFromResident(
   });
 }
 
+/**
+ * Activates a rotation for a resident by setting the assignment status to 'active'.
+ * If an assignment already exists (regardless of status), it updates the status to 'active'.
+ * If no assignment exists, it creates a new one with 'active' status.
+ * This function is used by admins to directly activate rotations for residents.
+ */
+export async function activateResidentRotation(
+  residentId: string,
+  rotationId: string,
+): Promise<void> {
+  const db = getFirestore(getFirebaseApp());
+  const assignmentsCol = collection(db, 'assignments');
+
+  await runTransaction(db, async (tx) => {
+    // Check if assignment already exists
+    const existingSnap = await getDocs(
+      query(
+        assignmentsCol,
+        where('residentId', '==', residentId),
+        where('rotationId', '==', rotationId),
+      ),
+    );
+
+    if (existingSnap.docs.length > 0) {
+      // Update existing assignment to 'active' status
+      const assignmentDoc = existingSnap.docs[0];
+      if (assignmentDoc) {
+        tx.update(assignmentDoc.ref, {
+          status: 'active',
+          startedAt: serverTimestamp(),
+        });
+      }
+    } else {
+      // Create new assignment with 'active' status
+      const newRef = doc(assignmentsCol);
+      tx.set(newRef, {
+        residentId,
+        rotationId,
+        tutorIds: [],
+        startedAt: serverTimestamp(),
+        endedAt: null,
+        status: 'active',
+        isGlobal: false,
+      });
+    }
+  });
+}
+
+/**
+ * Unassigns a resident from a rotation by setting the assignment status to 'inactive'.
+ * This makes the rotation unavailable to the resident but preserves the assignment record.
+ */
 export async function unassignResidentFromRotation(
   residentId: string,
   rotationId: string,
 ): Promise<void> {
   const db = getFirestore(getFirebaseApp());
   const assignmentsCol = collection(db, 'assignments');
-  let deletedAssignment = false;
 
   await runTransaction(db, async (tx) => {
     const assignmentsSnap = await getDocs(
@@ -320,11 +371,12 @@ export async function unassignResidentFromRotation(
     const assignmentDoc = assignmentsSnap.docs[0];
     if (!assignmentDoc) return;
 
-    tx.delete(assignmentDoc.ref);
-    deletedAssignment = true;
+    // Set status to 'inactive' instead of deleting
+    tx.update(assignmentDoc.ref, {
+      status: 'inactive',
+      endedAt: serverTimestamp(),
+    });
   });
-
-  if (!deletedAssignment) return;
 
   // Clean up any pending petitions for the resident/rotation pair so the UI resets fully.
   const pendingPetitionsSnap = await getDocs(
