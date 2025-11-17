@@ -5,7 +5,6 @@ import { formatDateLabel, getRotationName, toDate } from '../rotationUtils';
 
 import type { Rotation } from '@/types/rotations';
 
-
 describe('rotationUtils', () => {
   describe('getRotationName', () => {
     const mockRotation: Rotation = {

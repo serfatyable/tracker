@@ -69,7 +69,6 @@ function isSupportedMetric(metric: NextWebVitalsMetric): metric is SupportedWebV
 export function reportWebVital(metric: NextWebVitalsMetric) {
   if (!isSupportedMetric(metric)) {
     if (process.env.NODE_ENV !== 'production') {
-       
       console.warn('[tracker][web-vitals] Ignoring unsupported metric', metric);
     }
     return;
@@ -114,7 +113,6 @@ export function reportWebVital(metric: NextWebVitalsMetric) {
   }
 
   if (process.env.NODE_ENV !== 'production') {
-     
     console.debug('[tracker][web-vitals]', payload);
   }
 }

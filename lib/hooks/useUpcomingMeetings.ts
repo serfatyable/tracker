@@ -1,12 +1,5 @@
 'use client';
-import {
-  onSnapshot,
-  query,
-  collection,
-  where,
-  getFirestore,
-  orderBy,
-} from 'firebase/firestore';
+import { onSnapshot, query, collection, where, getFirestore, orderBy } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
 import { getFirebaseApp } from '../firebase/client';

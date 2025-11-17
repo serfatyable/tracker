@@ -94,29 +94,21 @@ function formatTimeAgo(date: Date, language: string): string {
   }
 
   if (diffInMinutes < 60) {
-    return language === 'he'
-      ? `לפני ${diffInMinutes} דקות`
-      : `${diffInMinutes}m ago`;
+    return language === 'he' ? `לפני ${diffInMinutes} דקות` : `${diffInMinutes}m ago`;
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return language === 'he'
-      ? `לפני ${diffInHours} שעות`
-      : `${diffInHours}h ago`;
+    return language === 'he' ? `לפני ${diffInHours} שעות` : `${diffInHours}h ago`;
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) {
-    return language === 'he'
-      ? `לפני ${diffInDays} ימים`
-      : `${diffInDays}d ago`;
+    return language === 'he' ? `לפני ${diffInDays} ימים` : `${diffInDays}d ago`;
   }
 
   const diffInWeeks = Math.floor(diffInDays / 7);
-  return language === 'he'
-    ? `לפני ${diffInWeeks} שבועות`
-    : `${diffInWeeks}w ago`;
+  return language === 'he' ? `לפני ${diffInWeeks} שבועות` : `${diffInWeeks}w ago`;
 }
 
 export default function TutorActivityTimeline({ activities: providedActivities }: Props) {
@@ -164,7 +156,9 @@ export default function TutorActivityTimeline({ activities: providedActivities }
             return (
               <div key={activity.id} className="relative flex gap-4 pb-2">
                 {/* Icon */}
-                <div className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${activity.bgColor} ring-4 ring-white dark:ring-slate-900`}>
+                <div
+                  className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${activity.bgColor} ring-4 ring-white dark:ring-slate-900`}
+                >
                   <Icon className={`h-5 w-5 ${activity.color}`} />
                 </div>
 

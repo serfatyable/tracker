@@ -171,7 +171,9 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
                 placeholder={t('exams.admin.examLinkPlaceholder')}
                 disabled={loading}
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('exams.admin.examLinkHelp')}</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {t('exams.admin.examLinkHelp')}
+              </p>
             </div>
 
             {/* Subjects Section */}
@@ -319,7 +321,9 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
                       placeholder={t('exams.admin.subjectLinkPlaceholder')}
                       disabled={loading}
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('exams.admin.subjectLinkHelp')}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {t('exams.admin.subjectLinkHelp')}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -334,7 +338,10 @@ export default function EditExamDialog({ isOpen, onClose, exam, userId }: EditEx
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 disabled={loading}
               />
-              <label htmlFor="isActive" className="text-sm font-medium text-gray-900 dark:text-white">
+              <label
+                htmlFor="isActive"
+                className="text-sm font-medium text-gray-900 dark:text-white"
+              >
                 {t('exams.admin.isActive')}
               </label>
             </div>

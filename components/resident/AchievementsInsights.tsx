@@ -92,7 +92,9 @@ export default function AchievementsInsights() {
       },
       {
         id: 'fifty-approved',
-        title: t('ui.home.achievements.fiftyApproved', { defaultValue: 'Expert Learner' }) as string,
+        title: t('ui.home.achievements.fiftyApproved', {
+          defaultValue: 'Expert Learner',
+        }) as string,
         description: t('ui.home.achievements.fiftyApprovedDesc', {
           defaultValue: '50 tasks approved',
         }) as string,
@@ -205,10 +207,7 @@ export default function AchievementsInsights() {
                 </div>
                 <div className="space-y-2">
                   {insights.map((insight) => (
-                    <div
-                      key={insight.id}
-                      className="flex items-center justify-between text-sm"
-                    >
+                    <div key={insight.id} className="flex items-center justify-between text-sm">
                       <span className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                         <span>{insight.icon}</span>
                         <span>{insight.label}</span>

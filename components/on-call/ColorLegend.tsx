@@ -5,7 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 import { getStationColors } from '../../lib/on-call/stationColors';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
-import { getLocalStorageItem, setLocalStorageItem, ONCALL_STORAGE_KEYS } from '../../lib/utils/localStorage';
+import {
+  getLocalStorageItem,
+  setLocalStorageItem,
+  ONCALL_STORAGE_KEYS,
+} from '../../lib/utils/localStorage';
 
 export default function ColorLegend() {
   const { t } = useTranslation();

@@ -25,7 +25,9 @@ export default function RoleSelect({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-white">{labels.role}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white">
+          {labels.role}
+        </label>
         <select
           value={role}
           onChange={(e) => onRoleChange(e.target.value as Role)}
@@ -38,7 +40,9 @@ export default function RoleSelect({
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-900 dark:text-white">{labels.language}</label>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white">
+          {labels.language}
+        </label>
         <select
           value={language}
           onChange={(e) => onLanguageChange(e.target.value as 'en' | 'he')}

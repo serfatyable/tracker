@@ -175,7 +175,9 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
                   placeholder={t('exams.admin.examLinkPlaceholder')}
                   disabled={loading}
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('exams.admin.defaultLinkHelp')}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {t('exams.admin.defaultLinkHelp')}
+                </p>
               </div>
 
               {/* Active Status */}
@@ -188,7 +190,10 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   disabled={loading}
                 />
-                <label htmlFor="isActive" className="text-sm font-medium text-gray-900 dark:text-white">
+                <label
+                  htmlFor="isActive"
+                  className="text-sm font-medium text-gray-900 dark:text-white"
+                >
                   {t('exams.admin.isActive')}
                 </label>
               </div>
@@ -306,7 +311,9 @@ export default function CreateExamDialog({ isOpen, onClose, userId }: CreateExam
                       placeholder={t('exams.admin.subjectLinkPlaceholder')}
                       disabled={loading}
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('exams.admin.subjectLinkHelp')}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {t('exams.admin.subjectLinkHelp')}
+                    </p>
                   </div>
 
                   {/* Description (English) */}

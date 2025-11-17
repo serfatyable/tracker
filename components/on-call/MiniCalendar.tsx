@@ -8,7 +8,11 @@ import { getStationColors } from '../../lib/on-call/stationColors';
 import { stationKeys, stationI18nKeys } from '../../lib/on-call/stations';
 import { createSynonymMatcher } from '../../lib/search/synonyms';
 import { addDays, toDateKey } from '../../lib/utils/dateUtils';
-import { getLocalStorageItem, setLocalStorageItem, ONCALL_STORAGE_KEYS } from '../../lib/utils/localStorage';
+import {
+  getLocalStorageItem,
+  setLocalStorageItem,
+  ONCALL_STORAGE_KEYS,
+} from '../../lib/utils/localStorage';
 import { Skeleton } from '../dashboard/Skeleton';
 
 import type { StationAssignment } from '@/types/onCall';
@@ -68,10 +72,10 @@ export default function MiniCalendar() {
     return savedStart ? new Date(savedStart) : new Date();
   });
   const [filterStation, setFilterStation] = useState<string>(() =>
-    getLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_STATION_FILTER, '')
+    getLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_STATION_FILTER, ''),
   );
   const [filterDoctor, setFilterDoctor] = useState<string>(() =>
-    getLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_DOCTOR_FILTER, '')
+    getLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_DOCTOR_FILTER, ''),
   );
 
   const handleStartChange = (newDate: Date) => {
@@ -89,7 +93,10 @@ export default function MiniCalendar() {
     setLocalStorageItem(ONCALL_STORAGE_KEYS.MINI_CALENDAR_DOCTOR_FILTER, doctor);
   };
 
-  const days = useMemo(() => Array.from({ length: TIMELINE_DAYS_COUNT }).map((_, i) => addDays(start, i)), [start]);
+  const days = useMemo(
+    () => Array.from({ length: TIMELINE_DAYS_COUNT }).map((_, i) => addDays(start, i)),
+    [start],
+  );
   const dayKeys = days.map((d) => toDateKey(d));
 
   return (

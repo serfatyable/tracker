@@ -116,7 +116,9 @@ export default function SmartRecommendations() {
         description: t('ui.home.recommendation.newFeedback', {
           defaultValue: 'New tutor feedback available',
         }),
-        action: t('ui.home.recommendation.viewFeedback', { defaultValue: 'View Feedback' }) as string,
+        action: t('ui.home.recommendation.viewFeedback', {
+          defaultValue: 'View Feedback',
+        }) as string,
         actionLink: `/resident/reflections/${task.id}?taskType=${encodeURIComponent(node.name)}`,
         priority: 80,
         icon: '💬',

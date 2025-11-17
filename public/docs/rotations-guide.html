@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -7,7 +7,12 @@
     <style>
       :root {
         color-scheme: light dark;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
       }
       body {
         margin: 0 auto;
@@ -23,7 +28,9 @@
         background: rgba(148, 163, 184, 0.2);
         border-radius: 4px;
         padding: 0.1rem 0.3rem;
-        font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+        font-family:
+          ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+          'Courier New', monospace;
       }
       a {
         color: #0b6cff;
@@ -40,8 +47,8 @@
   <body>
     <h1>Rotation Management Quick Guide</h1>
     <p>
-      This lightweight page exists so the in-app “Open guide” link always resolves. Replace the
-      URL shown in the app by setting <code>NEXT_PUBLIC_ROTATIONS_GUIDE_URL</code> to your preferred
+      This lightweight page exists so the in-app “Open guide” link always resolves. Replace the URL
+      shown in the app by setting <code>NEXT_PUBLIC_ROTATIONS_GUIDE_URL</code> to your preferred
       documentation site if you have a richer resource.
     </p>
 
@@ -59,13 +66,16 @@
     <ul>
       <li><a href="/api/templates/rotation.xlsx" download>Curriculum Excel template</a></li>
       <li><a href="/api/templates/rotation.csv" download>Curriculum CSV template</a></li>
-      <li><a href="/ROTATION_TEMPLATE_GUIDE.md" target="_blank" rel="noopener noreferrer">ROTATION_TEMPLATE_GUIDE.md (full reference)</a></li>
+      <li>
+        <a href="/ROTATION_TEMPLATE_GUIDE.md" target="_blank" rel="noopener noreferrer"
+          >ROTATION_TEMPLATE_GUIDE.md (full reference)</a
+        >
+      </li>
     </ul>
 
-    <p style="margin-top: 3rem; font-size: 0.85rem; opacity: 0.75;">
+    <p style="margin-top: 3rem; font-size: 0.85rem; opacity: 0.75">
       Need a richer handbook? Host it anywhere (Notion, Confluence, etc.) and set
       <code>NEXT_PUBLIC_ROTATIONS_GUIDE_URL</code> so admins are sent there instead.
     </p>
   </body>
 </html>
-

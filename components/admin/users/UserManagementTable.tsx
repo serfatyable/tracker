@@ -142,20 +142,10 @@ function UserCard({
       {/* Additional Actions for Active Residents */}
       {user.role === 'resident' && user.status !== 'pending' && (
         <div className="flex gap-2 flex-wrap">
-          <Button
-            size="sm"
-            variant="outline"
-            className="btn-levitate"
-            onClick={onAssignTutor}
-          >
+          <Button size="sm" variant="outline" className="btn-levitate" onClick={onAssignTutor}>
             {t('admin.users.assignTutor', { defaultValue: 'Assign Tutor' })}
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="btn-levitate"
-            onClick={onManageRotations}
-          >
+          <Button size="sm" variant="ghost" className="btn-levitate" onClick={onManageRotations}>
             {t('admin.users.manageRotations', { defaultValue: 'Manage rotations' })}
           </Button>
         </div>
@@ -760,7 +750,9 @@ const UserManagementTable = memo(function UserManagementTable() {
                                       size="sm"
                                       variant="outline"
                                       className="btn-levitate"
-                                      onClick={() => openAssignTutor(userId, user.fullName || userId)}
+                                      onClick={() =>
+                                        openAssignTutor(userId, user.fullName || userId)
+                                      }
                                     >
                                       {t('admin.users.assignTutor', {
                                         defaultValue: 'Assign Tutor',

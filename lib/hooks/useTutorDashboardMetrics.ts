@@ -6,7 +6,6 @@ import { useTutorDashboardData } from './useTutorDashboardData';
 
 import type { UserProfile } from '@/types/auth';
 
-
 export type TutorDashboardMetrics = {
   // Hero section metrics
   pendingCount: number;

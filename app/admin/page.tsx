@@ -131,8 +131,7 @@ function DashboardContent({
       for (const tid of a.tutorIds || []) load.set(tid, (load.get(tid) || 0) + 1);
     const counts = Array.from(load.values());
     const mean = counts.reduce((s, n) => s + n, 0) / (counts.length || 1);
-    const variance =
-      counts.reduce((s, n) => s + Math.pow(n - mean, 2), 0) / (counts.length || 1);
+    const variance = counts.reduce((s, n) => s + Math.pow(n - mean, 2), 0) / (counts.length || 1);
     const tutorLoadBalance = Number.isFinite(Math.sqrt(variance))
       ? Number(Math.sqrt(variance).toFixed(1))
       : 0;

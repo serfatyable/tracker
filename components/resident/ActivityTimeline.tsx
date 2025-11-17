@@ -130,7 +130,7 @@ export default function ActivityTimeline() {
   }
 
   // Group by weeks for display
-  const weeks: typeof heatmapData[] = [];
+  const weeks: (typeof heatmapData)[] = [];
   for (let i = 0; i < heatmapData.length; i += 7) {
     weeks.push(heatmapData.slice(i, i + 7));
   }
@@ -186,8 +186,7 @@ export default function ActivityTimeline() {
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="flex flex-col gap-1">
               {week.map((day, dayIndex) => {
-                const isToday =
-                  day.date.toDateString() === new Date().toDateString();
+                const isToday = day.date.toDateString() === new Date().toDateString();
                 return (
                   <div
                     key={dayIndex}

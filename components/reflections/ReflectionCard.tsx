@@ -73,7 +73,9 @@ export default function ReflectionCard({
 
         {/* Date and arrow */}
         <div className="flex flex-col items-end gap-2">
-          <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{dateStr}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            {dateStr}
+          </div>
           <svg
             className="w-5 h-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all"
             fill="none"

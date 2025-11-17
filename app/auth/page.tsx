@@ -24,7 +24,12 @@ import { getFirebaseStatus } from '../../lib/firebase/client';
 import { mapFirebaseAuthErrorToI18nKey } from '../../lib/firebase/errors';
 import { useRotations } from '../../lib/hooks/useRotations';
 import { applyLanguageToDocument } from '../../lib/i18n/applyLanguage';
-import { validateWithSchema, signInSchema, passwordResetSchema, signUpSchema } from '../../lib/schemas';
+import {
+  validateWithSchema,
+  signInSchema,
+  passwordResetSchema,
+  signUpSchema,
+} from '../../lib/schemas';
 import type { Role } from '../../types/auth';
 
 function classNames(...classes: (string | boolean | undefined)[]) {

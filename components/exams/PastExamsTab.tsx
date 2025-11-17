@@ -81,7 +81,9 @@ export default function PastExamsTab({ exam, isAdmin, userId }: PastExamsTabProp
       {sortedPastExams.length === 0 ? (
         <Card className="text-center py-12">
           <DocumentTextIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-600 dark:text-gray-400 font-medium mb-4">{t('exams.noPastExams')}</p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium mb-4">
+            {t('exams.noPastExams')}
+          </p>
         </Card>
       ) : (
         <div className="space-y-3">

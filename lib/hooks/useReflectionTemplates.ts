@@ -74,9 +74,7 @@ type UseReflectionTemplatesResult = {
   duplicateTemplate: (template: ReflectionTemplate) => Promise<void>;
 };
 
-export function useReflectionTemplates(
-  audience: Audience | '',
-): UseReflectionTemplatesResult {
+export function useReflectionTemplates(audience: Audience | ''): UseReflectionTemplatesResult {
   const [templates, setTemplates] = useState<ReflectionTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

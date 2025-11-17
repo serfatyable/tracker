@@ -6,7 +6,11 @@ import { useOnCallByDate } from '../../lib/hooks/useOnCallByDate';
 import { getStationCardClasses } from '../../lib/on-call/stationColors';
 import { stationI18nKeys, stationKeys } from '../../lib/on-call/stations';
 import { toDateKey } from '../../lib/utils/dateUtils';
-import { getLocalStorageItem, setLocalStorageItem, ONCALL_STORAGE_KEYS } from '../../lib/utils/localStorage';
+import {
+  getLocalStorageItem,
+  setLocalStorageItem,
+  ONCALL_STORAGE_KEYS,
+} from '../../lib/utils/localStorage';
 import { Skeleton } from '../dashboard/Skeleton';
 import Button from '../ui/Button';
 import EmptyState, { CalendarIcon } from '../ui/EmptyState';

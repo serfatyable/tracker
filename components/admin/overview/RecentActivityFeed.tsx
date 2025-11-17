@@ -85,7 +85,9 @@ export default function RecentActivityFeed({ activities }: Props): React.ReactEl
               key={activity.id}
               className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/20 transition-colors"
             >
-              <div className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${colorClass}`}>
+              <div
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${colorClass}`}
+              >
                 <Icon className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
@@ -93,7 +95,8 @@ export default function RecentActivityFeed({ activities }: Props): React.ReactEl
                   {activity.userName || t('dashboard.system', { defaultValue: 'System' })}
                 </div>
                 <div className="text-sm text-foreground/70 mt-0.5">
-                  {activity.action || t('dashboard.performedAction', { defaultValue: 'Performed an action' })}
+                  {activity.action ||
+                    t('dashboard.performedAction', { defaultValue: 'Performed an action' })}
                 </div>
                 {activity.details && (
                   <div className="text-xs text-foreground/50 mt-1 line-clamp-1">

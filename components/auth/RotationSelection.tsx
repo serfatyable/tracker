@@ -71,7 +71,7 @@ export default function RotationSelection({
                   he: rotation.name_he || rotation.name,
                   fallback: rotation.name,
                   lang: language,
-                })
+                }),
               )}
             </option>
           ))}
@@ -105,7 +105,7 @@ export default function RotationSelection({
                       he: rotation.name_he || rotation.name,
                       fallback: rotation.name,
                       lang: language,
-                    })
+                    }),
                   )}
                   {rotation.id === currentRotationId && (
                     <span className="ms-2 text-xs text-blue-600 dark:text-blue-400">(Current)</span>

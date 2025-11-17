@@ -151,7 +151,10 @@ export function getStationBadgeClasses(stationKey: StationKey): string {
 /**
  * Get card classes for a station
  */
-export function getStationCardClasses(stationKey: StationKey, isHighlighted: boolean = false): string {
+export function getStationCardClasses(
+  stationKey: StationKey,
+  isHighlighted: boolean = false,
+): string {
   const colors = stationColors[stationKey];
   const baseClasses = 'rounded border p-3';
 

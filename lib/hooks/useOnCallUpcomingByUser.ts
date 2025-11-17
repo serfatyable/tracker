@@ -52,7 +52,10 @@ export function useOnCallUpcomingByUser(userId?: string) {
             for (const d of daysSnap.docs) {
               const rec = d.data() as OnCallDay;
               const stations = rec.stations;
-              for (const [stationKey, entry] of Object.entries(stations) as [StationKey, StationAssignment][]) {
+              for (const [stationKey, entry] of Object.entries(stations) as [
+                StationKey,
+                StationAssignment,
+              ][]) {
                 if (entry && entry.userId === userId) {
                   // Synthesize minimal assignment-like object for UI
                   const parts = rec.dateKey.split('-').map((p: string) => parseInt(p, 10));

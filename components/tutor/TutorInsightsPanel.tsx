@@ -216,7 +216,8 @@ export default function TutorInsightsPanel({
             <div className="flex items-end justify-between gap-2">
               {[12, 18, 15, 22, 19, 25, 23].map((value, index) => (
                 <div key={index} className="flex flex-1 flex-col items-center gap-2">
-                  <div className="w-full rounded-t-lg bg-gradient-to-t from-teal-500 to-cyan-400 transition-all hover:from-teal-600 hover:to-cyan-500"
+                  <div
+                    className="w-full rounded-t-lg bg-gradient-to-t from-teal-500 to-cyan-400 transition-all hover:from-teal-600 hover:to-cyan-500"
                     style={{ height: `${value * 4}px` }}
                   />
                   <span className="text-xs text-gray-600 dark:text-gray-400">

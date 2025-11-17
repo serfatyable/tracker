@@ -39,7 +39,11 @@ export default function ProgressRing({ size = 20, stroke = 3, percent, label }: 
         strokeWidth={stroke}
         stroke="currentColor"
         className={
-          clamped === 100 ? 'text-green-500' : clamped > 0 ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'
+          clamped === 100
+            ? 'text-green-500'
+            : clamped > 0
+              ? 'text-blue-500'
+              : 'text-gray-400 dark:text-gray-500'
         }
         fill="none"
         strokeDasharray={`${dash} ${circumference - dash}`}

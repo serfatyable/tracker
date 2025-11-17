@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { createAuthErrorResponse, verifyAuthToken } from '@/lib/api/auth';
-import { listRotationPetitionsWithDetails, approveRotationPetition, denyRotationPetition } from '@/lib/firebase/admin';
+import {
+  listRotationPetitionsWithDetails,
+  approveRotationPetition,
+  denyRotationPetition,
+} from '@/lib/firebase/admin';
 import { getAdminApp } from '@/lib/firebase/admin-sdk';
 import {
   validateApiRequest,
@@ -43,7 +47,10 @@ export async function GET(req: NextRequest) {
 
     const validationResult = validateApiRequest(listRotationPetitionsQuerySchema, queryData);
     if (!validationResult.success) {
-      return NextResponse.json({ error: validationResult.error }, { status: validationResult.status });
+      return NextResponse.json(
+        { error: validationResult.error },
+        { status: validationResult.status },
+      );
     }
 
     const params: any = {};
@@ -87,7 +94,10 @@ export async function POST(req: NextRequest) {
   // Validate request body with Zod
   const validationResult = validateApiRequest(createRotationPetitionRequestSchema, body);
   if (!validationResult.success) {
-    return NextResponse.json({ error: validationResult.error }, { status: validationResult.status });
+    return NextResponse.json(
+      { error: validationResult.error },
+      { status: validationResult.status },
+    );
   }
 
   const { rotationId, type, reason } = validationResult.data;
@@ -189,7 +199,10 @@ export async function PATCH(req: NextRequest) {
     // Validate request body with Zod
     const validationResult = validateApiRequest(updateRotationPetitionRequestSchema, body);
     if (!validationResult.success) {
-      return NextResponse.json({ error: validationResult.error }, { status: validationResult.status });
+      return NextResponse.json(
+        { error: validationResult.error },
+        { status: validationResult.status },
+      );
     }
 
     const { petitionId, action } = validationResult.data;

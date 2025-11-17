@@ -15,10 +15,7 @@ export const emailSchema = z
   .toLowerCase();
 
 // Password validation schema
-export const passwordSchema = z
-  .string()
-  .min(1, 'errors.required')
-  .min(8, 'errors.passwordLength');
+export const passwordSchema = z.string().min(1, 'errors.required').min(8, 'errors.passwordLength');
 
 // Date validation for residency start date (YYYY-MM-DD, must be in the past)
 export const pastDateSchema = z

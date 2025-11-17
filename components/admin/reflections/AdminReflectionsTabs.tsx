@@ -3,7 +3,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '../../../lib/hooks/useCurrentUserProfile';
-import { useReflectionSubmissions, type ReflectionFilters } from '../../../lib/hooks/useReflections';
+import {
+  useReflectionSubmissions,
+  type ReflectionFilters,
+} from '../../../lib/hooks/useReflections';
 import { useReflectionTemplates } from '../../../lib/hooks/useReflectionTemplates';
 import type { Audience, Reflection, ReflectionTemplate } from '../../../types/reflections';
 import Button from '../../ui/Button';
@@ -32,9 +35,10 @@ function TemplatesTab() {
     duplicateTemplate,
   } = useReflectionTemplates(audience);
 
-  const latestPublished = templates
-    .filter((t) => t.status === 'published')
-    .sort((a, b) => (b.version || 0) - (a.version || 0))[0] || null;
+  const latestPublished =
+    templates
+      .filter((t) => t.status === 'published')
+      .sort((a, b) => (b.version || 0) - (a.version || 0))[0] || null;
 
   const handleCreateDraft = () => {
     if (!audience) return;
@@ -378,9 +382,14 @@ function TemplateEditor({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-lg text-indigo-900 dark:text-indigo-50">
-              {t('reflections.editingTemplate', { version: working.version, status: working.status })}
+              {t('reflections.editingTemplate', {
+                version: working.version,
+                status: working.status,
+              })}
             </h3>
-            <div className="text-xs mt-1 text-indigo-800 dark:text-indigo-200">{working.audience}</div>
+            <div className="text-xs mt-1 text-indigo-800 dark:text-indigo-200">
+              {working.audience}
+            </div>
           </div>
           <Button variant="outline" size="sm" onClick={onClose}>
             {t('reflections.close')}
@@ -418,7 +427,9 @@ function TemplateEditor({
                           setWorking((prev) => ({
                             ...prev,
                             sections: prev.sections.map((s) =>
-                              s.id === section.id ? { ...s, name: { ...s.name, en: e.target.value } } : s,
+                              s.id === section.id
+                                ? { ...s, name: { ...s.name, en: e.target.value } }
+                                : s,
                             ),
                           }));
                         }}
@@ -441,7 +452,9 @@ function TemplateEditor({
                           setWorking((prev) => ({
                             ...prev,
                             sections: prev.sections.map((s) =>
-                              s.id === section.id ? { ...s, name: { ...s.name, he: e.target.value } } : s,
+                              s.id === section.id
+                                ? { ...s, name: { ...s.name, he: e.target.value } }
+                                : s,
                             ),
                           }));
                         }}
@@ -495,7 +508,9 @@ function TemplateEditor({
                                   ? {
                                       ...s,
                                       prompts: s.prompts.map((p) =>
-                                        p.id === prompt.id ? { ...p, label: { ...p.label, en: e.target.value } } : p,
+                                        p.id === prompt.id
+                                          ? { ...p, label: { ...p.label, en: e.target.value } }
+                                          : p,
                                       ),
                                     }
                                   : s,
@@ -525,7 +540,9 @@ function TemplateEditor({
                                   ? {
                                       ...s,
                                       prompts: s.prompts.map((p) =>
-                                        p.id === prompt.id ? { ...p, label: { ...p.label, he: e.target.value } } : p,
+                                        p.id === prompt.id
+                                          ? { ...p, label: { ...p.label, he: e.target.value } }
+                                          : p,
                                       ),
                                     }
                                   : s,
@@ -548,7 +565,9 @@ function TemplateEditor({
                                     ? {
                                         ...s,
                                         prompts: s.prompts.map((p) =>
-                                          p.id === prompt.id ? { ...p, required: e.target.checked } : p,
+                                          p.id === prompt.id
+                                            ? { ...p, required: e.target.checked }
+                                            : p,
                                         ),
                                       }
                                     : s,
@@ -629,7 +648,10 @@ function SubmissionsTab() {
       <Card>
         <div className="flex flex-wrap gap-3">
           <div>
-            <label htmlFor="role-filter" className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50">
+            <label
+              htmlFor="role-filter"
+              className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50"
+            >
               {t('reflections.filterByRole')}
             </label>
             <select
@@ -647,7 +669,10 @@ function SubmissionsTab() {
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label htmlFor="search-filter" className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50">
+            <label
+              htmlFor="search-filter"
+              className="block text-xs font-medium mb-1 text-gray-900 dark:text-gray-50"
+            >
               {t('reflections.searchSubmissions')}
             </label>
             <input
@@ -745,7 +770,10 @@ function SubmissionsTab() {
             </div>
 
             <div className="space-y-3">
-              <label htmlFor="admin-comment" className="block text-sm font-medium text-gray-900 dark:text-gray-50">
+              <label
+                htmlFor="admin-comment"
+                className="block text-sm font-medium text-gray-900 dark:text-gray-50"
+              >
                 {t('reflections.adminComment')}
               </label>
               <input

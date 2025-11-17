@@ -54,11 +54,7 @@ export default function PeopleInsights({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Unassigned Residents */}
-        <UnassignedQueues
-          assignments={assignments}
-          residents={residents}
-          rotations={rotations}
-        />
+        <UnassignedQueues assignments={assignments} residents={residents} rotations={rotations} />
 
         {/* Zero Load Tutors */}
         <div className="card-levitate p-4">

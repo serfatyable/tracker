@@ -30,7 +30,9 @@ export default function AccountSyncView() {
   const [deleteType, setDeleteType] = useState<'auth' | 'firestore' | null>(null);
   const [deleteUids, setDeleteUids] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
-  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(
+    null,
+  );
 
   const fetchSyncData = useCallback(async () => {
     try {
@@ -252,7 +254,12 @@ export default function AccountSyncView() {
               {t('ui.orphanedAuthAccounts', { defaultValue: 'Orphaned Auth Accounts' })}
             </h3>
             <Button
-              onClick={() => handleDeleteClick('auth', data.orphanedAuth.map((a) => a.uid))}
+              onClick={() =>
+                handleDeleteClick(
+                  'auth',
+                  data.orphanedAuth.map((a) => a.uid),
+                )
+              }
               variant="destructive"
               size="sm"
               className="inline-flex items-center gap-2"
@@ -327,7 +334,12 @@ export default function AccountSyncView() {
               {t('ui.orphanedFirestoreDocs', { defaultValue: 'Orphaned User Data' })}
             </h3>
             <Button
-              onClick={() => handleDeleteClick('firestore', data.orphanedFirestore.map((d) => d.uid))}
+              onClick={() =>
+                handleDeleteClick(
+                  'firestore',
+                  data.orphanedFirestore.map((d) => d.uid),
+                )
+              }
               variant="destructive"
               size="sm"
               className="inline-flex items-center gap-2"
@@ -368,7 +380,9 @@ export default function AccountSyncView() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-50">{doc.email}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-50">
+                      {doc.email}
+                    </td>
                     <td className="px-4 py-3 text-sm text-muted capitalize">{doc.role}</td>
                     <td className="px-4 py-3 text-sm font-mono text-muted">{doc.uid}</td>
                     <td className="px-4 py-3 text-sm text-right">
@@ -402,9 +416,7 @@ export default function AccountSyncView() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogHeader>
-          {t('ui.confirmDelete', { defaultValue: 'Confirm Deletion' })}
-        </DialogHeader>
+        <DialogHeader>{t('ui.confirmDelete', { defaultValue: 'Confirm Deletion' })}</DialogHeader>
         <div className="p-6">
           <p className="text-gray-700 dark:text-gray-300">
             {deleteUids.length === 1
@@ -441,11 +453,7 @@ export default function AccountSyncView() {
 
       {/* Toast Notifications */}
       {toast && (
-        <Toast
-          message={toast.message}
-          variant={toast.variant}
-          onClear={() => setToast(null)}
-        />
+        <Toast message={toast.message} variant={toast.variant} onClear={() => setToast(null)} />
       )}
     </div>
   );

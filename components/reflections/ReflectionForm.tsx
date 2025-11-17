@@ -110,7 +110,7 @@ export default function ReflectionForm({
     [answers],
   );
 
-  const getSectionCharCount = (section: typeof template.sections[0]) => {
+  const getSectionCharCount = (section: (typeof template.sections)[0]) => {
     return section.prompts.reduce((sum, prompt) => sum + (answers[prompt.id]?.length || 0), 0);
   };
 
@@ -122,7 +122,10 @@ export default function ReflectionForm({
         .map((section) => {
           const sectionChars = getSectionCharCount(section);
           return (
-            <div key={section.id} className="rounded border p-3 border-gray-300 dark:border-gray-600">
+            <div
+              key={section.id}
+              className="rounded border p-3 border-gray-300 dark:border-gray-600"
+            >
               <div className="flex items-start justify-between mb-1">
                 <div className="font-semibold">
                   {section.name[lang]} <span className="opacity-60 text-xs">({audience})</span>
@@ -145,7 +148,9 @@ export default function ReflectionForm({
                             {prompt.label[lang]}
                             {prompt.required ? <span className="text-red-500"> *</span> : null}
                           </label>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">{charCount}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {charCount}
+                          </span>
                         </div>
                         <textarea
                           disabled={disabled || busy}
@@ -167,7 +172,9 @@ export default function ReflectionForm({
       <div className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/85 dark:supports-[backdrop-filter]:bg-gray-900/85 border-t border-gray-200 dark:border-gray-700 safe-area-inset-bottom shadow-lg">
         <div className="app-container p-3 flex items-center justify-between gap-3">
           <div className="flex flex-col">
-            <div className="text-xs font-medium text-gray-900 dark:text-white">Total characters</div>
+            <div className="text-xs font-medium text-gray-900 dark:text-white">
+              Total characters
+            </div>
             <div className="text-sm font-semibold text-primary">{totalChars.toLocaleString()}</div>
           </div>
           <div className="flex gap-2">
@@ -188,7 +195,9 @@ export default function ReflectionForm({
       {/* Desktop submit */}
       <div className="hidden md:flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50">
         <div className="flex flex-col">
-          <div className="text-xs font-medium text-gray-600 dark:text-gray-400">Total characters</div>
+          <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Total characters
+          </div>
           <div className="text-lg font-semibold text-primary">{totalChars.toLocaleString()}</div>
         </div>
         <Button

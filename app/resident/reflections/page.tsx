@@ -91,7 +91,9 @@ export default function ResidentReflectionsIndexPage() {
         {/* Filters */}
         <Card>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-sm">{t('ui.filters', { defaultValue: 'Filters' })}</h3>
+            <h3 className="font-semibold text-sm">
+              {t('ui.filters', { defaultValue: 'Filters' })}
+            </h3>
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={handleClearFilters}>
                 {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
