@@ -253,7 +253,7 @@ export default function AccountSyncView() {
             </h3>
             <Button
               onClick={() => handleDeleteClick('auth', data.orphanedAuth.map((a) => a.uid))}
-              variant="danger"
+              variant="destructive"
               size="sm"
               className="inline-flex items-center gap-2"
             >
@@ -305,7 +305,7 @@ export default function AccountSyncView() {
                     <td className="px-4 py-3 text-sm text-right">
                       <Button
                         onClick={() => handleDeleteClick('auth', [account.uid])}
-                        variant="danger"
+                        variant="destructive"
                         size="sm"
                       >
                         {t('ui.delete', { defaultValue: 'Delete' })}
@@ -328,7 +328,7 @@ export default function AccountSyncView() {
             </h3>
             <Button
               onClick={() => handleDeleteClick('firestore', data.orphanedFirestore.map((d) => d.uid))}
-              variant="danger"
+              variant="destructive"
               size="sm"
               className="inline-flex items-center gap-2"
             >
@@ -374,7 +374,7 @@ export default function AccountSyncView() {
                     <td className="px-4 py-3 text-sm text-right">
                       <Button
                         onClick={() => handleDeleteClick('firestore', [doc.uid])}
-                        variant="danger"
+                        variant="destructive"
                         size="sm"
                       >
                         {t('ui.delete', { defaultValue: 'Delete' })}
@@ -431,7 +431,7 @@ export default function AccountSyncView() {
           >
             {t('ui.cancel', { defaultValue: 'Cancel' })}
           </Button>
-          <Button onClick={handleDeleteConfirm} variant="danger" disabled={deleting}>
+          <Button onClick={handleDeleteConfirm} variant="destructive" disabled={deleting}>
             {deleting
               ? t('ui.deleting', { defaultValue: 'Deleting...' })
               : t('ui.delete', { defaultValue: 'Delete' })}
