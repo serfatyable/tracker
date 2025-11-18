@@ -38,6 +38,7 @@ export default function ProgramTypeSelect({
         disabled={disabled}
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error ? errorId : undefined}
+        aria-required={required}
         className="input-levitate"
       >
         <option value="">-- {label} --</option>
@@ -45,7 +46,7 @@ export default function ProgramTypeSelect({
         <option value="6-year">{option6Year}</option>
       </select>
       {error ? (
-        <p id={errorId} className="text-sm text-red-600">
+        <p id={errorId} className="text-sm text-red-600" role="alert" aria-live="polite">
           {error}
         </p>
       ) : null}

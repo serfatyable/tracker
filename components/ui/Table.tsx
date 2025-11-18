@@ -12,6 +12,15 @@ export function Table({ className, ...rest }: TableHTMLAttributes<HTMLTableEleme
   );
 }
 
+export function TCaption({ className, ...rest }: HTMLAttributes<HTMLTableCaptionElement>) {
+  return (
+    <caption
+      className={'sr-only ' + (className || '')}
+      {...rest}
+    />
+  );
+}
+
 export function THead({ className, ...rest }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead

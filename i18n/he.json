@@ -252,7 +252,88 @@
     "noResultsFound": "לא נמצאו תוצאות",
     "resident": "מתמחה",
     "tutor": "מדריך",
-    "homeTitle": "דף הבית"
+    "homeTitle": "דף הבית",
+    "home": {
+      "greeting": {
+        "morning": "בוקר טוב",
+        "afternoon": "צהריים טובים",
+        "evening": "ערב טוב"
+      },
+      "quote1": "מצוינות היא תהליך מתמשך, לא מקרה.",
+      "quote2": "כל מומחה היה פעם מתחיל.",
+      "quote3": "למידה היא מסע, לא יעד.",
+      "quote4": "התקדמות, לא שלמות.",
+      "quote5": "צעדים קטנים מובילים להישגים גדולים.",
+      "rotationProgress": "התקדמות בסבב",
+      "dayStreak": "רצף ימים",
+      "keepGoing": "המשך כך!",
+      "noActiveRotation": "אין סבב פעיל",
+      "totalRequiredTasks": "סה״כ משימות נדרשות",
+      "avgReviewTime": "ממוצע: {{days}} ימי סקירה",
+      "thisWeek": "השבוע",
+      "activityTimeline": "ציר זמן פעילות",
+      "less": "פחות",
+      "more": "יותר",
+      "totalActivities": "סה״כ",
+      "mostActive": "הכי פעיל",
+      "last12Weeks": "12 השבועות האחרונים",
+      "suggestedNextSteps": "הצעות לפעולות הבאות",
+      "noRecommendations": "הכל מסודר!",
+      "noRecommendationsDesc": "אתה עושה עבודה מעולה. המשך כך!",
+      "recommendation": {
+        "almostComplete": "{{current}}/{{required}} הושלמו - כמעט שם!",
+        "logMore": "רשום עוד",
+        "rejectedTask": "עיין במשוב ושלח שוב",
+        "reflect": "בצע רפלקציה",
+        "newFeedback": "משוב חדש מהמדריך זמין",
+        "viewFeedback": "צפה במשוב",
+        "notStarted": "{{required}} נדרשות - התחל!",
+        "startNow": "התחל עכשיו"
+      },
+      "upcomingWeek": "השבוע",
+      "noUpcomingEvents": "אין אירועים קרובים",
+      "noUpcomingEventsDesc": "לוח הזמנים שלך ל-7 הימים הקרובים פנוי.",
+      "schedule": {
+        "onCall": "תורנות",
+        "morningMeeting": "ישיבת בוקר",
+        "lecturer": "מרצה: {{name}}",
+        "today": "היום",
+        "tomorrow": "מחר"
+      },
+      "weeklySummary": "השבוע",
+      "tasksCompleted": "משימות שהושלמו",
+      "activitiesLogged": "פעילויות שנרשמו",
+      "strengthAreas": "תחומי חוזק",
+      "recentAchievements": "הישגים אחרונים",
+      "noAchievementsYet": "השלם משימות כדי לפתוח הישגים!",
+      "achievements": {
+        "firstTask": "הצעדים הראשונים",
+        "firstTaskDesc": "השלמת את המשימה הראשונה שלך",
+        "weekStreak": "לוחם השבוע",
+        "weekStreakDesc": "רצף פעילות של 7 ימים",
+        "tenApproved": "בהתקדמות",
+        "tenApprovedDesc": "10 משימות אושרו",
+        "fiftyApproved": "לומד מומחה",
+        "fiftyApprovedDesc": "50 משימות אושרו",
+        "rotationComplete": "מאסטר הסבב",
+        "rotationCompleteDesc": "השלמת את כל המשימות הנדרשות בסבב"
+      },
+      "favorites": "גישה מהירה",
+      "actions": {
+        "logActivityDesc": "תעד את העבודה שלך",
+        "searchDesc": "מצא משימות במהירות",
+        "activeRotationDesc": "צפה בסבב הנוכחי"
+      },
+      "priority": {
+        "high": "גבוהה",
+        "medium": "בינונית",
+        "low": "נמוכה"
+      },
+      "tasksAwaitingReview": "משימות ממתינות לסקירה",
+      "needsAttention": "דורש תשומת לב",
+      "review": "סקירה",
+      "reflect": "רפלקציה"
+    }
   },
   "morningMeetings": {
     "title": "ישיבת בוקר",

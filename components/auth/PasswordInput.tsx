@@ -40,6 +40,7 @@ export default function PasswordInput({
           required={required}
           disabled={disabled}
           autoComplete={autoComplete}
+          aria-required={required}
           className="input-levitate pr-12"
         />
         <button

@@ -31,13 +31,14 @@ export default function TextAreaField({
       {label ? (
         <label htmlFor={areaId} className="mb-1 block text-sm font-medium text-fg">
           {label}
-          {required ? <span className="ml-1 text-red-600">*</span> : null}
+          {required ? <span className="ms-1 text-red-600">*</span> : null}
         </label>
       ) : null}
       <TextArea
         id={areaId}
         aria-describedby={ariaDesc}
         aria-invalid={!!error}
+        aria-required={required}
         className={[
           'placeholder:text-[rgb(var(--fg))] dark:placeholder:text-white/70',
           error ? 'ring-1 ring-red-500' : 'focus:ring-1 focus:ring-primary',
@@ -53,7 +54,7 @@ export default function TextAreaField({
         </p>
       ) : null}
       {error ? (
-        <p id={errId} className="mt-1 text-xs text-red-600">
+        <p id={errId} className="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
           {error}
         </p>
       ) : null}

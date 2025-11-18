@@ -350,6 +350,8 @@ export default function AuthPage() {
                   <div
                     id="si-form-error"
                     className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-700"
+                    role="alert"
+                    aria-live="polite"
                   >
                     {formMessage}
                   </div>
@@ -410,6 +412,8 @@ export default function AuthPage() {
                   <div
                     id="su-form-error"
                     className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-700"
+                    role="alert"
+                    aria-live="polite"
                   >
                     {formMessage}
                   </div>
