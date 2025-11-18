@@ -182,6 +182,15 @@ export default function AdminOnCallImportPage() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => router.push('/admin/on-call/manual')}
+              className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-900/30 border-blue-400 dark:border-blue-600 text-blue-700 dark:text-blue-300"
+              title={t('onCall.manualEntry', { defaultValue: 'Manual On-Call Entry' })}
+            >
+              ✏️ {t('onCall.manualEntry', { defaultValue: 'Manual Entry' })}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => router.push('/admin/on-call/backfill')}
               title="Open backfill tools"
             >
