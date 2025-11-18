@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '@/lib/react-query/hooks';
-import { createSynonymMatcher } from '../../lib/search/synonyms';
+import { createSynonymMatcher } from '@/lib/search/synonyms';
 
 export default function CommandPalette() {
   const { t } = useTranslation();
@@ -38,7 +38,7 @@ export default function CommandPalette() {
   const items = useMemo(() => {
     if (role === 'resident') {
       return [
-        { label: t('ui.home') as string, href: '/resident' },
+        { label: t('ui.homeTitle', { defaultValue: 'Home' }) as string, href: '/resident' },
         { label: t('ui.onCall', { defaultValue: 'On Call' }) as string, href: '/on-call' },
         {
           label: t('ui.morningMeetings', { defaultValue: 'Morning Meetings' }) as string,
@@ -50,7 +50,7 @@ export default function CommandPalette() {
     }
     if (role === 'tutor') {
       return [
-        { label: t('ui.home') as string, href: '/tutor' },
+        { label: t('ui.homeTitle', { defaultValue: 'Home' }) as string, href: '/tutor' },
         { label: t('tutor.tabs.residents') as string, href: '/tutor?tab=residents' },
         { label: t('ui.tasks') as string, href: '/tutor?tab=tasks' },
         { label: t('ui.onCall', { defaultValue: 'On Call' }) as string, href: '/on-call' },
@@ -62,7 +62,7 @@ export default function CommandPalette() {
       ];
     }
     return [
-      { label: t('ui.home') as string, href: '/admin' },
+      { label: t('ui.homeTitle', { defaultValue: 'Home' }) as string, href: '/admin' },
       { label: t('ui.tasks') as string, href: '/admin?tab=tasks' },
       {
         label: t('ui.morningMeetings', { defaultValue: 'Morning Meetings' }) as string,

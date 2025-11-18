@@ -1,9 +1,11 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { updateUserQuickAccessTabs } from '@/lib/firebase/auth';
+import { queryKeys } from '@/lib/react-query/keys';
 import type { UserProfile } from '@/types/auth';
 
 interface QuickAccessSectionProps {
@@ -58,14 +60,14 @@ const ALL_TABS = {
 
 // Tab labels (matching RoleTabs)
 const TAB_LABELS: Record<string, string> = {
-  'resident-home': 'ui.home',
+  'resident-home': 'ui.homeTitle',
   'resident-reflections': 'ui.reflections',
   'resident-rotations': 'ui.rotations',
   'resident-exams': 'exams.title',
   'resident-on-call': 'ui.onCall',
   'resident-meetings': 'ui.morningMeetings',
   'resident-settings': 'ui.settings',
-  'tutor-home': 'ui.home',
+  'tutor-home': 'ui.homeTitle',
   'tutor-residents': 'tutor.tabs.residents',
   'tutor-tasks': 'ui.tasks',
   'tutor-reflections': 'ui.reflections',
@@ -74,7 +76,7 @@ const TAB_LABELS: Record<string, string> = {
   'tutor-meetings': 'ui.morningMeetings',
   'tutor-exams': 'exams.title',
   'tutor-settings': 'ui.settings',
-  'admin-home': 'ui.home',
+  'admin-home': 'ui.homeTitle',
   'admin-tasks': 'ui.tasks',
   'admin-reflections': 'ui.reflections',
   'admin-rotations': 'ui.rotations',
@@ -88,6 +90,7 @@ const TAB_LABELS: Record<string, string> = {
 
 export default function QuickAccessSection({ profile, onToast }: QuickAccessSectionProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const role = profile.role;
   const availableTabs = ALL_TABS[role];
@@ -135,6 +138,19 @@ export default function QuickAccessSection({ profile, onToast }: QuickAccessSect
     try {
       setLoading(true);
       await updateUserQuickAccessTabs(selectedTabs);
+      queryClient.setQueryData(queryKeys.users.currentProfile(), (existing: UserProfile | null) => {
+        if (!existing) {
+          return existing;
+        }
+
+        return {
+          ...existing,
+          settings: {
+            ...(existing.settings ?? {}),
+            quickAccessTabs: selectedTabs,
+          },
+        } satisfies UserProfile;
+      });
       onToast(t('settings.saved'));
     } catch {
       onToast(t('settings.error'));
@@ -191,7 +207,7 @@ export default function QuickAccessSection({ profile, onToast }: QuickAccessSect
               className="rounded"
             />
             <span>
-              {t(TAB_LABELS[tabId] || 'ui.home', {
+              {t(TAB_LABELS[tabId] || 'ui.homeTitle', {
                 defaultValue: tabId.split('-').slice(1).join(' '),
               })}
             </span>
