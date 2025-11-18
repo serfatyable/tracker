@@ -461,13 +461,22 @@ const OnCallScheduleView = memo(function OnCallScheduleView({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex gap-2 flex-wrap">
             {showUploadButton && (
-              <Button
-                onClick={() => router.push('/admin/on-call')}
-                className="btn-levitate border-blue-400 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-950/30 dark:text-blue-300"
-                variant="outline"
-              >
-                📤 {t('onCall.import.uploadExcel', { defaultValue: 'Upload Schedule' })}
-              </Button>
+              <>
+                <Button
+                  onClick={() => router.push('/admin/on-call')}
+                  className="btn-levitate border-blue-400 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-950/30 dark:text-blue-300"
+                  variant="outline"
+                >
+                  📤 {t('onCall.import.uploadExcel', { defaultValue: 'Upload Schedule' })}
+                </Button>
+                <Button
+                  onClick={() => router.push('/admin/on-call/manual')}
+                  className="btn-levitate border-green-400 bg-green-50 hover:bg-green-100 text-green-700 dark:border-green-600 dark:bg-green-950/30 dark:text-green-300"
+                  variant="outline"
+                >
+                  ✏️ {t('onCall.manualEntry', { defaultValue: 'Manual Entry' })}
+                </Button>
+              </>
             )}
 
             {/* My Shifts Toggle */}
