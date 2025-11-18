@@ -4,7 +4,7 @@ import { memo, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useUsersByRole } from '@/lib/hooks/useUsersByRole';
-import type { UserProfile } from '@/types/auth';
+import type { ResidentProfile } from '@/types/auth';
 import type { StationAssignment } from '@/types/onCall';
 
 interface StationAutocompleteProps {
@@ -35,8 +35,8 @@ const StationAutocomplete = memo(function StationAutocomplete({
     );
   }, [residents, query]);
 
-  // Convert UserProfile to StationAssignment
-  const handleChange = (resident: UserProfile | null) => {
+  // Convert ResidentProfile to StationAssignment
+  const handleChange = (resident: ResidentProfile | null) => {
     if (!resident) {
       onChange(null);
       return;
@@ -68,11 +68,11 @@ const StationAutocomplete = memo(function StationAutocomplete({
   }
 
   return (
-    <Combobox value={selectedResident} onChange={handleChange} disabled={disabled}>
+    <Combobox<ResidentProfile | null> value={selectedResident} onChange={handleChange} disabled={disabled}>
       <div className="relative">
         <Combobox.Input
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-900 disabled:cursor-not-allowed"
-          displayValue={(resident: UserProfile | null) =>
+          displayValue={(resident: ResidentProfile | null) =>
             resident?.fullName || resident?.email || ''
           }
           onChange={(event) => setQuery(event.target.value)}
