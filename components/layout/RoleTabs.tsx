@@ -17,8 +17,7 @@ import type { ReadonlyURLSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile } from '@/lib/react-query/hooks';
-import { useUserTasks } from '@/lib/react-query/hooks';
+import { useCurrentUserProfile , useUserTasks } from '@/lib/react-query/hooks';
 
 type Tab = {
   id: string;
@@ -32,7 +31,7 @@ type Tab = {
 function useResidentTabs(): Tab[] {
   const { t } = useTranslation();
   const { tasks } = useUserTasks();
-  const pendingTasks = useMemo(
+  const _pendingTasks = useMemo(
     () => tasks.filter((task) => task.status === 'pending').length,
     [tasks],
   );
@@ -284,7 +283,7 @@ export default function RoleTabs() {
 
   return (
     <nav
-      className="segmented-nav hidden md:flex"
+      className="segmented-nav"
       aria-label={t('ui.tabNavigation', { defaultValue: 'Primary navigation' }) as string}
     >
       {tabs.map((tab) => {
