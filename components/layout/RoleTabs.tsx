@@ -17,7 +17,7 @@ import type { ReadonlyURLSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile , useUserTasks } from '@/lib/react-query/hooks';
+import { useCurrentUserProfile, useUserTasks } from '@/lib/react-query/hooks';
 
 type Tab = {
   id: string;
@@ -39,7 +39,7 @@ function useResidentTabs(): Tab[] {
   return [
     {
       id: 'resident-home',
-      label: t('ui.home', { defaultValue: 'Home' }) as string,
+      label: t('ui.homeTitle', { defaultValue: 'Home' }) as string,
       href: '/resident',
       icon: HomeIcon,
       match: (pathname, params) =>
@@ -97,7 +97,7 @@ function useTutorTabs(): Tab[] {
   return [
     {
       id: 'tutor-home',
-      label: t('ui.home', { defaultValue: 'Home' }) as string,
+      label: t('ui.homeTitle', { defaultValue: 'Home' }) as string,
       href: '/tutor',
       icon: HomeIcon,
       match: (pathname) => pathname === '/tutor',
@@ -166,7 +166,7 @@ function useAdminTabs(): Tab[] {
   return [
     {
       id: 'admin-home',
-      label: t('ui.home', { defaultValue: 'Home' }) as string,
+      label: t('ui.homeTitle', { defaultValue: 'Home' }) as string,
       href: '/admin',
       icon: HomeIcon,
       match: (pathname) => pathname === '/admin',

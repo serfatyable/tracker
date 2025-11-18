@@ -58,14 +58,14 @@ const ALL_TABS = {
 
 // Tab labels (matching RoleTabs)
 const TAB_LABELS: Record<string, string> = {
-  'resident-home': 'ui.home',
+  'resident-home': 'ui.homeTitle',
   'resident-reflections': 'ui.reflections',
   'resident-rotations': 'ui.rotations',
   'resident-exams': 'exams.title',
   'resident-on-call': 'ui.onCall',
   'resident-meetings': 'ui.morningMeetings',
   'resident-settings': 'ui.settings',
-  'tutor-home': 'ui.home',
+  'tutor-home': 'ui.homeTitle',
   'tutor-residents': 'tutor.tabs.residents',
   'tutor-tasks': 'ui.tasks',
   'tutor-reflections': 'ui.reflections',
@@ -74,7 +74,7 @@ const TAB_LABELS: Record<string, string> = {
   'tutor-meetings': 'ui.morningMeetings',
   'tutor-exams': 'exams.title',
   'tutor-settings': 'ui.settings',
-  'admin-home': 'ui.home',
+  'admin-home': 'ui.homeTitle',
   'admin-tasks': 'ui.tasks',
   'admin-reflections': 'ui.reflections',
   'admin-rotations': 'ui.rotations',
@@ -191,7 +191,7 @@ export default function QuickAccessSection({ profile, onToast }: QuickAccessSect
               className="rounded"
             />
             <span>
-              {t(TAB_LABELS[tabId] || 'ui.home', {
+              {t(TAB_LABELS[tabId] || 'ui.homeTitle', {
                 defaultValue: tabId.split('-').slice(1).join(' '),
               })}
             </span>

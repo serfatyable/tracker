@@ -14,7 +14,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '@/lib/react-query/hooks';
-import { haptic } from '../../lib/utils/haptics';
+import { haptic } from '@/lib/utils/haptics';
 
 export default function BottomBar() {
   const pathname = usePathname();
@@ -32,7 +32,7 @@ export default function BottomBar() {
     {
       key: 'home',
       href: '/resident',
-      label: t('ui.home', { defaultValue: 'Home' }),
+      label: t('ui.homeTitle', { defaultValue: 'Home' }),
       Icon: HomeSolid,
     },
     {
@@ -62,7 +62,12 @@ export default function BottomBar() {
   ];
 
   const tutorTabs = [
-    { key: 'home', href: '/tutor', label: t('ui.home', { defaultValue: 'Home' }), Icon: HomeSolid },
+    {
+      key: 'home',
+      href: '/tutor',
+      label: t('ui.homeTitle', { defaultValue: 'Home' }),
+      Icon: HomeSolid,
+    },
     {
       key: 'exams',
       href: '/exams',
@@ -80,7 +85,12 @@ export default function BottomBar() {
   ];
 
   const adminTabs = [
-    { key: 'home', href: '/admin', label: t('ui.home', { defaultValue: 'Home' }), Icon: HomeSolid },
+    {
+      key: 'home',
+      href: '/admin',
+      label: t('ui.homeTitle', { defaultValue: 'Home' }),
+      Icon: HomeSolid,
+    },
     {
       key: 'exams',
       href: '/exams',
