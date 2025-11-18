@@ -225,9 +225,9 @@ export async function POST(request: Request) {
       const normalized = String(s || '')
         .normalize('NFD')
         .replace(/\p{M}/gu, '') // remove diacritics (including Hebrew niqqud)
+        .replace(/[\u200E\u200F]/g, ' ') // replace LRM/RLM with space (BEFORE space normalization)
         .trim()
         .replace(/\s+/g, ' ')
-        .replace(/[\u200E\u200F]/g, '') // strip LRM/RLM
         .toLowerCase();
       const tokens = normalized.split(/\s+/).filter(Boolean);
       // Use last token (family name) for matching
