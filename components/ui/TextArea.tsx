@@ -2,11 +2,9 @@
 
 import type { TextareaHTMLAttributes } from 'react';
 
-type Props = TextareaHTMLAttributes<HTMLTextAreaElement>;
+import { cn } from '@/lib/utils/cn';
 
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ');
-}
+type Props = TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 export default function TextArea({ className, disabled, ...rest }: Props) {
   const base = 'input-levitate placeholder:opacity-70 transition-colors';
@@ -18,6 +16,6 @@ export default function TextArea({ className, disabled, ...rest }: Props) {
     : 'hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
 
   return (
-    <textarea className={cx(base, light, dark, states, className)} disabled={disabled} {...rest} />
+    <textarea className={cn(base, light, dark, states, className)} disabled={disabled} {...rest} />
   );
 }

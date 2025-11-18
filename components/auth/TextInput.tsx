@@ -39,10 +39,11 @@ export default function TextInput({
         autoComplete={autoComplete}
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error ? errorId : undefined}
+        aria-required={required}
         className="input-levitate"
       />
       {error ? (
-        <p id={errorId} className="text-sm text-red-600">
+        <p id={errorId} className="text-sm text-red-600" role="alert" aria-live="polite">
           {error}
         </p>
       ) : null}

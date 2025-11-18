@@ -2,6 +2,8 @@
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
+import { cn } from '@/lib/utils/cn';
+
 type Variant = 'default' | 'outline' | 'ghost' | 'destructive' | 'secondary';
 type Size = 'sm' | 'md' | 'lg';
 
@@ -12,10 +14,6 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   rightIcon?: ReactNode;
   loading?: boolean;
 };
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ');
-}
 
 export function Button({
   variant = 'default',
@@ -53,7 +51,7 @@ export function Button({
 
   return (
     <button
-      className={cx(base, sizes[size], variants[variant], className)}
+      className={cn(base, sizes[size], variants[variant], className)}
       disabled={disabled || loading}
       {...rest}
     >

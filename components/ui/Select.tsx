@@ -2,11 +2,9 @@
 
 import type { SelectHTMLAttributes } from 'react';
 
-type Props = SelectHTMLAttributes<HTMLSelectElement>;
+import { cn } from '@/lib/utils/cn';
 
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ');
-}
+type Props = SelectHTMLAttributes<HTMLSelectElement>;
 
 export default function Select({ className, disabled, ...rest }: Props) {
   const base = 'input-levitate transition-colors cursor-pointer';
@@ -16,6 +14,6 @@ export default function Select({ className, disabled, ...rest }: Props) {
     ? 'opacity-60 cursor-not-allowed'
     : 'hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
   return (
-    <select className={cx(base, light, dark, states, className)} disabled={disabled} {...rest} />
+    <select className={cn(base, light, dark, states, className)} disabled={disabled} {...rest} />
   );
 }
