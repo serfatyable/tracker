@@ -25,7 +25,6 @@
       "@i18n/*": ["i18n/*"]
     },
     "types": ["vitest/globals", "@testing-library/jest-dom"],
-    "typeRoots": ["./custom-types", "./node_modules/@types"],
     "incremental": true,
     "plugins": [
       {
@@ -33,6 +32,6 @@
       }
     ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "mobile-rotation-audit/**", "item-wiring-audit/**"]
+  "include": ["next-env.d.ts", "global.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "__tests__/**", "mobile-rotation-audit/**", "item-wiring-audit/**"]
 }
