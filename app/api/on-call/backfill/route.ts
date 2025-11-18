@@ -9,9 +9,9 @@ function normalizeName(s: string): string {
   const normalized = String(s || '')
     .normalize('NFD')
     .replace(/\p{M}/gu, '') // remove diacritics
+    .replace(/[\u200E\u200F]/g, ' ') // replace LRM/RLM with space (BEFORE space normalization)
     .trim()
     .replace(/\s+/g, ' ')
-    .replace(/[\u200E\u200F]/g, '')
     .toLowerCase();
   const tokens = normalized.split(/\s+/).filter(Boolean);
   // Use last token (family name) for matching
