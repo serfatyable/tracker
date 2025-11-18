@@ -1,9 +1,11 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { updateUserQuickAccessTabs } from '@/lib/firebase/auth';
+import { queryKeys } from '@/lib/react-query/keys';
 import type { UserProfile } from '@/types/auth';
 
 interface QuickAccessSectionProps {
@@ -88,6 +90,7 @@ const TAB_LABELS: Record<string, string> = {
 
 export default function QuickAccessSection({ profile, onToast }: QuickAccessSectionProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const role = profile.role;
   const availableTabs = ALL_TABS[role];
@@ -135,6 +138,19 @@ export default function QuickAccessSection({ profile, onToast }: QuickAccessSect
     try {
       setLoading(true);
       await updateUserQuickAccessTabs(selectedTabs);
+      queryClient.setQueryData(queryKeys.users.currentProfile(), (existing: UserProfile | null) => {
+        if (!existing) {
+          return existing;
+        }
+
+        return {
+          ...existing,
+          settings: {
+            ...(existing.settings ?? {}),
+            quickAccessTabs: selectedTabs,
+          },
+        } satisfies UserProfile;
+      });
       onToast(t('settings.saved'));
     } catch {
       onToast(t('settings.error'));
