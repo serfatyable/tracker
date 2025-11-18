@@ -286,6 +286,7 @@ export default function RoleTabs() {
     <nav
       className="segmented-nav hidden md:flex"
       aria-label={t('ui.tabNavigation', { defaultValue: 'Primary navigation' }) as string}
+      data-tour="role-tabs"
     >
       {tabs.map((tab) => {
         const active = tab.match(pathname, searchParams);

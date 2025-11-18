@@ -54,15 +54,15 @@
     "overdue": "Overdue",
     "remaining": "Remaining",
     "remainingShort": "Remaining {{count}}",
-    "allRotations": "All",
+    "allRotations": "All Rotations",
     "domainAll": "All domains",
-    "selectRotation": "Select rotation",
+    "selectRotation": "Select Rotation",
     "browseAll": "Browse all",
     "statusNotStarted": "Not started",
     "statusInProgress": "In progress",
     "statusCompleted": "Completed",
     "myRotations": "My rotations",
-    "searchRotations": "Search rotations...",
+    "searchRotations": "Search rotations",
     "close": "Close",
     "viewOverview": "Overview",
     "viewItems": "Items",
@@ -76,9 +76,7 @@
     "notes": "Notes",
     "logActivity": "Log activity",
     "noDescription": "No description available",
-    "searchRotations": "Search rotations",
     "currentRotation": "Current rotation",
-    "allRotations": "All rotations",
     "clear": "Clear",
     "create": "Create",
     "open": "Open",
@@ -102,13 +100,11 @@
     "createRotation": "Create Rotation",
     "startDate": "Start date",
     "endDate": "End date",
-    "searchRotations": "Search rotations",
     "back": "Back",
     "next": "Next",
     "first": "First",
     "searchRotationsOrItems": "Search rotations or items...",
     "loadingRotations": "Loading rotations…",
-    "selectRotation": "Select a rotation to view items",
     "loadingItems": "Loading items…",
     "noItemsMatch": "No items match your search in this rotation.",
     "loggingOnlyInActiveRotation": "Logging allowed only in your active rotation",
@@ -123,20 +119,15 @@
     "noRecentLogs": "No recent logs",
     "required": "Required",
     "mcq": "MCQ",
-    "resources": "Resources",
     "links": "Links",
-    "notes": "Notes",
     "viewNotes": "View notes",
     "noNotes": "No notes available",
-    "close": "Close",
     "optionalNote": "Optional note",
     "logPlusOne": "Log +1",
     "disabled": "Disabled",
     "selectLeaf": "Select a leaf to view details",
     "announcements": "Announcements",
     "none": "None",
-    "approved": "Approved",
-    "pending": "Pending",
     "awaitingApproval": "Awaiting approval",
     "pendingTasks": {
       "multipleSubmissionsLabel": "{{count}} pending submissions",
@@ -145,7 +136,6 @@
     "complete": "complete",
     "goToActiveRotation": "Go to active rotation",
     "noItems": "No items",
-    "logActivity": "Log activity",
     "activeAllRotations": "active/all rotations",
     "category.knowledge": "knowledge",
     "category.skills": "skills",
@@ -158,7 +148,6 @@
     "compact": "Compact",
     "normal": "Normal",
     "rejected": "Rejected",
-    "reject": "Reject",
     "user": "User",
     "rotation": "Rotation",
     "item": "Item",
@@ -200,7 +189,6 @@
     "unassignedOnly": "Unassigned Only",
     "assignmentSuccess": "Assignment created successfully",
     "unassignmentSuccess": "Assignment removed successfully",
-    "selectRotation": "Select Rotation",
     "confirmUnassign": "Confirm Unassignment",
     "assignedTutors": "Assigned Tutors",
     "assignedResidents": "Assigned Residents",
@@ -216,7 +204,6 @@
     "pleaseSelectRotation": "Please select a rotation",
     "assign": "Assign",
     "searchAssignments": "Search assignments...",
-    "allRotations": "All Rotations",
     "noAssignmentsFound": "No assignments found",
     "noAssignmentsYet": "No assignments have been created yet",
     "unassignConfirmMessage": "Are you sure you want to unassign {{tutorName}} from {{residentName}}?",
@@ -961,7 +948,6 @@
     "promptLabelHe": "Prompt (Hebrew)",
     "defaultResidentTemplate": "Default Resident Template",
     "defaultTutorTemplate": "Default Tutor Template",
-    "reflectionDetail": "Reflection detail",
     "save": "Save",
     "submittedBy": "Submitted by",
     "submittedAt": "Submitted at",
@@ -1321,7 +1307,7 @@
       "uploadError": "Failed to upload file",
       "createError": "Failed to create exam",
       "updateError": "Failed to update exam",
-      "deleteError": "Failed to delete exam",
+      "deleteError": "Failed to delete exam. Please try again.",
       "required": "Required",
       "optional": "optional",
       "uploading": "Uploading...",
@@ -1342,10 +1328,8 @@
       "subjectLinkPlaceholder": "https://...",
       "subjectLinkHelp": "Separate link for this subject (optional)",
       "save": "Save",
-      "create": "Create",
       "upload": "Upload",
       "delete": "Delete",
-      "confirmDelete": "Are you sure you want to delete this exam?",
       "confirmDeleteMultiple": "Are you sure you want to delete {{count}} exams?",
       "deleteMultipleExams": "Delete {{count}} Exams",
       "deleteMultiple": "Delete {{count}} Exams",
@@ -1353,8 +1337,6 @@
       "selectAll": "Select All",
       "deselectAll": "Deselect All",
       "selected": "selected",
-      "deleting": "Deleting...",
-      "deleteError": "Failed to delete exam. Please try again.",
       "edit": "Edit",
       "close": "Close"
     },
@@ -1434,6 +1416,39 @@
       "gradientOptionLabel": "Option A",
       "gradientOptionDescription": "Vibrant gradient spotlight with a subtle glow.",
       "error": "Failed to export exams calendar."
+    }
+  },
+  "guidedTour": {
+    "launch": "Guided tour",
+    "launchAria": "Replay the guided tour",
+    "progress": "Step {{current}} of {{total}}",
+    "steps": {
+      "welcome": {
+        "title": "Welcome to Tracker",
+        "description": "This quick tour highlights the essentials so you can move from orientation to action."
+      },
+      "topBar": {
+        "title": "Stay oriented",
+        "description": "Open the main menu, switch languages, and keep up with reminders from the top bar."
+      },
+      "command": {
+        "title": "Search everything",
+        "description": "Use the command palette button or press ⌘K to jump anywhere in the app."
+      },
+      "roleTabs": {
+        "title": "Switch workflows",
+        "description": "Role-based tabs keep rotations, meetings, exams, and settings one click away."
+      },
+      "quickActions": {
+        "title": "Act on priorities",
+        "description": "Quick actions surface common next steps and your curated favorites."
+      }
+    },
+    "controls": {
+      "skip": "Skip",
+      "next": "Next",
+      "back": "Back",
+      "finish": "Finish"
     }
   }
 }

@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 
 import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import TopBar from '../TopBar';
+import GuidedTour from '../guided-tour/GuidedTour';
 import CommandPalette from '../ui/CommandPalette';
 import NetworkStatusIndicator from '../ui/NetworkStatusIndicator';
 
@@ -32,6 +33,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <NetworkStatusIndicator show="offline-only" position="bottom" />
       <CommandPalette />
+      <GuidedTour />
     </div>
   );
 }

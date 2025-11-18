@@ -1,5 +1,5 @@
 'use client';
-import { Bars3Icon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +21,15 @@ export default function TopBar() {
   const openCommandPalette = useCallback(() => {
     if (typeof window === 'undefined') return;
     window.dispatchEvent(new Event('tracker:command-palette'));
+  }, []);
+
+  const launchGuidedTour = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(
+      new CustomEvent('tracker:guided-tour', {
+        detail: { action: 'start' },
+      }),
+    );
   }, []);
 
   useEffect(() => {
@@ -81,7 +90,7 @@ export default function TopBar() {
   }
 
   return (
-    <header className="topbar glass-panel">
+    <header className="topbar glass-panel" data-tour="topbar">
       <div className="flex items-center gap-2 text-base flex-shrink-0 min-w-0">
         <button
           type="button"
@@ -101,6 +110,7 @@ export default function TopBar() {
           className="command-button hidden sm:flex"
           onClick={openCommandPalette}
           aria-label={t('ui.search', { defaultValue: 'Search' })}
+          data-tour="command-button"
         >
           <MagnifyingGlassIcon className="h-5 w-5 flex-shrink-0" />
           <span className="inline-flex items-center gap-2 text-sm font-medium">
@@ -120,6 +130,27 @@ export default function TopBar() {
           aria-label={t('ui.search', { defaultValue: 'Search' })}
         >
           <MagnifyingGlassIcon className="h-5 w-5" />
+        </button>
+        <div className="hidden lg:flex">
+          <button
+            type="button"
+            className="command-button"
+            onClick={launchGuidedTour}
+            aria-label={t('guidedTour.launchAria', { defaultValue: 'Replay the guided tour' })}
+          >
+            <QuestionMarkCircleIcon className="h-5 w-5" />
+            <span className="inline-flex items-center gap-2 text-sm font-medium">
+              {t('guidedTour.launch', { defaultValue: 'Guided tour' })}
+            </span>
+          </button>
+        </div>
+        <button
+          type="button"
+          className="icon-button icon-button--ghost lg:hidden"
+          onClick={launchGuidedTour}
+          aria-label={t('guidedTour.launchAria', { defaultValue: 'Replay the guided tour' })}
+        >
+          <QuestionMarkCircleIcon className="h-5 w-5" />
         </button>
         <div className="hidden sm:block">
           <LangToggle />
