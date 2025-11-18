@@ -107,10 +107,13 @@ export default function GuidedTour() {
     () => [
       {
         id: 'welcome',
-        title: t('guidedTour.steps.welcome.title', { defaultValue: 'Welcome to Tracker' }) as string,
+        title: t('guidedTour.steps.welcome.title', {
+          defaultValue: 'Welcome to Tracker',
+        }) as string,
         description:
           (t('guidedTour.steps.welcome.description', {
-            defaultValue: 'This quick tour highlights the essentials so you can move from orientation to action.',
+            defaultValue:
+              'This quick tour highlights the essentials so you can move from orientation to action.',
           }) as string) || '',
         placement: 'center',
       },
@@ -119,7 +122,8 @@ export default function GuidedTour() {
         title: t('guidedTour.steps.topBar.title', { defaultValue: 'Stay oriented' }) as string,
         description:
           (t('guidedTour.steps.topBar.description', {
-            defaultValue: 'Open the main menu, switch languages, and keep up with reminders from the top bar.',
+            defaultValue:
+              'Open the main menu, switch languages, and keep up with reminders from the top bar.',
           }) as string) || '',
         target: '[data-tour="topbar"]',
         placement: 'bottom',
@@ -139,14 +143,17 @@ export default function GuidedTour() {
         title: t('guidedTour.steps.roleTabs.title', { defaultValue: 'Switch workflows' }) as string,
         description:
           (t('guidedTour.steps.roleTabs.description', {
-            defaultValue: 'Role-based tabs keep rotations, meetings, exams, and settings one click away.',
+            defaultValue:
+              'Role-based tabs keep rotations, meetings, exams, and settings one click away.',
           }) as string) || '',
         target: '[data-tour="role-tabs"]',
         placement: 'top',
       },
       {
         id: 'quick-actions',
-        title: t('guidedTour.steps.quickActions.title', { defaultValue: 'Act on priorities' }) as string,
+        title: t('guidedTour.steps.quickActions.title', {
+          defaultValue: 'Act on priorities',
+        }) as string,
         description:
           (t('guidedTour.steps.quickActions.description', {
             defaultValue: 'Quick actions surface common next steps and your curated favorites.',
@@ -198,22 +205,6 @@ export default function GuidedTour() {
       window.removeEventListener('scroll', onResize, true);
     };
   }, [isRunning, updateRect, stepIndex]);
-
-  useEffect(() => {
-    if (!isRunning || typeof window === 'undefined') return;
-    const current = steps[stepIndex];
-    if (current?.target) {
-      const el = document.querySelector(current.target);
-      const bounds = el?.getBoundingClientRect();
-      const hidden = bounds ? bounds.width < 1 && bounds.height < 1 : false;
-      if ((!el || hidden) && stepIndex < steps.length - 1) {
-        const timeout = window.setTimeout(() => {
-          setStepIndex((prev) => (prev === stepIndex ? prev + 1 : prev));
-        }, 600);
-        return () => window.clearTimeout(timeout);
-      }
-    }
-  }, [isRunning, stepIndex, steps]);
 
   useEffect(() => {
     if (!isRunning || typeof document === 'undefined') return;
@@ -342,13 +333,18 @@ export default function GuidedTour() {
         className="absolute w-full max-w-sm"
         style={{
           top: typeof tooltipStyle.top === 'number' ? `${tooltipStyle.top}px` : tooltipStyle.top,
-          left: typeof tooltipStyle.left === 'number' ? `${tooltipStyle.left}px` : tooltipStyle.left,
+          left:
+            typeof tooltipStyle.left === 'number' ? `${tooltipStyle.left}px` : tooltipStyle.left,
           transform: tooltipStyle.transform,
         }}
       >
         <div className="pointer-events-auto rounded-2xl bg-[rgb(var(--surface-elevated,255,255,255))] p-5 text-[rgb(var(--fg,17,24,39))] shadow-2xl ring-1 ring-black/10 dark:bg-[rgb(var(--surface-elevated))] dark:text-[rgb(var(--fg))]">
           <p className="text-xs font-medium uppercase tracking-wide text-sky-500">
-            {t('guidedTour.progress', { defaultValue: 'Step {{current}} of {{total}}', current: stepIndex + 1, total: steps.length })}
+            {t('guidedTour.progress', {
+              defaultValue: 'Step {{current}} of {{total}}',
+              current: stepIndex + 1,
+              total: steps.length,
+            })}
           </p>
           <h2 id={titleId} className="mt-2 text-lg font-semibold">
             {activeStep?.title}
