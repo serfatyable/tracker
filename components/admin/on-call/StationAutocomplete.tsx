@@ -49,9 +49,9 @@ const StationAutocomplete = memo(function StationAutocomplete({
   };
 
   // Find selected resident from value
-  const selectedResident = useMemo(() => {
+  const selectedResident = useMemo<ResidentProfile | null>(() => {
     if (!value) return null;
-    return residents.find((r) => r.uid === value.userId) || null;
+    return (residents.find((r) => r.uid === value.userId) as ResidentProfile) || null;
   }, [value, residents]);
 
   if (loading) {
