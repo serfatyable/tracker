@@ -2,14 +2,14 @@
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-// @ts-ignore - react-dom types not available
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { signOutAndRedirect } from '../../lib/firebase/auth';
-import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
 import NavItem from './NavItem';
+
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
 export default function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();

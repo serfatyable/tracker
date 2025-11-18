@@ -25,6 +25,7 @@
       "@i18n/*": ["i18n/*"]
     },
     "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "typeRoots": ["./custom-types", "./node_modules/@types"],
     "incremental": true,
     "plugins": [
       {
