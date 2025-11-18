@@ -98,7 +98,7 @@ export default function BottomBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-black/10 dark:border-white/10 bg-white/90 dark:bg-neutral-900/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur text-foreground/70 dark:text-white/70 px-1 py-1.5 md:hidden safe-area-inset-bottom"
+      className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-[rgb(var(--border))] bg-[rgb(var(--bg))]/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur text-[rgb(var(--fg))]/70 px-1 py-1.5 md:hidden safe-area-inset-bottom"
       aria-label={t('ui.primaryNavigation', { defaultValue: 'Primary navigation' })}
       role="tablist"
     >

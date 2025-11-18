@@ -288,16 +288,18 @@ export default function AuthPage() {
             TRACKER
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" role="group" aria-label={t('ui.selectLanguage', { defaultValue: 'Select language' })}>
           <button
             type="button"
             onClick={() => setLanguage('en')}
             className={classNames(
-              'rounded-full px-3 py-1 text-sm border',
+              'rounded-md px-4 py-2 text-sm font-medium border transition-all min-h-[44px] min-w-[64px]',
               language === 'en'
-                ? 'pill ring-2 ring-primary border-primary-token'
-                : 'pill opacity-90 border-primary-token',
+                ? 'bg-primary text-[rgb(var(--primary-ink))] border-primary shadow-md'
+                : 'bg-surface border-border hover:bg-surface-elevated text-foreground',
             )}
+            aria-pressed={language === 'en'}
+            aria-label={t('ui.english', { defaultValue: 'English' })}
             suppressHydrationWarning
           >
             EN
@@ -306,14 +308,16 @@ export default function AuthPage() {
             type="button"
             onClick={() => setLanguage('he')}
             className={classNames(
-              'rounded-full px-3 py-1 text-sm border',
+              'rounded-md px-4 py-2 text-sm font-medium border transition-all min-h-[44px] min-w-[64px]',
               language === 'he'
-                ? 'pill ring-2 ring-primary border-primary-token'
-                : 'pill opacity-90 border-primary-token',
+                ? 'bg-primary text-[rgb(var(--primary-ink))] border-primary shadow-md'
+                : 'bg-surface border-border hover:bg-surface-elevated text-foreground',
             )}
+            aria-pressed={language === 'he'}
+            aria-label={t('ui.hebrew', { defaultValue: 'Hebrew' })}
             suppressHydrationWarning
           >
-            HE
+            עב
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 'use client';
+import { HandRaisedIcon, FireIcon } from '@heroicons/react/24/solid';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -96,8 +97,9 @@ export default function WelcomeHero() {
       <div className="relative z-10">
         {/* Greeting and Name */}
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
-            {greeting}, {userName}! 👋
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
+            {greeting}, {userName}!
+            <HandRaisedIcon className="h-7 w-7 text-amber-500 dark:text-amber-400" aria-hidden="true" />
           </h1>
           <p className="mt-1 text-sm italic text-gray-600 dark:text-gray-400">{quote}</p>
         </div>
@@ -155,7 +157,7 @@ export default function WelcomeHero() {
           {/* Streak Badge */}
           {streak > 0 && (
             <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2 dark:from-amber-900/30 dark:to-orange-900/30">
-              <span className="text-2xl">🔥</span>
+              <FireIcon className="h-6 w-6 text-orange-600 dark:text-orange-400" aria-hidden="true" />
               <div>
                 <div className="text-sm font-bold text-amber-900 dark:text-amber-200">
                   {streak} {t('ui.home.dayStreak', { defaultValue: 'day streak' })}

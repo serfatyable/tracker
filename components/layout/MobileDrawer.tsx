@@ -134,17 +134,17 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
       <div className="fixed inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
-        className={`fixed inset-y-0 ${isRTL ? 'right-0' : 'left-0'} w-80 max-w-[85vw] bg-white/70 dark:bg-neutral-900/80 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-lg shadow-black/5 text-foreground dark:text-white overscroll-contain focus:outline-none flex flex-col`}
+        className={`fixed inset-y-0 ${isRTL ? 'right-0' : 'left-0'} w-80 max-w-[85vw] bg-[rgb(var(--surface-elevated))]/70 backdrop-blur-md border border-[rgb(var(--border))] shadow-lg text-[rgb(var(--fg))] overscroll-contain focus:outline-none flex flex-col`}
         tabIndex={-1}
       >
         <div className="flex items-center justify-between px-3 py-3 border-b border-muted/20">
-          <span className="font-medium text-foreground dark:text-white">
+          <span className="font-medium text-[rgb(var(--fg))]">
             {t('ui.menu', { defaultValue: 'Menu' })}
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-foreground dark:text-white"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md hover:bg-[rgb(var(--surface))] text-[rgb(var(--fg))]"
             aria-label={t('ui.close')}
           >
             <XMarkIcon className="h-6 w-6" stroke="currentColor" />
@@ -175,7 +175,7 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
           <button
             type="button"
             onClick={onToggleLang}
-            className="tab-levitate text-sm text-foreground dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+            className="tab-levitate text-sm text-[rgb(var(--fg))] hover:bg-[rgb(var(--surface))]"
             aria-label={t('ui.toggleLanguage')}
           >
             {lang.toUpperCase()}
@@ -183,7 +183,7 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
           <button
             type="button"
             onClick={onSignOut}
-            className="tab-levitate text-sm text-foreground dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+            className="tab-levitate text-sm text-[rgb(var(--fg))] hover:bg-[rgb(var(--surface))]"
             aria-label={t('auth.signOut')}
           >
             {t('auth.signOut')}

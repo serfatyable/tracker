@@ -284,7 +284,7 @@ export default function RoleTabs() {
 
   return (
     <nav
-      className="segmented-nav"
+      className="segmented-nav hidden md:flex"
       aria-label={t('ui.tabNavigation', { defaultValue: 'Primary navigation' }) as string}
     >
       {tabs.map((tab) => {
