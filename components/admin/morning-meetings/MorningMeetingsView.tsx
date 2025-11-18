@@ -1,27 +1,41 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import type { MorningMeeting } from '../../../types/morningMeetings';
 
 import { useMorningMeetingsMultiMonth } from '../../../lib/hooks/useMorningClasses';
 import { createSynonymMatcher } from '../../../lib/search/synonyms';
-import type { MorningMeeting } from '../../../types/morningMeetings';
 import { ListSkeleton } from '../../dashboard/Skeleton';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
+import Toast from '../../ui/Toast';
+import EditMeetingPanel from './EditMeetingPanel';
 
 interface MorningMeetingsViewProps {
   showUploadButton?: boolean;
+  showEditButtons?: boolean; // New prop to show edit/delete buttons
 }
 
 export default function MorningMeetingsView({
   showUploadButton = false,
+  showEditButtons = false,
 }: MorningMeetingsViewProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
+  const [toast, setToast] = useState<{ message: string; variant?: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+  const [editPanelOpen, setEditPanelOpen] = useState(false);
+  const [editingMeeting, setEditingMeeting] = useState<MorningMeeting | null>(null);
+  const [suggestions, setSuggestions] = useState<{
+    lecturers: string[];
+    moderators: string[];
+    organizers: string[];
+    users: Array<{ uid: string; fullName: string; email: string }>;
+  } | undefined>(undefined);
 
   // Get current month key
   const now = new Date();
@@ -30,6 +44,108 @@ export default function MorningMeetingsView({
 
   // Fetch meetings for the next 6 months
   const { meetingsByMonth, loading } = useMorningMeetingsMultiMonth(6);
+
+  // Fetch suggestions when edit panel opens
+  useEffect(() => {
+    if (editPanelOpen && showEditButtons && !suggestions) {
+      fetchSuggestions();
+    }
+  }, [editPanelOpen, showEditButtons, suggestions]);
+
+  const fetchSuggestions = async () => {
+    try {
+      const { fetchWithAuth } = await import('../../../lib/api/client');
+      const res = await fetchWithAuth('/api/morning-meetings/suggestions');
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error);
+    }
+  };
+
+  const handleCreateMeeting = useCallback(() => {
+    setEditingMeeting(null);
+    setEditPanelOpen(true);
+  }, []);
+
+  const handleCreateMeetingForDate = useCallback((dateString: string) => {
+    setEditingMeeting({
+      date: dateString,
+    } as any);
+    setEditPanelOpen(true);
+  }, []);
+
+  const handleEditMeeting = useCallback((meeting: MorningMeeting) => {
+    setEditingMeeting(meeting);
+    setEditPanelOpen(true);
+  }, []);
+
+  const handleDeleteMeeting = useCallback(async (meeting: MorningMeeting) => {
+    if (!meeting.id) return;
+
+    const confirmed = confirm(
+      t('morningMeetings.edit.confirmDelete', {
+        defaultValue: 'Are you sure you want to delete this meeting? This action cannot be undone.',
+      })
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const { fetchWithAuth } = await import('../../../lib/api/client');
+      const res = await fetchWithAuth(`/api/morning-meetings/${meeting.id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setToast({
+          message: t('morningMeetings.edit.deleteSuccess', { defaultValue: 'Meeting deleted successfully' }),
+          variant: 'success',
+        });
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        throw new Error('Failed to delete meeting');
+      }
+    } catch (_error) {
+      setToast({
+        message: t('morningMeetings.edit.deleteError', { defaultValue: 'Failed to delete meeting' }),
+        variant: 'error',
+      });
+    }
+  }, [t]);
+
+  const handleSaveMeeting = useCallback(async (meeting: Partial<MorningMeeting> & { id?: string }) => {
+    const { fetchWithAuth } = await import('../../../lib/api/client');
+
+    const isUpdate = Boolean(meeting.id);
+    const url = isUpdate ? `/api/morning-meetings/${meeting.id}` : '/api/morning-meetings';
+    const method = isUpdate ? 'PATCH' : 'POST';
+
+    const res = await fetchWithAuth(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(meeting),
+    });
+
+    if (res.ok) {
+      setToast({
+        message: isUpdate
+          ? t('morningMeetings.edit.updateSuccess', { defaultValue: 'Meeting updated successfully' })
+          : t('morningMeetings.edit.createSuccess', { defaultValue: 'Meeting created successfully' }),
+        variant: 'success',
+      });
+      setEditPanelOpen(false);
+      setEditingMeeting(null);
+      // Refresh the page to show updated data
+      window.location.reload();
+    } else {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to save meeting');
+    }
+  }, [t]);
 
   // Filter meetings by search term
   const filteredMeetings = useMemo(() => {
@@ -88,28 +204,61 @@ export default function MorningMeetingsView({
 
   return (
     <div className="space-y-4">
+      <Toast message={toast?.message ?? null} variant={toast?.variant} onClear={() => setToast(null)} />
+
+      {/* Edit Meeting Panel */}
+      <EditMeetingPanel
+        isOpen={editPanelOpen}
+        onClose={() => {
+          setEditPanelOpen(false);
+          setEditingMeeting(null);
+        }}
+        onSave={handleSaveMeeting}
+        meeting={editingMeeting}
+        suggestions={suggestions}
+      />
+
       {/* Header with Upload Button (admin only) and Search */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          {showUploadButton && (
-            <Button
-              onClick={() => router.push('/admin/morning-meetings')}
-              className="inline-flex items-center gap-2 btn-levitate border-blue-400 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-950/30 dark:text-blue-300"
-              variant="outline"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-              {t('morningMeetings.import.uploadExcel')}
-            </Button>
-          )}
+          <div className="flex gap-2 flex-wrap">
+            {showUploadButton && (
+              <Button
+                onClick={() => router.push('/admin/morning-meetings')}
+                className="inline-flex items-center gap-2 btn-levitate border-blue-400 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:border-blue-600 dark:bg-blue-950/30 dark:text-blue-300"
+                variant="outline"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                {t('morningMeetings.import.uploadExcel')}
+              </Button>
+            )}
+            {showEditButtons && (
+              <Button
+                onClick={handleCreateMeeting}
+                className="inline-flex items-center gap-2 btn-levitate border-green-400 bg-green-50 hover:bg-green-100 text-green-700 dark:border-green-600 dark:bg-green-950/30 dark:text-green-300"
+                variant="outline"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                {t('morningMeetings.edit.addMeeting', { defaultValue: 'Add Meeting' })}
+              </Button>
+            )}
+          </div>
           <div
-            className={`flex gap-2 items-center w-full sm:w-auto ${!showUploadButton ? 'sm:ml-auto' : ''}`}
+            className={`flex gap-2 items-center w-full sm:w-auto ${!showUploadButton && !showEditButtons ? 'sm:ml-auto' : ''}`}
           >
             <Input
               type="text"
@@ -276,22 +425,37 @@ export default function MorningMeetingsView({
                   return (
                     <div
                       key={d}
-                      onClick={() => dayMeetings.length > 0 && scrollToDay(d)}
+                      onClick={() => {
+                        if (dayMeetings.length > 0) {
+                          scrollToDay(d);
+                        } else if (showEditButtons) {
+                          // Create meeting for this date
+                          const [year, month] = selectedMonth.split('-').map(Number);
+                          const dateObj = new Date(year!, month!, d);
+                          const dateString = dateObj.toISOString().split('T')[0];
+                          handleCreateMeetingForDate(dateString!);
+                        }
+                      }}
                       className={`
                         rounded-lg border p-2 min-h-[80px] transition-all hover:shadow-md hover:scale-105
-                        ${dayMeetings.length > 0 ? 'cursor-pointer' : 'cursor-default'}
+                        ${dayMeetings.length > 0 || showEditButtons ? 'cursor-pointer' : 'cursor-default'}
                         ${
                           isToday
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 ring-2 ring-blue-500 ring-opacity-50'
                             : 'border-gray-200 dark:border-[rgb(var(--border))] hover:border-gray-300 dark:hover:border-[rgb(var(--border-strong))]'
                         }
+                        ${showEditButtons && dayMeetings.length === 0 ? 'hover:border-green-400 hover:bg-green-50/50 dark:hover:bg-green-950/20' : ''}
                       `}
                       title={
                         dayMeetings.length > 0
                           ? t('morningMeetings.clickToView', {
                               defaultValue: 'Click to view details',
                             })
-                          : ''
+                          : showEditButtons
+                            ? t('morningMeetings.edit.clickToAdd', {
+                                defaultValue: 'Click to add meeting',
+                              })
+                            : ''
                       }
                     >
                       <div
@@ -375,7 +539,13 @@ export default function MorningMeetingsView({
                           id={isFirstOfDay ? `day-${date.getDate()}` : undefined}
                           className="scroll-mt-24"
                         >
-                          <MeetingCard meeting={meeting} language={i18n.language} />
+                          <MeetingCard
+                            meeting={meeting}
+                            language={i18n.language}
+                            showEditButtons={showEditButtons}
+                            onEdit={handleEditMeeting}
+                            onDelete={handleDeleteMeeting}
+                          />
                         </div>
                       );
                     })}
@@ -391,7 +561,19 @@ export default function MorningMeetingsView({
 }
 
 // Meeting card component
-function MeetingCard({ meeting, language }: { meeting: MorningMeeting; language: string }) {
+function MeetingCard({
+  meeting,
+  language,
+  showEditButtons,
+  onEdit,
+  onDelete,
+}: {
+  meeting: MorningMeeting;
+  language: string;
+  showEditButtons?: boolean;
+  onEdit?: (meeting: MorningMeeting) => void;
+  onDelete?: (meeting: MorningMeeting) => void;
+}) {
   const { t } = useTranslation();
   const date = meeting.date.toDate();
   const month = date.getMonth();
@@ -447,9 +629,45 @@ function MeetingCard({ meeting, language }: { meeting: MorningMeeting; language:
 
         {/* Meeting details */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-lg">
-            {meeting.title}
-          </h3>
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+              {meeting.title}
+            </h3>
+            {showEditButtons && (
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => onEdit?.(meeting)}
+                  className="p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30 rounded transition-colors"
+                  title={t('morningMeetings.edit.editMeeting', { defaultValue: 'Edit' })}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete?.(meeting)}
+                  className="p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 rounded transition-colors"
+                  title={t('morningMeetings.edit.deleteMeeting', { defaultValue: 'Delete' })}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="space-y-1.5 text-sm">
             {meeting.lecturer && (
