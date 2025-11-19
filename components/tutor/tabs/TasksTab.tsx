@@ -80,7 +80,7 @@ export default function TasksTab({ residents, tasks, onBulkApprove, onBulkReject
   }, [rotationIds]);
 
   const selectedIds = useMemo(() => Object.keys(sel).filter((k) => sel[k]), [sel]);
-  const language = (i18n?.language || 'en').split('-')[0];
+  const language = (i18n?.language || 'en').split('-')[0] ?? 'en';
 
   return (
     <div className="space-y-3">
