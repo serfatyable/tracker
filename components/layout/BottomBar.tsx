@@ -13,14 +13,24 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile } from '@/lib/react-query/hooks';
+import { useCurrentUserProfile, useUserTasks } from '@/lib/react-query/hooks';
 import { haptic } from '@/lib/utils/haptics';
+
+type TabDefinition = {
+  key: string;
+  href?: string;
+  label: string;
+  Icon: typeof HomeSolid;
+  badge?: number | null;
+  onPress?: () => void;
+};
 
 export default function BottomBar() {
   const pathname = usePathname();
   const { t } = useTranslation();
   const { data: me } = useCurrentUserProfile();
   const role = me?.role || 'resident';
+  const { tasks } = useUserTasks();
 
   const dispatchOpenDrawer = () => {
     if (typeof window !== 'undefined') {
@@ -28,7 +38,9 @@ export default function BottomBar() {
     }
   };
 
-  const residentTabs = [
+  const pendingCount = tasks.filter((task) => task.status === 'pending').length;
+
+  const residentTabs: TabDefinition[] = [
     {
       key: 'home',
       href: '/resident',
@@ -61,7 +73,7 @@ export default function BottomBar() {
     },
   ];
 
-  const tutorTabs = [
+  const tutorTabs: TabDefinition[] = [
     {
       key: 'home',
       href: '/tutor',
@@ -84,7 +96,7 @@ export default function BottomBar() {
     // More is a trigger instead of Link
   ];
 
-  const adminTabs = [
+  const adminTabs: TabDefinition[] = [
     {
       key: 'home',
       href: '/admin',
@@ -103,8 +115,12 @@ export default function BottomBar() {
 
   const isResident = role === 'resident';
   const isTutor = role === 'tutor';
+  if (isResident) {
+    residentTabs[0]!.badge = pendingCount || null;
+  }
+
   const tabs = isResident ? residentTabs : isTutor ? tutorTabs : adminTabs;
-  const showMore = !isResident; // Tutors/Admins: include More
+  const showMore = true;
 
   return (
     <nav
@@ -112,27 +128,42 @@ export default function BottomBar() {
       aria-label={t('ui.primaryNavigation', { defaultValue: 'Primary navigation' })}
       role="tablist"
     >
-      {tabs.map(({ href, label, Icon }) => {
-        const base = href.split('?')[0]!;
-        const active = pathname === href || pathname.startsWith(base + '/');
+      {tabs.map(({ href, label, Icon, badge, onPress, key }) => {
+        const base = href?.split('?')[0]!;
+        const active = href ? pathname === href || pathname.startsWith(base + '/') : false;
+        const Component = (href ? Link : 'button') as any;
         return (
-          <Link
-            key={href}
-            href={href}
+          <Component
+            key={key}
+            {...(href ? { href } : { type: 'button' })}
             role="tab"
             aria-selected={active}
             aria-label={label}
-            onClick={() => haptic('light')}
-            className={`flex flex-col items-center justify-center h-14 min-w-0 px-3 text-xs font-medium transition-transform transition-colors ${
+            onClick={() => {
+              haptic('light');
+              if (onPress) onPress();
+            }}
+            className={`nav-pill ${
               active
                 ? 'text-foreground dark:text-white scale-95'
                 : 'text-foreground/70 dark:text-white/70 hover:text-foreground dark:hover:text-white active:scale-95'
             }`}
-            data-active={active}
+            title={label}
           >
-            <Icon className="h-5 w-5" stroke="currentColor" />
-            <span className="truncate w-full text-center">{label}</span>
-          </Link>
+            <span className="relative flex flex-col items-center gap-1">
+              <Icon className="h-5 w-5" stroke="currentColor" aria-hidden="true" />
+              <span className="truncate text-sm leading-tight">{label}</span>
+              {badge ? (
+                <span
+                  className="nav-badge"
+                  aria-label={`${label} has ${badge} updates`}
+                  aria-live="polite"
+                >
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              ) : null}
+            </span>
+          </Component>
         );
       })}
       {showMore && (
@@ -144,10 +175,10 @@ export default function BottomBar() {
             haptic('light');
             dispatchOpenDrawer();
           }}
-          className="flex flex-col items-center justify-center h-14 min-w-0 px-3 text-xs font-medium transition-transform transition-colors text-foreground/70 dark:text-white/70 hover:text-foreground dark:hover:text-white active:scale-95"
+          className="nav-pill text-foreground/70 dark:text-white/70 hover:text-foreground dark:hover:text-white active:scale-95"
         >
           <MoreSolid className="h-5 w-5" stroke="currentColor" />
-          <span className="truncate w-full text-center">
+          <span className="truncate w-full text-center text-sm">
             {t('ui.more', { defaultValue: 'More' })}
           </span>
         </button>

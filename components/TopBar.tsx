@@ -1,13 +1,16 @@
 'use client';
-import { Bars3Icon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, BellIcon, HomeIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useTomorrowLecturerReminder } from '../lib/hooks/useTomorrowLecturerReminder';
 
 import Avatar from './ui/Avatar';
+import Button from './ui/Button';
 
 const MobileDrawer = dynamic(() => import('./layout/MobileDrawer'), { ssr: false });
 
@@ -17,11 +20,21 @@ export default function TopBar() {
   const { t, i18n: i18next } = useTranslation();
   const { show, meeting } = useTomorrowLecturerReminder();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const router = useRouter();
+  const role = me?.role ?? 'resident';
 
   const openCommandPalette = useCallback(() => {
     if (typeof window === 'undefined') return;
     window.dispatchEvent(new Event('tracker:command-palette'));
   }, []);
+
+  const homeHref = role === 'tutor' ? '/tutor' : role === 'admin' ? '/admin' : '/resident';
+  const quickActionHref = role === 'tutor' ? '/tutor/tasks?view=inbox' : role === 'admin' ? '/admin/tasks' : '/resident/reflections?mode=new';
+  const quickActionLabel = useMemo(() => {
+    if (role === 'tutor') return t('ui.quickAdd.task', { defaultValue: 'Add task' });
+    if (role === 'admin') return t('ui.quickAdd.record', { defaultValue: 'Add record' });
+    return t('ui.quickAdd.log', { defaultValue: 'Log activity' });
+  }, [role, t]);
 
   useEffect(() => {
     const onOpen = () => setDrawerOpen(true);
@@ -80,6 +93,10 @@ export default function TopBar() {
     );
   }
 
+  const handleQuickAction = useCallback(() => {
+    router.push(quickActionHref);
+  }, [router, quickActionHref]);
+
   return (
     <header className="topbar glass-panel">
       <div className="flex items-center gap-2 text-base flex-shrink-0 min-w-0">
@@ -91,9 +108,25 @@ export default function TopBar() {
         >
           <Bars3Icon className="h-5 w-5" stroke="currentColor" />
         </button>
-        <span className="app-wordmark" aria-label="TRACKER">
-          TRACKER
-        </span>
+        <Link
+          href={homeHref}
+          className="home-chip"
+          aria-label={t('ui.goHome', { defaultValue: 'Go to dashboard' })}
+        >
+          <HomeIcon className="h-5 w-5" aria-hidden="true" />
+          <span className="hidden sm:inline">TRACKER</span>
+        </Link>
+      </div>
+      <div className="flex items-center justify-center gap-2 min-w-0">
+        {show && meeting ? (
+          <button
+            type="button"
+            className="alert-chip"
+            onClick={() => router.push('/morning-meetings')}
+          >
+            {t('morningMeetings.lecturerReminder')} · {meeting?.title}
+          </button>
+        ) : null}
       </div>
       <nav className="flex items-center gap-2 flex-shrink min-w-0" aria-label="User menu">
         <button
@@ -108,11 +141,6 @@ export default function TopBar() {
             <kbd className="shortcut-kbd">⌘K</kbd>
           </span>
         </button>
-        {show && meeting ? (
-          <div className="hidden md:block alert-chip">
-            {t('morningMeetings.lecturerReminder')} — {meeting?.title}
-          </div>
-        ) : null}
         <button
           type="button"
           className="command-button sm:hidden"
@@ -121,6 +149,23 @@ export default function TopBar() {
         >
           <MagnifyingGlassIcon className="h-5 w-5" />
         </button>
+        <button
+          type="button"
+          className="icon-button lg:hidden"
+          onClick={handleQuickAction}
+          aria-label={quickActionLabel}
+        >
+          <PlusIcon className="h-5 w-5" />
+        </button>
+        <Button
+          size="sm"
+          className="hidden lg:inline-flex"
+          leftIcon={<PlusIcon className="h-4 w-4" aria-hidden="true" />}
+          onClick={handleQuickAction}
+        >
+          {quickActionLabel}
+        </Button>
+        <NotificationBell hasReminder={show} onClick={() => router.push('/morning-meetings')} />
         <div className="hidden sm:block">
           <LangToggle />
         </div>
@@ -138,5 +183,20 @@ export default function TopBar() {
       </nav>
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </header>
+  );
+}
+
+function NotificationBell({ hasReminder, onClick }: { hasReminder: boolean; onClick: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      className="icon-button relative"
+      onClick={onClick}
+      aria-label={t('ui.notifications', { defaultValue: 'Notifications' })}
+    >
+      <BellIcon className="h-5 w-5" aria-hidden="true" />
+      {hasReminder ? <span className="notification-dot" aria-hidden="true" /> : null}
+    </button>
   );
 }

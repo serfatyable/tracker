@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
 import { ListSkeleton } from '@/components/dashboard/Skeleton';
@@ -10,6 +11,7 @@ import EmptyState, { ChecklistIcon } from '@/components/ui/EmptyState';
 import Select from '@/components/ui/Select';
 import type { TaskDoc } from '@/lib/firebase/db';
 import { useUserTasks } from '@/lib/react-query/hooks';
+import { formatRelativeTime } from '@/lib/morning-meetings/morningMeetingsUtils';
 
 export default function EnhancedPendingTasks({
   activeRotationId,
@@ -18,12 +20,14 @@ export default function EnhancedPendingTasks({
   activeRotationId: string | null;
   nodesById: Record<string, { name: string; rotationId: string }>;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { tasks, loading } = useUserTasks();
   const [rotationFilter, setRotationFilter] = useState<'' | 'active' | 'all'>('');
   const [categoryFilter, setCategoryFilter] = useState<
     '' | 'all' | 'Knowledge' | 'Skills' | 'Guidance'
   >('');
+  const router = useRouter();
+  const locale = i18n.language === 'he' ? 'he-IL' : 'en-US';
 
   const list = useMemo(() => {
     const base = tasks.filter((item) => item.status === 'pending' || item.status === 'rejected');
@@ -204,6 +208,23 @@ export default function EnhancedPendingTasks({
           </Select>
         </div>
       </div>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => router.push('/resident/reflections?tab=pending')}
+        >
+          {t('ui.home.reviewInbox', { defaultValue: 'Open review inbox' })}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setRotationFilter('active')}
+          disabled={rotationFilter === 'active'}
+        >
+          {t('ui.home.focusActiveRotation', { defaultValue: 'Focus active rotation' })}
+        </Button>
+      </div>
 
       {list.length === 0 ? (
         <EmptyState
@@ -223,6 +244,9 @@ export default function EnhancedPendingTasks({
         <div className="space-y-2">
           {list.map((task) => {
             const priorityConfig = getPriorityConfig(task.priority);
+            const lastFeedback = task.feedback?.[task.feedback.length - 1];
+            const relativeTime = formatRelativeTime(task.mostRecentCreatedAt, locale);
+            const categoryName = findCategoryName(nodesById, task.itemId);
             return (
               <div
                 key={task.status === 'pending' ? `${task.itemId}__${task.rotationId}` : task.id}
@@ -242,6 +266,9 @@ export default function EnhancedPendingTasks({
                         <span className="font-medium text-gray-900 dark:text-white">
                           {nodesById[task.itemId]?.name || task.itemId}
                         </span>
+                        <Badge size="sm" variant="outline">
+                          {priorityConfig.label}
+                        </Badge>
                         {task.status === 'pending' && task.duplicateCount > 1 ? (
                           <Badge
                             title={t('ui.pendingTasks.multipleSubmissionsLabel', {
@@ -262,12 +289,37 @@ export default function EnhancedPendingTasks({
                       </div>
                       <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                         <span className="capitalize">{task.status}</span>
+                        <span>• {relativeTime}</span>
+                        {categoryName ? <span>• {categoryName}</span> : null}
                         {task.status === 'rejected' && (
                           <span className="font-medium text-red-600 dark:text-red-400">
                             • {t('ui.home.needsAttention', { defaultValue: 'Needs attention' })}
                           </span>
                         )}
                       </div>
+                      {task.status === 'rejected' && lastFeedback?.text ? (
+                        <p className="mt-1 text-xs italic text-red-700 dark:text-red-300">
+                          “{lastFeedback.text}”
+                        </p>
+                      ) : null}
+                      {lastFeedback?.by ? (
+                        <div className="mt-2 inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <span className="reviewer-chip" aria-hidden="true">
+                            {lastFeedback.by
+                              .split(' ')
+                              .map((segment) => segment[0])
+                              .join('')
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </span>
+                          <span>
+                            {t('ui.home.lastReviewer', {
+                              defaultValue: 'Last reviewed by {{name}}',
+                              name: lastFeedback.by,
+                            })}
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 

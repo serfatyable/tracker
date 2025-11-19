@@ -1,12 +1,16 @@
 'use client';
 import { HandRaisedIcon, FireIcon } from '@heroicons/react/24/solid';
-import { useMemo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useResidentActiveRotation } from '@/lib/hooks/useResidentActiveRotation';
 import { useRotations } from '@/lib/react-query/hooks';
 import { useUserTasks } from '@/lib/react-query/hooks';
+import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
 
 export default function WelcomeHero() {
   const { t, i18n } = useTranslation();
@@ -14,12 +18,13 @@ export default function WelcomeHero() {
   const { rotationId } = useResidentActiveRotation();
   const { rotations } = useRotations();
   const { tasks } = useUserTasks();
+  const router = useRouter();
 
   const currentRotation = useMemo(() => {
     return rotations.find((r) => r.id === rotationId);
   }, [rotations, rotationId]);
 
-  const { streak, completionPercentage } = useMemo(() => {
+  const { streak, completionPercentage, resumeTask, overdueTasks } = useMemo(() => {
     if (!tasks.length) return { streak: 0, completionPercentage: 0 };
 
     // Calculate streak (consecutive days with at least one task)
@@ -58,7 +63,17 @@ export default function WelcomeHero() {
     const totalCount = rotationTasks.length || 1;
     const completionPercentage = Math.round((approvedCount / totalCount) * 100);
 
-    return { streak, completionPercentage };
+    const resumeTask = rotationTasks
+      .filter((t) => t.status === 'pending')
+      .sort((a, b) => getTaskTimestamp(b) - getTaskTimestamp(a))[0];
+
+    const overdueTasks = rotationTasks.filter((task) => {
+      if (task.status !== 'pending') return false;
+      const created = getTaskTimestamp(task);
+      return Date.now() - created > 1000 * 60 * 60 * 24 * 7; // older than a week
+    });
+
+    return { streak, completionPercentage, resumeTask, overdueTasks };
   }, [tasks, rotationId]);
 
   const greeting = useMemo(() => {
@@ -88,6 +103,19 @@ export default function WelcomeHero() {
   const circumference = 2 * Math.PI * 45; // radius = 45
   const strokeDashoffset = circumference - (completionPercentage / 100) * circumference;
 
+  const handleResume = useCallback(() => {
+    if (!resumeTask) return;
+    router.push(`/resident/reflections/${resumeTask.id}`);
+  }, [resumeTask, router]);
+
+  const handleOpenRotation = useCallback(() => {
+    if (rotationId) {
+      router.push(`/resident/rotations?selected=${rotationId}`);
+    } else {
+      router.push('/resident/rotations');
+    }
+  }, [router, rotationId]);
+
   return (
     <div className="relative overflow-hidden rounded-xl border border-sky-200/60 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 p-6 shadow-lg dark:border-sky-900/40 dark:from-sky-950/40 dark:via-blue-950/30 dark:to-indigo-950/30">
       {/* Decorative background elements */}
@@ -108,9 +136,13 @@ export default function WelcomeHero() {
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           {/* Progress Circle */}
           {currentRotation && (
-            <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleOpenRotation}
+              className="flex items-center gap-3 rounded-xl bg-white/70 px-3 py-2 transition hover:shadow-md dark:bg-white/10"
+            >
               <div className="relative h-20 w-20">
-                <svg className="h-20 w-20 -rotate-90 transform">
+                <svg className="h-20 w-20 -rotate-90 transform" role="presentation">
                   {/* Background circle */}
                   <circle
                     cx="40"
@@ -150,13 +182,24 @@ export default function WelcomeHero() {
                 <div className="text-xs text-gray-600 dark:text-gray-400">
                   {t('ui.home.rotationProgress', { defaultValue: 'Rotation Progress' })}
                 </div>
+                {overdueTasks?.length ? (
+                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-300">
+                    {t('ui.home.overdueCount', {
+                      defaultValue: '{{count}} overdue reflections',
+                      count: overdueTasks.length,
+                    })}
+                  </p>
+                ) : null}
               </div>
-            </div>
+            </button>
           )}
 
           {/* Streak Badge */}
           {streak > 0 && (
-            <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2 dark:from-amber-900/30 dark:to-orange-900/30">
+            <Link
+              href="/resident/reflections"
+              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2 transition hover:shadow-md dark:from-amber-900/30 dark:to-orange-900/30"
+            >
               <FireIcon className="h-6 w-6 text-orange-600 dark:text-orange-400" aria-hidden="true" />
               <div>
                 <div className="text-sm font-bold text-amber-900 dark:text-amber-200">
@@ -166,7 +209,7 @@ export default function WelcomeHero() {
                   {t('ui.home.keepGoing', { defaultValue: 'Keep going!' })}
                 </div>
               </div>
-            </div>
+            </Link>
           )}
 
           {/* Current Rotation Badge */}
@@ -179,7 +222,51 @@ export default function WelcomeHero() {
             </div>
           )}
         </div>
+
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <Button
+            variant="default"
+            size="md"
+            onClick={handleResume}
+            disabled={!resumeTask}
+            leftIcon={<span aria-hidden="true">✨</span>}
+          >
+            {resumeTask
+              ? t('ui.home.resumeTask', { defaultValue: 'Resume latest reflection' })
+              : t('ui.home.startTask', { defaultValue: 'Log a new reflection' })}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleOpenRotation}>
+            {t('ui.home.viewRotationBoard', { defaultValue: 'View rotation board' })}
+          </Button>
+          {overdueTasks?.length ? (
+            <Badge variant="warning" size="sm">
+              {t('ui.home.overdueBadge', { defaultValue: '{{count}} overdue', count: overdueTasks.length })}
+            </Badge>
+          ) : null}
+        </div>
       </div>
     </div>
   );
+}
+
+function getTaskTimestamp(task: any): number {
+  const value = task?.createdAt as any;
+  if (!value) return 0;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  if (typeof value.toMillis === 'function') {
+    try {
+      return value.toMillis();
+    } catch {
+      return 0;
+    }
+  }
+  if (typeof value.seconds === 'number') {
+    const nanos = typeof value.nanoseconds === 'number' ? value.nanoseconds / 1_000_000 : 0;
+    return value.seconds * 1000 + nanos;
+  }
+  return 0;
 }
