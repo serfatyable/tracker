@@ -1,8 +1,13 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { collection, getDocs, getFirestore, query, where } from 'firebase/firestore';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { getFirebaseApp } from '../../../lib/firebase/client';
 import type { TaskDoc } from '../../../lib/firebase/db';
+import { logger } from '../../../lib/utils/logger';
 import type { UserProfile } from '../../../types/auth';
+import type { RotationNode } from '../../../types/rotations';
 import Button from '../../ui/Button';
 
 type Props = {
@@ -13,6 +18,7 @@ type Props = {
 };
 
 export default function TasksTab({ residents, tasks, onBulkApprove, onBulkReject }: Props) {
+  const { i18n } = useTranslation();
   const resById = useMemo(() => new Map(residents.map((r) => [r.uid, r])), [residents]);
   const groups = useMemo(() => {
     const map = new Map<string, TaskDoc[]>();
@@ -23,10 +29,58 @@ export default function TasksTab({ residents, tasks, onBulkApprove, onBulkReject
     }
     return map;
   }, [tasks]);
+  const [nodesById, setNodesById] = useState<Record<string, RotationNode>>({});
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [reason, setReason] = useState('');
 
+  const rotationIds = useMemo(
+    () => Array.from(new Set(tasks.map((task) => task.rotationId))),
+    [tasks],
+  );
+
+  useEffect(() => {
+    if (!rotationIds.length) {
+      setNodesById({});
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const db = getFirestore(getFirebaseApp());
+        const snapshots = await Promise.all(
+          rotationIds.map((rotationId) =>
+            getDocs(query(collection(db, 'rotationNodes'), where('rotationId', '==', rotationId))),
+          ),
+        );
+        if (cancelled) return;
+        const map: Record<string, RotationNode> = {};
+        snapshots.forEach((snap) => {
+          snap.docs.forEach((doc) => {
+            const data = doc.data() as RotationNode;
+            map[doc.id] = { ...data, id: doc.id };
+          });
+        });
+        setNodesById(map);
+      } catch (error) {
+        if (!cancelled) {
+          logger.error(
+            'Failed to load rotation nodes for tutor tasks',
+            'tutor-tasks-tab',
+            error as Error,
+          );
+          setNodesById({});
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rotationIds]);
+
   const selectedIds = useMemo(() => Object.keys(sel).filter((k) => sel[k]), [sel]);
+  const language = (i18n?.language || 'en').split('-')[0];
 
   return (
     <div className="space-y-3">
@@ -69,7 +123,7 @@ export default function TasksTab({ residents, tasks, onBulkApprove, onBulkReject
                   >
                     <div>
                       <div className="font-medium text-gray-900 dark:text-gray-50">
-                        {t.itemId}{' '}
+                        {getNodeDisplayName(nodesById[t.itemId], language) || t.itemId}{' '}
                         <span className="opacity-70 text-gray-600 dark:text-gray-300">
                           ({t.count}/{t.requiredCount})
                         </span>
@@ -92,4 +146,12 @@ export default function TasksTab({ residents, tasks, onBulkApprove, onBulkReject
       </div>
     </div>
   );
+}
+
+function getNodeDisplayName(node: RotationNode | undefined, language: string) {
+  if (!node) return '';
+  const normalized = language?.toLowerCase?.() ?? 'en';
+  if (normalized.startsWith('he') && node.name_he) return node.name_he;
+  if (normalized.startsWith('en') && node.name_en) return node.name_en;
+  return node.name || node.name_en || node.name_he || '';
 }
