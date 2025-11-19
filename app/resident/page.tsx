@@ -1,6 +1,6 @@
 'use client';
-import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AuthGate from '../../components/auth/AuthGate';
@@ -14,12 +14,14 @@ import EnhancedQuickActions from '../../components/resident/EnhancedQuickActions
 import SmartRecommendations from '../../components/resident/SmartRecommendations';
 import UpcomingSchedule from '../../components/resident/UpcomingSchedule';
 import WelcomeHero from '../../components/resident/WelcomeHero';
-import Button from '@/components/ui/Button';
-import { usePageHeader } from '@/components/layout/page-header-context';
 import { useResidentActiveRotation } from '../../lib/hooks/useResidentActiveRotation';
 import { useRotationNodes } from '../../lib/hooks/useRotationNodes';
-import { useUserTasks } from '@/lib/react-query/hooks';
+
+import { usePageHeader } from '@/components/layout/page-header-context';
+import type { PageHeaderConfig, PageHeaderMeta } from '@/components/layout/page-header-context';
+import Button from '@/components/ui/Button';
 import { formatRelativeTime } from '@/lib/morning-meetings/morningMeetingsUtils';
+import { useUserTasks } from '@/lib/react-query/hooks';
 
 export default function ResidentDashboard() {
   const { t, i18n } = useTranslation();
@@ -42,24 +44,30 @@ export default function ResidentDashboard() {
     const mostRecent = tasks
       .filter((task) => task.createdAt)
       .sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0))[0];
-    if (!mostRecent?.createdAt) return t('ui.lastUpdated.never', { defaultValue: 'No activity yet' }) as string;
+    if (!mostRecent?.createdAt)
+      return t('ui.lastUpdated.never', { defaultValue: 'No activity yet' }) as string;
     const locale = i18n.language === 'he' ? 'he-IL' : 'en-US';
     return formatRelativeTime(mostRecent.createdAt.getTime(), locale);
   }, [tasks, t, i18n.language]);
 
-  const headerConfig = useMemo(
+  const headerConfig = useMemo<PageHeaderConfig>(
     () => ({
       title: t('ui.homeTitle', { defaultValue: 'Home' }) as string,
       description: t('ui.home.summary', {
         defaultValue: 'Track progress, resume drafts, and stay ahead on every rotation.',
       }) as string,
       breadcrumbs: [
-        { label: t('ui.homeTitle', { defaultValue: 'Home' }) as string, href: '/resident', current: true },
+        {
+          label: t('ui.homeTitle', { defaultValue: 'Home' }) as string,
+          href: '/resident',
+          current: true,
+        },
       ],
       meta: [
         {
           label: t('ui.activeRotation', { defaultValue: 'Active rotation' }) as string,
-          value: activeRotationName || t('ui.home.noActiveRotation', { defaultValue: 'Unassigned' }),
+          value:
+            activeRotationName || t('ui.home.noActiveRotation', { defaultValue: 'Unassigned' }),
         },
         {
           label: t('ui.pending', { defaultValue: 'Pending' }) as string,
@@ -70,7 +78,7 @@ export default function ResidentDashboard() {
           label: t('ui.lastUpdated.label', { defaultValue: 'Last activity' }) as string,
           value: lastActivityLabel,
         },
-      ],
+      ] satisfies PageHeaderMeta[],
       actions: (
         <Button
           size="sm"
@@ -87,14 +95,7 @@ export default function ResidentDashboard() {
         </Button>
       ),
     }),
-    [
-      t,
-      router,
-      activeRotationId,
-      activeRotationName,
-      pendingCount,
-      lastActivityLabel,
-    ],
+    [t, router, activeRotationId, activeRotationName, pendingCount, lastActivityLabel],
   );
 
   usePageHeader(headerConfig);

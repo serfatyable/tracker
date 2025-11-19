@@ -2,7 +2,7 @@ import { ChevronRightIcon, HomeIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-type BreadcrumbItemType = {
+export type BreadcrumbItemType = {
   label: string;
   href?: string;
   current?: boolean;
