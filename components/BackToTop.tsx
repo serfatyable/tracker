@@ -39,8 +39,9 @@ export function BackToTop({
       onClick={scrollToTop}
       className={cn(
         'fixed bottom-16 right-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full',
-        'bg-[rgb(var(--primary))] text-[rgb(var(--primary-ink))] shadow-lg transition-all duration-200',
-        'hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--primary))]',
+        'border border-white/50 bg-white/30 text-[rgb(var(--fg))] shadow-lg transition-all duration-200',
+        'backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md dark:border-white/10 dark:bg-gray-900/40 dark:text-white',
+        'hover:shadow-xl hover:bg-white/40 dark:hover:bg-gray-900/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
         'focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900',
         isVisible ? 'opacity-100 translate-y-0' : 'pointer-events-none translate-y-4 opacity-0',
         className,
