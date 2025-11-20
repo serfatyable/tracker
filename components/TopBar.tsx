@@ -83,7 +83,7 @@ export default function TopBar() {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-50 bg-[rgb(var(--surface-elevated))/0.92] backdrop-blur-md dark:bg-[rgb(var(--surface-elevated))/0.9]">
+      <div className="sticky inset-x-0 top-0 z-50 bg-[rgb(var(--bg))/0.92] backdrop-blur-md dark:bg-[rgb(var(--bg))/0.92]">
         <div className="app-container">
           <header className="topbar glass-panel min-h-[var(--topbar-height)]">
             <div className="flex items-center gap-2 text-base flex-shrink-0 min-w-0">
@@ -144,7 +144,6 @@ export default function TopBar() {
           </header>
         </div>
       </div>
-      <div aria-hidden className="h-[calc(var(--topbar-height)+1rem)]" />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </>
   );
