@@ -1,7 +1,6 @@
 'use client';
 
-import { lazy, Suspense } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Suspense, useMemo } from 'react';
 
 import AuthGate from '@/components/auth/AuthGate';
 import { SpinnerSkeleton, CardSkeleton } from '@/components/dashboard/Skeleton';
@@ -15,11 +14,10 @@ import TutorPriorityQueue from '@/components/tutor/TutorPriorityQueue';
 import TutorQuickActions from '@/components/tutor/TutorQuickActions';
 import TutorResidentsCards from '@/components/tutor/TutorResidentsCards';
 import TutorRotationsGrid from '@/components/tutor/TutorRotationsGrid';
+import { useRecentActivity } from '@/lib/hooks/useRecentActivity';
 import { useTutorDashboardMetrics } from '@/lib/hooks/useTutorDashboardMetrics';
 
 export default function TutorDashboard() {
-  const { t } = useTranslation();
-
   return (
     <AuthGate requiredRole="tutor">
       <AppShell>
@@ -36,6 +34,19 @@ export default function TutorDashboard() {
 function TutorDashboardContent() {
   const data = useTutorDashboardMetrics();
   const { metrics } = data;
+  const { activities: recentActivity } = useRecentActivity();
+
+  const timelineActivities = useMemo(
+    () =>
+      recentActivity?.map((activity) => ({
+        id: activity.id,
+        type: 'milestone' as const,
+        title: activity.action || 'Activity',
+        description: activity.details || activity.userName || undefined,
+        timestamp: activity.timestamp.toDate(),
+      })) ?? [],
+    [recentActivity],
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -112,7 +123,7 @@ function TutorDashboardContent() {
 
         {/* Activity Timeline */}
         <Suspense fallback={<CardSkeleton />}>
-          <TutorActivityTimeline />
+          <TutorActivityTimeline activities={timelineActivities} />
         </Suspense>
       </div>
 
