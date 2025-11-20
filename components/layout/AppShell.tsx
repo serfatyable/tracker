@@ -1,12 +1,14 @@
 'use client';
 import type { CSSProperties } from 'react';
 
-import { useCurrentUserProfile } from '@/lib/react-query/hooks';
+import BackToTop from '../BackToTop';
 import TopBar from '../TopBar';
 import CommandPalette from '../ui/CommandPalette';
 import NetworkStatusIndicator from '../ui/NetworkStatusIndicator';
 
 import RoleTabs from './RoleTabs';
+
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
 type AppShellStyle = CSSProperties & {
   '--top-bar-offset'?: string;
@@ -30,6 +32,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <BackToTop />
       <NetworkStatusIndicator show="offline-only" position="bottom" />
       <CommandPalette />
     </div>
