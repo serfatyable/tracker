@@ -2,12 +2,12 @@
 
 import {
   ClockIcon,
-  CheckCircleIcon,
   UserGroupIcon,
   ChartBarIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
 } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
 type KPIMetric = {
@@ -18,13 +18,13 @@ type KPIMetric = {
   trendValue?: string;
   icon: React.ComponentType<{ className?: string }>;
   color: 'teal' | 'sky' | 'emerald' | 'violet' | 'amber';
+  href?: string;
 };
 
 type Props = {
   pendingApprovals: number;
   assignedResidents: number;
   avgResponseTime: string;
-  completionRate: number;
   teachingLoad: number;
 };
 
@@ -32,7 +32,6 @@ export default function TutorKPICards({
   pendingApprovals,
   assignedResidents,
   avgResponseTime,
-  completionRate,
   teachingLoad,
 }: Props) {
   const { t } = useTranslation();
@@ -40,11 +39,12 @@ export default function TutorKPICards({
   const metrics: KPIMetric[] = [
     {
       id: 'pending',
-      label: t('tutor.kpi.pendingApprovals'),
+      label: 'Pending tasks',
       value: pendingApprovals,
       icon: ClockIcon,
       color: 'amber',
       trend: pendingApprovals > 10 ? 'up' : 'neutral',
+      href: '/tutor/tasks',
     },
     {
       id: 'residents',
@@ -52,6 +52,7 @@ export default function TutorKPICards({
       value: assignedResidents,
       icon: UserGroupIcon,
       color: 'sky',
+      href: '/residents',
     },
     {
       id: 'response',
@@ -59,15 +60,6 @@ export default function TutorKPICards({
       value: avgResponseTime,
       icon: ChartBarIcon,
       color: 'teal',
-    },
-    {
-      id: 'completion',
-      label: t('tutor.kpi.completionRate'),
-      value: `${completionRate}%`,
-      icon: CheckCircleIcon,
-      color: 'emerald',
-      trend: completionRate > 70 ? 'up' : completionRate < 50 ? 'down' : 'neutral',
-      trendValue: completionRate > 70 ? t('tutor.kpi.excellent') : '',
     },
     {
       id: 'load',
@@ -117,51 +109,61 @@ export default function TutorKPICards({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric) => {
         const colors = colorClasses[metric.color];
         const Icon = metric.icon;
 
+        const Wrapper = metric.href ? Link : 'div';
+        const wrapperProps = metric.href
+          ? {
+              href: metric.href,
+              className:
+                'group block rounded-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500',
+            }
+          : { className: 'group block' };
+
         return (
-          <div
-            key={metric.id}
-            className={`group relative overflow-hidden rounded-xl ${colors.bg} p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_2px_8px_rgba(0,0,0,0.05)] ring-1 ${colors.ring} transition-all duration-300 hover:scale-105 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_12px_24px_-8px_rgba(0,0,0,0.15)]`}
-          >
-            {/* Icon */}
+          <Wrapper key={metric.id} {...wrapperProps}>
             <div
-              className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${colors.iconBg} shadow-lg`}
+              className={`relative overflow-hidden rounded-xl ${colors.bg} p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_2px_8px_rgba(0,0,0,0.05)] ring-1 ${colors.ring} transition-all duration-300 group-hover:scale-105 group-hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_12px_24px_-8px_rgba(0,0,0,0.15)]`}
             >
-              <Icon className="h-5 w-5 text-white" />
-            </div>
-
-            {/* Label */}
-            <div className={`text-xs font-medium uppercase tracking-wide ${colors.label}`}>
-              {metric.label}
-            </div>
-
-            {/* Value */}
-            <div className={`mt-2 text-2xl font-bold ${colors.text}`}>{metric.value}</div>
-
-            {/* Trend */}
-            {metric.trend && (
-              <div className="mt-2 flex items-center gap-1">
-                {metric.trend === 'up' && (
-                  <ArrowTrendingUpIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                )}
-                {metric.trend === 'down' && (
-                  <ArrowTrendingDownIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-                )}
-                {metric.trendValue && (
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
-                    {metric.trendValue}
-                  </span>
-                )}
+              {/* Icon */}
+              <div
+                className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${colors.iconBg} shadow-lg`}
+              >
+                <Icon className="h-5 w-5 text-white" />
               </div>
-            )}
 
-            {/* Hover effect decoration */}
-            <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/5 transition-transform duration-300 group-hover:scale-150" />
-          </div>
+              {/* Label */}
+              <div className={`text-xs font-medium uppercase tracking-wide ${colors.label}`}>
+                {metric.label}
+              </div>
+
+              {/* Value */}
+              <div className={`mt-2 text-2xl font-bold ${colors.text}`}>{metric.value}</div>
+
+              {/* Trend */}
+              {metric.trend && (
+                <div className="mt-2 flex items-center gap-1">
+                  {metric.trend === 'up' && (
+                    <ArrowTrendingUpIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  )}
+                  {metric.trend === 'down' && (
+                    <ArrowTrendingDownIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                  )}
+                  {metric.trendValue && (
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                      {metric.trendValue}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Hover effect decoration */}
+              <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/5 transition-transform duration-300 group-hover:scale-150" />
+            </div>
+          </Wrapper>
         );
       })}
     </div>

@@ -1,7 +1,6 @@
 'use client';
 
-import { lazy, Suspense } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Suspense } from 'react';
 
 import AuthGate from '@/components/auth/AuthGate';
 import { SpinnerSkeleton, CardSkeleton } from '@/components/dashboard/Skeleton';
@@ -18,8 +17,6 @@ import TutorRotationsGrid from '@/components/tutor/TutorRotationsGrid';
 import { useTutorDashboardMetrics } from '@/lib/hooks/useTutorDashboardMetrics';
 
 export default function TutorDashboard() {
-  const { t } = useTranslation();
-
   return (
     <AuthGate requiredRole="tutor">
       <AppShell>
@@ -59,8 +56,8 @@ function TutorDashboardContent() {
       {/* KPI Cards */}
       <Suspense
         fallback={
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {[...Array(5)].map((_, i) => (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
               <div key={i} className="h-32 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800" />
             ))}
           </div>
@@ -70,7 +67,6 @@ function TutorDashboardContent() {
           pendingApprovals={metrics.pendingCount}
           assignedResidents={metrics.residentsCount}
           avgResponseTime={metrics.avgResponseTime}
-          completionRate={metrics.completionRate}
           teachingLoad={metrics.teachingLoad}
         />
       </Suspense>
