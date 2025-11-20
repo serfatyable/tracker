@@ -533,6 +533,11 @@ service cloud.firestore {
       allow delete: if isTutorOrAdminApproved();
     }
 
+    // Audit Log: approved tutors and admins can view recent activity
+    match /auditLog/{logId} {
+      allow read: if isTutorOrAdminApproved();
+    }
+
     // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;
