@@ -4,10 +4,11 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useTomorrowLecturerReminder } from '../lib/hooks/useTomorrowLecturerReminder';
 
 import Avatar from './ui/Avatar';
+
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
 const MobileDrawer = dynamic(() => import('./layout/MobileDrawer'), { ssr: false });
 
@@ -82,7 +83,7 @@ export default function TopBar() {
 
   return (
     <header className="topbar glass-panel">
-      <div className="flex items-center gap-2 text-base flex-shrink-0 min-w-0">
+      <div className="sticky top-0 z-50 flex items-center gap-2 text-base flex-shrink-0 min-w-0 min-h-[var(--topbar-height)] rounded-[var(--radius-lg)] bg-[rgb(var(--surface-elevated))/0.92] backdrop-blur-md dark:bg-[rgb(var(--surface-elevated))/0.9]">
         <button
           type="button"
           className="icon-button icon-button--primary"
