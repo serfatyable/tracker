@@ -6,12 +6,14 @@ import {
   BookOpenIcon,
   CalendarDaysIcon,
   DocumentTextIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 
+import NavItem from './NavItem';
+
 import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
-import NavItem from './NavItem';
 
 export default function Sidebar() {
   const { data: me } = useCurrentUserProfile();
@@ -25,6 +27,7 @@ export default function Sidebar() {
       : role === 'tutor'
         ? '/tutor/reflections'
         : '/resident/reflections';
+  const tasksHref = role === 'admin' ? '/admin/tasks' : '/tutor/tasks';
 
   return (
     <aside
@@ -36,6 +39,9 @@ export default function Sidebar() {
         <NavItem href={homeHref} label={t('ui.dashboard')} Icon={HomeIcon} />
         <NavItem href={reflectionsHref} label={t('ui.reflections')} Icon={BookOpenIcon} />
         <NavItem href="/auth" label={t('ui.auth')} Icon={UserGroupIcon} />
+        {(role === 'admin' || role === 'tutor') && (
+          <NavItem href={tasksHref} label={t('ui.tasks')} Icon={ClipboardDocumentCheckIcon} />
+        )}
         <NavItem href="/exams" label={t('exams.title')} Icon={DocumentTextIcon} />
         <NavItem href="/morning-meetings" label={t('ui.morningMeetings')} Icon={CalendarDaysIcon} />
         <NavItem href="/on-call" label={t('ui.onCall')} Icon={CalendarDaysIcon} />

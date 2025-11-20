@@ -7,9 +7,11 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { signOutAndRedirect } from '../../lib/firebase/auth';
-import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 
 import NavItem from './NavItem';
+
+import { useCurrentUserProfile } from '@/lib/react-query/hooks';
+
 
 export default function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -85,6 +87,7 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
       : role === 'tutor'
         ? '/tutor/reflections'
         : '/resident/reflections';
+  const tasksHref = role === 'admin' ? '/admin/tasks' : '/tutor/tasks';
   const rotationsHref =
     role === 'admin'
       ? '/admin/rotations'
@@ -157,6 +160,9 @@ export default function MobileDrawer({ open, onClose }: { open: boolean; onClose
               href={residentsHref}
               label={t('tutor.tabs.residents', { defaultValue: 'Residents' })}
             />
+          )}
+          {(role === 'admin' || role === 'tutor') && (
+            <NavItem href={tasksHref} label={t('ui.tasks')} />
           )}
           <NavItem href={reflectionsHref} label={t('ui.reflections')} />
           <NavItem href={rotationsHref} label={t('ui.rotations', { defaultValue: 'Rotations' })} />
