@@ -82,65 +82,70 @@ export default function TopBar() {
   }
 
   return (
-    <div className="sticky top-0 z-50 w-full bg-[rgb(var(--surface-elevated))/0.92] backdrop-blur-md dark:bg-[rgb(var(--surface-elevated))/0.9]">
-      <header className="topbar glass-panel min-h-[var(--topbar-height)]">
-        <div className="flex items-center gap-2 text-base flex-shrink-0 min-w-0">
-          <button
-            type="button"
-            className="icon-button icon-button--primary"
-            aria-label={t('ui.openMenu', { defaultValue: 'Open menu' })}
-            onClick={() => setDrawerOpen(true)}
-          >
-            <Bars3Icon className="h-5 w-5" stroke="currentColor" />
-          </button>
-          <span className="app-wordmark" aria-label="TRACKER">
-            TRACKER
-          </span>
-        </div>
-
-        <nav className="flex items-center gap-2 flex-shrink min-w-0" aria-label="User menu">
-          <button
-            type="button"
-            className="command-button hidden sm:flex"
-            onClick={openCommandPalette}
-            aria-label={t('ui.search', { defaultValue: 'Search' })}
-          >
-            <MagnifyingGlassIcon className="h-5 w-5 flex-shrink-0" />
-            <span className="inline-flex items-center gap-2 text-sm font-medium">
-              {t('ui.search', { defaultValue: 'Search' })}
-              <kbd className="shortcut-kbd">⌘K</kbd>
-            </span>
-          </button>
-          {show && meeting ? (
-            <div className="hidden md:block alert-chip">
-              {t('morningMeetings.lecturerReminder')} — {meeting?.title}
+    <>
+      <div className="fixed inset-x-0 top-0 z-50 bg-[rgb(var(--surface-elevated))/0.92] backdrop-blur-md dark:bg-[rgb(var(--surface-elevated))/0.9]">
+        <div className="app-container">
+          <header className="topbar glass-panel min-h-[var(--topbar-height)]">
+            <div className="flex items-center gap-2 text-base flex-shrink-0 min-w-0">
+              <button
+                type="button"
+                className="icon-button icon-button--primary"
+                aria-label={t('ui.openMenu', { defaultValue: 'Open menu' })}
+                onClick={() => setDrawerOpen(true)}
+              >
+                <Bars3Icon className="h-5 w-5" stroke="currentColor" />
+              </button>
+              <span className="app-wordmark" aria-label="TRACKER">
+                TRACKER
+              </span>
             </div>
-          ) : null}
-          <button
-            type="button"
-            className="command-button sm:hidden"
-            onClick={openCommandPalette}
-            aria-label={t('ui.search', { defaultValue: 'Search' })}
-          >
-            <MagnifyingGlassIcon className="h-5 w-5" />
-          </button>
-          <div className="hidden sm:block">
-            <LangToggle />
-          </div>
-          <div className="min-w-0">
-            <Avatar
-              name={me?.fullName || undefined}
-              email={me?.email || undefined}
-              size={32}
-              className="h-8 w-8 rounded-full"
-            />
-          </div>
-          <div className="sm:hidden">
-            <LangToggle />
-          </div>
-        </nav>
-      </header>
+
+            <nav className="flex items-center gap-2 flex-shrink min-w-0" aria-label="User menu">
+              <button
+                type="button"
+                className="command-button hidden sm:flex"
+                onClick={openCommandPalette}
+                aria-label={t('ui.search', { defaultValue: 'Search' })}
+              >
+                <MagnifyingGlassIcon className="h-5 w-5 flex-shrink-0" />
+                <span className="inline-flex items-center gap-2 text-sm font-medium">
+                  {t('ui.search', { defaultValue: 'Search' })}
+                  <kbd className="shortcut-kbd">⌘K</kbd>
+                </span>
+              </button>
+              {show && meeting ? (
+                <div className="hidden md:block alert-chip">
+                  {t('morningMeetings.lecturerReminder')} — {meeting?.title}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                className="command-button sm:hidden"
+                onClick={openCommandPalette}
+                aria-label={t('ui.search', { defaultValue: 'Search' })}
+              >
+                <MagnifyingGlassIcon className="h-5 w-5" />
+              </button>
+              <div className="hidden sm:block">
+                <LangToggle />
+              </div>
+              <div className="min-w-0">
+                <Avatar
+                  name={me?.fullName || undefined}
+                  email={me?.email || undefined}
+                  size={32}
+                  className="h-8 w-8 rounded-full"
+                />
+              </div>
+              <div className="sm:hidden">
+                <LangToggle />
+              </div>
+            </nav>
+          </header>
+        </div>
+      </div>
+      <div aria-hidden className="h-[calc(var(--topbar-height)+1rem)]" />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-    </div>
+    </>
   );
 }
