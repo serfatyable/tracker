@@ -82,8 +82,8 @@ export default function TopBar() {
   }
 
   return (
-    <header className="topbar glass-panel">
-      <div className="sticky top-0 z-50 flex items-center gap-2 text-base flex-shrink-0 min-w-0 min-h-[var(--topbar-height)] rounded-[var(--radius-lg)] bg-[rgb(var(--surface-elevated))/0.92] backdrop-blur-md dark:bg-[rgb(var(--surface-elevated))/0.9]">
+    <header className="topbar glass-panel sticky top-0 z-50 min-h-[var(--topbar-height)] bg-[rgb(var(--surface-elevated))/0.92] backdrop-blur-md dark:bg-[rgb(var(--surface-elevated))/0.9]">
+      <div className="flex items-center gap-2 text-base flex-shrink-0 min-w-0">
         <button
           type="button"
           className="icon-button icon-button--primary"
