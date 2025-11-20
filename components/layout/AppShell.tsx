@@ -2,6 +2,7 @@
 import type { CSSProperties } from 'react';
 
 import BackToTop from '../BackToTop';
+import FloatingMenuButton from '../FloatingMenuButton';
 import TopBar from '../TopBar';
 import CommandPalette from '../ui/CommandPalette';
 import NetworkStatusIndicator from '../ui/NetworkStatusIndicator';
@@ -32,6 +33,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <FloatingMenuButton />
       <BackToTop />
       <NetworkStatusIndicator show="offline-only" position="bottom" />
       <CommandPalette />
