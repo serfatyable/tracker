@@ -20,7 +20,24 @@ export default function ActivityTimeline() {
     const activityMap = new Map<string, { count: number; categories: Set<string> }>();
 
     tasks.forEach((task) => {
-      const taskTime = (task.createdAt as any)?.toMillis?.() || 0;
+      const created = task.createdAt as any;
+      let taskTime = 0;
+
+      if (created instanceof Date) {
+        taskTime = created.getTime();
+      } else if (created && typeof created.toMillis === 'function') {
+        try {
+          taskTime = created.toMillis();
+        } catch {
+          taskTime = 0;
+        }
+      } else if (typeof created === 'number') {
+        taskTime = created;
+      } else if (typeof created === 'string') {
+        const parsed = Date.parse(created);
+        taskTime = Number.isNaN(parsed) ? 0 : parsed;
+      }
+
       if (!taskTime) return;
 
       const taskDate = new Date(taskTime);
@@ -61,8 +78,28 @@ export default function ActivityTimeline() {
     // Get recent activities (last 5 unique tasks)
     const sortedTasks = [...tasks]
       .sort((a, b) => {
-        const aTime = (a.createdAt as any)?.toMillis?.() || 0;
-        const bTime = (b.createdAt as any)?.toMillis?.() || 0;
+        const aCreated = a.createdAt as any;
+        const bCreated = b.createdAt as any;
+        const aTime =
+          aCreated instanceof Date
+            ? aCreated.getTime()
+            : typeof aCreated?.toMillis === 'function'
+              ? aCreated.toMillis()
+              : typeof aCreated === 'number'
+                ? aCreated
+                : typeof aCreated === 'string'
+                  ? Date.parse(aCreated) || 0
+                  : 0;
+        const bTime =
+          bCreated instanceof Date
+            ? bCreated.getTime()
+            : typeof bCreated?.toMillis === 'function'
+              ? bCreated.toMillis()
+              : typeof bCreated === 'number'
+                ? bCreated
+                : typeof bCreated === 'string'
+                  ? Date.parse(bCreated) || 0
+                  : 0;
         return bTime - aTime;
       })
       .slice(0, 5);
@@ -78,7 +115,24 @@ export default function ActivityTimeline() {
     // Calculate activity stats
     const totalActivities = tasks.length;
     const thisWeekCount = tasks.filter((t) => {
-      const taskTime = (t.createdAt as any)?.toMillis?.() || 0;
+      const created = t.createdAt as any;
+      let taskTime = 0;
+
+      if (created instanceof Date) {
+        taskTime = created.getTime();
+      } else if (created && typeof created.toMillis === 'function') {
+        try {
+          taskTime = created.toMillis();
+        } catch {
+          taskTime = 0;
+        }
+      } else if (typeof created === 'number') {
+        taskTime = created;
+      } else if (typeof created === 'string') {
+        const parsed = Date.parse(created);
+        taskTime = Number.isNaN(parsed) ? 0 : parsed;
+      }
+
       return taskTime >= now.getTime() - 7 * 24 * 60 * 60 * 1000;
     }).length;
 

@@ -43,7 +43,24 @@ export default function AchievementsInsights() {
 
     // Calculate weekly summary
     const tasksThisWeek = tasks.filter((t) => {
-      const taskTime = (t.createdAt as any)?.toMillis?.() || 0;
+      const created = t.createdAt as any;
+      let taskTime = 0;
+
+      if (created instanceof Date) {
+        taskTime = created.getTime();
+      } else if (created && typeof created.toMillis === 'function') {
+        try {
+          taskTime = created.toMillis();
+        } catch {
+          taskTime = 0;
+        }
+      } else if (typeof created === 'number') {
+        taskTime = created;
+      } else if (typeof created === 'string') {
+        const parsed = Date.parse(created);
+        taskTime = Number.isNaN(parsed) ? 0 : parsed;
+      }
+
       return taskTime >= oneWeekAgo;
     });
 
