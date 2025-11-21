@@ -7,9 +7,37 @@ import { ListSkeleton } from '@/components/dashboard/Skeleton';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import EmptyState, { ChecklistIcon } from '@/components/ui/EmptyState';
-import Select from '@/components/ui/Select';
 import type { TaskDoc } from '@/lib/firebase/db';
 import { useUserTasks } from '@/lib/react-query/hooks';
+
+type CategoryFilter = 'all' | 'Knowledge' | 'Skills' | 'Guidance';
+
+const CATEGORY_ACCENTS: Record<CategoryFilter, { active: string; inactive: string }> = {
+  all: {
+    active:
+      'border-gray-900 bg-gray-900 text-white shadow-sm dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900',
+    inactive:
+      'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-800/50',
+  },
+  Knowledge: {
+    active:
+      'border-sky-400 bg-sky-50 text-sky-700 shadow-sm dark:border-sky-500/70 dark:bg-sky-900/30 dark:text-sky-100',
+    inactive:
+      'border-sky-200 text-sky-700/90 hover:border-sky-300 hover:bg-sky-50/70 dark:border-sky-800 dark:text-sky-200 dark:hover:border-sky-600 dark:hover:bg-sky-900/40',
+  },
+  Skills: {
+    active:
+      'border-emerald-400 bg-emerald-50 text-emerald-700 shadow-sm dark:border-emerald-500/70 dark:bg-emerald-900/30 dark:text-emerald-100',
+    inactive:
+      'border-emerald-200 text-emerald-700/90 hover:border-emerald-300 hover:bg-emerald-50/70 dark:border-emerald-800 dark:text-emerald-200 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/40',
+  },
+  Guidance: {
+    active:
+      'border-purple-400 bg-purple-50 text-purple-700 shadow-sm dark:border-purple-500/70 dark:bg-purple-900/30 dark:text-purple-100',
+    inactive:
+      'border-purple-200 text-purple-700/90 hover:border-purple-300 hover:bg-purple-50/70 dark:border-purple-800 dark:text-purple-200 dark:hover:border-purple-600 dark:hover:bg-purple-900/40',
+  },
+};
 
 export default function EnhancedPendingTasks({
   activeRotationId,
@@ -20,19 +48,16 @@ export default function EnhancedPendingTasks({
 }) {
   const { t } = useTranslation();
   const { tasks, loading } = useUserTasks();
-  const [rotationFilter, setRotationFilter] = useState<'' | 'active' | 'all'>('');
-  const [categoryFilter, setCategoryFilter] = useState<
-    '' | 'all' | 'Knowledge' | 'Skills' | 'Guidance'
-  >('');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
 
   const list = useMemo(() => {
     const base = tasks.filter((item) => item.status === 'pending' || item.status === 'rejected');
     const byRotation =
-      rotationFilter === 'active' && activeRotationId
+      activeRotationId != null
         ? base.filter((item) => item.rotationId === activeRotationId)
         : base;
     const filtered =
-      categoryFilter === 'all' || categoryFilter === ''
+      categoryFilter === 'all'
         ? byRotation
         : byRotation.filter((item) => {
             const node = nodesById[item.itemId];
@@ -102,7 +127,7 @@ export default function EnhancedPendingTasks({
       const priorityOrder = { high: 0, medium: 1, low: 2 };
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
-  }, [tasks, rotationFilter, categoryFilter, activeRotationId, nodesById]);
+  }, [tasks, categoryFilter, activeRotationId, nodesById]);
 
   function findCategoryName(
     map: Record<string, any>,
@@ -171,37 +196,38 @@ export default function EnhancedPendingTasks({
             )
           </span>
         </h3>
-        <div className="flex items-center gap-2">
-          <Select
-            aria-label="Rotation filter"
-            value={rotationFilter}
-            onChange={(e) => setRotationFilter(e.target.value as any)}
-            className="text-sm"
-          >
-            {rotationFilter === 'active' || rotationFilter === 'all' ? null : (
-              <option value="" disabled>
-                {t('ui.allActiveRotations', { defaultValue: 'All/Active rotations' })}
-              </option>
-            )}
-            <option value="all">{t('ui.all', { defaultValue: 'All' })}</option>
-            <option value="active">{t('ui.active', { defaultValue: 'Active' })}</option>
-          </Select>
-          <Select
-            aria-label="Category filter"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value as any)}
-            className="text-sm"
-          >
-            {categoryFilter === '' ? (
-              <option value="" disabled>
-                {t('ui.category.all', { defaultValue: 'knowledge/skills/guidance' })}
-              </option>
-            ) : null}
-            <option value="all">{t('ui.all', { defaultValue: 'All' })}</option>
-            <option value="Knowledge">{t('ui.category.knowledge') || 'knowledge'}</option>
-            <option value="Skills">{t('ui.category.skills') || 'skills'}</option>
-            <option value="Guidance">{t('ui.category.guidance') || 'guidance'}</option>
-          </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            { key: 'all' as const, label: t('ui.all', { defaultValue: 'All' }) },
+            {
+              key: 'Knowledge' as const,
+              label: t('ui.category.knowledge', { defaultValue: 'Knowledge' }) || 'Knowledge',
+            },
+            {
+              key: 'Skills' as const,
+              label: t('ui.category.skills', { defaultValue: 'Skills' }) || 'Skills',
+            },
+            {
+              key: 'Guidance' as const,
+              label: t('ui.category.guidance', { defaultValue: 'Guidance' }) || 'Guidance',
+            },
+          ].map((option) => {
+            const isActive = categoryFilter === option.key;
+            const variant = isActive
+              ? CATEGORY_ACCENTS[option.key].active
+              : CATEGORY_ACCENTS[option.key].inactive;
+            return (
+              <button
+                key={option.key}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setCategoryFilter(option.key)}
+                className={`rounded-full px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 dark:focus-visible:ring-gray-600 dark:focus-visible:ring-offset-gray-900 ${variant}`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
