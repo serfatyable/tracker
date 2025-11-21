@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import { useCurrentUserProfile } from '@/lib/react-query/hooks';
 import { useResidentActiveRotation } from '@/lib/hooks/useResidentActiveRotation';
+import { useResidentProgress } from '@/lib/hooks/useResidentProgress';
+import { useRotationNodes } from '@/lib/hooks/useRotationNodes';
 import { useRotations } from '@/lib/react-query/hooks';
 import { useUserTasks } from '@/lib/react-query/hooks';
 
@@ -14,13 +16,15 @@ export default function WelcomeHero() {
   const { rotationId } = useResidentActiveRotation();
   const { rotations } = useRotations();
   const { tasks } = useUserTasks();
+  const { nodes } = useRotationNodes(rotationId || null);
+  const { totals } = useResidentProgress(rotationId || null, tasks, nodes);
 
   const currentRotation = useMemo(() => {
     return rotations.find((r) => r.id === rotationId);
   }, [rotations, rotationId]);
 
-  const { streak, completionPercentage } = useMemo(() => {
-    if (!tasks.length) return { streak: 0, completionPercentage: 0 };
+  const streak = useMemo(() => {
+    if (!tasks.length) return 0;
 
     // Calculate streak (consecutive days with at least one task)
     const sortedTasks = [...tasks].sort((a, b) => {
@@ -52,14 +56,11 @@ export default function WelcomeHero() {
       }
     }
 
-    // Calculate rotation completion percentage
-    const rotationTasks = tasks.filter((t) => t.rotationId === rotationId);
-    const approvedCount = rotationTasks.filter((t) => t.status === 'approved').length;
-    const totalCount = rotationTasks.length || 1;
-    const completionPercentage = Math.round((approvedCount / totalCount) * 100);
+    return streak;
+  }, [tasks]);
 
-    return { streak, completionPercentage };
-  }, [tasks, rotationId]);
+  // Calculate rotation completion percentage based on required tasks in the active rotation
+  const completionPercentage = totals.percent;
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();

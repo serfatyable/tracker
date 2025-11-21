@@ -21,14 +21,35 @@ export default function EnhancedKPICards() {
     const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
 
     const leafs = nodes.filter((n) => n.rotationId === rotationId && n.type === 'leaf');
-    const requiredTotal = leafs.reduce((acc, n: any) => acc + (Number(n.requiredCount) || 0), 0);
+    const requiredTotal = leafs.reduce(
+      (acc, n: any) => acc + (Number(n.requiredCount) || 0),
+      0,
+    );
 
     const rotationTasks = tasks.filter((t) => t.rotationId === rotationId);
     const approvedTasks = rotationTasks.filter((t) => t.status === 'approved');
     const pendingTasks = rotationTasks.filter((t) => t.status === 'pending');
 
-    const approvedTotal = approvedTasks.reduce((acc, t) => acc + (Number(t.count) || 0), 0);
-    const pendingTotal = pendingTasks.reduce((acc, t) => acc + (Number(t.count) || 0), 0);
+    // Build capped counts per leaf
+    const countsByItemId: Record<string, { approved: number; pending: number }> = {};
+    rotationTasks.forEach((t) => {
+      const bucket = (countsByItemId[t.itemId] = countsByItemId[t.itemId] || {
+        approved: 0,
+        pending: 0,
+      });
+      if (t.status === 'approved') bucket.approved += Number(t.count) || 0;
+      else if (t.status === 'pending') bucket.pending += Number(t.count) || 0;
+    });
+
+    let approvedTotal = 0;
+    let pendingTotal = 0;
+    leafs.forEach((leaf: any) => {
+      const req = Number(leaf.requiredCount) || 0;
+      const bucket = countsByItemId[leaf.id] || { approved: 0, pending: 0 };
+      const cappedApproved = Math.min(bucket.approved, req);
+      approvedTotal += cappedApproved;
+      pendingTotal += Math.max(0, req - cappedApproved);
+    });
 
     // Calculate weekly trends
     const approvedThisWeek = approvedTasks.filter((t) => {
