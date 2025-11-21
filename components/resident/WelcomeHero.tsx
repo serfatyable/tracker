@@ -36,32 +36,35 @@ export default function WelcomeHero() {
   }, [rotations, rotationId]);
 
   const streak = useMemo(() => {
+    const getSafeTime = (created: any): number => {
+      if (created instanceof Date) {
+        return created.getTime();
+      }
+      if (created && typeof created.toMillis === 'function') {
+        try {
+          return created.toMillis();
+        } catch {
+          return 0;
+        }
+      }
+      if (typeof created === 'number') {
+        return created;
+      }
+      if (typeof created === 'string') {
+        const parsed = Date.parse(created);
+        return Number.isNaN(parsed) ? 0 : parsed;
+      }
+      return 0;
+    };
+
     if (!tasks.length) return 0;
 
     // Calculate streak (consecutive days with at least one task)
     const sortedTasks = [...tasks].sort((a, b) => {
       const aCreated = a.createdAt as any;
       const bCreated = b.createdAt as any;
-      const aTime =
-        aCreated instanceof Date
-          ? aCreated.getTime()
-          : typeof aCreated?.toMillis === 'function'
-            ? aCreated.toMillis()
-            : typeof aCreated === 'number'
-              ? aCreated
-              : typeof aCreated === 'string'
-                ? Date.parse(aCreated) || 0
-                : 0;
-      const bTime =
-        bCreated instanceof Date
-          ? bCreated.getTime()
-          : typeof bCreated?.toMillis === 'function'
-            ? bCreated.toMillis()
-            : typeof bCreated === 'number'
-              ? bCreated
-              : typeof bCreated === 'string'
-                ? Date.parse(bCreated) || 0
-                : 0;
+      const aTime = getSafeTime(aCreated);
+      const bTime = getSafeTime(bCreated);
       return bTime - aTime;
     });
 
