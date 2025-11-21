@@ -422,7 +422,7 @@ export default function AuthPage() {
                   id="su-fullname"
                   value={fullName}
                   onChange={setFullName}
-                  label={t('auth.fullName')}
+                  label={t('auth.fullNameEnglish')}
                   error={errors.fullName || null}
                   required
                   disabled={loading}
@@ -432,7 +432,7 @@ export default function AuthPage() {
                   id="su-fullname-he"
                   value={fullNameHe}
                   onChange={setFullNameHe}
-                  label={t('auth.fullName') + ' (HE)'}
+                  label={t('auth.fullNameHebrew')}
                   disabled={loading}
                   autoComplete="off"
                 />

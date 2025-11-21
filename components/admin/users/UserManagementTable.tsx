@@ -1,12 +1,18 @@
 'use client';
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import {
+  CheckCircleIcon,
+  ClockIcon,
+  FunnelIcon,
+  MagnifyingGlassIcon,
+  NoSymbolIcon,
+} from '@heroicons/react/24/outline';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
   listUsers,
   updateUsersStatus,
-  updateUsersRole,
   listAssignmentsWithDetails,
   unassignResidentFromRotation,
   activateResidentRotation,
@@ -22,12 +28,142 @@ import Button from '../../ui/Button';
 import { Dialog, DialogHeader, DialogFooter } from '../../ui/Dialog';
 import EmptyState, { ChecklistIcon } from '../../ui/EmptyState';
 import Input from '../../ui/Input';
-import Select from '../../ui/Select';
 import { Table, THead, TBody, TR, TH, TD, TableWrapper } from '../../ui/Table';
 import Toast from '../../ui/Toast';
 
 import AssignmentBadges from './AssignmentBadges';
 import AssignTutorDialog from './AssignTutorDialog';
+
+const statusToneClasses: Record<UserProfile['status'], string> = {
+  pending:
+    'border-amber-500/70 text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30',
+  active: 'border-emerald-500/70 text-emerald-800 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-900/30',
+  disabled: 'border-rose-500/70 text-rose-800 dark:text-rose-200 bg-rose-50 dark:bg-rose-900/30',
+};
+
+const roleToneClasses: Record<Role, string> = {
+  resident:
+    'border-cyan-500/70 text-cyan-700 dark:text-cyan-200 bg-cyan-50 dark:bg-cyan-900/30',
+  tutor: 'border-sky-500/70 text-sky-700 dark:text-sky-200 bg-sky-50 dark:bg-sky-900/30',
+  admin: 'border-purple-500/70 text-purple-700 dark:text-purple-200 bg-purple-50 dark:bg-purple-900/30',
+};
+
+const chipBaseClass =
+  'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2';
+const chipInactiveClass =
+  'border-muted/40 text-muted hover:border-muted hover:text-foreground dark:border-muted/60 dark:text-muted dark:hover:text-foreground';
+
+const chipActiveClass =
+  'bg-blue-600 text-white border-blue-600 shadow shadow-blue-500/30 hover:bg-blue-500';
+
+const statusChipActiveMap: Record<'pending' | 'active' | 'disabled' | '', string> = {
+  '': chipActiveClass,
+  pending: 'border-amber-500 bg-amber-500 text-white shadow-amber-500/30',
+  active: 'border-emerald-500 bg-emerald-500 text-white shadow-emerald-500/30',
+  disabled: 'border-rose-500 bg-rose-500 text-white shadow-rose-500/30',
+};
+
+const roleChipActiveMap: Record<Role | '', string> = {
+  '': chipActiveClass,
+  resident: 'border-cyan-500 bg-cyan-500 text-white shadow-cyan-500/30',
+  tutor: 'border-sky-500 bg-sky-500 text-white shadow-sky-500/30',
+  admin: 'border-purple-500 bg-purple-500 text-white shadow-purple-500/30',
+};
+
+type StatusFilterValue = '' | 'pending' | 'active' | 'disabled';
+type RoleFilterValue = Role | '';
+
+type IconType = typeof ClockIcon;
+
+function StatusPill({ status }: { status: UserProfile['status'] }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${statusToneClasses[status]}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function RolePill({ role }: { role: Role }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${roleToneClasses[role]}`}
+    >
+      {role}
+    </span>
+  );
+}
+
+function AvatarBadge({ name, fallback }: { name?: string | null; fallback: string }) {
+  const initials = getInitials(name || fallback);
+  return (
+    <div className="hidden md:flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-base font-semibold uppercase text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+      {initials}
+    </div>
+  );
+}
+
+function getInitials(value?: string) {
+  if (!value) return '??';
+  const parts = value.split(' ').filter(Boolean);
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]!.charAt(0) + parts[1]!.charAt(0)).toUpperCase();
+}
+
+function FilterChip({
+  label,
+  active,
+  onClick,
+  activeClass,
+  icon: Icon,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  activeClass: string;
+  icon?: IconType;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`${chipBaseClass} ${active ? activeClass : chipInactiveClass}`}
+    >
+      {Icon ? <Icon className="h-4 w-4" /> : null}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function QuickStatCard({
+  label,
+  value,
+  description,
+  icon: Icon,
+  toneClass,
+}: {
+  label: string;
+  value: number;
+  description: string;
+  icon: IconType;
+  toneClass: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/60 bg-white/80 p-4 text-gray-900 shadow-sm shadow-slate-200/50 backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-50">
+      <div className="flex items-center gap-3">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${toneClass}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
+          <p className="text-2xl font-semibold">{value}</p>
+          <p className="text-xs text-muted">{description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Mobile Card Component
 function UserCard({
@@ -37,7 +173,6 @@ function UserCard({
   onToggleSelect,
   onApprove,
   onDeny,
-  onRoleChange,
   actionLoading,
   assignments,
   t,
@@ -50,63 +185,35 @@ function UserCard({
   onToggleSelect: (checked: boolean) => void;
   onApprove: () => void;
   onDeny: () => void;
-  onRoleChange: (role: Role) => void;
   actionLoading: Record<string, boolean>;
   assignments: AssignmentWithDetails[];
   t: any;
   onManageRotations: () => void;
   onAssignTutor: () => void;
 }) {
+  const displayName = user.fullName || userId;
   return (
-    <div className="card-levitate p-4 space-y-3">
-      {/* Header: Checkbox + Name + Status */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={(e) => onToggleSelect(e.target.checked)}
-            className="mt-0.5 flex-shrink-0 w-4 h-4"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-base text-gray-900 dark:text-gray-50 truncate">
-              {user.fullName || userId}
-            </div>
-            <div className="text-sm text-muted truncate">{user.email}</div>
+    <div className="card-levitate space-y-4 p-4">
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onToggleSelect(e.target.checked)}
+          className="mt-2 h-4 w-4 flex-shrink-0"
+        />
+        <div className="flex-1 space-y-1">
+          <div className="text-base font-semibold text-gray-900 dark:text-gray-50">{displayName}</div>
+          <div className="text-sm text-muted break-anywhere">{user.email}</div>
+          <div className="flex flex-wrap gap-1.5">
+            <StatusPill status={user.status} />
+            <RolePill role={user.role} />
           </div>
         </div>
-        <span
-          className={
-            'inline-flex rounded-full px-2 py-1 text-xs font-medium flex-shrink-0 ' +
-            (user.status === 'pending'
-              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-              : user.status === 'active'
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
-                : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200')
-          }
-        >
-          {user.status}
-        </span>
       </div>
 
-      {/* Role Dropdown */}
-      <div>
-        <Select
-          value={user.role}
-          onChange={(e) => onRoleChange(e.target.value as Role)}
-          disabled={actionLoading[`role-${userId}`]}
-          className="w-full text-sm h-9"
-        >
-          <option value="resident">Resident</option>
-          <option value="tutor">Tutor</option>
-          <option value="admin">Admin</option>
-        </Select>
-      </div>
-
-      {/* Assignment Badges (for residents only) */}
       {user.role === 'resident' && (
         <div>
-          <div className="text-xs font-medium text-muted mb-1">
+          <div className="mb-1 text-xs font-medium text-muted">
             {t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })}
           </div>
           <AssignmentBadges
@@ -118,41 +225,40 @@ function UserCard({
         </div>
       )}
 
-      {/* Action Buttons (only for pending) */}
-      {user.status === 'pending' && (
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            className="flex-1 btn-levitate border-green-500 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/30"
-            variant="outline"
-            loading={actionLoading[`approve-${userId}`]}
-            onClick={onApprove}
-          >
-            {t('ui.approve')}
-          </Button>
-          <Button
-            size="sm"
-            className="flex-1 btn-levitate border-red-500 text-red-700 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
-            variant="outline"
-            loading={actionLoading[`deny-${userId}`]}
-            onClick={onDeny}
-          >
-            {t('ui.disable')}
-          </Button>
-        </div>
-      )}
-
-      {/* Additional Actions for Active Residents */}
-      {user.role === 'resident' && user.status !== 'pending' && (
-        <div className="flex gap-2 flex-wrap">
-          <Button size="sm" variant="outline" className="btn-levitate" onClick={onAssignTutor}>
-            {t('admin.users.assignTutor', { defaultValue: 'Assign Tutor' })}
-          </Button>
-          <Button size="sm" variant="ghost" className="btn-levitate" onClick={onManageRotations}>
-            {t('admin.users.manageRotations', { defaultValue: 'Manage rotations' })}
-          </Button>
-        </div>
-      )}
+      <div className="flex flex-wrap gap-2">
+        {user.status === 'pending' ? (
+          <>
+            <Button
+              size="sm"
+              className="btn-levitate flex-1 border-emerald-500 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
+              variant="outline"
+              loading={actionLoading[`approve-${userId}`]}
+              onClick={onApprove}
+            >
+              {t('ui.approve')}
+            </Button>
+            <Button
+              size="sm"
+              className="btn-levitate flex-1 border-rose-500 text-rose-700 hover:bg-rose-50 dark:border-rose-500 dark:text-rose-200 dark:hover:bg-rose-900/30"
+              variant="outline"
+              loading={actionLoading[`deny-${userId}`]}
+              onClick={onDeny}
+            >
+              {t('ui.disable')}
+            </Button>
+          </>
+        ) : null}
+        {user.role === 'resident' && user.status !== 'pending' && (
+          <>
+            <Button size="sm" variant="outline" className="btn-levitate flex-1" onClick={onAssignTutor}>
+              {t('admin.users.assignTutor', { defaultValue: 'Assign Tutor' })}
+            </Button>
+            <Button size="sm" variant="ghost" className="btn-levitate flex-1" onClick={onManageRotations}>
+              {t('admin.users.manageRotations', { defaultValue: 'Manage rotations' })}
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -314,6 +420,81 @@ const UserManagementTable = memo(function UserManagementTable() {
 
   // Fetch all rotations
   const { rotations } = useRotations();
+
+  const statusCounts = useMemo(() => {
+    return users.reduce(
+      (acc, user) => {
+        const status = user.status as UserProfile['status'];
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      },
+      { pending: 0, active: 0, disabled: 0 } as Record<UserProfile['status'], number>,
+    );
+  }, [users]);
+
+  const quickStats = useMemo(
+    () => [
+      {
+        id: 'pending',
+        value: statusCounts.pending,
+        label: t('ui.pending', { defaultValue: 'Pending' }),
+        description: t('admin.users.pendingSummary', {
+          defaultValue: 'Awaiting approval',
+        }) as string,
+        icon: ClockIcon,
+        toneClass: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-100',
+      },
+      {
+        id: 'active',
+        value: statusCounts.active,
+        label: t('ui.active', { defaultValue: 'Active' }),
+        description: t('admin.users.activeSummary', {
+          defaultValue: 'Ready to assign',
+        }) as string,
+        icon: CheckCircleIcon,
+        toneClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-100',
+      },
+      {
+        id: 'disabled',
+        value: statusCounts.disabled,
+        label: t('ui.disabled', { defaultValue: 'Disabled' }),
+        description: t('admin.users.disabledSummary', {
+          defaultValue: 'Need attention',
+        }) as string,
+        icon: NoSymbolIcon,
+        toneClass: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-100',
+      },
+    ],
+    [statusCounts, t],
+  );
+
+  const statusChipOptions = useMemo(
+    () => [
+      {
+        value: '' as StatusFilterValue,
+        label: t('ui.allStatuses', { defaultValue: 'All statuses' }) as string,
+        icon: FunnelIcon,
+      },
+      { value: 'pending' as StatusFilterValue, label: t('ui.pending', { defaultValue: 'Pending' }) as string },
+      { value: 'active' as StatusFilterValue, label: t('ui.active', { defaultValue: 'Active' }) as string },
+      { value: 'disabled' as StatusFilterValue, label: t('ui.disabled', { defaultValue: 'Disabled' }) as string },
+    ],
+    [t],
+  );
+
+  const roleChipOptions = useMemo(
+    () => [
+      { value: '' as RoleFilterValue, label: t('ui.allRoles', { defaultValue: 'All roles' }) as string },
+      { value: 'resident' as RoleFilterValue, label: t('roles.resident', { defaultValue: 'Resident' }) as string },
+      { value: 'tutor' as RoleFilterValue, label: t('roles.tutor', { defaultValue: 'Tutor' }) as string },
+      { value: 'admin' as RoleFilterValue, label: t('roles.admin', { defaultValue: 'Admin' }) as string },
+    ],
+    [t],
+  );
+
+  const filtersApplied = Boolean(statusFilter || roleFilter || searchQuery);
+  const selectedIdsList = idsSelected();
+  const selectedCount = selectedIdsList.length;
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -536,26 +717,6 @@ const UserManagementTable = memo(function UserManagementTable() {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: Role) => {
-    setActionLoading((prev) => ({ ...prev, [`role-${userId}`]: true }));
-    try {
-      await updateUsersRole({ userIds: [userId], role: newRole });
-      setToast({
-        message: t('ui.roleUpdated'),
-        variant: 'success',
-      });
-      await refresh();
-    } catch (error) {
-      console.error('Failed to update user role:', error);
-      setToast({
-        message: t('ui.operationFailed'),
-        variant: 'error',
-      });
-    } finally {
-      setActionLoading((prev) => ({ ...prev, [`role-${userId}`]: false }));
-    }
-  };
-
   const handleBulkApprove = async () => {
     const selectedIds = idsSelected();
     const pendingUsers = selectedIds.filter((id) => {
@@ -631,41 +792,81 @@ const UserManagementTable = memo(function UserManagementTable() {
         variant={toast?.variant}
         onClear={() => setToast(null)}
       />
-      <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter((e.target.value || '') as any)}
-            >
-              <option value="" disabled>
-                {t('ui.status')}
-              </option>
-              <option value="">{t('ui.all')}</option>
-              <option value="pending">{t('ui.pending')}</option>
-              <option value="active">{t('ui.active')}</option>
-              <option value="disabled">{t('ui.disabled')}</option>
-            </Select>
-            <Select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter((e.target.value || '') as any)}
-            >
-              <option value="" disabled>
-                {t('ui.role')}
-              </option>
-              <option value="">{t('ui.all')}</option>
-              <option value="resident">Resident</option>
-              <option value="tutor">Tutor</option>
-              <option value="admin">Admin</option>
-            </Select>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Input
-              placeholder={t('ui.searchUsers') as string}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-64"
+      <div className="space-y-6">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {quickStats.map((stat) => (
+            <QuickStatCard
+              key={stat.id}
+              label={stat.label}
+              value={stat.value}
+              description={stat.description}
+              icon={stat.icon}
+              toneClass={stat.toneClass}
             />
+          ))}
+        </div>
+
+        <div className="rounded-2xl border border-muted/30 bg-white/90 p-4 shadow-sm backdrop-blur supports-[backdrop-filter]:backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80 md:sticky md:top-16 md:z-20">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-muted">
+            <span className="inline-flex items-center gap-2">
+              <FunnelIcon className="h-4 w-4" />
+              {t('ui.filters', { defaultValue: 'Filters' })}
+            </span>
+            {filtersApplied ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter('');
+                  setRoleFilter('');
+                  setSearchQuery('');
+                }}
+                className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                {t('ui.clearFilters', { defaultValue: 'Clear filters' })}
+              </button>
+            ) : null}
+          </div>
+          <div className="mt-3 flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2">
+              {statusChipOptions.map((option) => (
+                <FilterChip
+                  key={option.value || 'all-statuses'}
+                  label={option.label}
+                  icon={option.icon}
+                  active={statusFilter === option.value}
+                  activeClass={statusChipActiveMap[option.value]}
+                  onClick={() => setStatusFilter(option.value)}
+                />
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {roleChipOptions.map((option) => (
+                <FilterChip
+                  key={option.value || 'all-roles'}
+                  label={option.label}
+                  active={roleFilter === option.value}
+                  activeClass={roleChipActiveMap[option.value as Role | '']}
+                  onClick={() => setRoleFilter(option.value)}
+                />
+              ))}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full sm:w-72">
+                <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
+                <Input
+                  placeholder={t('ui.searchUsers', { defaultValue: 'Search users' }) as string}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-11 w-full rounded-xl bg-white/90 pl-9 dark:bg-slate-900/70"
+                />
+              </div>
+              <div className="text-xs font-medium text-muted">
+                {t('ui.showingResults', {
+                  defaultValue: 'Showing {{count}} results',
+                  count: users.length,
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -683,11 +884,9 @@ const UserManagementTable = memo(function UserManagementTable() {
           />
         ) : (
           <>
-            {/* Mobile: Card Layout */}
-            <div className="block md:hidden space-y-3">
-              {/* Select All for Mobile */}
-              <div className="mb-3">
-                <label className="flex items-center gap-2 text-sm">
+            <div className="space-y-3 md:hidden">
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={users.length > 0 && users.every((u) => sel[u.uid])}
@@ -697,14 +896,22 @@ const UserManagementTable = memo(function UserManagementTable() {
                       users.forEach((u) => (next[u.uid] = checked));
                       setSel(next);
                     }}
-                    className="w-4 h-4"
+                    className="h-4 w-4"
                   />
-                  <span className="text-gray-900 dark:text-gray-50">
-                    Select all ({users.length})
+                  <span className="text-muted">
+                    {t('ui.selectAll', { defaultValue: 'Select all' })} ({users.length})
                   </span>
                 </label>
+                {selectedCount > 0 && (
+                  <span className="text-xs text-muted">
+                    {selectedCount}{' '}
+                    {t('ui.selectedCount_other', {
+                      defaultValue: 'selected',
+                      count: selectedCount,
+                    })}
+                  </span>
+                )}
               </div>
-
               {users.map((user) => {
                 const userId = (user as any).uid || (user as any).id;
                 return (
@@ -716,7 +923,6 @@ const UserManagementTable = memo(function UserManagementTable() {
                     onToggleSelect={(checked) => setSel((s) => ({ ...s, [userId]: checked }))}
                     onApprove={() => handleApproveUser(userId)}
                     onDeny={() => handleDenyUser(userId)}
-                    onRoleChange={(role) => handleRoleChange(userId, role)}
                     actionLoading={actionLoading}
                     assignments={getAssignmentsForResident(userId)}
                     t={t}
@@ -727,14 +933,13 @@ const UserManagementTable = memo(function UserManagementTable() {
               })}
             </div>
 
-            {/* Desktop: Table Layout */}
             <div className="hidden md:block">
               <TableWrapper className="-mx-4 sm:mx-0">
-                <div className="inline-block min-w-[48rem] align-top w-full">
+                <div className="inline-block w-full min-w-[48rem] align-top">
                   <Table className="w-full table-auto border-collapse">
                     <THead>
                       <TR>
-                        <TH className="sticky left-0 rtl:left-auto rtl:right-0 z-20 bg-bg border-r border-muted/20">
+                        <TH className="sticky left-0 z-20 w-12 bg-bg border-r border-muted/20">
                           <input
                             type="checkbox"
                             checked={users.length > 0 && users.every((u) => sel[u.uid])}
@@ -746,24 +951,19 @@ const UserManagementTable = memo(function UserManagementTable() {
                             }}
                           />
                         </TH>
-                        <TH className="sticky left-[2.25rem] rtl:left-auto rtl:right-[2.25rem] z-10 bg-bg border-r border-muted/20">
-                          {t('ui.fullName')}
-                        </TH>
-                        <TH className="hidden sm:table-cell">{t('ui.email')}</TH>
-                        <TH className="hidden md:table-cell">{t('ui.role')}</TH>
-                        <TH className="hidden md:table-cell">{t('ui.status')}</TH>
+                        <TH>{t('ui.user', { defaultValue: 'User' })}</TH>
                         <TH className="hidden lg:table-cell">
                           {t('ui.assignedTutors', { defaultValue: 'Assigned Tutors' })}
                         </TH>
-                        <TH className="text-right">{t('ui.open')}</TH>
+                        <TH className="text-right">{t('ui.actions', { defaultValue: 'Actions' })}</TH>
                       </TR>
                     </THead>
                     <TBody>
                       {users.map((user) => {
                         const userId = (user as any).uid || (user as any).id;
                         return (
-                          <TR key={userId}>
-                            <TD className="sticky left-0 rtl:left-auto rtl:right-0 z-20 bg-bg border-r border-muted/20">
+                          <TR key={userId} className="align-middle">
+                            <TD className="sticky left-0 z-20 bg-bg border-r border-muted/20">
                               <input
                                 type="checkbox"
                                 checked={!!sel[userId]}
@@ -772,42 +972,27 @@ const UserManagementTable = memo(function UserManagementTable() {
                                 }
                               />
                             </TD>
-                            <TD className="sticky left-[2.25rem] rtl:left-auto rtl:right-[2.25rem] z-10 bg-bg border-r border-muted/20">
-                              <span
-                                className="block whitespace-nowrap truncate max-w-[16rem]"
-                                title={user.fullName || userId}
-                              >
-                                {user.fullName || userId}
-                              </span>
-                            </TD>
-                            <TD className="break-anywhere hidden sm:table-cell">{user.email}</TD>
-                            <TD className="hidden md:table-cell">
-                              <span
-                                className={
-                                  'inline-flex rounded-full px-2 py-0.5 text-xs font-medium ' +
-                                  (user.role === 'admin'
-                                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'
-                                    : user.role === 'tutor'
-                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
-                                      : 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200')
-                                }
-                              >
-                                {user.role}
-                              </span>
-                            </TD>
-                            <TD className="hidden md:table-cell">
-                              <span
-                                className={
-                                  'inline-flex rounded-full px-2 py-0.5 text-xs font-medium ' +
-                                  (user.status === 'pending'
-                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-                                    : user.status === 'active'
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
-                                      : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200')
-                                }
-                              >
-                                {user.status}
-                              </span>
+                            <TD>
+                              <div className="flex items-center gap-3">
+                                <AvatarBadge name={user.fullName} fallback={userId} />
+                                <div className="min-w-0 space-y-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="truncate text-base font-semibold">
+                                      {user.fullName || userId}
+                                    </span>
+                                    {user.status === 'pending' ? (
+                                      <span className="text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-300">
+                                        {t('ui.awaitingApproval', { defaultValue: 'Awaiting approval' })}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <div className="text-sm text-muted break-anywhere">{user.email}</div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    <StatusPill status={user.status} />
+                                    <RolePill role={user.role} />
+                                  </div>
+                                </div>
+                              </div>
                             </TD>
                             <TD className="hidden lg:table-cell">
                               {user.role === 'resident' ? (
@@ -816,16 +1001,16 @@ const UserManagementTable = memo(function UserManagementTable() {
                                   maxVisible={2}
                                 />
                               ) : (
-                                <span className="text-sm text-muted">-</span>
+                                <span className="text-sm text-muted">{t('ui.notApplicable', { defaultValue: 'N/A' })}</span>
                               )}
                             </TD>
                             <TD className="text-right">
-                              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                              <div className="flex flex-wrap items-center justify-end gap-2">
                                 {user.status === 'pending' && (
                                   <>
                                     <Button
                                       size="sm"
-                                      className="btn-levitate border-green-500 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/30"
+                                      className="btn-levitate border-emerald-500 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
                                       variant="outline"
                                       loading={actionLoading[`approve-${userId}`]}
                                       onClick={() => handleApproveUser(userId)}
@@ -834,7 +1019,7 @@ const UserManagementTable = memo(function UserManagementTable() {
                                     </Button>
                                     <Button
                                       size="sm"
-                                      className="btn-levitate border-red-500 text-red-700 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
+                                      className="btn-levitate border-rose-500 text-rose-700 hover:bg-rose-50 dark:border-rose-500 dark:text-rose-200 dark:hover:bg-rose-900/30"
                                       variant="outline"
                                       loading={actionLoading[`deny-${userId}`]}
                                       onClick={() => handleDenyUser(userId)}
@@ -843,16 +1028,6 @@ const UserManagementTable = memo(function UserManagementTable() {
                                     </Button>
                                   </>
                                 )}
-                                <Select
-                                  value={user.role}
-                                  onChange={(e) => handleRoleChange(userId, e.target.value as Role)}
-                                  disabled={actionLoading[`role-${userId}`]}
-                                  className="text-xs h-8"
-                                >
-                                  <option value="resident">Resident</option>
-                                  <option value="tutor">Tutor</option>
-                                  <option value="admin">Admin</option>
-                                </Select>
                                 {user.role === 'resident' && (
                                   <>
                                     <Button
@@ -863,9 +1038,7 @@ const UserManagementTable = memo(function UserManagementTable() {
                                         openAssignTutor(userId, user.fullName || userId)
                                       }
                                     >
-                                      {t('admin.users.assignTutor', {
-                                        defaultValue: 'Assign Tutor',
-                                      })}
+                                      {t('admin.users.assignTutor', { defaultValue: 'Assign Tutor' })}
                                     </Button>
                                     <Button
                                       size="sm"
@@ -894,29 +1067,44 @@ const UserManagementTable = memo(function UserManagementTable() {
           </>
         )}
 
-        <div className="flex flex-col sm:flex-row justify-end gap-2">
-          {/* Show selection count on mobile */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-muted md:hidden">
-            {idsSelected().length > 0 && <span>{idsSelected().length} selected</span>}
+            {selectedCount > 0 && (
+              <span>
+                {selectedCount}{' '}
+                {t('ui.selectedCount_other', {
+                  defaultValue: 'selected',
+                  count: selectedCount,
+                })}
+              </span>
+            )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button
-              className="btn-levitate border-green-500 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/30"
-              disabled={loading || idsSelected().length === 0}
+              className="btn-levitate border-emerald-500 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
+              disabled={loading || selectedCount === 0}
               loading={bulkActionLoading}
               variant="outline"
               onClick={handleBulkApprove}
             >
-              {t('ui.approve')} Selected
+              {t('ui.approve', { defaultValue: 'Approve' })}{' '}
+              {t('ui.selectedCount_other', {
+                defaultValue: 'selected',
+                count: selectedCount,
+              })}
             </Button>
             <Button
-              className="btn-levitate border-red-500 text-red-700 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
-              disabled={loading || idsSelected().length === 0}
+              className="btn-levitate border-rose-500 text-rose-700 hover:bg-rose-50 dark:border-rose-500 dark:text-rose-200 dark:hover:bg-rose-900/30"
+              disabled={loading || selectedCount === 0}
               loading={bulkActionLoading}
               variant="outline"
               onClick={handleBulkDeny}
             >
-              {t('ui.disable')} Selected
+              {t('ui.disable', { defaultValue: 'Disable' })}{' '}
+              {t('ui.selectedCount_other', {
+                defaultValue: 'selected',
+                count: selectedCount,
+              })}
             </Button>
           </div>
         </div>
