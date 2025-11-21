@@ -43,13 +43,16 @@ export function useResidentProgress(
     function compute(node: RotationNode): NodeProgress {
       if (node.type === 'leaf') {
         const c = countsByItemId[node.id] || { approved: 0, pending: 0 };
+        const requiredCount = Number(node.requiredCount || 0);
+        const approvedCount = Math.min(c.approved, requiredCount);
+        const pendingCount = Math.max(0, requiredCount - approvedCount);
         return {
           id: node.id,
           name: node.name,
           type: node.type,
-          requiredCount: Number(node.requiredCount || 0),
-          approvedCount: c.approved,
-          pendingCount: c.pending,
+          requiredCount,
+          approvedCount,
+          pendingCount,
           children: [],
         };
       }

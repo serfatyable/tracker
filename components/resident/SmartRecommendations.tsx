@@ -33,7 +33,7 @@ export default function SmartRecommendations() {
     const recs: Recommendation[] = [];
     const nodesMap = new Map(nodes.map((n) => [n.id, n]));
 
-    // 1. Find tasks that are almost complete (e.g., 2/3 done)
+    // 1. Find tasks that are almost complete (based on requiredCount, capped by requirement)
     const tasksByItem = new Map<string, typeof tasks>();
     tasks.forEach((task) => {
       if (task.rotationId === rotationId && task.status === 'approved') {
@@ -46,13 +46,16 @@ export default function SmartRecommendations() {
       const node = nodesMap.get(itemId);
       if (!node || node.type !== 'leaf') return;
 
-      const approvedCount = itemTasks.reduce((sum, t) => sum + (Number(t.count) || 0), 0);
       const requiredCount = Number((node as any).requiredCount) || 0;
+      if (requiredCount <= 0) return;
 
-      if (requiredCount > 0 && approvedCount > 0 && approvedCount < requiredCount) {
+      const rawApproved = itemTasks.reduce((sum, t) => sum + (Number(t.count) || 0), 0);
+      const approvedCount = Math.min(rawApproved, requiredCount);
+
+      if (approvedCount > 0 && approvedCount < requiredCount) {
         const percentage = Math.round((approvedCount / requiredCount) * 100);
         if (percentage >= 50) {
-          // At least 50% complete
+          // At least 50% complete, but not yet finished
           recs.push({
             id: `almost-${itemId}`,
             type: 'almost-complete',
