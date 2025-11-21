@@ -67,20 +67,45 @@ export default function UpcomingSchedule() {
           console.error('Error loading on-call schedule:', err);
         }
 
-        // Load morning meetings
+        // Load morning meetings (all residents see all meetings)
         try {
           const meetingsSnap = await getDocs(collection(db, 'morningMeetings'));
           meetingsSnap.docs.forEach((doc) => {
-            const data = doc.data();
-            const dateStr = doc.id;
-            const eventDate = new Date(dateStr);
+            const data = doc.data() as any;
+
+            // Prefer the canonical date fields from the meeting document
+            let eventDate: Date | null = null;
+            const rawDate = data.date as any;
+
+            if (rawDate && typeof rawDate.toDate === 'function') {
+              try {
+                eventDate = rawDate.toDate();
+              } catch {
+                eventDate = null;
+              }
+            } else if (typeof data.dateKey === 'string') {
+              const parsed = Date.parse(data.dateKey);
+              eventDate = Number.isNaN(parsed) ? null : new Date(parsed);
+            } else {
+              // Fallback: try to parse the document id as a date
+              const parsed = Date.parse(doc.id);
+              eventDate = Number.isNaN(parsed) ? null : new Date(parsed);
+            }
+
+            if (!eventDate) return;
 
             if (eventDate >= now && eventDate <= sevenDaysFromNow) {
+              const dateKey =
+                typeof data.dateKey === 'string' && data.dateKey.length > 0
+                  ? data.dateKey
+                  : doc.id;
+
               meetingEvents.push({
-                id: `meeting-${dateStr}`,
-                date: dateStr,
+                id: `meeting-${doc.id}`,
+                date: dateKey,
                 type: 'meeting',
                 title:
+                  data.title ||
                   data.topic ||
                   t('ui.home.schedule.morningMeeting', { defaultValue: 'Morning Meeting' }),
                 subtitle: data.lecturer

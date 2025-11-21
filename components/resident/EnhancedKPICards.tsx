@@ -53,12 +53,46 @@ export default function EnhancedKPICards() {
 
     // Calculate weekly trends
     const approvedThisWeek = approvedTasks.filter((t) => {
-      const taskTime = (t.createdAt as any)?.toMillis?.() || 0;
+      const created = t.createdAt as any;
+      let taskTime = 0;
+
+      if (created instanceof Date) {
+        taskTime = created.getTime();
+      } else if (created && typeof created.toMillis === 'function') {
+        try {
+          taskTime = created.toMillis();
+        } catch {
+          taskTime = 0;
+        }
+      } else if (typeof created === 'number') {
+        taskTime = created;
+      } else if (typeof created === 'string') {
+        const parsed = Date.parse(created);
+        taskTime = Number.isNaN(parsed) ? 0 : parsed;
+      }
+
       return taskTime >= oneWeekAgo;
     }).length;
 
     const pendingThisWeek = pendingTasks.filter((t) => {
-      const taskTime = (t.createdAt as any)?.toMillis?.() || 0;
+      const created = t.createdAt as any;
+      let taskTime = 0;
+
+      if (created instanceof Date) {
+        taskTime = created.getTime();
+      } else if (created && typeof created.toMillis === 'function') {
+        try {
+          taskTime = created.toMillis();
+        } catch {
+          taskTime = 0;
+        }
+      } else if (typeof created === 'number') {
+        taskTime = created;
+      } else if (typeof created === 'string') {
+        const parsed = Date.parse(created);
+        taskTime = Number.isNaN(parsed) ? 0 : parsed;
+      }
+
       return taskTime >= oneWeekAgo;
     }).length;
 
@@ -152,7 +186,7 @@ export default function EnhancedKPICards() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Card
         title={t('ui.required') as string}
         value={kpiData.required.value}
@@ -160,16 +194,6 @@ export default function EnhancedKPICards() {
         icon="📋"
         gradient="from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/20"
         iconBg="bg-blue-100 dark:bg-blue-900/50"
-      />
-      <Card
-        title={t('ui.approved') as string}
-        value={kpiData.approved.value}
-        subtitle={`${kpiData.approved.percentage}% ${t('ui.complete', { defaultValue: 'complete' })}`}
-        trend={kpiData.approved.trend}
-        percentage={kpiData.approved.percentage}
-        icon="✅"
-        gradient="from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20"
-        iconBg="bg-teal-100 dark:bg-teal-900/50"
       />
       <Card
         title={t('ui.pending') as string}
