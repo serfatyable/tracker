@@ -1,5 +1,5 @@
 'use client';
-import { SparklesIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
@@ -46,12 +46,7 @@ export default function MyShiftsList({
     [t],
   );
 
-  const downloadLabel = translate('onCall.downloadMyIcs', 'Download My ICS');
-  const optionLabel = translate('onCall.downloadOptionGradientLabel', 'Option A');
-  const optionDescription = translate(
-    'onCall.downloadOptionGradientDescription',
-    'Vibrant gradient spotlight with a subtle glow.',
-  );
+  const downloadLabel = translate('onCall.downloadMyIcs', 'Download My Calendar');
 
   const grouped = useMemo(() => {
     const map = new Map<string, { date: Date; items: { stationKey: string }[] }>();
@@ -143,21 +138,17 @@ export default function MyShiftsList({
             {t('onCall.myShifts', { defaultValue: 'My Shifts' })}
           </div>
           <div className="flex w-full flex-col gap-3 text-left lg:w-auto lg:text-right">
-            <div className="flex flex-col gap-2 rounded-xl border border-gray-200/70 bg-white/80 p-4 text-left shadow-sm dark:border-white/10 dark:bg-white/5 sm:w-72">
+            <div className="flex flex-col rounded-2xl border border-gray-200/70 bg-white/90 p-4 shadow-md dark:border-white/10 dark:bg-white/5 sm:w-72">
               <Button
-                variant="ghost"
+                variant="default"
                 size="lg"
-                className="w-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-0 focus-visible:ring-white/60 active:translate-y-0 dark:focus-visible:ring-white/40"
-                leftIcon={<SparklesIcon className="h-5 w-5" />}
+                className="w-full justify-center gap-3 bg-gradient-to-r from-indigo-600 via-sky-600 to-cyan-500 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-0 focus-visible:ring-white/70 active:translate-y-0 dark:focus-visible:ring-white/50"
+                leftIcon={<ArrowDownTrayIcon className="h-5 w-5" />}
                 onClick={handleDownload}
-                aria-label={`${optionLabel} – ${downloadLabel}`}
+                aria-label={downloadLabel}
               >
                 {downloadLabel}
               </Button>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                {optionLabel}
-              </div>
-              <div className="text-xs text-gray-600 dark:text-gray-300">{optionDescription}</div>
             </div>
           </div>
         </div>
